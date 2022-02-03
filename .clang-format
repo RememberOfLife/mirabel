@@ -1,0 +1,66 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+AccessModifierOffset: 0
+AlignAfterOpenBracket: AlwaysBreak
+AlignTrailingComments: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: true
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
+  BeforeElse: false
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakConstructorInitializers: AfterColon
+BreakInheritanceList: AfterColon
+BreakStringLiterals: false
+ColumnLimit: 0 # default 80 / makes everything ugly
+DeriveLineEnding: false
+DerivePointerAlignment: false
+# TODO edit the access qualifier spaces before and after such that it fits with the missing space before a class is closed
+EmptyLineAfterAccessModifier: Always
+EmptyLineBeforeAccessModifier: Always
+IndentAccessModifiers: true
+IndentCaseLabels: true
+IndentExternBlock: Indent
+IndentPPDirectives: BeforeHash
+IndentWidth: 4
+InsertTrailingCommas: Wrapped
+MacroBlockBegin: "^BEGIN_.*"
+MacroBlockBegin: "^END_.*"
+NamespaceIndentation: All
+# PackConstructorInitializers: CurrentLine # v14
+PenaltyReturnTypeOnItsOwnLine: 100
+PointerAlignment: Left
+# QualifierAlignment: Custom # v14
+# QualifierOrder: ['inline', 'static', 'const', 'type'] # v14
+ReflowComments: false
+# SeparateDefinitionBlocks: Always # v14
+ShortNamespaceLines: 0
+SortIncludes: CaseInsensitive
+SpaceAfterTemplateKeyword: false
+SpaceBeforeCtorInitializerColon: false
+SpacesInContainerLiterals: false
+UseCRLF: false
+UseTab: Never
