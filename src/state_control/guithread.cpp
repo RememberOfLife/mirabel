@@ -10,10 +10,11 @@
 #include "surena_game.hpp"
 #include "surena_tictactoe.hpp"
 
-#include "games/default_ctx.hpp"
-#include "games/tictactoe.hpp"
+#include "frontends/empty_frontend.hpp"
+#include "frontends/frontend.hpp"
+#include "frontends/tictactoe.hpp"
+#include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/drawing_context_app.hpp"
 #include "state_control/event.hpp"
 #include "state_control/event_queue.hpp"
 
@@ -90,7 +91,7 @@ namespace StateControl {
         glEnable(GL_BLEND);
 
         // init default context
-        ctx = new Games::DefaultCtx();
+        ctx = new Frontends::EmptyFrontend();
     }
 
     GuiThread::~GuiThread()
@@ -111,6 +112,9 @@ namespace StateControl {
         float w_px = imgui_io->DisplaySize.x;
         float h_px = imgui_io->DisplaySize.y;
 
+        bool ctrl_left = false;
+        bool ctrl_right = false;
+
         int frame_work_ns = 0;
         const int frame_budget_ns = (1000 * 1000 * 1000)/60;
         bool quit = false;
@@ -125,19 +129,26 @@ namespace StateControl {
                 // process event e
                 // e.g. gamestate updates, load other ctx or game, etc..
                 switch (e.type) {
-                    case EVENT_TYPE_LOADGAME: {
-                        MetaGui::log("loading ttt game\n");
-                        delete game;
-                        game = new surena::TicTacToe();
+                    case EVENT_TYPE_EXIT: {
+                        quit = true;
+                        break;
+                    } break;
+                    case EVENT_TYPE_GAME_LOAD: {
+                        game = reinterpret_cast<surena::PerfectInformationGame*>(e.data1);
                         ctx->game = game;
                     } break;
-                    case EVENT_TYPE_LOADCTX: {
+                    case EVENT_TYPE_GAME_UNLOAD: {
+                        ctx->game = NULL;
+                        delete game;
+                        game = NULL;
+                    } break;
+                    case EVENT_TYPE_FRONTEND_LOAD: {
                         MetaGui::log("loading ttt ctx\n");
                         delete ctx;
-                        ctx = new Games::TicTacToe();
+                        ctx = new Frontends::TicTacToe();
                         ctx->game = game;
                     } break;
-                    case EVENT_TYPE_MOVE: {
+                    case EVENT_TYPE_GAME_MOVE: {
                         MetaGui::log("performing ttt move\n");
                         game->apply_move(reinterpret_cast<uint64_t>(e.data1));
                         if (game->player_to_move() == 0) {
@@ -161,18 +172,6 @@ namespace StateControl {
                     quit = true;
                     break;
                 }
-                // global window shortcuts
-                if (!imgui_io->WantCaptureKeyboard && event.type == SDL_KEYDOWN) {
-                    if (event.key.keysym.sym == SDLK_F3) {
-                        MetaGui::show_stats_overlay = !MetaGui::show_stats_overlay;
-                    }
-                    if (event.key.keysym.sym == SDLK_F4) {
-                        MetaGui::show_logs_window = !MetaGui::show_logs_window;
-                    }
-                    if (event.key.keysym.sym == SDLK_F5) {
-                        show_demo_window = !show_demo_window;
-                    }
-                }
                 // imgui wants mouse: skip mouse events
                 if (imgui_io->WantCaptureMouse && (
                     event.type == SDL_MOUSEMOTION ||
@@ -186,6 +185,45 @@ namespace StateControl {
                     event.type == SDL_KEYDOWN ||
                     event.type == SDL_KEYUP)) {
                     continue;
+                }
+                // global window shortcuts
+                if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_F3) {
+                        MetaGui::show_stats_overlay = !MetaGui::show_stats_overlay;
+                    }
+                    if (event.key.keysym.sym == SDLK_F4) {
+                        MetaGui::show_logs_window = !MetaGui::show_logs_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_F5) {
+                        show_demo_window = !show_demo_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_g && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_gamestate_config_window = !MetaGui::show_gamestate_config_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_f && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_guistate_config_window = !MetaGui::show_guistate_config_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_e && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_engine_window = !MetaGui::show_engine_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
+                        quit = true;
+                        break;
+                    }
+                }
+                if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_LCTRL) {
+                        ctrl_left = true;
+                    } else if (event.key.keysym.sym == SDLK_RCTRL) {
+                        ctrl_right = true;
+                    }
+                }
+                if (event.type == SDL_KEYUP) {
+                    if (event.key.keysym.sym == SDLK_LCTRL) {
+                        ctrl_left = false;
+                    } else if (event.key.keysym.sym == SDLK_RCTRL) {
+                        ctrl_right = false;
+                    }
                 }
                 ctx->process_event(event);
             }

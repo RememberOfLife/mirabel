@@ -7,7 +7,7 @@
 #include "SDL_opengl.h"
 #include "surena_game.hpp"
 
-#include "state_control/drawing_context_app.hpp"
+#include "frontends/frontend.hpp"
 #include "state_control/event_queue.hpp"
 
 namespace StateControl {
@@ -26,7 +26,7 @@ namespace StateControl {
             event_queue inbox;
 
             surena::PerfectInformationGame* game;
-            Games::DrawingContextApp* ctx;
+            Frontends::Frontend* ctx;
 
             GuiThread();
             ~GuiThread();

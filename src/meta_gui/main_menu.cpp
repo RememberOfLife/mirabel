@@ -21,25 +21,24 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Logs", "F4", show_logs_window)) {
                     show_logs_window = !show_logs_window;
                 }
-                if (ImGui::MenuItem("Gamestate Config", NULL, show_gamestate_config_window)) {
+                if (ImGui::MenuItem("Gamestate Config", "CTRL + G", show_gamestate_config_window)) {
                     show_gamestate_config_window = !show_gamestate_config_window;
                 }
-                if (ImGui::MenuItem("Guistate Config", NULL, show_guistate_config_window)) {
+                if (ImGui::MenuItem("Guistate Config", "CTRL + F", show_guistate_config_window)) {
                     show_guistate_config_window = !show_guistate_config_window;
                 }
-                if (ImGui::MenuItem("Engine", NULL, show_engine_window)) {
+                if (ImGui::MenuItem("Engine", "CTRL + E", show_engine_window)) {
                     show_engine_window = !show_engine_window;
                 }
                 ImGui::Separator();
-                if (ImGui::MenuItem("Quit", NULL, false)) {
-                    //TODO register quit event with StateControl::main_ctrl->t_gui.inbox
+                if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
+                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_EXIT));
                 }
                 ImGui::EndMenu();
             }
             if (ImGui::MenuItem("INIT TEST")) {
                 MetaGui::log("#S init test\n");
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_LOADGAME, 1, NULL));
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_LOADCTX, 1, NULL));
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_LOAD));
             }
             ImGui::EndMainMenuBar();
         }

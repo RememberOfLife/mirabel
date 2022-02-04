@@ -39,8 +39,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * actually use clang-format to make everything look uniform
 * replace currently pasted surena files with the proper submodule once it is reworked
 * sound
-* replace direct_draw with a maintained fork of [nanovg](https://github.com/inniyah/nanovg)
-* fix segfault when opening log and game very quickly
+* replace direct_draw with a maintained fork of [nanovg](https://github.com/inniyah/nanovg), or some other basic drawing library
 
 ## ideas
 * meta gui window snapping/anchoring?
@@ -49,6 +48,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * make games,frontends,engines dynamically loadable as plugins
 * engine compatiblity for arbitrary files?
 * how does the built in engine deliver its moves to the enginethread
+* how are options withing the gamestate config window passed?
 
 # integration workflow
 
@@ -102,49 +102,9 @@ lib/surena/includes/
 
 ---
 
-thing to do: base games, variants, options
-
-
-games_catalogue.cpp
-vector<base_game> games = {
-    base_game{
-        "chess",
-        vector<game_variant*>{
-            new chess960variant(),
-            new chessstandard(),
-        }
-    },
-};
-struct base_game [
-    char* name; // e.g. chess / havannah
-    vector<game_variant*> variants;
-]
-abstarct game_variant somewhere here
-chess960variant.cpp
-struct chess960 : game_variant {
-    game* thegame; // this gets edited
-    char* name; // e.g. chess / chess960 / havannah
-    void drawopts();
-    void drawstatediting();
-    game_state* newgame();
-    std::string getdescription(); // havannah6x6x6
-}
-
 frontends/chess
 class chess  {
     bool supportsgamevariant(game_variant* gv) {if instanceof<chessstandard> || instanceof<chess960variant>}  
 }
-
-gamestateconfig window
-- combobox: base game [display games]
-- if: combobox: variant [display gamevariants]
-- if: optionspanel [display gamevariant.drawopts()]
-- start game button (locks all input elements above => offers stop game button)
-- state editing information [display gamevariant.drawstatediting()]
-
-fix: ==> choose gamestate first then gamefrontend; other direction is horror
-
-rename games to frontend
-and games is then the folder for all the backend-frontend wrappers
 
 main_ctrl should be a context object (low prio)

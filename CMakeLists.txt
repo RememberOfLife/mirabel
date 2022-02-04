@@ -21,7 +21,10 @@ set(INCLUDES
 set(SOURCES
     src/main.cpp
 
-    src/games/default_ctx.cpp
+    src/frontends/empty_frontend.cpp
+    src/frontends/tictactoe.cpp
+
+    src/games/game_catalogue.cpp
     src/games/tictactoe.cpp
 
     src/meta_gui/engine.cpp

@@ -6,11 +6,11 @@
 
 #include "prototype_util/st_gui.hpp"
 
-#include "state_control/drawing_context_app.hpp"
+#include "frontends/frontend.hpp"
 
-namespace Games {
+namespace Frontends {
 
-    class DefaultCtx : public DrawingContextApp {
+    class EmptyFrontend : public Frontend {
 
         private:
 
@@ -18,9 +18,9 @@ namespace Games {
 
         public:
 
-            DefaultCtx();
+            EmptyFrontend();
 
-            ~DefaultCtx();
+            ~EmptyFrontend();
 
             void process_event(SDL_Event event) override;
 

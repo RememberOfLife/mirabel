@@ -22,6 +22,7 @@ namespace StateControl {
             void loop();
 
             void start();
+            void stop();
             void join();
 
     };
