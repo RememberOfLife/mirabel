@@ -1,25 +1,33 @@
 cmake_minimum_required(VERSION 3.18)
 project(mirabel)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 find_package(OpenGL REQUIRED)
 
 find_package(SDL2 REQUIRED)
 
 set(INCLUDES
-    .
-    src/
-    
-    lib/imgui
     lib/imgui/backends
-    lib/surena
-    lib/surena/games
-    lib/surena/util
+    lib/imgui
+
+    lib/surena/includes
+
+    src
 )
 
 set(SOURCES
-    src/main.cpp
+    lib/imgui/backends/imgui_impl_opengl3.cpp
+    lib/imgui/backends/imgui_impl_sdl.cpp
+    lib/imgui/imgui_demo.cpp
+    lib/imgui/imgui_draw.cpp
+    lib/imgui/imgui_tables.cpp
+    lib/imgui/imgui_widgets.cpp
+    lib/imgui/imgui.cpp 
+
+    lib/surena/src/games/tictactoe.cpp
+    lib/surena/src/util/fast_prng.cpp
 
     src/frontends/empty_frontend.cpp
     src/frontends/tictactoe.cpp
@@ -44,21 +52,14 @@ set(SOURCES
     src/state_control/event.cpp
     src/state_control/guithread.cpp
     
-    lib/imgui/imgui.cpp 
-    lib/imgui/imgui_demo.cpp
-    lib/imgui/imgui_draw.cpp
-    lib/imgui/imgui_tables.cpp
-    lib/imgui/imgui_widgets.cpp
-    lib/imgui/backends/imgui_impl_sdl.cpp
-    lib/imgui/backends/imgui_impl_opengl3.cpp
-
-    lib/surena/games/surena_tictactoe.cpp
-    lib/surena/util/surena_fast_prng.cpp
+    src/main.cpp
 )
 
 add_executable(mirabel ${SOURCES})
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
+
+target_link_libraries(mirabel Threads::Threads)
 
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
 target_link_libraries(mirabel ${OPENGL_LIBRARIES})

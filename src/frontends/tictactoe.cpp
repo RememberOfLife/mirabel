@@ -1,8 +1,8 @@
 #include <cstdint>
 
 #include "SDL.h"
-#include "surena_game.hpp"
-#include "surena_tictactoe.hpp"
+#include "surena/game.hpp"
+#include "surena/games/tictactoe.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 #include "prototype_util/direct_draw.hpp"

@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "surena_game.hpp"
+#include "surena/game.hpp"
 
 namespace Games {
     

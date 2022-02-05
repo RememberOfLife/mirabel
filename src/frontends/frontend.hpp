@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SDL.h"
-#include "surena_game.hpp"
+#include "surena/game.hpp"
 
 namespace Frontends {
 

@@ -37,7 +37,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
 * actually use clang-format to make everything look uniform
-* replace currently pasted surena files with the proper submodule once it is reworked
 * sound
 * replace direct_draw with a maintained fork of [nanovg](https://github.com/inniyah/nanovg), or some other basic drawing library
 
@@ -75,30 +74,6 @@ FIXES:
 * ==> server concept
   * server is a class inside the project, can also be hosted locally or spun up locally for the network
   * supports guest login, but also user accounts
-
-mirabel/
-    cmakelists.txt nimmt includepaths
-    src/
-        game.hpp #1
-        games/
-            tictactoe.hpp // includes "game.hpp #1" und "surena/games/tictactoe.hpp"
-    lib/
-        surena/
-            includes/
-                surena/
-                    engine.hpp // include "surena/game.hpp" includer "surena/games/tictatctoe.hpp"
-                    game.hpp #2
-                    games/
-                        tictactoe2.hpp // include "surena/games/tictactoe.hpp"
-                        tictactoe.hpp // include "surena/game.hpp #2"
-            src/
-                games/
-                    tictactoe.cpp
-
-includepaths:
-.
-src/
-lib/surena/includes/
 
 ---
 

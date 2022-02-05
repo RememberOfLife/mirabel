@@ -2,7 +2,7 @@
 
 #include <thread>
 
-#include "surena_game.hpp"
+#include "surena/game.hpp"
 
 #include "state_control/event_queue.hpp"
 

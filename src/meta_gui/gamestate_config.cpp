@@ -1,8 +1,8 @@
 #include <cstdint>
 
 #include "imgui.h"
-#include "surena_game.hpp"
-#include "surena_tictactoe.hpp"
+#include "surena/game.hpp"
+#include "surena/games/tictactoe.hpp"
 
 #include "games/game_catalogue.hpp"
 #include "state_control/controller.hpp"

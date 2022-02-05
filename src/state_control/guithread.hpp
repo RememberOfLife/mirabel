@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
-#include "surena_game.hpp"
+#include "surena/game.hpp"
 
 #include "frontends/frontend.hpp"
 #include "state_control/event_queue.hpp"

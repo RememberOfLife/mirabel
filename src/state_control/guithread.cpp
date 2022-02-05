@@ -7,8 +7,7 @@
 #include "imgui_impl_opengl3.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
-#include "surena_game.hpp"
-#include "surena_tictactoe.hpp"
+#include "surena/game.hpp"
 
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend.hpp"
