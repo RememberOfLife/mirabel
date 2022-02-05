@@ -29,11 +29,14 @@ namespace MetaGui {
     void log_unregister(uint32_t log_id);
     void log_clear(uint32_t log_id);
 
-    extern bool show_gamestate_config_window;
-    void gamestate_config_window(bool* p_open); // select game, parameter config (e.g. board size), game state editing
+    extern bool show_game_config_window;
+    void game_config_window(bool* p_open); // select game, parameter config (e.g. board size), game state editing
+    extern uint32_t base_game_idx;
+    extern uint32_t game_variant_idx;
 
-    extern bool show_guistate_config_window;
-    void guistate_config_window(bool* p_open); // select gui to use (compatible with the gamestate), visual config (colors)
+    extern bool show_frontend_config_window;
+    void frontend_config_window(bool* p_open); // select frontend to use (compatible with the game), visual config (colors)
+    extern uint32_t frontend_wrap_idx;
 
     extern bool show_engine_window;
     void engine_window(bool* p_open);

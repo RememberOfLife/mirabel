@@ -47,7 +47,8 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * make games,frontends,engines dynamically loadable as plugins
 * engine compatiblity for arbitrary files?
 * how does the built in engine deliver its moves to the enginethread
-* how are options withing the gamestate config window passed?
+* how are options within the gamestate config window passed?
+* local docs / game rule window, per variant? images/graphic representations?
 
 # integration workflow
 
@@ -74,12 +75,23 @@ FIXES:
 * ==> server concept
   * server is a class inside the project, can also be hosted locally or spun up locally for the network
   * supports guest login, but also user accounts
+* ==> manage games with randomness (also works for long term hidden state)
+  * DEPENDS ON server architecture (also for offline play)
+  * lobby setting, where the server auto decides random moves if set to host mode
+    * or if the game is just mirroring another actual game then any lobby mod can input the random moves
+  * every user in the lobby can also be set to be an unknown (e.g. mirroring a real person we don't know state about), i.e. their state will not be decided by the system
+    * all real users input their info (e.g. dealt cards) and then can use play and ai
+* ==> games with simultaneous moves
+  * game unions all possible moves from all outstanding players to move simultaneously, returns that as the valid_moves_list
+  * when a player moves, their move is stored by the backend game into its accumulation buffer
+    * when the last remaining player, of all those who move simultaneously, makes their move, the game processes the accumulation buffer and proceeds
+* ==> manage player specific views for games with simultaneous moves or hidden information
+  * frontend requires info on what view it should render, i.e. render only hidden info or move placer for the player of that view
+  * auto switch view to player_to_move / next player if setting for that is given
+* ==> resources like textures
+  * can be generated on first launch into some local cache directory
+  * not available for sounds?
 
 ---
-
-frontends/chess
-class chess  {
-    bool supportsgamevariant(game_variant* gv) {if instanceof<chessstandard> || instanceof<chess960variant>}  
-}
 
 main_ctrl should be a context object (low prio)

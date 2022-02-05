@@ -21,11 +21,11 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Logs", "F4", show_logs_window)) {
                     show_logs_window = !show_logs_window;
                 }
-                if (ImGui::MenuItem("Gamestate Config", "CTRL + G", show_gamestate_config_window)) {
-                    show_gamestate_config_window = !show_gamestate_config_window;
+                if (ImGui::MenuItem("Game Config", "CTRL + G", show_game_config_window)) {
+                    show_game_config_window = !show_game_config_window;
                 }
-                if (ImGui::MenuItem("Guistate Config", "CTRL + F", show_guistate_config_window)) {
-                    show_guistate_config_window = !show_guistate_config_window;
+                if (ImGui::MenuItem("Frontend Config", "CTRL + F", show_frontend_config_window)) {
+                    show_frontend_config_window = !show_frontend_config_window;
                 }
                 if (ImGui::MenuItem("Engine", "CTRL + E", show_engine_window)) {
                     show_engine_window = !show_engine_window;
@@ -35,10 +35,6 @@ namespace MetaGui {
                     StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_EXIT));
                 }
                 ImGui::EndMenu();
-            }
-            if (ImGui::MenuItem("INIT TEST")) {
-                MetaGui::log("#S init test\n");
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_LOAD));
             }
             ImGui::EndMainMenuBar();
         }

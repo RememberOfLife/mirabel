@@ -30,14 +30,15 @@ set(SOURCES
     lib/surena/src/util/fast_prng.cpp
 
     src/frontends/empty_frontend.cpp
+    src/frontends/frontend_catalogue.cpp
     src/frontends/tictactoe.cpp
 
     src/games/game_catalogue.cpp
     src/games/tictactoe.cpp
 
     src/meta_gui/engine.cpp
-    src/meta_gui/gamestate_config.cpp
-    src/meta_gui/guistate_config.cpp
+    src/meta_gui/frontend_config.cpp
+    src/meta_gui/game_config.cpp
     src/meta_gui/logs.cpp
     src/meta_gui/main_menu.cpp
     src/meta_gui/meta_gui.cpp

@@ -4,30 +4,29 @@
 
 #include "SDL.h"
 
+#include "games/game_catalogue.hpp"
 #include "prototype_util/st_gui.hpp"
 
-#include "frontends/frontend.hpp"
+#include "frontends/frontend_catalogue.hpp"
 
 namespace Frontends {
 
     class EmptyFrontend : public Frontend {
-
-        private:
-
-            uint32_t log;
-
         public:
-
             EmptyFrontend();
-
             ~EmptyFrontend();
-
             void process_event(SDL_Event event) override;
-
             void update() override;
-
             void render() override;
+            void draw_options() override;
+    };
 
+    class EmptyFrontend_FEW : public FrontendWrap {
+        public:
+            EmptyFrontend_FEW();
+            ~EmptyFrontend_FEW();
+            bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) override;
+            Frontend* new_frontend() override;
     };
 
 }

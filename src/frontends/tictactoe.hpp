@@ -4,7 +4,9 @@
 
 #include "SDL.h"
 
-#include "frontends/frontend.hpp"
+#include "games/game_catalogue.hpp"
+
+#include "frontends/frontend_catalogue.hpp"
 
 namespace Frontends {
 
@@ -27,7 +29,7 @@ namespace Frontends {
             int mx;
             int my;
 
-            //TODO size and color variables for guistate config
+            //TODO size and color variables for frontend config
             sbtn board_buttons[3][3]; // board_buttons[y][x] origin is bottom left
 
         public:
@@ -42,6 +44,16 @@ namespace Frontends {
 
             void render() override;
 
+            void draw_options() override;
+
+    };
+
+    class TicTacToe_FEW : public FrontendWrap {
+        public:
+            TicTacToe_FEW();
+            ~TicTacToe_FEW();
+            bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) override;
+            Frontend* new_frontend() override;
     };
 
 }

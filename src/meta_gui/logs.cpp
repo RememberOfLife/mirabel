@@ -258,6 +258,7 @@ namespace MetaGui {
                 ImGui::PopStyleColor();
                 current_log->visible = visible;
                 // popup context menu with info + settings about the log
+                //TODO dont do a popup, its illegible
                 if (ImGui::BeginPopupContextItem()) {
                     char buf[24];
                     sprintf(buf, "line count: %lu", current_log->log_line_offsets.size()-1);

@@ -10,7 +10,7 @@
 #include "surena/game.hpp"
 
 #include "frontends/empty_frontend.hpp"
-#include "frontends/frontend.hpp"
+#include "frontends/frontend_catalogue.hpp"
 #include "frontends/tictactoe.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -23,7 +23,7 @@ namespace StateControl {
 
     GuiThread::GuiThread():
         game(NULL),
-        ctx(NULL)
+        frontend(NULL)
     {
         // setup SDL
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -90,7 +90,7 @@ namespace StateControl {
         glEnable(GL_BLEND);
 
         // init default context
-        ctx = new Frontends::EmptyFrontend();
+        frontend = new Frontends::EmptyFrontend();
     }
 
     GuiThread::~GuiThread()
@@ -126,32 +126,35 @@ namespace StateControl {
 
             for (event e = inbox.pop(); e.type != 0; e = inbox.pop()) {
                 // process event e
-                // e.g. gamestate updates, load other ctx or game, etc..
+                // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
                     case EVENT_TYPE_EXIT: {
                         quit = true;
                         break;
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
+                        delete game;
                         game = reinterpret_cast<surena::PerfectInformationGame*>(e.data1);
-                        ctx->game = game;
+                        frontend->game = game;
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
-                        ctx->game = NULL;
+                        frontend->game = NULL;
                         delete game;
                         game = NULL;
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
-                        MetaGui::log("loading ttt ctx\n");
-                        delete ctx;
-                        ctx = new Frontends::TicTacToe();
-                        ctx->game = game;
+                        delete frontend;
+                        frontend = reinterpret_cast<Frontends::Frontend*>(e.data1);
+                        frontend->game = game;
+                    } break;
+                    case EVENT_TYPE_FRONTEND_UNLOAD: {
+                        delete frontend;
+                        frontend = new Frontends::EmptyFrontend();
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
-                        MetaGui::log("performing ttt move\n");
                         game->apply_move(reinterpret_cast<uint64_t>(e.data1));
                         if (game->player_to_move() == 0) {
-                            MetaGui::logf("#S ttt game done: winner is %d\n", game->get_result());
+                            MetaGui::logf("#S game done: winner is %d\n", game->get_result());
                         }
                     } break;
                 }
@@ -197,10 +200,10 @@ namespace StateControl {
                         show_demo_window = !show_demo_window;
                     }
                     if (event.key.keysym.sym == SDLK_g && (ctrl_left || ctrl_right)) {
-                        MetaGui::show_gamestate_config_window = !MetaGui::show_gamestate_config_window;
+                        MetaGui::show_game_config_window = !MetaGui::show_game_config_window;
                     }
                     if (event.key.keysym.sym == SDLK_f && (ctrl_left || ctrl_right)) {
-                        MetaGui::show_guistate_config_window = !MetaGui::show_guistate_config_window;
+                        MetaGui::show_frontend_config_window = !MetaGui::show_frontend_config_window;
                     }
                     if (event.key.keysym.sym == SDLK_e && (ctrl_left || ctrl_right)) {
                         MetaGui::show_engine_window = !MetaGui::show_engine_window;
@@ -224,7 +227,7 @@ namespace StateControl {
                         ctrl_right = false;
                     }
                 }
-                ctx->process_event(event);
+                frontend->process_event(event);
             }
 
             // start the dear imgui frame
@@ -237,23 +240,23 @@ namespace StateControl {
             if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
             if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
             if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
-            if (MetaGui::show_gamestate_config_window) MetaGui::gamestate_config_window(&MetaGui::show_gamestate_config_window);
-            if (MetaGui::show_guistate_config_window) MetaGui::guistate_config_window(&MetaGui::show_guistate_config_window);
+            if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
+            if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
             if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
 
             //TODO put this in the sdl resize event, make a resize function on the context app
             w_px = imgui_io->DisplaySize.x;
             h_px = imgui_io->DisplaySize.y;
-            ctx->w_px = w_px;
-            ctx->h_px = h_px;
+            frontend->w_px = w_px;
+            frontend->h_px = h_px;
             // rendering
             glViewport(0, 0, (int)w_px, (int)h_px);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             glOrtho(0.0, (GLdouble)w_px, (GLdouble)h_px, 0.0, -1, 1);
 
-            ctx->update();
-            ctx->render();
+            frontend->update();
+            frontend->render();
             
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

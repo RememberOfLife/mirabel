@@ -15,6 +15,7 @@ namespace StateControl {
         EVENT_TYPE_FRONTEND_UNLOAD,
     };
 
+    // make this a union, like sdl events, to avoid reinterpret casts
     struct event {
         uint32_t type;
         uint32_t code;

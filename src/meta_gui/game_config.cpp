@@ -14,13 +14,14 @@
 
 namespace MetaGui {
 
-    static uint32_t base_game_idx = 0;
-    static uint32_t game_variant_idx = 0;
+    uint32_t base_game_idx = 0;
+    uint32_t game_variant_idx = 0;
 
-    void gamestate_config_window(bool* p_open)
+    void game_config_window(bool* p_open)
     {
-        ImGui::SetNextWindowSize(ImVec2(200, 300), ImGuiCond_FirstUseEver);
-        bool window_contents_visible = ImGui::Begin("Gamestate Config", p_open);
+        ImGui::SetNextWindowSize(ImVec2(230, 300), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(50, 80), ImGuiCond_FirstUseEver);
+        bool window_contents_visible = ImGui::Begin("Game Config", p_open);
         if (!window_contents_visible)
         {
             ImGui::End();
@@ -50,7 +51,7 @@ namespace MetaGui {
         if (disable_variant_selection) {
             ImGui::BeginDisabled();
         }
-        if (ImGui::BeginCombo("Variant", Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, Games::game_catalogue[base_game_idx].variants.size() > 1 ? ImGuiComboFlags_None : ImGuiComboFlags_NoArrowButton)) {
+        if (ImGui::BeginCombo("Variant", Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, disable_variant_selection ? ImGuiComboFlags_NoArrowButton : ImGuiComboFlags_None)) {
             for (int i = 0; i < Games::game_catalogue[base_game_idx].variants.size(); i++) {
                 bool is_selected = (game_variant_idx == i);
                 if (ImGui::Selectable(Games::game_catalogue[base_game_idx].variants[i]->name, is_selected)) {

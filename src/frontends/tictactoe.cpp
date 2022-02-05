@@ -1,15 +1,19 @@
 #include <cstdint>
 
+#include "imgui.h"
 #include "SDL.h"
 #include "surena/game.hpp"
 #include "surena/games/tictactoe.hpp"
 
+#include "games/game_catalogue.hpp"
+#include "games/tictactoe.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "prototype_util/direct_draw.hpp"
 #include "state_control/controller.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
+#include "util/instanceof.hpp"
 
 #include "frontends/tictactoe.hpp"
 
@@ -58,7 +62,6 @@ namespace Frontends {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && reinterpret_cast<surena::TicTacToe*>(game)->get_cell(x, y) == 0) {
-                                    MetaGui::logf(log, "move: player %d (%d,%d)\n", reinterpret_cast<surena::TicTacToe*>(game)->player_to_move(), x, y);
                                     uint64_t move_code = x | (y<<2);
                                     StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_MOVE, 1, reinterpret_cast<void*>(move_code)));
                                 }
@@ -126,6 +129,29 @@ namespace Frontends {
             }
         }
         DD::Pop();
+    }
+
+    void TicTacToe::draw_options()
+    {
+        //TODO draw color and size options
+        ImGui::TextDisabled("<no options>");
+    }
+
+    TicTacToe_FEW::TicTacToe_FEW():
+        FrontendWrap("TicTacToe")
+    {}
+
+    TicTacToe_FEW::~TicTacToe_FEW()
+    {}
+    
+    bool TicTacToe_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    {
+        return (Util::instanceof<Games::TicTacToe>(base_game_variant));
+    }
+    
+    Frontend* TicTacToe_FEW::new_frontend()
+    {
+        return new TicTacToe();
     }
 
 }
