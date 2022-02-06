@@ -1,6 +1,6 @@
 #include "imgui.h"
-#include "surena/game.hpp"
 #include "surena/games/tictactoe.hpp"
+#include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
 
@@ -10,14 +10,10 @@ namespace Games {
 
             TicTacToe::TicTacToe():
                 BaseGameVariant("Standard")
-            {
-                //TODO
-            }
+            {}
             
             TicTacToe::~TicTacToe()
-            {
-                //TODO
-            }
+            {}
 
             surena::PerfectInformationGame* TicTacToe::new_game()
             {

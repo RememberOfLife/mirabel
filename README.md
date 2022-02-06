@@ -49,6 +49,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * how does the built in engine deliver its moves to the enginethread
 * how are options within the gamestate config window passed?
 * local docs / game rule window, per variant? images/graphic representations?
+* how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
 
 # integration workflow
 

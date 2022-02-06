@@ -2,7 +2,6 @@
 
 #include "imgui.h"
 #include "surena/game.hpp"
-#include "surena/games/tictactoe.hpp"
 
 #include "games/game_catalogue.hpp"
 #include "state_control/controller.hpp"

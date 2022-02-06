@@ -1,3 +1,4 @@
+#include "games/tictactoe_ultimate.hpp"
 #include "games/tictactoe.hpp"
 
 #include "games/game_catalogue.hpp"
@@ -13,6 +14,7 @@ namespace Games {
             "TicTacToe",
             std::vector<BaseGameVariant*>{
                 new TicTacToe(),
+                new TicTacToe_Ultimate(),
             }
         },
     };

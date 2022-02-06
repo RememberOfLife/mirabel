@@ -245,6 +245,7 @@ namespace StateControl {
             if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
 
             //TODO put this in the sdl resize event, make a resize function on the context app
+            // also this should use workarea and not entire viewport, as it otherwise slip under the main menu bar
             w_px = imgui_io->DisplaySize.x;
             h_px = imgui_io->DisplaySize.y;
             frontend->w_px = w_px;

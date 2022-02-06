@@ -1,4 +1,5 @@
 #include "frontends/empty_frontend.hpp"
+#include "frontends/tictactoe_ultimate.hpp"
 #include "frontends/tictactoe.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
@@ -11,6 +12,7 @@ namespace Frontends {
 
     std::vector<FrontendWrap*> frontend_catalogue = {
         new EmptyFrontend_FEW(),
+        new TicTacToe_Ultimate_FEW(),
         new TicTacToe_FEW(),
     };
 

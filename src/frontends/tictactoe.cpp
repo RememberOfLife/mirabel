@@ -2,8 +2,8 @@
 
 #include "imgui.h"
 #include "SDL.h"
-#include "surena/game.hpp"
 #include "surena/games/tictactoe.hpp"
+#include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe.hpp"

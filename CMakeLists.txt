@@ -26,14 +26,17 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
+    lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/util/fast_prng.cpp
 
     src/frontends/empty_frontend.cpp
     src/frontends/frontend_catalogue.cpp
+    src/frontends/tictactoe_ultimate.cpp
     src/frontends/tictactoe.cpp
 
     src/games/game_catalogue.cpp
+    src/games/tictactoe_ultimate.cpp
     src/games/tictactoe.cpp
 
     src/meta_gui/engine.cpp
