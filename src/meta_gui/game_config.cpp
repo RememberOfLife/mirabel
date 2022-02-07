@@ -77,7 +77,7 @@ namespace MetaGui {
         if (game_running) {
             if (ImGui::Button("Restart")) {
                 StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_UNLOAD));
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_LOAD, 0, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
@@ -85,7 +85,7 @@ namespace MetaGui {
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_LOAD, 0, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
             }
         }
         ImGui::Separator();

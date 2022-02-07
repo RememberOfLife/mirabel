@@ -7,7 +7,6 @@
 
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe.hpp"
-#include "meta_gui/meta_gui.hpp"
 #include "prototype_util/direct_draw.hpp"
 #include "state_control/controller.hpp"
 #include "state_control/event_queue.hpp"
@@ -25,18 +24,15 @@ namespace Frontends {
 
     TicTacToe::TicTacToe()
     {
-        log = MetaGui::log_register("F/tictactoe");
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                board_buttons[y][x] = sbtn{static_cast<float>(x)*250, 500-static_cast<float>(y)*250, 200, 200, false, false};
+                board_buttons[y][x] = sbtn{static_cast<float>(x)*(button_size+padding), (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding), button_size, button_size, false, false};
             }
         }
     }
 
     TicTacToe::~TicTacToe()
-    {
-        MetaGui::log_unregister(log);
-    }
+    {}
 
     void TicTacToe::process_event(SDL_Event event)
     {
@@ -55,15 +51,15 @@ namespace Frontends {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     int mX = event.button.x;
                     int mY = event.button.y;
-                    mX -= w_px/2-350;
-                    mY -= h_px/2-350;
+                    mX -= w_px/2-(3*button_size+2*padding)/2;
+                    mY -= h_px/2-(3*button_size+2*padding)/2;
                     for (int x = 0; x < 3; x++) {
                         for (int y = 0; y < 3; y++) {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && reinterpret_cast<surena::TicTacToe*>(game)->get_cell(x, y) == 0) {
                                     uint64_t move_code = x | (y<<2);
-                                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_MOVE, 1, reinterpret_cast<void*>(move_code)));
+                                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
                                 board_buttons[y][x].mousedown = false;
                             }
@@ -83,10 +79,14 @@ namespace Frontends {
         // set button hovered
         int mX = mx;
         int mY = my;
-        mX -= w_px/2-350;
-        mY -= h_px/2-350;
+        mX -= w_px/2-(3*button_size+2*padding)/2;
+        mY -= h_px/2-(3*button_size+2*padding)/2;
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
+                board_buttons[y][x].x = static_cast<float>(x)*(button_size+padding);
+                board_buttons[y][x].y = (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding);
+                board_buttons[y][x].w = button_size;
+                board_buttons[y][x].h = button_size;
                 board_buttons[y][x].update(mX, mY);
             }
         }
@@ -94,18 +94,22 @@ namespace Frontends {
 
     void TicTacToe::render()
     {
-        DD::SetLineWidth(35);
+        DD::SetLineWidth(button_size*0.175);
         DD::SetRGB255(201, 144, 73);
         DD::Clear();
         DD::Push();
-        DD::Translate(w_px/2-350, h_px/2-350);
+        DD::Translate(w_px/2-(3*button_size+2*padding)/2, h_px/2-(3*button_size+2*padding)/2);
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                float base_x = static_cast<float>(x)*250;
-                float base_y = 500-static_cast<float>(y)*250;
+                float base_x = static_cast<float>(x)*(button_size+padding);
+                float base_y = (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding);
                 DD::SetFill();
-                DD::SetRGB255(240, 217, 181);
-                DD::DrawRectangle(base_x, base_y, 200, 200);
+                if (!game || game->player_to_move() == 0) {
+                    DD::SetRGB255(161, 119, 67);
+                } else {
+                    DD::SetRGB255(240, 217, 181);
+                }
+                DD::DrawRectangle(base_x, base_y, button_size, button_size);
                 if (!game) {
                     continue;
                 }
@@ -114,17 +118,17 @@ namespace Frontends {
                     // X
                     DD::SetStroke();
                     DD::SetRGB255(25, 25, 25);
-                    DD::DrawLine(base_x+35, base_y+35, base_x+165, base_y+165);
-                    DD::DrawLine(base_x+35, base_y+165, base_x+165, base_y+35);
+                    DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.175, base_x+button_size*0.825, base_y+button_size*0.825);
+                    DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.825, base_x+button_size*0.825, base_y+button_size*0.175);
                 } else if (player_in_cell == 2) {
                     // O
                     DD::SetStroke();
                     DD::SetRGB255(25, 25, 25);
-                    DD::DrawCircle(base_x+100, base_y+100, 60);
+                    DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.3);
                 } else if (board_buttons[y][x].hovered) {
                     DD::SetRGB255(220, 197, 161);
                     DD::SetFill();
-                    DD::DrawRectangle(board_buttons[y][x].x+10, board_buttons[y][x].y+10, board_buttons[y][x].w-20, board_buttons[y][x].h-20);
+                    DD::DrawRectangle(board_buttons[y][x].x+button_size*0.05, board_buttons[y][x].y+button_size*0.05, board_buttons[y][x].w-button_size*0.1, board_buttons[y][x].h-button_size*0.1);
                 }
             }
         }
@@ -133,8 +137,8 @@ namespace Frontends {
 
     void TicTacToe::draw_options()
     {
-        //TODO draw color and size options
-        ImGui::TextDisabled("<no options>");
+        ImGui::SliderFloat("button size", &button_size, 20, 400, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("padding", &padding, 0, 100, "%.3f", ImGuiSliderFlags_AlwaysClamp);
     }
 
     TicTacToe_FEW::TicTacToe_FEW():

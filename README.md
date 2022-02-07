@@ -50,6 +50,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * how are options within the gamestate config window passed?
 * local docs / game rule window, per variant? images/graphic representations?
 * how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
+* design networking structure for offline/online server play
 
 # integration workflow
 

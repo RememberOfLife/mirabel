@@ -14,8 +14,6 @@ namespace Frontends {
 
         private:
 
-            uint32_t log;
-
             float button_size = 55;
             float local_padding = 10;
             float global_padding = 40;

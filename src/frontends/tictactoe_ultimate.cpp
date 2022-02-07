@@ -7,7 +7,6 @@
 
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe_ultimate.hpp"
-#include "meta_gui/meta_gui.hpp"
 #include "prototype_util/direct_draw.hpp"
 #include "state_control/controller.hpp"
 #include "state_control/event_queue.hpp"
@@ -25,7 +24,6 @@ namespace Frontends {
 
     TicTacToe_Ultimate::TicTacToe_Ultimate()
     {
-        log = MetaGui::log_register("F/tictactoe_ultimate");
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 for (int ly = 0; ly < 3; ly++) {
@@ -33,7 +31,7 @@ namespace Frontends {
                         board_buttons[8-(gy*3+ly)][gx*3+lx] = sbtn{
                             static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding),
                             static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding),
-                            55, 55, false, false};
+                            button_size, button_size, false, false};
                     }
                 }
             }
@@ -41,9 +39,7 @@ namespace Frontends {
     }
 
     TicTacToe_Ultimate::~TicTacToe_Ultimate()
-    {
-        MetaGui::log_unregister(log);
-    }
+    {}
 
     void TicTacToe_Ultimate::process_event(SDL_Event event)
     {
@@ -78,7 +74,7 @@ namespace Frontends {
                                     if (event.type == SDL_MOUSEBUTTONUP) {
                                         if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_cell_local(ix, iy) == 0) {
                                             uint64_t move_code = ix | (iy<<4);
-                                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_MOVE, 1, reinterpret_cast<void*>(move_code)));
+                                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
                                         }
                                         board_buttons[iy][ix].mousedown = false;
                                     }
@@ -204,9 +200,9 @@ namespace Frontends {
 
     void TicTacToe_Ultimate::draw_options()
     {
-        ImGui::SliderFloat("button size", &button_size, 20, 100);
-        ImGui::SliderFloat("local padding", &local_padding, 0, 20);
-        ImGui::SliderFloat("global padding", &global_padding, 0, 80);
+        ImGui::SliderFloat("button size", &button_size, 20, 100, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("local padding", &local_padding, 0, 20, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("global padding", &global_padding, 0, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
     }
 
     TicTacToe_Ultimate_FEW::TicTacToe_Ultimate_FEW():

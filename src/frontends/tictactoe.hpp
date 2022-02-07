@@ -14,7 +14,8 @@ namespace Frontends {
 
         private:
 
-            uint32_t log;
+            float button_size = 200;
+            float padding = 50;
 
             struct sbtn {
                 float x;
@@ -29,7 +30,6 @@ namespace Frontends {
             int mx;
             int my;
 
-            //TODO size and color variables for frontend config
             sbtn board_buttons[3][3]; // board_buttons[y][x] origin is bottom left
 
         public:

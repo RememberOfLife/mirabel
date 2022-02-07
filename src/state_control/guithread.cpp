@@ -134,7 +134,7 @@ namespace StateControl {
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         delete game;
-                        game = reinterpret_cast<surena::PerfectInformationGame*>(e.data1);
+                        game = e.game.game;
                         frontend->game = game;
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
@@ -144,7 +144,7 @@ namespace StateControl {
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
-                        frontend = reinterpret_cast<Frontends::Frontend*>(e.data1);
+                        frontend = e.frontend.frontend;
                         frontend->game = game;
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
@@ -152,10 +152,13 @@ namespace StateControl {
                         frontend = new Frontends::EmptyFrontend();
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
-                        game->apply_move(reinterpret_cast<uint64_t>(e.data1));
+                        game->apply_move(e.move.code);
                         if (game->player_to_move() == 0) {
-                            MetaGui::logf("#S game done: winner is %d\n", game->get_result());
+                            MetaGui::logf("#S game done: winner is player %d\n", game->get_result());
                         }
+                    } break;
+                    default: {
+                        MetaGui::logf("#W guithread: received unknown event, type: %d\n", e.type);
                     } break;
                 }
             }

@@ -1,5 +1,7 @@
 #include <cstdint>
 
+#include "meta_gui/meta_gui.hpp"
+
 #include "state_control/event_queue.hpp"
 
 namespace StateControl {
@@ -17,7 +19,7 @@ namespace StateControl {
             m.lock();
             if (q.size() == 0) {
                 m.unlock();
-                return event(0, 0, NULL);
+                return event(EVENT_TYPE_NULL);
             }
             event r = event(q.front());
             q.pop_front();

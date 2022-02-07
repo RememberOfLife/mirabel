@@ -41,7 +41,7 @@ namespace MetaGui {
         }
         if (!selected_few_compatible) {
             frontend_wrap_idx = 0;
-            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_LOAD, 0, Frontends::frontend_catalogue[frontend_wrap_idx]->new_frontend()));
+            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[frontend_wrap_idx]->new_frontend()));
         }
         // draw frontend_wrap combo box, show only compatible ones
         bool disable_frontend_selection = (compatible_few.size() == 1);
@@ -54,7 +54,7 @@ namespace MetaGui {
                 bool is_selected = (frontend_wrap_idx == frontend_idx);
                 if (ImGui::Selectable(compatible_few[i]->name, is_selected)) {
                     frontend_wrap_idx = frontend_idx;
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_LOAD, 0, Frontends::frontend_catalogue[frontend_wrap_idx]->new_frontend()));
+                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[frontend_wrap_idx]->new_frontend()));
                 }
                 // set the initial focus when opening the combo
                 if (is_selected) {
