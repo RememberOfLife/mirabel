@@ -96,3 +96,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
+* ==> changes to internal game state
+  * via the internal state editor that a game may provide, display is just exposed functions
+  * updates would likely be a special kind of internal_update event send to all queues and thus games, then the game has a method for accepting internal updates
+    * might even be a struct of data?

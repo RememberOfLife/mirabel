@@ -1,8 +1,8 @@
 #pragma once
 
-#include "games/game_catalogue.hpp"
+#include "surena/game.hpp"
 
-#include "games/tictactoe.hpp"
+#include "games/game_catalogue.hpp"
 
 namespace Games {
 
@@ -13,7 +13,7 @@ namespace Games {
 
             surena::Game* new_game() override;
             void draw_options() override;
-            void draw_state_editor() override;
+            void draw_state_editor(surena::Game* game) override;
             const char* description() override;
 
     };

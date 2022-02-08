@@ -25,7 +25,7 @@ namespace Games {
                 ImGui::TextDisabled("<no options>");
             }
 
-            void TicTacToe_Ultimate::draw_state_editor()
+            void TicTacToe_Ultimate::draw_state_editor(surena::Game* game)
             {
                 // TODO proper state editor
                 ImGui::TextDisabled("<state editor unavailable>");

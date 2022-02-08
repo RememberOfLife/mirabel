@@ -14,7 +14,7 @@ namespace Games {
             ~BaseGameVariant() = default;
             virtual surena::Game* new_game() = 0;
             virtual void draw_options() = 0; // draw options available to configure the game, locked while running
-            virtual void draw_state_editor() = 0; // draw internal state representation and editing tools
+            virtual void draw_state_editor(surena::Game* game) = 0; // draw internal state representation and editing tools
             virtual const char* description() = 0; // name string augmented with important options
     };
 

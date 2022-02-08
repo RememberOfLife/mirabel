@@ -94,7 +94,7 @@ namespace MetaGui {
             return;
         }
         // draw internal state editor, only if a game is running
-        Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor();
+        Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(StateControl::main_ctrl->t_gui.game);
         ImGui::End();
     }
 

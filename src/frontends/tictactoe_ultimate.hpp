@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #include "SDL.h"
 #include "surena/games/tictactoe_ultimate.hpp"
 #include "surena/game.hpp"
