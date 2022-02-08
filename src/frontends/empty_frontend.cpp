@@ -16,7 +16,7 @@ namespace Frontends {
     EmptyFrontend::~EmptyFrontend()
     {}
 
-    void EmptyFrontend::set_game(surena::PerfectInformationGame* game)
+    void EmptyFrontend::set_game(surena::Game* game)
     {}
 
     void EmptyFrontend::process_event(SDL_Event event)

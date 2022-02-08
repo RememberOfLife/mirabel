@@ -11,7 +11,7 @@ namespace Games {
             TicTacToe();
             ~TicTacToe();
 
-            surena::PerfectInformationGame* new_game() override;
+            surena::Game* new_game() override;
             void draw_options() override;
             void draw_state_editor() override;
             const char* description() override;

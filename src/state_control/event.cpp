@@ -29,7 +29,7 @@ namespace StateControl {
         }
     }
 
-    event event::create_game_event(uint32_t type, surena::PerfectInformationGame *game)
+    event event::create_game_event(uint32_t type, surena::Game *game)
     {
         event e = event(type);
         e.game.game = game;

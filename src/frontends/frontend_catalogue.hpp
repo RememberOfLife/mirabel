@@ -20,7 +20,8 @@ namespace Frontends {
 
             // set internal game pointer of the frontend if compatible, otherwise NULL
             // pass NULL to this function to unset the game
-            virtual void set_game(surena::PerfectInformationGame* new_game) = 0;
+            // any data passed previously by this function, must be assumed invalid when called again
+            virtual void set_game(surena::Game* new_game) = 0;
 
             virtual void process_event(SDL_Event event) = 0;
 

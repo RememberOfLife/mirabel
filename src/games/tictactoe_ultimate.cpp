@@ -15,7 +15,7 @@ namespace Games {
             TicTacToe_Ultimate::~TicTacToe_Ultimate()
             {}
 
-            surena::PerfectInformationGame* TicTacToe_Ultimate::new_game()
+            surena::Game* TicTacToe_Ultimate::new_game()
             {
                 return new surena::TicTacToe_Ultimate();
             }

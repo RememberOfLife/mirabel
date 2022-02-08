@@ -20,7 +20,7 @@ namespace StateControl {
 
     struct game_event {
         uint32_t type;
-        surena::PerfectInformationGame* game;
+        surena::Game* game;
     };
 
     struct move_event {
@@ -41,7 +41,7 @@ namespace StateControl {
 
         event(uint32_t type);
         event(const event& e);
-        static event create_game_event(uint32_t type, surena::PerfectInformationGame* game);
+        static event create_game_event(uint32_t type, surena::Game* game);
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
     };

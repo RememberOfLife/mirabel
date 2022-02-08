@@ -41,7 +41,7 @@ namespace Frontends {
 
             TicTacToe_Ultimate();
             ~TicTacToe_Ultimate();
-            void set_game(surena::PerfectInformationGame* new_game);
+            void set_game(surena::Game* new_game) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;

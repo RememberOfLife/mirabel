@@ -27,7 +27,7 @@ namespace StateControl {
             std::thread running_thread;
             event_queue inbox;
 
-            surena::PerfectInformationGame* game;
+            surena::Game* game;
             Frontends::Frontend* frontend;
 
             GuiThread();

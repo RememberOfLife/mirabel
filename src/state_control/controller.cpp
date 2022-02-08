@@ -5,8 +5,9 @@ namespace StateControl {
     Controller* main_ctrl = new Controller();
 
     Controller::Controller()
-    {
-        
-    }
+    {}
+
+    Controller::~Controller()
+    {}
 
 }

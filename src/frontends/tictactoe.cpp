@@ -34,7 +34,7 @@ namespace Frontends {
     TicTacToe::~TicTacToe()
     {}
 
-    void TicTacToe::set_game(surena::PerfectInformationGame* new_game)
+    void TicTacToe::set_game(surena::Game* new_game)
     {
         game = dynamic_cast<surena::TicTacToe*>(new_game);
     }

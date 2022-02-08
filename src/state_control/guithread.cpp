@@ -117,6 +117,7 @@ namespace StateControl {
     void GuiThread::loop()
     {
         //TODO cleanup statics here
+        bool fullscreen = false;
         bool show_demo_window = false;
         float w_px = imgui_io->DisplaySize.x;
         float h_px = imgui_io->DisplaySize.y;
@@ -211,6 +212,10 @@ namespace StateControl {
                     }
                     if (event.key.keysym.sym == SDLK_F5) {
                         show_demo_window = !show_demo_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_F11) {
+                        fullscreen = !fullscreen;
+                        SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                     }
                     if (event.key.keysym.sym == SDLK_g && (ctrl_left || ctrl_right)) {
                         MetaGui::show_game_config_window = !MetaGui::show_game_config_window;

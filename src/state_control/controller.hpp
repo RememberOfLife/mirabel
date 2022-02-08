@@ -12,6 +12,7 @@ namespace StateControl {
             // networkthread
             
             Controller();
+            ~Controller();
 
     };
 

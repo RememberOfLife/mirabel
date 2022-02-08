@@ -15,7 +15,7 @@ namespace Games {
             TicTacToe::~TicTacToe()
             {}
 
-            surena::PerfectInformationGame* TicTacToe::new_game()
+            surena::Game* TicTacToe::new_game()
             {
                 return new surena::TicTacToe();
             }
