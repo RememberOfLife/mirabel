@@ -12,7 +12,6 @@
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
-#include "util/instanceof.hpp"
 
 #include "frontends/tictactoe.hpp"
 
@@ -22,7 +21,8 @@ namespace Frontends {
         hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
     }
 
-    TicTacToe::TicTacToe()
+    TicTacToe::TicTacToe():
+        game(NULL)
     {
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
@@ -33,6 +33,11 @@ namespace Frontends {
 
     TicTacToe::~TicTacToe()
     {}
+
+    void TicTacToe::set_game(surena::PerfectInformationGame* new_game)
+    {
+        game = dynamic_cast<surena::TicTacToe*>(new_game);
+    }
 
     void TicTacToe::process_event(SDL_Event event)
     {
@@ -57,7 +62,7 @@ namespace Frontends {
                         for (int y = 0; y < 3; y++) {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
-                                if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && reinterpret_cast<surena::TicTacToe*>(game)->get_cell(x, y) == 0) {
+                                if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && game->get_cell(x, y) == 0) {
                                     uint64_t move_code = x | (y<<2);
                                     StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
@@ -113,7 +118,7 @@ namespace Frontends {
                 if (!game) {
                     continue;
                 }
-                uint8_t player_in_cell = reinterpret_cast<surena::TicTacToe*>(game)->get_cell(x, y);
+                uint8_t player_in_cell = game->get_cell(x, y);
                 if (player_in_cell == 1) {
                     // X
                     DD::SetStroke();
@@ -150,7 +155,7 @@ namespace Frontends {
     
     bool TicTacToe_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
     {
-        return (Util::instanceof<Games::TicTacToe>(base_game_variant));
+        return (dynamic_cast<Games::TicTacToe*>(base_game_variant) != nullptr);
     }
     
     Frontend* TicTacToe_FEW::new_frontend()

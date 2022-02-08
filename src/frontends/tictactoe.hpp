@@ -3,6 +3,8 @@
 #include <cstdint>
 
 #include "SDL.h"
+#include "surena/games/tictactoe.hpp"
+#include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
 
@@ -13,6 +15,8 @@ namespace Frontends {
     class TicTacToe : public Frontend {
 
         private:
+
+            surena::TicTacToe* game;
 
             float button_size = 200;
             float padding = 50;
@@ -35,15 +39,11 @@ namespace Frontends {
         public:
 
             TicTacToe();
-
             ~TicTacToe();
-
+            void set_game(surena::PerfectInformationGame* new_game);
             void process_event(SDL_Event event) override;
-
             void update() override;
-
             void render() override;
-
             void draw_options() override;
 
     };

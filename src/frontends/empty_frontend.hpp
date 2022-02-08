@@ -3,6 +3,7 @@
 #include <cstdint>
 
 #include "SDL.h"
+#include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
 #include "prototype_util/st_gui.hpp"
@@ -15,6 +16,7 @@ namespace Frontends {
         public:
             EmptyFrontend();
             ~EmptyFrontend();
+            void set_game(surena::PerfectInformationGame* new_game);
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;

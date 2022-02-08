@@ -13,14 +13,14 @@ namespace Frontends {
 
         public:
 
-            surena::PerfectInformationGame* game;
-
             float w_px;
             float h_px;
 
             virtual ~Frontend() = default;
 
-            //TODO method to pass game pointer so the frontend can check compatibility itself
+            // set internal game pointer of the frontend if compatible, otherwise NULL
+            // pass NULL to this function to unset the game
+            virtual void set_game(surena::PerfectInformationGame* new_game) = 0;
 
             virtual void process_event(SDL_Event event) = 0;
 

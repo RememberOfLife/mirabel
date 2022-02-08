@@ -66,21 +66,15 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
 * should the frontend config menu do loading/unloading like the game (i.e. with dedicated buttons) instead of immediately upon selection?
-* collect ideas and integrations in an extra section that will fall under lobby logic for online/offline play
+* how to handle animation within frontends?
+  * e.g. when loading a game, or making a move, etc..
 
 ### integration workflow
-* ==> gamestate is passed to ctx on creation and loading of other games through ctx.loadgamestate(gamestate)
-  * ctx keeps pointer to the gamestate it is supposed to render
-  * watch out to make them all compatible by gametype they support
-  * config window loading of other game or ctx puts the request into the postbox queue, so on next frame it is replaced
 * ==> engine sends out events with best move updates, these get processed by the guithread and forwarded to the metagui and guistate
   * maybe save them somewhere in the guithread in some aux_info struct containing describables for the guistate to display and use
   * AUX_INFO struct also saves things like player_id <-> player_name mappings etc
 * ==> metagui engine window is directly responsible for interacting with the engine via the controller.enginethread pointer
 * ==> engine wrapper (enginethread) keeps a struct of configuration options with their string descriptors and everything, accessed by metagui for displaying, updating options done through events sent to the enginethread
-* ==> seperate gamestate and guistate windows
-  * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
-  * can select from guistates compatible with the current gamestate
 * ==> offline ai play:
   * engine has an option to enable auto search and auto move when certain players are playing
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
@@ -100,3 +94,5 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * ==> resources like textures
   * can be generated on first launch into some local cache directory
   * not available for sounds?
+* ==> lobby logic
+  * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")

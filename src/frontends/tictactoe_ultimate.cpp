@@ -12,7 +12,6 @@
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
-#include "util/instanceof.hpp"
 
 #include "frontends/tictactoe_ultimate.hpp"
 
@@ -41,6 +40,11 @@ namespace Frontends {
     TicTacToe_Ultimate::~TicTacToe_Ultimate()
     {}
 
+    void TicTacToe_Ultimate::set_game(surena::PerfectInformationGame* new_game)
+    {
+        game = dynamic_cast<surena::TicTacToe_Ultimate*>(new_game);
+    }
+
     void TicTacToe_Ultimate::process_event(SDL_Event event)
     {
         if (!game || game->player_to_move() == 0) {
@@ -60,7 +64,7 @@ namespace Frontends {
                     int mY = event.button.y;
                     mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
                     mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-                    uint8_t global_target = reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_global_target();
+                    uint8_t global_target = game->get_global_target();
                     for (int gy = 0; gy < 3; gy++) {
                         for (int gx = 0; gx < 3; gx++) {
                             if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -72,7 +76,7 @@ namespace Frontends {
                                     int iy = 8-(gy*3+ly);
                                     board_buttons[iy][ix].update(mX, mY);
                                     if (event.type == SDL_MOUSEBUTTONUP) {
-                                        if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_cell_local(ix, iy) == 0) {
+                                        if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && game->get_cell_local(ix, iy) == 0) {
                                             uint64_t move_code = ix | (iy<<4);
                                             StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
                                         }
@@ -98,7 +102,7 @@ namespace Frontends {
         int mY = my;
         mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
         mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-        uint8_t global_target = reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_global_target();
+        uint8_t global_target = game->get_global_target();
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -122,14 +126,14 @@ namespace Frontends {
     void TicTacToe_Ultimate::render()
     {
         float local_baord_size = 3*button_size+2*local_padding;
-        uint8_t global_target = game ? reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_global_target() : 0;
+        uint8_t global_target = game ? game->get_global_target() : 0;
         DD::SetRGB255(201, 144, 73);
         DD::Clear();
         DD::Push();
         DD::Translate(w_px/2-(3*local_baord_size+2*global_padding)/2, h_px/2-(3*local_baord_size+2*global_padding)/2);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
-                uint8_t local_result = (game ? reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_cell_global(gx, 2-gy) : 0);
+                uint8_t local_result = (game ? game->get_cell_global(gx, 2-gy) : 0);
                 float base_x = gx*(local_baord_size+global_padding);
                 float base_y = gy*(local_baord_size+global_padding);
                 if (local_result > 0) {
@@ -174,7 +178,7 @@ namespace Frontends {
                         }
                         int ix = gx*3+lx;
                         int iy = 8-(gy*3+ly);
-                        uint8_t player_in_cell = reinterpret_cast<surena::TicTacToe_Ultimate*>(game)->get_cell_local(ix, iy);
+                        uint8_t player_in_cell = game->get_cell_local(ix, iy);
                         if (player_in_cell == 1) {
                             // X
                             DD::SetStroke();
@@ -214,7 +218,7 @@ namespace Frontends {
     
     bool TicTacToe_Ultimate_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
     {
-        return (Util::instanceof<Games::TicTacToe_Ultimate>(base_game_variant));
+        return (dynamic_cast<Games::TicTacToe_Ultimate*>(base_game_variant) != nullptr);
     }
     
     Frontend* TicTacToe_Ultimate_FEW::new_frontend()

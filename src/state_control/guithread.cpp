@@ -145,17 +145,17 @@ namespace StateControl {
                     case EVENT_TYPE_GAME_LOAD: {
                         delete game;
                         game = e.game.game;
-                        frontend->game = game;
+                        frontend->set_game(game);
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
-                        frontend->game = NULL;
+                        frontend->set_game(NULL);
                         delete game;
                         game = NULL;
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
                         frontend = e.frontend.frontend;
-                        frontend->game = game;
+                        frontend->set_game(game);
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
                         delete frontend;
