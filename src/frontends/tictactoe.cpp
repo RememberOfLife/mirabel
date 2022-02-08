@@ -1,7 +1,7 @@
 #include <cstdint>
 
-#include "imgui.h"
 #include "SDL.h"
+#include "imgui.h"
 #include "surena/games/tictactoe.hpp"
 #include "surena/game.hpp"
 

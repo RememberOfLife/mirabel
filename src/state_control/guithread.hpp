@@ -2,9 +2,10 @@
 
 #include <thread>
 
-#include "imgui.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include "nanovg_gl.h"
+#include "imgui.h"
 #include "surena/game.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
@@ -19,6 +20,7 @@ namespace StateControl {
             SDL_Window* sdl_window;
             SDL_GLContext sdl_glcontext;
             ImGuiIO* imgui_io;
+            NVGcontext* nanovg_ctx;
 
         public:
 

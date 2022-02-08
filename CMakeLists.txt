@@ -9,6 +9,8 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
 set(INCLUDES
+    lib/nanovg/src
+
     lib/imgui/backends
     lib/imgui
 
@@ -18,6 +20,9 @@ set(INCLUDES
 )
 
 set(SOURCES
+    lib/nanovg/src/nanovg_gl.c
+    lib/nanovg/src/nanovg.c
+
     lib/imgui/backends/imgui_impl_opengl3.cpp
     lib/imgui/backends/imgui_impl_sdl.cpp
     lib/imgui/imgui_demo.cpp
@@ -60,6 +65,7 @@ set(SOURCES
 )
 
 add_executable(mirabel ${SOURCES})
+target_compile_definitions(mirabel PUBLIC NANOVG_GL3)
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 

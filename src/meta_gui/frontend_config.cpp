@@ -17,8 +17,8 @@ namespace MetaGui {
 
     void frontend_config_window(bool* p_open)
     {
-        ImGui::SetNextWindowSize(ImVec2(230, 300), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowPos(ImVec2(300, 80), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(230, 300), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Frontend Config", p_open);
         if (!window_contents_visible)
         {

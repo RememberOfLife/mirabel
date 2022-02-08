@@ -2,11 +2,12 @@
 #include <cstdint>
 #include <cstdio>
 
+#include "SDL.h"
+#include "SDL_opengl.h"
+#include "nanovg_gl.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
-#include "SDL.h"
-#include "SDL_opengl.h"
 #include "surena/game.hpp"
 
 #include "frontends/empty_frontend.hpp"
@@ -28,7 +29,7 @@ namespace StateControl {
         // setup SDL
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
         {
-            fprintf(stderr, "sdl init error: %s\n", SDL_GetError());
+            fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
             exit(-1);
         }
 
@@ -91,10 +92,19 @@ namespace StateControl {
 
         // init default context
         frontend = new Frontends::EmptyFrontend();
+
+        nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+        int font_id = nvgCreateFont(nanovg_ctx, "df", "../res/opensans/OpenSans-Regular.ttf");
+        if (font_id < 0) {
+            fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
+            exit(-1);
+        }
     }
 
     GuiThread::~GuiThread()
     {
+        nvgDeleteGL3(nanovg_ctx);
+
         ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplSDL2_Shutdown();
         ImGui::DestroyContext();
@@ -260,8 +270,10 @@ namespace StateControl {
             glOrtho(0.0, (GLdouble)w_px, (GLdouble)h_px, 0.0, -1, 1);
 
             frontend->update();
-            frontend->render();
-            
+            nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
+            frontend->render(); // todo render should take the drawing context (nanovg_ctx) and the player perspective (information view) from which to draw
+            nvgEndFrame(nanovg_ctx);
+
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
             SDL_GL_SwapWindow(sdl_window);

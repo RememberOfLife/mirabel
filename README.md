@@ -1,10 +1,20 @@
 # mirabel
 
+General purpose board game playing GUI.
+
+## Future Features
+* Engine Integration
+* Online (Multiplayer) Play
+
+
+additionally requires stb for compiling nanovg
+
 import blocks style:
 * all standard libs
-* imports from dependencies
+* imports from dependencies in order [SDL, nanovg, imgui, surena]
 * imports from own src tree
 * import header for things implemented in this source file
+
 
 https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
 
@@ -38,23 +48,27 @@ http://www.cmyr.net/blog/druid-dynamism.html
 ## todo
 * actually use clang-format to make everything look uniform
 * sound
-* replace direct_draw with a maintained fork of [nanovg](https://github.com/inniyah/nanovg), or some other basic drawing library
+* main_ctrl should be a context object (low prio)
 
 ## ideas
 * meta gui window snapping/anchoring?
 
 ## problems
 * make games,frontends,engines dynamically loadable as plugins
-* engine compatiblity for arbitrary files?
-* how does the built in engine deliver its moves to the enginethread
-* how are options within the gamestate config window passed?
+* engine compatiblity
+  * inbuilt engine works with everything
+  * e.g. uci-engine is a wrapper for an executable that can be specified via an option
+  * engine compatiblity for arbitrary files?
 * local docs / game rule window, per variant? images/graphic representations?
+  * load rules from res?
 * how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
+  * history manager is owned by the notation/history metagui window, which also offers loading+saving of notation files
 * design networking structure for offline/online server play
+  * SDL_net for tcp connections
+* should the frontend config menu do loading/unloading like the game (i.e. with dedicated buttons) instead of immediately upon selection?
+* collect ideas and integrations in an extra section that will fall under lobby logic for online/offline play
 
-# integration workflow
-
-FIXES:
+### integration workflow
 * ==> gamestate is passed to ctx on creation and loading of other games through ctx.loadgamestate(gamestate)
   * ctx keeps pointer to the gamestate it is supposed to render
   * watch out to make them all compatible by gametype they support
@@ -71,9 +85,6 @@ FIXES:
   * engine has an option to enable auto search and auto move when certain players are playing
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
   * or configured to automatically start searching with timeout param, and also to automatically submit its move to the controller
-* ==> engine compatibility
-  * inbuilt engine works with everything
-  * e.g. uci-engine is a wrapper for an executable that can be specified via an option
 * ==> server concept
   * server is a class inside the project, can also be hosted locally or spun up locally for the network
   * supports guest login, but also user accounts
@@ -83,17 +94,9 @@ FIXES:
     * or if the game is just mirroring another actual game then any lobby mod can input the random moves
   * every user in the lobby can also be set to be an unknown (e.g. mirroring a real person we don't know state about), i.e. their state will not be decided by the system
     * all real users input their info (e.g. dealt cards) and then can use play and ai
-* ==> games with simultaneous moves
-  * game unions all possible moves from all outstanding players to move simultaneously, returns that as the valid_moves_list
-  * when a player moves, their move is stored by the backend game into its accumulation buffer
-    * when the last remaining player, of all those who move simultaneously, makes their move, the game processes the accumulation buffer and proceeds
 * ==> manage player specific views for games with simultaneous moves or hidden information
   * frontend requires info on what view it should render, i.e. render only hidden info or move placer for the player of that view
   * auto switch view to player_to_move / next player if setting for that is given
 * ==> resources like textures
   * can be generated on first launch into some local cache directory
   * not available for sounds?
-
----
-
-main_ctrl should be a context object (low prio)
