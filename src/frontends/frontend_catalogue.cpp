@@ -1,4 +1,5 @@
 #include "frontends/empty_frontend.hpp"
+#include "frontends/havannah.hpp"
 #include "frontends/tictactoe_ultimate.hpp"
 #include "frontends/tictactoe.hpp"
 
@@ -14,6 +15,7 @@ namespace Frontends {
         new EmptyFrontend_FEW(),
         new TicTacToe_Ultimate_FEW(),
         new TicTacToe_FEW(),
+        new Havannah_FEW(),
     };
 
 }

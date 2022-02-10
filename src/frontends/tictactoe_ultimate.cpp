@@ -22,7 +22,9 @@ namespace Frontends {
         hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
     }
 
-    TicTacToe_Ultimate::TicTacToe_Ultimate()
+    TicTacToe_Ultimate::TicTacToe_Ultimate():
+        game(NULL),
+        engine(NULL)
     {
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {

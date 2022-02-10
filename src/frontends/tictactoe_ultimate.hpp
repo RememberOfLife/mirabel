@@ -18,9 +18,9 @@ namespace Frontends {
             surena::TicTacToe_Ultimate* game;
             surena::Engine* engine;
 
-            float button_size = 55;
-            float local_padding = 10;
-            float global_padding = 40;
+            float button_size = 65;
+            float local_padding = 3;
+            float global_padding = 20;
 
             struct sbtn {
                 float x;

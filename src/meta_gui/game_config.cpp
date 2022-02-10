@@ -66,6 +66,7 @@ namespace MetaGui {
         if (disable_variant_selection) {
             ImGui::EndDisabled();
         }
+        //TODO maybe put a seperator here for visual clarity? or put the entire start/stop section to the very top? or nest options under it
         // draw options panel
         Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_options();
         if (game_running) {

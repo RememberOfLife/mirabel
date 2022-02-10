@@ -53,6 +53,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 ## ideas
 * meta gui window snapping/anchoring?
+* "moving" around the board by an offset using middle mouse dragging?
 
 ## problems
 * make games,frontends,engines dynamically loadable as plugins

@@ -19,7 +19,7 @@ namespace Frontends {
             surena::Engine* engine;
 
             float button_size = 200;
-            float padding = 50;
+            float padding = 20;
 
             struct sbtn {
                 float x;

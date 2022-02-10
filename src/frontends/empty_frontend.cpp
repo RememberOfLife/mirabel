@@ -7,6 +7,7 @@
 
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
+#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/empty_frontend.hpp"
 
