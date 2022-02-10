@@ -27,14 +27,14 @@ namespace Games {
 
             void TicTacToe_Ultimate::draw_state_editor(surena::Game* game)
             {
-                // TODO proper state editor
-                ImGui::TextDisabled("<state editor unavailable>");
-                // surena::TicTacToe_Ultimate* game = // get from state ctrl
-                // for (int iy = 0; iy < 3; iy++) {
-                //     for (int ix = 0; ix < 3; ix++) {
-                //         uint8_t state_value = 
-                //     }
-                // }
+                surena::TicTacToe_Ultimate* state = dynamic_cast<surena::TicTacToe_Ultimate*>(game);
+                if (state == nullptr) {
+                    return;
+                }
+                //TODO proper state editor
+                const char* check_options[3] = {"-", "X", "O"};
+                ImGui::Text("player to move: %s", check_options[state->player_to_move()]);
+                ImGui::Text("result: %s", check_options[state->get_result()]);
             }
 
             const char* TicTacToe_Ultimate::description()

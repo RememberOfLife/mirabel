@@ -46,6 +46,7 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
+* frontend config should do loading/unloading like the game (i.e. with dedicated buttons) instead of immediately upon selection, enables options before loading the actual frontend
 * actually use clang-format to make everything look uniform
 * sound
 * main_ctrl should be a context object (low prio)
@@ -55,19 +56,15 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 ## problems
 * make games,frontends,engines dynamically loadable as plugins
-* engine compatiblity
-  * inbuilt engine works with everything
-  * e.g. uci-engine is a wrapper for an executable that can be specified via an option
-  * engine compatiblity for arbitrary files?
 * local docs / game rule window, per variant? images/graphic representations?
   * load rules from res?
 * how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
   * history manager is owned by the notation/history metagui window, which also offers loading+saving of notation files
+  * is the history manager actually kept there? or in another place
+    * could also send an event to set the displayed state
+  * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
-* should the frontend config menu do loading/unloading like the game (i.e. with dedicated buttons) instead of immediately upon selection?
-* how to handle animation within frontends?
-  * e.g. when loading a game, or making a move, etc..
 
 ### integration workflow
 * ==> engine sends out events with best move updates, these get processed by the guithread and forwarded to the metagui and guistate
@@ -96,7 +93,14 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
-* ==> changes to internal game state
-  * via the internal state editor that a game may provide, display is just exposed functions
-  * updates would likely be a special kind of internal_update event send to all queues and thus games, then the game has a method for accepting internal updates
-    * might even be a struct of data?
+* ==> engine compatiblity
+  * engine catalogue
+    * every engine wrapper has a function gamevariant_compatible(base_game_name, variant*)
+  * inbuilt engine works with everything
+    * one of the "options" for the built in engine is a variant, i.e. minimax/mcts/etc
+  * e.g. uci-engine is a wrapper for an executable that can be specified via an option
+* ==> animation within frontends?
+  * e.g. when loading a game, or making a move, etc..
+  * frontend does not necessarily need to be newest state, it just exposes somewhere if it is ready to accept new moves (or not if it still animating)
+    * if the frontend is passed a move even though it said it doesnt want to, then it should cancel the current animation and process the move (may animate that)
+    * possibly requires an extra buffer for stored moves so we don't pollute the guithread eventqueue

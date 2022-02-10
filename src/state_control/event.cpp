@@ -23,6 +23,9 @@ namespace StateControl {
             case EVENT_TYPE_GAME_MOVE: {
                 move.code = e.move.code;
             } break;
+            case EVENT_TYPE_GAME_INTERNAL_UPDATE: {
+                internal_update.code = e.internal_update.code;
+            } break;
             case EVENT_TYPE_FRONTEND_LOAD: {
                 frontend.frontend = e.frontend.frontend;
             } break;
@@ -40,6 +43,13 @@ namespace StateControl {
     {
         event e = event(type);
         e.move.code = code;
+        return e;
+    }
+
+    event event::create_internal_update_event(uint32_t type, uint64_t code)
+    {
+        event e = event(type);
+        e.internal_update.code = code;
         return e;
     }
 

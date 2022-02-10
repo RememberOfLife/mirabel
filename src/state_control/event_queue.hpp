@@ -7,7 +7,7 @@
 
 namespace StateControl {
 
-    // this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
+    //TODO this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
 
     struct event_queue {
         std::mutex m;

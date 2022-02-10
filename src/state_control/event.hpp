@@ -14,35 +14,40 @@ namespace StateControl {
         EVENT_TYPE_GAME_LOAD,
         EVENT_TYPE_GAME_UNLOAD,
         EVENT_TYPE_GAME_MOVE,
+        EVENT_TYPE_GAME_INTERNAL_UPDATE,
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,
     };
 
     struct game_event {
-        uint32_t type;
         surena::Game* game;
     };
 
     struct move_event {
-        uint32_t type;
+        uint64_t code;
+    };
+
+    struct internal_update_event {
         uint64_t code;
     };
     
     struct frontend_event {
-        uint32_t type;
         Frontends::Frontend* frontend;
     };
 
-    union event {
+    struct event {
         uint32_t type;
-        game_event game;
-        move_event move;
-        frontend_event frontend;
-
+        union {
+            game_event game;
+            move_event move;
+            internal_update_event internal_update;
+            frontend_event frontend;
+        };
         event(uint32_t type);
         event(const event& e);
         static event create_game_event(uint32_t type, surena::Game* game);
         static event create_move_event(uint32_t type, uint64_t code);
+        static event create_internal_update_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
     };
 

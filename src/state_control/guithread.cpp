@@ -153,6 +153,16 @@ namespace StateControl {
                         delete game;
                         game = NULL;
                     } break;
+                    case EVENT_TYPE_GAME_MOVE: {
+                        game->apply_move(e.move.code);
+                        if (game->player_to_move() == 0) {
+                            MetaGui::logf("#S game done: winner is player %d\n", game->get_result());
+                        }
+                    } break;
+                    case EVENT_TYPE_GAME_INTERNAL_UPDATE: {
+                        game->apply_internal_update(e.internal_update.code);
+                        MetaGui::log("#I game internal state updated\n");
+                    } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
                         frontend = e.frontend.frontend;
@@ -161,12 +171,6 @@ namespace StateControl {
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
                         delete frontend;
                         frontend = new Frontends::EmptyFrontend();
-                    } break;
-                    case EVENT_TYPE_GAME_MOVE: {
-                        game->apply_move(e.move.code);
-                        if (game->player_to_move() == 0) {
-                            MetaGui::logf("#S game done: winner is player %d\n", game->get_result());
-                        }
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unknown event, type: %d\n", e.type);
@@ -215,6 +219,7 @@ namespace StateControl {
                     }
                     if (event.key.keysym.sym == SDLK_F11) {
                         fullscreen = !fullscreen;
+                        // borderless fullscreen
                         SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                     }
                     if (event.key.keysym.sym == SDLK_g && (ctrl_left || ctrl_right)) {
