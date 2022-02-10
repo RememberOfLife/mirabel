@@ -31,9 +31,14 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
+    lib/surena/src/engines/randomengine.cpp
+    lib/surena/src/engines/singlethreadedmcts.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/util/fast_prng.cpp
+
+    src/engines/builtin_surena.cpp
+    src/engines/engine_catalogue.cpp
 
     src/frontends/empty_frontend.cpp
     src/frontends/frontend_catalogue.cpp
@@ -56,7 +61,6 @@ set(SOURCES
     src/prototype_util/st_gui.cpp
 
     src/state_control/controller.cpp
-    src/state_control/enginethread.cpp
     src/state_control/event_queue.cpp
     src/state_control/event.cpp
     src/state_control/guithread.cpp

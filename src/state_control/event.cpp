@@ -1,5 +1,6 @@
 #include <cstddef>
 
+#include "surena/engine.hpp"
 #include "surena/game.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
@@ -29,6 +30,9 @@ namespace StateControl {
             case EVENT_TYPE_FRONTEND_LOAD: {
                 frontend.frontend = e.frontend.frontend;
             } break;
+            case EVENT_TYPE_ENGINE_LOAD: {
+                engine.engine = e.engine.engine;
+            } break;
         }
     }
 
@@ -57,6 +61,13 @@ namespace StateControl {
     {
         event e = event(type);
         e.frontend.frontend = frontend;
+        return e;
+    }
+
+    event event::create_engine_event(uint32_t type, surena::Engine *engine)
+    {
+        event e = event(type);
+        e.engine.engine = engine;
         return e;
     }
 

@@ -76,7 +76,6 @@ namespace MetaGui {
         ImGui::Separator();
         if (game_running) {
             if (ImGui::Button("Restart")) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_UNLOAD));
                 StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
             }
             ImGui::SameLine();

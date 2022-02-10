@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+#include "surena/engine.hpp"
 #include "surena/game.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
@@ -17,6 +18,8 @@ namespace StateControl {
         EVENT_TYPE_GAME_INTERNAL_UPDATE,
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,
+        EVENT_TYPE_ENGINE_LOAD,
+        EVENT_TYPE_ENGINE_UNLOAD,
     };
 
     struct game_event {
@@ -35,6 +38,10 @@ namespace StateControl {
         Frontends::Frontend* frontend;
     };
 
+    struct engine_event {
+        surena::Engine* engine;
+    };
+
     struct event {
         uint32_t type;
         union {
@@ -42,6 +49,7 @@ namespace StateControl {
             move_event move;
             internal_update_event internal_update;
             frontend_event frontend;
+            engine_event engine;
         };
         event(uint32_t type);
         event(const event& e);
@@ -49,6 +57,7 @@ namespace StateControl {
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_internal_update_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
+        static event create_engine_event(uint32_t type, surena::Engine* frontend);
     };
 
 }

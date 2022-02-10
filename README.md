@@ -65,13 +65,10 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
+* where to store state info from the engine like uci opts?
+* what to do when engine is loaded but no game?
 
 ### integration workflow
-* ==> engine sends out events with best move updates, these get processed by the guithread and forwarded to the metagui and guistate
-  * maybe save them somewhere in the guithread in some aux_info struct containing describables for the guistate to display and use
-  * AUX_INFO struct also saves things like player_id <-> player_name mappings etc
-* ==> metagui engine window is directly responsible for interacting with the engine via the controller.enginethread pointer
-* ==> engine wrapper (enginethread) keeps a struct of configuration options with their string descriptors and everything, accessed by metagui for displaying, updating options done through events sent to the enginethread
 * ==> offline ai play:
   * engine has an option to enable auto search and auto move when certain players are playing
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
@@ -94,10 +91,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
 * ==> engine compatiblity
-  * engine catalogue
-    * every engine wrapper has a function gamevariant_compatible(base_game_name, variant*)
-  * inbuilt engine works with everything
-    * one of the "options" for the built in engine is a variant, i.e. minimax/mcts/etc
   * e.g. uci-engine is a wrapper for an executable that can be specified via an option
 * ==> animation within frontends?
   * e.g. when loading a game, or making a move, etc..

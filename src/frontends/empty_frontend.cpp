@@ -2,6 +2,8 @@
 
 #include "SDL.h"
 #include "imgui.h"
+#include "surena/engine.hpp"
+#include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -17,6 +19,9 @@ namespace Frontends {
     {}
 
     void EmptyFrontend::set_game(surena::Game* game)
+    {}
+
+    void EmptyFrontend::set_engine(surena::Engine* new_engine)
     {}
 
     void EmptyFrontend::process_event(SDL_Event event)

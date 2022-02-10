@@ -2,6 +2,7 @@
 
 #include "SDL.h"
 #include "surena/games/tictactoe_ultimate.hpp"
+#include "surena/engine.hpp"
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
@@ -15,6 +16,7 @@ namespace Frontends {
         private:
 
             surena::TicTacToe_Ultimate* game;
+            surena::Engine* engine;
 
             float button_size = 55;
             float local_padding = 10;
@@ -40,6 +42,7 @@ namespace Frontends {
             TicTacToe_Ultimate();
             ~TicTacToe_Ultimate();
             void set_game(surena::Game* new_game) override;
+            void set_engine(surena::Engine* new_engine) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;

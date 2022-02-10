@@ -3,6 +3,7 @@
 #include "SDL.h"
 #include "imgui.h"
 #include "surena/games/tictactoe_ultimate.hpp"
+#include "surena/engine.hpp"
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
@@ -43,6 +44,11 @@ namespace Frontends {
     void TicTacToe_Ultimate::set_game(surena::Game* new_game)
     {
         game = dynamic_cast<surena::TicTacToe_Ultimate*>(new_game);
+    }
+
+    void TicTacToe_Ultimate::set_engine(surena::Engine* new_engine)
+    {
+        engine = new_engine;
     }
 
     void TicTacToe_Ultimate::process_event(SDL_Event event)
@@ -194,6 +200,11 @@ namespace Frontends {
                             DD::SetRGB255(220, 197, 161);
                             DD::SetFill();
                             DD::DrawRectangle(board_buttons[iy][ix].x+button_size*0.05, board_buttons[iy][ix].y+button_size*0.05, board_buttons[iy][ix].w-button_size*0.1, board_buttons[iy][ix].h-button_size*0.1);
+                        }
+                        if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((iy<<4)|ix)) {
+                            DD::SetRGB255(125, 187, 248);
+                            DD::SetFill();
+                            DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.15);
                         }
                     }
                 }

@@ -15,6 +15,7 @@ namespace Frontends {
             EmptyFrontend();
             ~EmptyFrontend();
             void set_game(surena::Game* new_game) override;
+            void set_engine(surena::Engine* new_engine) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;

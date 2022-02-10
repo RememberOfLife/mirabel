@@ -29,6 +29,7 @@ namespace StateControl {
 
             surena::Game* game;
             Frontends::Frontend* frontend;
+            surena::Engine* engine;
 
             GuiThread();
             ~GuiThread();

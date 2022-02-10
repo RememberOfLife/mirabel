@@ -24,7 +24,8 @@ namespace StateControl {
 
     GuiThread::GuiThread():
         game(NULL),
-        frontend(NULL)
+        frontend(NULL),
+        engine(NULL)
     {
         // setup SDL
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
@@ -147,30 +148,54 @@ namespace StateControl {
                         delete game;
                         game = e.game.game;
                         frontend->set_game(game);
+                        if (engine) {
+                            engine->set_gamestate(game->clone());
+                        }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
                         frontend->set_game(NULL);
+                        if (engine) {
+                            engine->set_gamestate(NULL);
+                        }
                         delete game;
                         game = NULL;
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
                         game->apply_move(e.move.code);
+                        if (engine) {
+                            engine->apply_move(e.move.code);
+                        }
                         if (game->player_to_move() == 0) {
                             MetaGui::logf("#S game done: winner is player %d\n", game->get_result());
                         }
                     } break;
                     case EVENT_TYPE_GAME_INTERNAL_UPDATE: {
                         game->apply_internal_update(e.internal_update.code);
+                        if (engine) {
+                            engine->apply_internal_update(e.internal_update.code);
+                        }
                         MetaGui::log("#I game internal state updated\n");
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
                         frontend = e.frontend.frontend;
                         frontend->set_game(game);
+                        frontend->set_engine(engine);
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
                         delete frontend;
                         frontend = new Frontends::EmptyFrontend();
+                    } break;
+                    case EVENT_TYPE_ENGINE_LOAD: {
+                        delete engine;
+                        engine = e.engine.engine;
+                        engine->set_gamestate(game ? game->clone() : NULL);
+                        frontend->set_engine(engine);
+                    } break;
+                    case EVENT_TYPE_ENGINE_UNLOAD: {
+                        frontend->set_engine(NULL);
+                        delete engine;
+                        engine = NULL;
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unknown event, type: %d\n", e.type);

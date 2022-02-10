@@ -1,4 +1,3 @@
-#include "state_control/enginethread.hpp"
 #include "state_control/guithread.hpp"
 
 namespace StateControl {
@@ -8,11 +7,12 @@ namespace StateControl {
         public:
 
             GuiThread t_gui;
-            EngineThread t_engine;
             // networkthread
             
             Controller();
             ~Controller();
+
+            // distribute function that takes an event and pushes it into all non null queues
 
     };
 

@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "SDL.h"
+#include "surena/engine.hpp"
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
@@ -22,6 +23,10 @@ namespace Frontends {
             // pass NULL to this function to unset the game
             // any data passed previously by this function, must be assumed invalid when called again
             virtual void set_game(surena::Game* new_game) = 0;
+
+            // set internal engine pointer, pass NULL to unset
+            // any data passed previously by this function, must be assumed invalid when called again
+            virtual void set_engine(surena::Engine* new_engine) = 0;
 
             virtual void process_event(SDL_Event event) = 0;
 
