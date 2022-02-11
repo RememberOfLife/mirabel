@@ -23,8 +23,22 @@ namespace Frontends {
             float button_size = 25;
             float padding = 2.5;
 
+            struct sbtn {
+                float x;
+                float y;
+                float r;
+                uint8_t ix;
+                uint8_t iy;
+                bool hovered;
+                bool mousedown;
+                void update(float mx, float my, bool flat_top);
+            };
+
             int mx;
             int my;
+
+            //TODO remove empty buttons
+            sbtn board_buttons[361]; // enough buttons for size 10
 
             Havannah();
             ~Havannah();
@@ -34,6 +48,8 @@ namespace Frontends {
             void update() override;
             void render() override;
             void draw_options() override;
+
+            static void rotate_cords(float& x, float&y, float angle);
 
     };
 

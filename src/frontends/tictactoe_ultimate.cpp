@@ -33,7 +33,8 @@ namespace Frontends {
                         board_buttons[8-(gy*3+ly)][gx*3+lx] = sbtn{
                             static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding),
                             static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding),
-                            button_size, button_size, false, false};
+                            button_size, button_size, false, false
+                        };
                     }
                 }
             }

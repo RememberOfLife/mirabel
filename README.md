@@ -68,6 +68,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * SDL_net for tcp connections
 * where to store state info from the engine like uci opts?
 * what to do when engine is loaded but no game?
+* segfault when unloading game while engine is running
 
 ### integration workflow
 * ==> offline ai play:

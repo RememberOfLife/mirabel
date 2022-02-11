@@ -28,7 +28,11 @@ namespace Frontends {
     {
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                board_buttons[y][x] = sbtn{static_cast<float>(x)*(button_size+padding), (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding), button_size, button_size, false, false};
+                board_buttons[y][x] = sbtn{
+                    static_cast<float>(x)*(button_size+padding),
+                    (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding),
+                    button_size, button_size, false, false
+                };
             }
         }
     }
