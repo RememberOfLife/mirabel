@@ -52,13 +52,17 @@ namespace Frontends {
     
     bool EmptyFrontend_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
     {
-        //TODO decide if this should really be true, or if there is another unload mechanism
-        return true; // empty frontend is compatible with all others, serves as universal unloader
+        return false; // empty frontend will never be listed explicitly, but can always be used as universal unloader by loading it instead
     }
     
     Frontend* EmptyFrontend_FEW::new_frontend()
     {
         return new EmptyFrontend();
+    }
+
+    void EmptyFrontend_FEW::draw_options()
+    {
+        ImGui::TextDisabled("<no options>");
     }
 
 }

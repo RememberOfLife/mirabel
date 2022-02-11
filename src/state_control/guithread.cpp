@@ -104,6 +104,10 @@ namespace StateControl {
 
     GuiThread::~GuiThread()
     {
+        delete engine;
+        delete frontend;
+        delete game;
+
         nvgDeleteGL3(nanovg_ctx);
 
         ImGui_ImplOpenGL3_Shutdown();
@@ -181,10 +185,12 @@ namespace StateControl {
                         frontend = e.frontend.frontend;
                         frontend->set_game(game);
                         frontend->set_engine(engine);
+                        MetaGui::running_few_idx = MetaGui::selected_few_idx;
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
                         delete frontend;
                         frontend = new Frontends::EmptyFrontend();
+                        MetaGui::running_few_idx = 0;
                     } break;
                     case EVENT_TYPE_ENGINE_LOAD: {
                         delete engine;

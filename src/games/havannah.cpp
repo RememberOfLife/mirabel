@@ -31,16 +31,18 @@ namespace Games {
                 }
             }
 
-            void Havannah::draw_state_editor(surena::Game* game)
+            void Havannah::draw_state_editor(surena::Game* abstract_game)
             {
-                surena::Havannah* state = dynamic_cast<surena::Havannah*>(game);
-                if (state == nullptr) {
+                surena::Havannah* game = dynamic_cast<surena::Havannah*>(abstract_game);
+                if (game == nullptr) {
                     return;
                 }
                 //TODO proper state editor
-                const char* check_options[4] = {"-", "X", "O", "-"}; // needs 2 dashes for none AND invalid
-                ImGui::Text("player to move: %s", check_options[state->player_to_move()]);
-                ImGui::Text("result: %s", check_options[state->get_result()]);
+                // white is actually displayed red per default, but because that might be configurable it is kept uniform here
+                const char* check_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
+                ImGui::Text("player to move: %s", check_options[game->player_to_move()]);
+                ImGui::Text("result: %s", check_options[game->get_result()]);
+                //TODO expose winningcondition
             }
 
             const char* Havannah::description()

@@ -45,7 +45,7 @@ namespace Frontends {
             virtual ~FrontendWrap() = default;
             virtual bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) = 0;
             virtual Frontend* new_frontend() = 0;
-            //TODO if required put any options that need to be set pre frontend creation here in a draw_options
+            virtual void draw_options() = 0; // draw options that need to be set pre frontend creation
     };
 
     extern std::vector<FrontendWrap*> frontend_catalogue;

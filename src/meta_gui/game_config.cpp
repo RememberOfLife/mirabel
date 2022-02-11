@@ -27,6 +27,21 @@ namespace MetaGui {
             return;
         }
         bool game_running = (StateControl::main_ctrl->t_gui.game != NULL);
+        // draw game start,stop,restart
+        // locks all pre loading input elements if game is running, stop is only available if running
+        if (game_running) {
+            if (ImGui::Button("Restart")) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_UNLOAD));
+            }
+        } else {
+            if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+            }
+        }
         if (game_running) {
             ImGui::BeginDisabled();
         }
@@ -66,35 +81,31 @@ namespace MetaGui {
         if (disable_variant_selection) {
             ImGui::EndDisabled();
         }
-        //TODO maybe put a seperator here for visual clarity? or put the entire start/stop section to the very top? or nest options under it
-        // draw options panel
-        Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_options();
         if (game_running) {
             ImGui::EndDisabled();
         }
-        // draw game start,stop,restart
-        // locks all input elements above if game is running, stop is only available if running
         ImGui::Separator();
-        if (game_running) {
-            if (ImGui::Button("Restart")) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+        // draw options panel
+        if (ImGui::CollapsingHeader(game_running ? "Options [locked]" : "Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (game_running) {
+                ImGui::BeginDisabled();
             }
-            ImGui::SameLine();
-            if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_UNLOAD));
+            Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_options();
+            if (game_running) {
+                ImGui::EndDisabled();
+            }
+        }
+        ImGui::Separator();
+        // draw internal state editor, only if a game is running
+        if (game_running) {
+            if (ImGui::CollapsingHeader("State Editor", ImGuiTreeNodeFlags_DefaultOpen)) {
+                Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(StateControl::main_ctrl->t_gui.game);
             }
         } else {
-            if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
-            }
+            ImGui::BeginDisabled();
+            ImGui::CollapsingHeader("State Editor", ImGuiTreeNodeFlags_Leaf);
+            ImGui::EndDisabled();
         }
-        ImGui::Separator();
-        if (!game_running) {
-            ImGui::End();
-            return;
-        }
-        // draw internal state editor, only if a game is running
-        Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(StateControl::main_ctrl->t_gui.game);
         ImGui::End();
     }
 

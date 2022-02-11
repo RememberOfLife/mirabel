@@ -25,16 +25,16 @@ namespace Games {
                 ImGui::TextDisabled("<no options>");
             }
 
-            void TicTacToe_Ultimate::draw_state_editor(surena::Game* game)
+            void TicTacToe_Ultimate::draw_state_editor(surena::Game* abstract_game)
             {
-                surena::TicTacToe_Ultimate* state = dynamic_cast<surena::TicTacToe_Ultimate*>(game);
-                if (state == nullptr) {
+                surena::TicTacToe_Ultimate* game = dynamic_cast<surena::TicTacToe_Ultimate*>(abstract_game);
+                if (game == nullptr) {
                     return;
                 }
                 //TODO proper state editor
                 const char* check_options[3] = {"-", "X", "O"};
-                ImGui::Text("player to move: %s", check_options[state->player_to_move()]);
-                ImGui::Text("result: %s", check_options[state->get_result()]);
+                ImGui::Text("player to move: %s", check_options[game->player_to_move()]);
+                ImGui::Text("result: %s", check_options[game->get_result()]);
             }
 
             const char* TicTacToe_Ultimate::description()

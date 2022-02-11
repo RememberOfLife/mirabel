@@ -31,6 +31,7 @@ namespace Frontends {
         }
         mx = abs(mx);
         my = abs(my);
+        // https://stackoverflow.com/questions/42903609/function-to-determine-if-point-is-inside-hexagon
         hovered = (my < std::round(sqrt(3) * std::min(r - mx, r / 2)));
     }
 
@@ -227,10 +228,12 @@ namespace Frontends {
                         assert(false);
                     } break;
                 }
+                //TODO draw colored connections to same player pieces
                 if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
                     DD::SetRGB255(125, 187, 248);
-                    DD::SetFill();
-                    DD::DrawCircle(0, 0, button_size*0.6);
+                    DD::SetStroke();
+                    DD::SetLineWidth(button_size*0.1);
+                    DD::DrawRegularPolygon(6, 0, 0, button_size*0.95);
                 }
                 DD::Pop();
             }
@@ -270,6 +273,10 @@ namespace Frontends {
     {
         return new Havannah();
     }
-
+    
+    void Havannah_FEW::draw_options()
+    {
+        ImGui::TextDisabled("<no options>");
+    }
 
 }

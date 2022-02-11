@@ -13,7 +13,7 @@ namespace Games {
 
             surena::Game* new_game() override;
             void draw_options() override;
-            void draw_state_editor(surena::Game* game) override;
+            void draw_state_editor(surena::Game* abstract_game) override;
             const char* description() override;
 
     };

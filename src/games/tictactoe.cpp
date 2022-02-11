@@ -32,10 +32,10 @@ namespace Games {
                 ImGui::TextDisabled("<no options>");
             }
 
-            void TicTacToe::draw_state_editor(surena::Game* game)
+            void TicTacToe::draw_state_editor(surena::Game* abstract_game)
             {
-                surena::TicTacToe* state = dynamic_cast<surena::TicTacToe*>(game);
-                if (state == nullptr) {
+                surena::TicTacToe* game = dynamic_cast<surena::TicTacToe*>(abstract_game);
+                if (game == nullptr) {
                     return;
                 }
                 const char* check_options[3] = {"-", "X", "O"};
@@ -48,7 +48,7 @@ namespace Games {
                         if (ix > 0) {
                             ImGui::SameLine();
                         }
-                        int board_state = state->get_cell(ix, iy);
+                        int board_state = game->get_cell(ix, iy);
                         int imgui_check = board_state;
                         ImGui::PushID(imgui_id++);
                         ImGui::PushItemWidth(check_width);
@@ -74,7 +74,7 @@ namespace Games {
                     }
                 }
                 // edit: player to move
-                int board_current = state->player_to_move();
+                int board_current = game->player_to_move();
                 int imgui_current = board_current;
                 ImGui::PushID(imgui_id++);
                 ImGui::PushItemWidth(check_width);
@@ -98,7 +98,7 @@ namespace Games {
                     StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_internal_update_event(StateControl::EVENT_TYPE_GAME_INTERNAL_UPDATE, (1<<6)|(imgui_current<<4)));
                 }
                 // edit: result
-                int board_result = state->get_result();
+                int board_result = game->get_result();
                 int imgui_result = board_result;
                 ImGui::PushID(imgui_id++);
                 ImGui::PushItemWidth(check_width);

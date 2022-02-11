@@ -43,6 +43,20 @@ namespace MetaGui {
             engine_idx = 0;
             StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
         }
+        // draw engine restart/start/stop
+        if (engine_running) {
+            if (ImGui::Button("Restart")) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
+            }
+        } else {
+            if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
+                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
+            }
+        }
         // draw engine combo box, show only compatible ones
         bool disable_engine_selection = (compatible_engines.size() == 1);
         if (disable_engine_selection) {
@@ -65,20 +79,13 @@ namespace MetaGui {
         if (disable_engine_selection) {
             ImGui::EndDisabled();
         }
-        Engines::engine_catalogue[engine_idx]->draw_loader_options();
         ImGui::Separator();
         if (engine_running) {
-            if (ImGui::Button("Restart")) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
-            }
-        } else {
-            if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
-            }
+            ImGui::BeginDisabled();
+        }
+        Engines::engine_catalogue[engine_idx]->draw_loader_options();
+        if (engine_running) {
+            ImGui::EndDisabled();
         }
         ImGui::Separator();
         if (engine_running) {

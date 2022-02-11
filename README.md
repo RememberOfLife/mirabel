@@ -36,10 +36,6 @@ https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
 // - "wood/stone" piece placement
 // - "wood/stone" piece capture
 
-hexagons:
-https://stackoverflow.com/questions/42903609/function-to-determine-if-point-is-inside-hexagon
-http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
-
 gui:
 http://www.cmyr.net/blog/gui-framework-ingredients.html
 https://linebender.org/druid/widget.html
@@ -68,7 +64,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * SDL_net for tcp connections
 * where to store state info from the engine like uci opts?
 * what to do when engine is loaded but no game?
-* segfault when unloading game while engine is running
+* localization
 
 ### integration workflow
 * ==> offline ai play:
@@ -99,3 +95,4 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * frontend does not necessarily need to be newest state, it just exposes somewhere if it is ready to accept new moves (or not if it still animating)
     * if the frontend is passed a move even though it said it doesnt want to, then it should cancel the current animation and process the move (may animate that)
     * possibly requires an extra buffer for stored moves so we don't pollute the guithread eventqueue
+* ==> reaplace internal state update events with: editor clones and modifies using exposed internals -> push load event

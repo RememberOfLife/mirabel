@@ -36,7 +36,8 @@ namespace MetaGui {
 
     extern bool show_frontend_config_window;
     void frontend_config_window(bool* p_open); // select frontend to use (compatible with the game), visual config (colors)
-    extern uint32_t frontend_wrap_idx;
+    extern uint32_t running_few_idx;
+    extern uint32_t selected_few_idx;
 
     extern bool show_engine_window;
     void engine_window(bool* p_open);

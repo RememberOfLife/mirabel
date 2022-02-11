@@ -240,4 +240,9 @@ namespace Frontends {
         return new TicTacToe_Ultimate();
     }
 
+    void TicTacToe_Ultimate_FEW::draw_options()
+    {
+        ImGui::TextDisabled("<no options>");
+    }
+
 }
