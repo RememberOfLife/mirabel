@@ -227,6 +227,11 @@ namespace Frontends {
                         assert(false);
                     } break;
                 }
+                if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
+                    DD::SetRGB255(125, 187, 248);
+                    DD::SetFill();
+                    DD::DrawCircle(0, 0, button_size*0.6);
+                }
                 DD::Pop();
             }
         }
