@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 

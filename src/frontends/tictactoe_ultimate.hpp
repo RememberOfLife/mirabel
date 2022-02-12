@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "surena/games/tictactoe_ultimate.hpp"
 #include "surena/engine.hpp"
 #include "surena/game.hpp"

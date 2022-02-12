@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "imgui.h"
 #include "surena/games/tictactoe.hpp"
 #include "surena/engine.hpp"

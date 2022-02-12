@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SDL.h"
+#include <SDL2/SDL.h>
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
