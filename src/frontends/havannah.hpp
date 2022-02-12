@@ -31,7 +31,7 @@ namespace Frontends {
                 uint8_t iy;
                 bool hovered;
                 bool mousedown;
-                void update(float mx, float my, bool flat_top);
+                void update(float mx, float my);
             };
 
             int mx;

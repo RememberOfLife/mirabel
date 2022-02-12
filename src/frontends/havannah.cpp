@@ -21,14 +21,13 @@
 
 namespace Frontends {
 
-    void Havannah::sbtn::update(float mx, float my, bool flat_top) {
+    void Havannah::sbtn::update(float mx, float my) {
         const float hex_angle = 2 * M_PI / 6;
         mx -= x;
         my -= y;
-        if (!flat_top) {
-            // global hex board is flat top, buttons are pointy top
-            rotate_cords(mx, my, hex_angle);
-        }
+        // mouse is auto rotated by update to make this function assume global flat top
+        // rotate in button space to make the collision work with the pointy top local hexes we get from global flat top
+        rotate_cords(mx, my, hex_angle);
         mx = abs(mx);
         my = abs(my);
         // https://stackoverflow.com/questions/42903609/function-to-determine-if-point-is-inside-hexagon
@@ -113,7 +112,7 @@ namespace Frontends {
                             if (!(x - y < size) || !(y - x < size)) {
                                 continue;
                             }
-                            board_buttons[y*board_sizer+x].update(mX, mY, flat_top);
+                            board_buttons[y*board_sizer+x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 if (board_buttons[y*board_sizer+x].hovered && board_buttons[y*board_sizer+x].mousedown && game->get_cell(x, y) == 0) {
                                     uint64_t move_code = y | (x<<8);
@@ -146,6 +145,7 @@ namespace Frontends {
         mX -= w_px/2;
         mY -= h_px/2;
         if (!flat_top) {
+            // if global board is not flat topped, rotate the mouse so it is, for the collision check
             rotate_cords(mX, mY, hex_angle);
         }
         for (int y = 0; y < board_sizer; y++) {
@@ -162,7 +162,7 @@ namespace Frontends {
                 board_buttons[y*board_sizer+x].x = offset_x + base_x;
                 board_buttons[y*board_sizer+x].y = offset_y + base_y;
                 board_buttons[y*board_sizer+x].r = button_size;
-                board_buttons[y*board_sizer+x].update(mX, mY, flat_top);
+                board_buttons[y*board_sizer+x].update(mX, mY);
             }
         }
     }

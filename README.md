@@ -48,6 +48,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
 ## todo
 * sound
   * sound menu for muting and volume
+  * https://gist.github.com/armornick/3447121
+  * https://metacpan.org/pod/SDL2::audio
+  * https://github.com/jakebesworth/Simple-SDL2-Audio
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 

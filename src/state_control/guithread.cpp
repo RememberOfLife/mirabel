@@ -28,7 +28,7 @@ namespace StateControl {
         engine(NULL)
     {
         // setup SDL
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
+        if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
         {
             fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
             exit(-1);
