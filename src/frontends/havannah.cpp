@@ -215,7 +215,7 @@ namespace Frontends {
                         }
                     } break;
                     case surena::Havannah::COLOR_WHITE: {
-                        DD::SetRGB255(120, 25, 25);
+                        DD::SetRGB255(141, 35, 35);
                         DD::SetFill();
                         DD::DrawCircle(0, 0, button_size*0.6);
                     } break;

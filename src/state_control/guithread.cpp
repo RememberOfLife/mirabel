@@ -173,13 +173,6 @@ namespace StateControl {
                             MetaGui::logf("game done: winner is player %d\n", game->get_result());
                         }
                     } break;
-                    case EVENT_TYPE_GAME_INTERNAL_UPDATE: {
-                        game->apply_internal_update(e.internal_update.code);
-                        if (engine) {
-                            engine->apply_internal_update(e.internal_update.code);
-                        }
-                        MetaGui::log("#I game internal state updated\n");
-                    } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
                         frontend = e.frontend.frontend;

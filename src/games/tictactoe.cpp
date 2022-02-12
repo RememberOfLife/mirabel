@@ -68,8 +68,10 @@ namespace Games {
                         ImGui::PopItemWidth();
                         ImGui::PopID();
                         if (imgui_check != board_state) {
-                            // modified state via imgui, queue internal update event
-                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_internal_update_event(StateControl::EVENT_TYPE_GAME_INTERNAL_UPDATE, (imgui_check<<4)|(iy<<2)|(ix)));
+                            // modified state via imgui, clone+edit+load
+                            surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
+                            game_clone->set_cell(ix, iy, imgui_check);
+                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                         }
                     }
                 }
@@ -94,8 +96,10 @@ namespace Games {
                 ImGui::PopItemWidth();
                 ImGui::PopID();
                 if (imgui_current != board_current) {
-                    // queue internal update event
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_internal_update_event(StateControl::EVENT_TYPE_GAME_INTERNAL_UPDATE, (1<<6)|(imgui_current<<4)));
+                    // modified state via imgui, clone+edit+load
+                    surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
+                    game_clone->set_current_player(imgui_current);
+                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
                 // edit: result
                 int board_result = game->get_result();
@@ -118,8 +122,10 @@ namespace Games {
                 ImGui::PopItemWidth();
                 ImGui::PopID();
                 if (imgui_result != board_result) {
-                    // queue internal update event
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_internal_update_event(StateControl::EVENT_TYPE_GAME_INTERNAL_UPDATE, (2<<6)|(imgui_result<<4)));
+                    // modified state via imgui, clone+edit+load
+                    surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
+                    game_clone->set_result(imgui_result);
+                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
             }
 

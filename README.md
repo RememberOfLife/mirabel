@@ -28,7 +28,7 @@ https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
 //rgb(25, 25, 25) black accent
 //rgb(199, 36, 73) neon red/pink
 //rgb(37, 190, 223) neon cyan
-//rgb(120, 25, 25) dark red
+//rgb(120, 25, 25) dark red or use (141, 35, 35)
 //rgb(24, 38, 120) dark blue
 
 // sounds required:
@@ -46,7 +46,6 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
-* replace internal state update event by clone+edit+load in game state editor
 * sound
   * sound menu for muting and volume
 * actually use clang-format to make everything look uniform
