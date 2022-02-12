@@ -96,21 +96,14 @@ namespace MetaGui {
             ImGui::EndDisabled();
         }
         ImGui::Separator();
-        if (fronend_running) {
-            ImGui::BeginDisabled();
-        }
         if (ImGui::CollapsingHeader(fronend_running ? "Options [locked]" : "Options", ImGuiTreeNodeFlags_DefaultOpen)) {
             if (fronend_running) {
                 ImGui::BeginDisabled();
             }
-            
             Frontends::frontend_catalogue[selected_few_idx]->draw_options();
             if (fronend_running) {
                 ImGui::EndDisabled();
             }
-        }
-        if (fronend_running) {
-            ImGui::EndDisabled();
         }
         ImGui::Separator();
         if (fronend_running) {

@@ -170,7 +170,7 @@ namespace StateControl {
                             engine->apply_move(e.move.code);
                         }
                         if (game->player_to_move() == 0) {
-                            MetaGui::logf("#S game done: winner is player %d\n", game->get_result());
+                            MetaGui::logf("game done: winner is player %d\n", game->get_result());
                         }
                     } break;
                     case EVENT_TYPE_GAME_INTERNAL_UPDATE: {

@@ -14,8 +14,9 @@
 namespace MetaGui {
 
     /*TODO FEATURES
+        - some way to save logs, possibly just also write debug log to std error
         - thread safety?
-        - make proper highlighting (log levels) with an enum
+        - make proper highlighting (log levels) with an enum (for the log function)
         - proper ringbuffer
             - buffer health display
         - proper timestamps (not just millis since launch) on log entries
@@ -26,11 +27,10 @@ namespace MetaGui {
 
     enum LOG_LEVEL {
         LOG_LEVEL_NONE = 0,
-        LOG_LEVEL_LOG = 1,
-        LOG_LEVEL_SUCCESS = 2,
-        LOG_LEVEL_INFO = 3,
-        LOG_LEVEL_WARNING = 4,
-        LOG_LEVEL_ERROR = 5,
+        LOG_LEVEL_LOG,
+        LOG_LEVEL_INFO,
+        LOG_LEVEL_WARNING,
+        LOG_LEVEL_ERROR,
     };
 
     struct logger {
@@ -77,8 +77,8 @@ namespace MetaGui {
                 if (*line_start == '#') {
                     colored = true;
                     switch (*(line_start+1)) {
-                        case 'S': {
-                            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 222, 91, 255));
+                        default: {
+                            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255));
                         } break;
                         case 'I': {
                             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 206, 222, 255));
@@ -88,9 +88,6 @@ namespace MetaGui {
                         } break;
                         case 'E': {
                             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(222, 44, 44, 255));
-                        } break;
-                        default: {
-                            ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255));
                         } break;
                     }
                     if (line_end-line_start > 3) {
@@ -132,9 +129,6 @@ namespace MetaGui {
         LOG_LEVEL update_dirty = LOG_LEVEL_NONE;
         if (*line_start == '#') {
             switch (*(line_start+1)) {
-                case 'S': {
-                    update_dirty = LOG_LEVEL_SUCCESS;
-                } break;
                 case 'I': {
                     update_dirty = LOG_LEVEL_INFO;
                 } break;
@@ -169,9 +163,6 @@ namespace MetaGui {
         LOG_LEVEL update_dirty = LOG_LEVEL_LOG;
         if (*line_start == '#') {
             switch (*(line_start+1)) {
-                case 'S': {
-                    update_dirty = LOG_LEVEL_SUCCESS;
-                } break;
                 case 'I': {
                     update_dirty = LOG_LEVEL_INFO;
                 } break;
@@ -240,9 +231,6 @@ namespace MetaGui {
                     case LOG_LEVEL_LOG: {
                         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(250, 250, 250, 255));
                     } break;
-                    case LOG_LEVEL_SUCCESS: {
-                        ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 222, 91, 255));
-                    } break;
                     case LOG_LEVEL_INFO: {
                         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(44, 206, 222, 255));
                     } break;
@@ -257,14 +245,16 @@ namespace MetaGui {
                 bool visible = ImGui::BeginTabItem(current_log->name);
                 ImGui::PopStyleColor();
                 current_log->visible = visible;
-                // popup context menu with info + settings about the log
-                //TODO dont do a popup, its illegible
-                if (ImGui::BeginPopupContextItem()) {
-                    char buf[24];
-                    sprintf(buf, "line count: %lu", current_log->log_line_offsets.size()-1);
-                    ImGui::MenuItem(buf, NULL, false, false);
-                    ImGui::MenuItem("auto-scroll", NULL, &current_log->auto_scroll);
-                    ImGui::EndPopup();
+                // collapsing header with info + settings about the log
+                if (ImGui::CollapsingHeader("Logger", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::AlignTextToFramePadding();
+                    ImGui::Text("line count: %lu", current_log->log_line_offsets.size()-1);
+                    ImGui::SameLine();
+                    ImGui::NextColumn();
+                    const char* text_auto_scroll = "auto-scroll";
+                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(text_auto_scroll).x - ImGui::GetScrollX() - 3 * ImGui::GetStyle().ItemSpacing.x);
+                    ImGui::Checkbox(text_auto_scroll, &current_log->auto_scroll);
+                    ImGui::Separator();
                 }
                 if (visible) {
                     visible_log = current_log_id;

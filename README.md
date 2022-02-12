@@ -32,9 +32,13 @@ https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
 //rgb(24, 38, 120) dark blue
 
 // sounds required:
-// - pencil on paper
+// - pencil on paper, one scratch
+// - pencil on paper, multiple scratches
 // - "wood/stone" piece placement
 // - "wood/stone" piece capture
+// - game start beep
+// - game end jingle
+// - low on time beep
 
 gui:
 http://www.cmyr.net/blog/gui-framework-ingredients.html
@@ -42,9 +46,10 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
-* frontend config should do loading/unloading like the game (i.e. with dedicated buttons) instead of immediately upon selection, enables options before loading the actual frontend
-* actually use clang-format to make everything look uniform
+* replace internal state update event by clone+edit+load in game state editor
 * sound
+  * sound menu for muting and volume
+* actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 
 ## ideas
@@ -64,7 +69,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * SDL_net for tcp connections
 * where to store state info from the engine like uci opts?
 * what to do when engine is loaded but no game?
+  * engine should not crash, just return garbage
 * localization
+* frontend should be able to easily change the cursor
 
 ### integration workflow
 * ==> offline ai play:
@@ -95,4 +102,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * frontend does not necessarily need to be newest state, it just exposes somewhere if it is ready to accept new moves (or not if it still animating)
     * if the frontend is passed a move even though it said it doesnt want to, then it should cancel the current animation and process the move (may animate that)
     * possibly requires an extra buffer for stored moves so we don't pollute the guithread eventqueue
-* ==> reaplace internal state update events with: editor clones and modifies using exposed internals -> push load event
+  * how to smooth the animation for self played moves, i.e. when the user drops a drag-and-drop piece onto its target square
+    * normally the move_event is pushed AFTER the inbox event_queue is processed (in the sdl event queue for inputs)
+    * that way the piece will be reset for one frame until it is processed in the next one
