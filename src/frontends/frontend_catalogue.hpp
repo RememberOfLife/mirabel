@@ -3,6 +3,8 @@
 #include <vector>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 
@@ -30,9 +32,9 @@ namespace Frontends {
 
             virtual void process_event(SDL_Event event) = 0;
 
-            virtual void update() = 0; //TODO maybe this should receive the latest mouse position, for hover effects, so not every frontend has to listen to all mouse move events just for that, if so then collect mouse state in guithread
+            virtual void update() = 0;
 
-            virtual void render() = 0;
+            virtual void render(NVGcontext* ctx) = 0;
 
             virtual void draw_options() = 0; // draw options available to configure the frontend, e.g. colors and sizes
             

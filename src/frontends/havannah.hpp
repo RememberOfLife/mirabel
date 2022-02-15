@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "surena/games/havannah.hpp"
 #include "surena/game.hpp"
 
@@ -46,7 +48,7 @@ namespace Frontends {
             void set_engine(surena::Engine* new_engine) override;
             void process_event(SDL_Event event) override;
             void update() override;
-            void render() override;
+            void render(NVGcontext* ctx) override;
             void draw_options() override;
 
             static void rotate_cords(float& x, float&y, float angle);

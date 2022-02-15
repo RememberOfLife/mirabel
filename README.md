@@ -32,6 +32,10 @@ https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
 //rgb(24, 38, 120) dark blue
 
 // sounds required:
+// - card pickup
+// - card placement
+// - card shuffle light
+// - card shuffle heavy
 // - pencil on paper, one scratch
 // - pencil on paper, multiple scratches
 // - "wood/stone" piece placement
@@ -46,6 +50,7 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
+* when a frontend is started, all imgui windows get darker, doesnt happen with the game loader
 * sound
   * sound menu for muting and volume
   * https://gist.github.com/armornick/3447121
@@ -53,13 +58,22 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * https://github.com/jakebesworth/Simple-SDL2-Audio
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
+* put nanovg in another cmake target to hide its impl warnings
+* put correct cpp standard version in the cmake
 
 ## ideas
 * meta gui window snapping/anchoring?
 * "moving" around the board by an offset using middle mouse dragging?
+* filter games list with some categories/tags? (e.g. player count, randomness, hidden info, simul moves, abstract strategy)
+* quick launcher menu:
+  * "hav" matches to havannah and the standard variation and the first available frontend
+  * "hav+10" should set the size option to 10 for the havannah that matched
+    * how to make sure non kwargs get into the right place?
+  * "ttt.u/3d" matches tictactoe.ultimate/TicTacToe3D
 
 ## problems
 * make games,frontends,engines dynamically loadable as plugins
+  * needs an extra window
 * local docs / game rule window, per variant? images/graphic representations?
   * load rules from res?
 * how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
@@ -74,6 +88,8 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * engine should not crash, just return garbage
 * localization
 * frontend should be able to easily change the cursor
+* file paths should have some sort of file manager menu
+  * https://codereview.stackexchange.com/questions/194553/c-dear-imgui-file-browser
 
 ### integration workflow
 * ==> offline ai play:

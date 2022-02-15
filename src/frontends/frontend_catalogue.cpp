@@ -1,3 +1,4 @@
+#include "frontends/chess.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/havannah.hpp"
 #include "frontends/tictactoe_ultimate.hpp"
@@ -12,7 +13,8 @@ namespace Frontends {
     {}
 
     std::vector<FrontendWrap*> frontend_catalogue = {
-        new EmptyFrontend_FEW(),
+        new EmptyFrontend_FEW(), // do not move the empty frontend wrapper
+        new Chess_FEW(),
         new TicTacToe_Ultimate_FEW(),
         new TicTacToe_FEW(),
         new Havannah_FEW(),

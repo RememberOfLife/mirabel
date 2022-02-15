@@ -33,6 +33,7 @@ set(SOURCES
 
     lib/surena/src/engines/randomengine.cpp
     lib/surena/src/engines/singlethreadedmcts.cpp
+    lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
@@ -41,12 +42,14 @@ set(SOURCES
     src/engines/builtin_surena.cpp
     src/engines/engine_catalogue.cpp
 
+    src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp
     src/frontends/frontend_catalogue.cpp
     src/frontends/havannah.cpp
     src/frontends/tictactoe_ultimate.cpp
     src/frontends/tictactoe.cpp
 
+    src/games/chess.cpp
     src/games/game_catalogue.cpp
     src/games/havannah.cpp
     src/games/tictactoe_ultimate.cpp

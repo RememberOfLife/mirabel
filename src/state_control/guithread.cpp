@@ -305,7 +305,7 @@ namespace StateControl {
 
             frontend->update();
             nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
-            frontend->render(); // todo render should take the drawing context (nanovg_ctx) and the player perspective (information view) from which to draw
+            frontend->render(nanovg_ctx); // todo render should take the player perspective (information view) from which to draw
             nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();

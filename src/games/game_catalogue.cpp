@@ -1,3 +1,4 @@
+#include "games/chess.hpp"
 #include "games/havannah.hpp"
 #include "games/tictactoe_ultimate.hpp"
 #include "games/tictactoe.hpp"
@@ -11,6 +12,12 @@ namespace Games {
     {}
 
     std::vector<BaseGame> game_catalogue = {
+        BaseGame{
+            "Chess",
+            std::vector<BaseGameVariant*>{
+                new Chess(),
+            }
+        },
         BaseGame{
             "Havannah",
             std::vector<BaseGameVariant*>{
