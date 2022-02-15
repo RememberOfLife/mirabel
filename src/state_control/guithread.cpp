@@ -95,9 +95,14 @@ namespace StateControl {
         frontend = new Frontends::EmptyFrontend();
 
         nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
-        int font_id = nvgCreateFont(nanovg_ctx, "df", "../res/opensans/OpenSans-Regular.ttf");
-        if (font_id < 0) {
+        int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/opensans/OpenSans-Regular.ttf");
+        if (font_id0 < 0) {
             fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
+            exit(-1);
+        }
+        int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/opensans/OpenSans-ExtraBold.ttf");
+        if (font_id1 < 0) {
+            fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
             exit(-1);
         }
     }

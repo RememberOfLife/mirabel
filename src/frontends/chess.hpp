@@ -20,7 +20,7 @@ namespace Frontends {
             surena::Chess* game;
             surena::Engine* engine;
 
-            float square_size = 200;
+            float square_size = 90;
 
         public:
 

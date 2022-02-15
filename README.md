@@ -49,8 +49,13 @@ http://www.cmyr.net/blog/gui-framework-ingredients.html
 https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
-## todo
+## issues
 * when a frontend is started, all imgui windows get darker, doesnt happen with the game loader
+* when starting the game chess, while its frontend is loaded, the screen flickers once
+
+## todo
+* change window title according to the loaded game and frontend
+* nanovg context when passed should not stretch under the main menu bar area of the screen
 * sound
   * sound menu for muting and volume
   * https://gist.github.com/armornick/3447121
@@ -62,6 +67,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * put correct cpp standard version in the cmake
 
 ## ideas
+* maybe make the state editor something like a toggle?
+  * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from
+  * that would require interaction between the frontend and the basegamevariant
 * meta gui window snapping/anchoring?
 * "moving" around the board by an offset using middle mouse dragging?
 * filter games list with some categories/tags? (e.g. player count, randomness, hidden info, simul moves, abstract strategy)
