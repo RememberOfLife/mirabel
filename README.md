@@ -50,10 +50,10 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## issues
-* when a frontend is started, all imgui windows get darker, doesnt happen with the game loader
-* when starting the game chess, while its frontend is loaded, the screen flickers once
+
 
 ## todo
+chess backend -> chess frontend drag'n'drop -> chess frontend sounds -> chess frontend animations
 * change window title according to the loaded game and frontend
 * nanovg context when passed should not stretch under the main menu bar area of the screen
 * sound
@@ -67,6 +67,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * put correct cpp standard version in the cmake
 
 ## ideas
+* path to res folder shouldnt be hardcoded
 * maybe make the state editor something like a toggle?
   * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from
   * that would require interaction between the frontend and the basegamevariant
@@ -80,6 +81,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * "ttt.u/3d" matches tictactoe.ultimate/TicTacToe3D
 
 ## problems
+* change how the frontends receive the nanovg context, they need it in the constructor already
+  * also, how to design some system that supports failed construction? i.e. if options were malformed, like a passed resourcepath that doesnt contain resources
+  * also loading should be parallel to the guithread, can be integrated into the isready/stateok flag that frontends may expose to tell the guithread if they failed their construction?
 * make games,frontends,engines dynamically loadable as plugins
   * needs an extra window
 * local docs / game rule window, per variant? images/graphic representations?

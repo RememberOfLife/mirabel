@@ -91,20 +91,20 @@ namespace StateControl {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_BLEND);
 
-        // init default context
-        frontend = new Frontends::EmptyFrontend();
-
         nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
-        int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/opensans/OpenSans-Regular.ttf");
+        int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
         if (font_id0 < 0) {
             fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
             exit(-1);
         }
-        int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/opensans/OpenSans-ExtraBold.ttf");
+        int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
         if (font_id1 < 0) {
             fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
             exit(-1);
         }
+
+        // init default context
+        frontend = new Frontends::EmptyFrontend();
     }
 
     GuiThread::~GuiThread()
@@ -310,7 +310,7 @@ namespace StateControl {
 
             frontend->update();
             nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
-            frontend->render(nanovg_ctx); // todo render should take the player perspective (information view) from which to draw
+            frontend->render(); // todo render should take the player perspective (information view) from which to draw
             nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();

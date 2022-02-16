@@ -1,8 +1,6 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/tictactoe_ultimate.hpp"
 #include "surena/engine.hpp"
@@ -134,7 +132,7 @@ namespace Frontends {
         }
     }
 
-    void TicTacToe_Ultimate::render(NVGcontext* ctx)
+    void TicTacToe_Ultimate::render()
     {
         float local_baord_size = 3*button_size+2*local_padding;
         uint8_t global_target = game ? game->get_global_target() : 0;

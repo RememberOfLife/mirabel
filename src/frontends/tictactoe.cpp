@@ -1,8 +1,6 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/tictactoe.hpp"
 #include "surena/engine.hpp"
@@ -110,7 +108,7 @@ namespace Frontends {
         }
     }
 
-    void TicTacToe::render(NVGcontext* ctx)
+    void TicTacToe::render()
     {
         DD::SetLineWidth(button_size*0.175);
         DD::SetRGB255(201, 144, 73);

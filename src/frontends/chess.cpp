@@ -10,7 +10,7 @@
 
 #include "games/game_catalogue.hpp"
 #include "games/chess.hpp"
-#include "prototype_util/direct_draw.hpp"
+#include "meta_gui/meta_gui.hpp"
 #include "state_control/controller.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
@@ -23,7 +23,30 @@ namespace Frontends {
     Chess::Chess():
         game(NULL),
         engine(NULL)
-    {}
+    {
+        dc = StateControl::main_ctrl->t_gui.nanovg_ctx;
+        // load sprites from res folder
+        for (int i = 0; i < 12; i++) {
+            sprites[i] = -1;
+        }
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pwk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pwq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pwr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pwb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pwn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pwp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pbk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pbq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pbr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pbb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pbn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pbp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        for (int i = 0; i < 12; i++) {
+            if (sprites[i] < 0) {
+                MetaGui::logf("#E chess: sprite loading failure #%d\n", i);
+            }
+        }
+    }
 
     Chess::~Chess()
     {}
@@ -68,23 +91,23 @@ namespace Frontends {
         
     }
 
-    void Chess::render(NVGcontext* ctx)
+    void Chess::render()
     {
-        nvgSave(ctx);
-        nvgBeginPath(ctx);
-        nvgRect(ctx, -10, -10, w_px+20, h_px+20);
-        nvgFillColor(ctx, nvgRGB(201, 144, 73));
-        nvgFill(ctx);
-        nvgTranslate(ctx, w_px/2-(8*square_size)/2, h_px/2-(8*square_size)/2);
+        nvgSave(dc);
+        nvgBeginPath(dc);
+        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgFillColor(dc, nvgRGB(201, 144, 73));
+        nvgFill(dc);
+        nvgTranslate(dc, w_px/2-(8*square_size)/2, h_px/2-(8*square_size)/2);
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 float base_x = x * square_size;
                 float base_y = y * square_size;
                 // draw base square
-                nvgBeginPath(ctx);
-                nvgRect(ctx, base_x, base_y, square_size, square_size);
-                nvgFillColor(ctx, ((x + y) % 2 == 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67));
-                nvgFill(ctx);
+                nvgBeginPath(dc);
+                nvgRect(dc, base_x, base_y, square_size, square_size);
+                nvgFillColor(dc, ((x + y) % 2 == 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67));
+                nvgFill(dc);
                 if (!game) {
                     continue;
                 }
@@ -92,59 +115,21 @@ namespace Frontends {
                 if (piece_in_square.player == surena::Chess::PLAYER_NONE) {
                     continue;
                 }
-                //TODO this should render the piece sprites instead of just text bubbles
-                nvgBeginPath(ctx);
-                nvgFillColor(ctx, nvgRGBA(0, 0, 0, 40));
-                nvgCircle(ctx, base_x+square_size/2, base_y+square_size/2, square_size*0.4);
-                nvgFill(ctx);
-                nvgBeginPath(ctx);
-                nvgFontFace(ctx, "ff");
-                nvgFontSize(ctx, square_size*0.7);
-                nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
-                base_y += square_size/4;
-                switch (piece_in_square.player) {
-                    case surena::Chess::PLAYER_WHITE: {
-                        nvgFillColor(ctx, nvgRGB(236, 236, 236));
-                    } break;
-                    case surena::Chess::PLAYER_BLACK: {
-                        nvgFillColor(ctx, nvgRGB(25, 25, 25));
-                    } break;
-                    default: {
-                        assert(0);
-                    } break;
-                }
-                switch (piece_in_square.type) {
-                    case surena::Chess::PIECE_TYPE_KING: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "K", NULL);
-                    } break;
-                    case surena::Chess::PIECE_TYPE_QUEEN: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "Q", NULL);
-                    } break;
-                    case surena::Chess::PIECE_TYPE_ROOK: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "R", NULL);
-                    } break;
-                    case surena::Chess::PIECE_TYPE_BISHOP: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "B", NULL);
-                    } break;
-                    case surena::Chess::PIECE_TYPE_KNIGHT: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "N", NULL);
-                    } break;
-                    case surena::Chess::PIECE_TYPE_PAWN: {
-                        nvgText(ctx, base_x+square_size/2, base_y+square_size/2, "P", NULL);
-                    } break;
-                    default: {
-                        assert(0);
-                    } break;
-                }
-                nvgFill(ctx);
+                // render the piece sprites
+                nvgBeginPath(dc);
+                nvgRect(dc, base_x, base_y, square_size, square_size);
+                int sprite_idx = piece_in_square.player*6-6+piece_in_square.type-1;
+                NVGpaint sprite_paint = nvgImagePattern(dc, base_x, base_y, square_size, square_size, 0, sprites[sprite_idx], 1);
+                nvgFillPaint(dc, sprite_paint);
+                nvgFill(dc);
             }
         }
-        nvgRestore(ctx);
+        nvgRestore(dc);
     }
 
     void Chess::draw_options()
     {
-        ImGui::SliderFloat("button size", &square_size, 40, 125, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("square size", &square_size, 40, 125, "%.3f", ImGuiSliderFlags_AlwaysClamp);
     }
 
     Chess_FEW::Chess_FEW():

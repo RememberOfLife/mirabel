@@ -17,10 +17,14 @@ namespace Frontends {
 
         private:
 
+            NVGcontext* dc;
+
             surena::Chess* game;
             surena::Engine* engine;
 
             float square_size = 90;
+
+            int sprites[12];
 
         public:
 
@@ -30,7 +34,7 @@ namespace Frontends {
             void set_engine(surena::Engine* new_engine) override;
             void process_event(SDL_Event event) override;
             void update() override;
-            void render(NVGcontext* ctx) override;
+            void render() override;
             void draw_options() override;
 
     };

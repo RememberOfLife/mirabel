@@ -15,14 +15,12 @@ namespace StateControl {
 
     class GuiThread {
 
-        private:
+        public:
 
             SDL_Window* sdl_window;
             SDL_GLContext sdl_glcontext;
             ImGuiIO* imgui_io;
             NVGcontext* nanovg_ctx;
-
-        public:
 
             std::thread running_thread;
             event_queue inbox;

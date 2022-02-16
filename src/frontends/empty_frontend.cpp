@@ -1,8 +1,6 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
@@ -33,7 +31,7 @@ namespace Frontends {
     void EmptyFrontend::update()
     {}
 
-    void EmptyFrontend::render(NVGcontext* ctx)
+    void EmptyFrontend::render()
     {
         DD::SetRGB(0.45, 0.55, 0.6);
         DD::Clear();

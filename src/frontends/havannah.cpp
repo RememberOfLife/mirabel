@@ -3,8 +3,6 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/havannah.hpp"
 #include "surena/engine.hpp"
@@ -169,7 +167,7 @@ namespace Frontends {
         }
     }
 
-    void Havannah::render(NVGcontext* ctx)
+    void Havannah::render()
     {
         const float hex_angle = 2 * M_PI / 6;
         const float fitting_hex_radius = button_size+padding;
