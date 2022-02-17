@@ -1,5 +1,8 @@
 #pragma once
 
+#include <unordered_map>
+#include <vector>
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
@@ -39,6 +42,7 @@ namespace Frontends {
 
             sbtn board_buttons[8][8]; // board_buttons[y][x] origin is bottom left
 
+            std::unordered_map<uint8_t, std::vector<uint8_t>> move_map;
             bool passive_pin = false;
             int mouse_pindx_x = -1;
             int mouse_pindx_y = -1;

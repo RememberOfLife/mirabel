@@ -1,4 +1,7 @@
 #include <cstdint>
+#include <unordered_map>
+#include <vector>
+
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
@@ -93,11 +96,7 @@ namespace Frontends {
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                 if (event.button.button == SDL_BUTTON_LEFT) {
-                    if (event.type == SDL_MOUSEBUTTONDOWN) {
-                        passive_pin = false;
-                        mouse_pindx_x = -1;
-                        mouse_pindx_y = -1;
-                    }
+                    bool new_pickup = false;
                     // is proper left mouse button down event
                     int mX = event.button.x;
                     int mY = event.button.y;
@@ -107,7 +106,21 @@ namespace Frontends {
                         for (int x = 0; x < 8; x++) {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONDOWN) { // on down event, pickup piece that is hovered, if any
-                                if (board_buttons[y][x].hovered && game->get_cell(x, y).type != surena::Chess::PIECE_TYPE_NONE) {
+                                if (passive_pin && board_buttons[y][x].hovered) {
+                                    //TODO when placing a piece back onto itself to reset it, this will try to make that move
+                                    // if a pinned piece is set, instead MOVE it to the mousedown location
+                                    uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
+                                    std::vector<uint64_t> legal_moves = game->get_moves();
+                                    for (int i = 0; i < legal_moves.size(); i++) {
+                                        if (legal_moves[i] == target_move) {
+                                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
+                                            break;
+                                        }
+                                    }
+                                    // do not set new pickup here, so that the pin gets cleared automatically
+                                } else if (board_buttons[y][x].hovered && game->get_cell(x, y).type != surena::Chess::PIECE_TYPE_NONE && game->get_cell(x, y).player == game->player_to_move()) {
+                                    // new pickup
+                                    new_pickup = true;
                                     mouse_pindx_x = x;
                                     mouse_pindx_y = y;
                                 }
@@ -117,21 +130,33 @@ namespace Frontends {
                                     // dropped piece onto a square
                                     if (x == mouse_pindx_x && y == mouse_pindx_y) {
                                         // dropped back onto the picked up piece
-                                        passive_pin = true; //TODO if a passively pinned piece is dropped onto itself AGAIN, then reset the passive pin
+                                        passive_pin = true;
                                     } else {
                                         // dropped onto another square
-                                        //TODO
-                                        StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y)));
+                                        //TODO this code is getting hideous
+                                        uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
+                                        std::vector<uint64_t> legal_moves = game->get_moves();
+                                        for (int i = 0; i < legal_moves.size(); i++) {
+                                            if (legal_moves[i] == target_move) {
+                                                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                // reset pin idx after processing of a click
-                if (event.type == SDL_MOUSEBUTTONUP && !passive_pin) {
-                    mouse_pindx_x = -1;
-                    mouse_pindx_y = -1;
+                    if (event.type == SDL_MOUSEBUTTONDOWN && !new_pickup) {
+                        passive_pin = false;
+                        mouse_pindx_x = -1;
+                        mouse_pindx_y = -1;
+                    }
+                    // reset pin idx after processing of a click
+                    if (event.type == SDL_MOUSEBUTTONUP && !passive_pin) {
+                        mouse_pindx_x = -1;
+                        mouse_pindx_y = -1;
+                    }
                 }
             } break;
         }
@@ -154,6 +179,17 @@ namespace Frontends {
                 board_buttons[y][x].s = square_size;
                 board_buttons[y][x].update(mX, mY);
             }
+        }
+        //TODO should really cache these instead of loading them new every frame
+        move_map.clear();
+        std::vector<uint64_t> moves = game->get_moves();
+        for (int i = 0; i < moves.size(); i++) {
+            uint8_t m_from = (moves[i] >> 8) & 0xFF;
+            if (move_map.find(m_from) == move_map.end()) {
+                move_map.emplace(m_from, std::vector<uint8_t>{});
+            }
+            uint8_t m_to = moves[i] & 0xFF;
+            move_map.at(m_from).push_back(m_to);
         }
     }
 
@@ -198,6 +234,46 @@ namespace Frontends {
                 NVGpaint sprite_paint = nvgImagePattern(dc, base_x, base_y, square_size, square_size, 0, sprites[sprite_idx], sprite_alpha);
                 nvgFillPaint(dc, sprite_paint);
                 nvgFill(dc);
+            }
+        }
+        // render possible moves, if pinned piece exists
+        uint8_t m_from = (mouse_pindx_x<<4)|(mouse_pindx_y);
+        if (mouse_pindx_x >= 0 && move_map.find(m_from) != move_map.end()) {
+            std::vector<uint8_t> moves = move_map.at(m_from);
+            for (int i = 0; i < moves.size(); i++) {
+                int ix = (moves[i] >> 4) & 0x0F;
+                int iy = (moves[i] & 0x0F);
+                float base_x = ix * square_size;
+                float base_y = (7-iy) * square_size;
+                if (game->get_cell(ix, iy).type == surena::Chess::PIECE_TYPE_NONE) {
+                    // is a move to empty square
+                    nvgBeginPath(dc);
+                    nvgCircle(dc, base_x+square_size/2, base_y+square_size/2, square_size*0.15);
+                    nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                    nvgFill(dc);
+                } else {
+                    // is a capture
+                    float s = square_size*0.3;
+                    nvgBeginPath(dc);
+                    nvgMoveTo(dc, base_x, base_y);
+                    nvgLineTo(dc, base_x+s, base_y);
+                    nvgLineTo(dc, base_x, base_y+s);
+                    nvgClosePath(dc);
+                    nvgMoveTo(dc, base_x+square_size, base_y);
+                    nvgLineTo(dc, base_x+square_size-s, base_y);
+                    nvgLineTo(dc, base_x+square_size, base_y+s);
+                    nvgClosePath(dc);
+                    nvgMoveTo(dc, base_x, base_y+square_size);
+                    nvgLineTo(dc, base_x, base_y+square_size-s);
+                    nvgLineTo(dc, base_x+s, base_y+square_size);
+                    nvgClosePath(dc);
+                    nvgMoveTo(dc, base_x+square_size, base_y+square_size);
+                    nvgLineTo(dc, base_x+square_size-s, base_y+square_size);
+                    nvgLineTo(dc, base_x+square_size, base_y+square_size-s);
+                    nvgClosePath(dc);
+                    nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                    nvgFill(dc);
+                }
             }
         }
         nvgRestore(dc);
