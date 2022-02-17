@@ -113,6 +113,8 @@ namespace StateControl {
         delete frontend;
         delete game;
 
+        //TODO delete loaded font images
+
         nvgDeleteGL3(nanovg_ctx);
 
         ImGui_ImplOpenGL3_Shutdown();

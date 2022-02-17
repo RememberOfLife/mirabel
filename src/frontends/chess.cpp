@@ -20,6 +20,10 @@
 
 namespace Frontends {
 
+    void Chess::sbtn::update(float mx, float my) {
+        hovered = (mx >= x && mx <= x+s && my >= y && my <= y+s);
+    }
+
     Chess::Chess():
         game(NULL),
         engine(NULL)
@@ -46,10 +50,24 @@ namespace Frontends {
                 MetaGui::logf("#E chess: sprite loading failure #%d\n", i);
             }
         }
+        // setup buttons for drag and drop
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                board_buttons[y][x] = sbtn{
+                    static_cast<float>(x)*(square_size),
+                    (7*square_size)-static_cast<float>(y)*(square_size),
+                    square_size, false
+                };
+            }
+        }
     }
 
     Chess::~Chess()
-    {}
+    {
+        for (int i = 0; i < 12; i++) {
+            nvgDeleteImage(dc, sprites[i]);
+        }
+    }
 
     void Chess::set_game(surena::Game* new_game)
     {
@@ -61,34 +79,82 @@ namespace Frontends {
         engine = new_engine;
     }
 
-    /*
-    TODO
-    drag and drop behaviour:
-
-    static piece drag_piece;
-
-    on mouse down on a piece set it as drag_piece, also reset passively pinned piece
-    while drag_piece != NULL
-        draw possible moves for this piece, with small markers, also highlight the origin square of the piece
-        keep sprite of piece floating at the mouse location, transparently faded version stays on origin square
-    on mouse up while drag piece is set:
-        if the target square is the origin square of the piece, set it as passively pinned,
-            i.e. show its possible moves without requiring any mouse interaction
-        if the target square is not the origin:
-            enqueue move if target square is a legal move
-            reset drag piece otherwise
-
-    possibly cache available moves by piece, maybe even just a map, as to not require move gen every frame
-    */
-
     void Chess::process_event(SDL_Event event)
     {
-        
+        if (!game || game->player_to_move() == 0) {
+            // if no game, or game is done, don't process anything
+            return;
+        }
+        switch (event.type) {
+            case SDL_MOUSEMOTION: {
+                mx = event.motion.x;
+                my = event.motion.y;
+            } break;
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP: {
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    if (event.type == SDL_MOUSEBUTTONDOWN) {
+                        passive_pin = false;
+                        mouse_pindx_x = -1;
+                        mouse_pindx_y = -1;
+                    }
+                    // is proper left mouse button down event
+                    int mX = event.button.x;
+                    int mY = event.button.y;
+                    mX -= w_px/2-(8*square_size)/2;
+                    mY -= h_px/2-(8*square_size)/2;
+                    for (int y = 0; y < 8; y++) {
+                        for (int x = 0; x < 8; x++) {
+                            board_buttons[y][x].update(mX, mY);
+                            if (event.type == SDL_MOUSEBUTTONDOWN) { // on down event, pickup piece that is hovered, if any
+                                if (board_buttons[y][x].hovered && game->get_cell(x, y).type != surena::Chess::PIECE_TYPE_NONE) {
+                                    mouse_pindx_x = x;
+                                    mouse_pindx_y = y;
+                                }
+                            }
+                            if (event.type == SDL_MOUSEBUTTONUP) {
+                                if (board_buttons[y][x].hovered) {
+                                    // dropped piece onto a square
+                                    if (x == mouse_pindx_x && y == mouse_pindx_y) {
+                                        // dropped back onto the picked up piece
+                                        passive_pin = true; //TODO if a passively pinned piece is dropped onto itself AGAIN, then reset the passive pin
+                                    } else {
+                                        // dropped onto another square
+                                        //TODO
+                                        StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y)));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // reset pin idx after processing of a click
+                if (event.type == SDL_MOUSEBUTTONUP && !passive_pin) {
+                    mouse_pindx_x = -1;
+                    mouse_pindx_y = -1;
+                }
+            } break;
+        }
     }
 
     void Chess::update()
     {
-        
+        if (!game || game->player_to_move() == 0) {
+            return;
+        }
+        // set button hovered
+        int mX = mx;
+        int mY = my;
+        mX -= w_px/2-(8*square_size)/2;
+        mY -= h_px/2-(8*square_size)/2;
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                board_buttons[y][x].x = static_cast<float>(x)*(square_size);
+                board_buttons[y][x].y = (7*square_size)-static_cast<float>(y)*(square_size);
+                board_buttons[y][x].s = square_size;
+                board_buttons[y][x].update(mX, mY);
+            }
+        }
     }
 
     void Chess::render()
@@ -101,6 +167,7 @@ namespace Frontends {
         nvgTranslate(dc, w_px/2-(8*square_size)/2, h_px/2-(8*square_size)/2);
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
+                int iy = 7-y;
                 float base_x = x * square_size;
                 float base_y = y * square_size;
                 // draw base square
@@ -111,20 +178,39 @@ namespace Frontends {
                 if (!game) {
                     continue;
                 }
-                surena::Chess::piece piece_in_square = game->get_cell(x, (7-y));
+                surena::Chess::piece piece_in_square = game->get_cell(x, iy);
                 if (piece_in_square.player == surena::Chess::PLAYER_NONE) {
                     continue;
+                }
+                float sprite_alpha = 1;
+                if (x == mouse_pindx_x && iy == mouse_pindx_y) {
+                    sprite_alpha = 0.5;
+                    // render green underlay under the picked up piece
+                    nvgBeginPath(dc);
+                    nvgRect(dc, base_x, base_y, square_size, square_size);
+                    nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                    nvgFill(dc);
                 }
                 // render the piece sprites
                 nvgBeginPath(dc);
                 nvgRect(dc, base_x, base_y, square_size, square_size);
                 int sprite_idx = piece_in_square.player*6-6+piece_in_square.type-1;
-                NVGpaint sprite_paint = nvgImagePattern(dc, base_x, base_y, square_size, square_size, 0, sprites[sprite_idx], 1);
+                NVGpaint sprite_paint = nvgImagePattern(dc, base_x, base_y, square_size, square_size, 0, sprites[sprite_idx], sprite_alpha);
                 nvgFillPaint(dc, sprite_paint);
                 nvgFill(dc);
             }
         }
         nvgRestore(dc);
+        // render pinned piece
+        if (mouse_pindx_x >= 0 && !passive_pin) {
+            surena::Chess::piece pinned_piece = game->get_cell(mouse_pindx_x, mouse_pindx_y);
+            nvgBeginPath(dc);
+            nvgRect(dc, mx-square_size/2, my-square_size/2, square_size, square_size);
+            int sprite_idx = pinned_piece.player*6-6+pinned_piece.type-1;
+            NVGpaint sprite_paint = nvgImagePattern(dc, mx-square_size/2, my-square_size/2, square_size, square_size, 0, sprites[sprite_idx], 1);
+            nvgFillPaint(dc, sprite_paint);
+            nvgFill(dc);
+        }
     }
 
     void Chess::draw_options()

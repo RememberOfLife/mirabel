@@ -26,6 +26,23 @@ namespace Frontends {
 
             int sprites[12];
 
+            struct sbtn {
+                float x;
+                float y;
+                float s;
+                bool hovered;
+                void update(float mx, float my);
+            };
+
+            int mx;
+            int my;
+
+            sbtn board_buttons[8][8]; // board_buttons[y][x] origin is bottom left
+
+            bool passive_pin = false;
+            int mouse_pindx_x = -1;
+            int mouse_pindx_y = -1;
+
         public:
 
             Chess();
