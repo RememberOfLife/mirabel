@@ -55,6 +55,7 @@ set(SOURCES
     src/games/tictactoe_ultimate.cpp
     src/games/tictactoe.cpp
 
+    src/meta_gui/confirm_exit.cpp
     src/meta_gui/engine.cpp
     src/meta_gui/frontend_config.cpp
     src/meta_gui/game_config.cpp

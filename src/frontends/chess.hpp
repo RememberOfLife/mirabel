@@ -18,6 +18,10 @@ namespace Frontends {
 
     class Chess : public Frontend {
 
+        //TODO hoevring over possible moves should highlight the targeted move square
+        //TODO display when you king is in check
+        //TODO draw arrows and markers with right click
+
         private:
 
             NVGcontext* dc;

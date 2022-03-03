@@ -140,6 +140,7 @@ namespace StateControl {
         int frame_work_ns = 0;
         const int frame_budget_ns = (1000 * 1000 * 1000)/60;
         bool quit = false;
+        bool try_quit = false;
         while (!quit) {
             // sleep for the dead time that would be wasted by rendering
             // reduces input lag considerably by waiting up to the last possible moment to gather input events before action+rendering
@@ -152,7 +153,7 @@ namespace StateControl {
                 // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
                     case EVENT_TYPE_EXIT: {
-                        quit = true;
+                        try_quit = true;
                         break;
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
@@ -216,12 +217,19 @@ namespace StateControl {
                 // pass event through imgui
                 ImGui_ImplSDL2_ProcessEvent(&event);
                 if (event.type == SDL_QUIT) {
-                    quit = true;
+                    try_quit = true;
                     break;
                 }
                 if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdl_window)) {
-                    quit = true;
+                    try_quit = true;
                     break;
+                }
+                // if the confirm_exit_modal is up, pass CTRL+Q quit hotkey anyway
+                if (MetaGui::show_confirm_exit_modal) {
+                    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
+                        try_quit = true;
+                        break;
+                    }
                 }
                 // imgui wants mouse: skip mouse events
                 if (imgui_io->WantCaptureMouse && (
@@ -263,7 +271,7 @@ namespace StateControl {
                         MetaGui::show_engine_window = !MetaGui::show_engine_window;
                     }
                     if (event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
-                        quit = true;
+                        try_quit = true;
                         break;
                     }
                 }
@@ -283,6 +291,22 @@ namespace StateControl {
                 }
                 frontend->process_event(event);
             }
+            // user is trying to quit
+            if (try_quit) {
+                if (!game) {
+                    quit = true;
+                    break;
+                } else {
+                    // game running, display quit modal, or quit if already shown
+                    if (MetaGui::show_confirm_exit_modal) {
+                        quit = true;
+                        break;
+                    } else {
+                        MetaGui::show_confirm_exit_modal = true;
+                    }
+                }
+                try_quit = false;
+            }
 
             // start the dear imgui frame
             ImGui_ImplOpenGL3_NewFrame();
@@ -290,7 +314,9 @@ namespace StateControl {
             ImGui::NewFrame();
 
             // show imgui windows
+            //TODO since all of these only show when the bool is set, it doesnt really need to be an argument, they can just check themselves
             if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+            if (MetaGui::show_confirm_exit_modal) MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
             if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
             if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
             if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);

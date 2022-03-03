@@ -5,6 +5,8 @@
 
 namespace MetaGui {
 
+    bool show_confirm_exit_modal = false;
+
     bool show_main_menu_bar = true;
 
     bool show_stats_overlay = false;

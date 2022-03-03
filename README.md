@@ -53,7 +53,10 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 
 ## todo
-chess backend -> chess frontend drag'n'drop -> chess frontend sounds -> chess frontend animations
+* add fullscreen toggle to main menu bar
+* add a button to disable metagui rendering (including main bar)
+* chess frontend sounds
+* chess frontend animations
 * change window title according to the loaded game and frontend
 * nanovg context when passed should not stretch under the main menu bar area of the screen
 * sound
@@ -79,6 +82,15 @@ chess backend -> chess frontend drag'n'drop -> chess frontend sounds -> chess fr
   * "hav+10" should set the size option to 10 for the havannah that matched
     * how to make sure non kwargs get into the right place?
   * "ttt.u/3d" matches tictactoe.ultimate/TicTacToe3D
+* reassignable keyboardshortcuts
+* offer some global color palette from the mirabel settings (can be edited there), every frontend may use this if it wants / if the user sets an option to do so
+* some sort of general config/settings meta storage which the application uses to store saved preferences for each game frontend and general etc..
+* launch a watchdog thread that periodically looks at the frametimes of the guithread, if it hangs for $timeout then kill the whole application
+* some sort of async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
+  * after enqueuing the gui gets back a struct where it can see if e.g. the object has finished constructing yet
+  * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
+  * also frontendwrappers could cache constructe frontends and just return the cached one, this would keep settings per runtime and reduce loading times after first loading
+* button for screenshots? unsure if this is a useful feature though
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already
@@ -102,6 +114,9 @@ chess backend -> chess frontend drag'n'drop -> chess frontend sounds -> chess fr
 * frontend should be able to easily change the cursor
 * file paths should have some sort of file manager menu
   * https://codereview.stackexchange.com/questions/194553/c-dear-imgui-file-browser
+* how to notify players if the other party has made a move in a correspondence game?
+  * maybe users can supply a webhook?
+* how to manage teams in games, i.e. multiple people playing for a shared reward?
 
 ### integration workflow
 * ==> offline ai play:
@@ -125,6 +140,7 @@ chess backend -> chess frontend drag'n'drop -> chess frontend sounds -> chess fr
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
+  * a lobby has a trusted/untrusted state, depending on if the game is loaded from a player or only stored in full on the server
 * ==> engine compatiblity
   * e.g. uci-engine is a wrapper for an executable that can be specified via an option
 * ==> animation within frontends?

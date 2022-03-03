@@ -37,7 +37,7 @@ namespace MetaGui {
             static uint64_t last_fps_update_ticks = 0;
             static float last_fps = 0;
             if (current_ticks != last_ticks) {
-                float current_fps = 1000 / (current_ticks - last_ticks);
+                float current_fps = 1000 / static_cast<float>(current_ticks - last_ticks);
                 running_fps = 0.5 * running_fps + 0.5 * current_fps;
                 if (current_ticks - last_fps_update_ticks > 256) {
                     last_fps_update_ticks = current_ticks;
@@ -46,6 +46,7 @@ namespace MetaGui {
                 last_ticks = current_ticks;
             }
             ImGui::Text("FPS: %.1f", last_fps);
+            //TODO latency to server in ms goes here, if connected
             if (ImGui::BeginPopupContextWindow())
             {
                 if (ImGui::MenuItem("Custom", NULL, corner == -1)) corner = -1;

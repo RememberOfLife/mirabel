@@ -7,6 +7,9 @@
 
 namespace MetaGui {
 
+    extern bool show_confirm_exit_modal;
+    void confirm_exit_modal(bool* p_open);
+
     extern bool show_main_menu_bar;
     void main_menu_bar(bool* p_open);
 
