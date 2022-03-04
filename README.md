@@ -57,7 +57,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * chess frontend sounds
 * chess frontend animations
 * change window title according to the loaded game and frontend
-* nanovg context when passed should not stretch under the main menu bar area of the screen
 * sound
   * sound menu for muting and volume
   * https://gist.github.com/armornick/3447121

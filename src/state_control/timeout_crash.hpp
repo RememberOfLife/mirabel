@@ -10,8 +10,8 @@ namespace StateControl {
 
         public:
 
-            uint64_t initial_sleep = 3000;
-            uint64_t timeout_ms = 3000;
+            int initial_delay = 3000;
+            int timeout_ms = 1000;
 
             std::thread running_thread;
             event_queue inbox;

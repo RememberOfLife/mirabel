@@ -14,28 +14,30 @@
 namespace StateControl {
 
     TimeoutCrashThread::TimeoutCrashThread()
-    {
-
-    }
+    {}
 
     TimeoutCrashThread::~TimeoutCrashThread()
-    {
-
-    }
+    {}
     
     void TimeoutCrashThread::loop()
     {
         main_ctrl->t_gui.inbox.push(event(EVENT_TYPE_HEARTBEAT));
-        std::this_thread::sleep_for(std::chrono::milliseconds(initial_sleep));
         bool quit = false;
+        const int interval_budget_ms = (1000)/30;
+        bool gui_heartbeat = false;
+        int gui_last_heartbeat_ms = -initial_delay;
+
         while (!quit) {
-            bool gui_heartbeat = false;
+            // check inbox approximately each 30fps frame, this provides responsive exit bahviour
+            std::this_thread::sleep_for(std::chrono::milliseconds(interval_budget_ms));
+
             for (event e = inbox.pop(); e.type != 0; e = inbox.pop()) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
                     case EVENT_TYPE_EXIT: {
                         quit = true;
+                        MetaGui::log("#I timeout_crash: exit\n");
                         break;
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
@@ -46,13 +48,21 @@ namespace StateControl {
                     } break;
                 }
             }
-            if (!gui_heartbeat) {
-                fprintf(stderr, "[FATAL] guithread failed to provide heartbeat\n");
-                exit(-1); // if the gui has not responded to out heartbeat in timeout ms, quit
+
+            if (gui_last_heartbeat_ms > timeout_ms) {
+                if (gui_heartbeat) {
+                    gui_last_heartbeat_ms -= timeout_ms;
+                    gui_heartbeat = false;
+                    // re-issue heartbeat to gui
+                    main_ctrl->t_gui.inbox.push(event(EVENT_TYPE_HEARTBEAT));
+                } else {
+                    // if the gui has not responded to out heartbeat in timeout ms, quit
+                    fprintf(stderr, "[FATAL] guithread failed to provide heartbeat\n");
+                    exit(-1);
+                }
             }
-            // issue heartbeat to gui
-            main_ctrl->t_gui.inbox.push(event(EVENT_TYPE_HEARTBEAT));
-            std::this_thread::sleep_for(std::chrono::milliseconds(timeout_ms));
+
+            gui_last_heartbeat_ms += interval_budget_ms;
         }
     }
     
