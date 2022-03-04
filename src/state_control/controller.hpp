@@ -1,4 +1,5 @@
 #include "state_control/guithread.hpp"
+#include "state_control/timeout_crash.hpp"
 
 namespace StateControl {
 
@@ -7,6 +8,7 @@ namespace StateControl {
         public:
 
             GuiThread t_gui;
+            TimeoutCrashThread t_timeout;
             // networkthread
             
             Controller();

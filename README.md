@@ -84,7 +84,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * reassignable keyboardshortcuts
 * offer some global color palette from the mirabel settings (can be edited there), every frontend may use this if it wants / if the user sets an option to do so
 * some sort of general config/settings meta storage which the application uses to store saved preferences for each game frontend and general etc..
-* launch a watchdog thread that periodically looks at the frametimes of the guithread, if it hangs for $timeout then kill the whole application
 * some sort of async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
   * after enqueuing the gui gets back a struct where it can see if e.g. the object has finished constructing yet
   * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
@@ -116,6 +115,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * how to notify players if the other party has made a move in a correspondence game?
   * maybe users can supply a webhook?
 * how to manage teams in games, i.e. multiple people playing for a shared reward?
+* how are guithread state variables exposed? e.g. where to store fullscreen and frame_work_time such that it can be read from the outside?
 
 ### integration workflow
 * ==> offline ai play:

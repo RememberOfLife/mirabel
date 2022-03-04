@@ -11,6 +11,7 @@ namespace StateControl {
 
     enum EVENT_TYPE {
         EVENT_TYPE_NULL = 0,
+        EVENT_TYPE_HEARTBEAT, //TODO this should be a universal thing taking a queue where to put the heartbeat response into, i.e. PING+PONG
         EVENT_TYPE_EXIT,
         EVENT_TYPE_GAME_LOAD,
         EVENT_TYPE_GAME_UNLOAD,

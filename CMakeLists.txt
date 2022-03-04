@@ -71,6 +71,7 @@ set(SOURCES
     src/state_control/event_queue.cpp
     src/state_control/event.cpp
     src/state_control/guithread.cpp
+    src/state_control/timeout_crash.cpp
     
     src/main.cpp
 )

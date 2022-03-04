@@ -1,3 +1,7 @@
+#include "state_control/event_queue.hpp"
+#include "state_control/event.hpp"
+#include "state_control/timeout_crash.hpp"
+
 #include "state_control/controller.hpp"
 
 namespace StateControl {
@@ -8,6 +12,9 @@ namespace StateControl {
     {}
 
     Controller::~Controller()
-    {}
+    {
+        t_timeout.inbox.push(EVENT_TYPE_EXIT);
+        t_timeout.join();
+    }
 
 }
