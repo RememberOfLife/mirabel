@@ -54,7 +54,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
 * add fullscreen toggle to main menu bar
-* add a button to disable metagui rendering (including main bar)
 * chess frontend sounds
 * chess frontend animations
 * change window title according to the loaded game and frontend

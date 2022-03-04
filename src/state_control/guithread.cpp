@@ -129,6 +129,7 @@ namespace StateControl {
     void GuiThread::loop()
     {
         //TODO cleanup statics here
+        bool show_hud = true;
         bool fullscreen = false;
         bool show_demo_window = false;
         float w_px = imgui_io->DisplaySize.x;
@@ -247,6 +248,9 @@ namespace StateControl {
                 }
                 // global window shortcuts
                 if (event.type == SDL_KEYDOWN) {
+                    if (event.key.keysym.sym == SDLK_F1) {
+                        show_hud = !show_hud;
+                    }
                     if (event.key.keysym.sym == SDLK_F3) {
                         MetaGui::show_stats_overlay = !MetaGui::show_stats_overlay;
                     }
@@ -315,14 +319,16 @@ namespace StateControl {
 
             // show imgui windows
             //TODO since all of these only show when the bool is set, it doesnt really need to be an argument, they can just check themselves
-            if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
-            if (MetaGui::show_confirm_exit_modal) MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
-            if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
-            if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
-            if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
-            if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
-            if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
-            if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
+            if (show_hud) {
+                if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+                if (MetaGui::show_confirm_exit_modal) MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
+                if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
+                if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
+                if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
+                if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
+                if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
+                if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
+            }
 
             //TODO put this in the sdl resize event, make a resize function on the context app
             // also this should use workarea and not entire viewport, as it otherwise slip under the main menu bar
