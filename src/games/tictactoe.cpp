@@ -6,7 +6,7 @@
 
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -71,7 +71,7 @@ namespace Games {
                             // modified state via imgui, clone+edit+load
                             surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                             game_clone->set_cell(ix, iy, imgui_check);
-                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
+                            StateControl::main_client->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                         }
                     }
                 }
@@ -99,7 +99,7 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_current_player(imgui_current);
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
+                    StateControl::main_client->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
                 // edit: result
                 int board_result = game->get_result();
@@ -125,7 +125,7 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_result(imgui_result);
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
+                    StateControl::main_client->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
             }
 

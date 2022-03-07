@@ -67,10 +67,11 @@ set(SOURCES
     src/prototype_util/direct_draw.cpp
     src/prototype_util/st_gui.cpp
 
-    src/state_control/controller.cpp
+    src/state_control/client.cpp
     src/state_control/event_queue.cpp
     src/state_control/event.cpp
     src/state_control/guithread.cpp
+    src/state_control/server.cpp
     src/state_control/timeout_crash.cpp
     
     src/main.cpp

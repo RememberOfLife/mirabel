@@ -14,7 +14,7 @@
 #include "games/game_catalogue.hpp"
 #include "games/chess.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -31,7 +31,7 @@ namespace Frontends {
         game(NULL),
         engine(NULL)
     {
-        dc = StateControl::main_ctrl->t_gui.nanovg_ctx;
+        dc = StateControl::main_client->t_gui.nanovg_ctx;
         // load sprites from res folder
         for (int i = 0; i < 12; i++) {
             sprites[i] = -1;
@@ -113,7 +113,7 @@ namespace Frontends {
                                     std::vector<uint64_t> legal_moves = game->get_moves();
                                     for (int i = 0; i < legal_moves.size(); i++) {
                                         if (legal_moves[i] == target_move) {
-                                            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
+                                            StateControl::main_client->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
                                             break;
                                         }
                                     }
@@ -138,7 +138,7 @@ namespace Frontends {
                                         std::vector<uint64_t> legal_moves = game->get_moves();
                                         for (int i = 0; i < legal_moves.size(); i++) {
                                             if (legal_moves[i] == target_move) {
-                                                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
+                                                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, target_move));
                                                 break;
                                             }
                                         }

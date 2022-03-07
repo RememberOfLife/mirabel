@@ -4,7 +4,7 @@
 
 #include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -42,7 +42,7 @@ namespace MetaGui {
         }
         if (!selected_few_compatible && selected_few_idx > 0) {
             selected_few_idx = 0;
-            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_UNLOAD));
+            StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_UNLOAD));
         }
         if (compatible_few.size() > 0 && selected_few_idx == 0) {
             selected_few_idx = compatible_few_idx[0];
@@ -56,15 +56,15 @@ namespace MetaGui {
         }
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_UNLOAD));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_FRONTEND_UNLOAD));
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_frontend_event(StateControl::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
         }
         if (disable_fronend_loader) {
@@ -108,7 +108,7 @@ namespace MetaGui {
         ImGui::Separator();
         if (fronend_running) {
             if (ImGui::CollapsingHeader("Graphics Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                StateControl::main_ctrl->t_gui.frontend->draw_options();
+                StateControl::main_client->t_gui.frontend->draw_options();
             }
         } else {
             ImGui::BeginDisabled();

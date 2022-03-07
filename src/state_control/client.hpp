@@ -3,7 +3,7 @@
 
 namespace StateControl {
 
-    class Controller {
+    class Client {
 
         public:
 
@@ -11,13 +11,13 @@ namespace StateControl {
             TimeoutCrashThread t_timeout;
             // networkthread
             
-            Controller();
-            ~Controller();
+            Client();
+            ~Client();
 
             // distribute function that takes an event and pushes it into all non null queues
 
     };
 
-    extern Controller* main_ctrl;
+    extern Client* main_client;
 
 }

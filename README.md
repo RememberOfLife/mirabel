@@ -88,6 +88,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
   * also frontendwrappers could cache constructe frontends and just return the cached one, this would keep settings per runtime and reduce loading times after first loading
 * button for screenshots? unsure if this is a useful feature though
+* create icon, show it on the empty (default) frontend
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already
@@ -104,6 +105,8 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
+* is the server a separate executable to the client?
+  * would enable building and using the server with just surena as a dependency
 * where to store state info for things like:
   * engine uci opts
   * engine best moves and other infor like nps etc..
@@ -127,6 +130,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * ==> server concept
   * server is a class inside the project, can also be hosted locally or spun up locally for the network
   * supports guest login, but also user accounts
+  * whole history rating
 * ==> manage games with randomness (also works for long term hidden state)
   * DEPENDS ON server architecture (also for offline play)
   * lobby setting, where the server auto decides random moves if set to host mode

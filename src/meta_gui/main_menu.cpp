@@ -2,7 +2,7 @@
 
 #include "imgui.h"
 
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -32,7 +32,7 @@ namespace MetaGui {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
-                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_EXIT));
+                    StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_EXIT));
                 }
                 ImGui::EndMenu();
             }

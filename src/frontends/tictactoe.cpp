@@ -9,7 +9,7 @@
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe.hpp"
 #include "prototype_util/direct_draw.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -75,7 +75,7 @@ namespace Frontends {
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && game->get_cell(x, y) == 0) {
                                     uint64_t move_code = x | (y<<2);
-                                    StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
+                                    StateControl::main_client->t_gui.inbox.push(StateControl::event::create_move_event(StateControl::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
                                 board_buttons[y][x].mousedown = false;
                             }

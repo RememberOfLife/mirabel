@@ -15,7 +15,7 @@
 #include "frontends/tictactoe.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/timeout_crash.hpp"
@@ -163,7 +163,7 @@ namespace StateControl {
                         break;
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
-                        main_ctrl->t_timeout.inbox.push(EVENT_TYPE_HEARTBEAT);
+                        main_client->t_timeout.inbox.push(EVENT_TYPE_HEARTBEAT);
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         delete game;

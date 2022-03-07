@@ -3,7 +3,7 @@
 #include "imgui.h"
 
 #include "engines/engine_catalogue.hpp"
-#include "state_control/controller.hpp"
+#include "state_control/client.hpp"
 #include "state_control/event_queue.hpp"
 #include "state_control/event.hpp"
 #include "state_control/guithread.hpp"
@@ -24,7 +24,7 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
-        bool engine_running = StateControl::main_ctrl->t_gui.engine != NULL;
+        bool engine_running = StateControl::main_client->t_gui.engine != NULL;
         // collect all engines compatible with the current base game variant
         std::vector<Engines::Engine*> compatible_engines{};
         std::vector<uint32_t> compatible_engines_idx{};
@@ -41,20 +41,20 @@ namespace MetaGui {
         }
         if (!selected_engine_compatible) {
             engine_idx = 0;
-            StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
+            StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
         }
         // draw engine restart/start/stop
         if (engine_running) {
             if (ImGui::Button("Restart")) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_ENGINE_UNLOAD));
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_ctrl->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
+                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_engine_event(StateControl::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
             }
         }
         // draw engine combo box, show only compatible ones
@@ -89,7 +89,7 @@ namespace MetaGui {
         }
         ImGui::Separator();
         if (engine_running) {
-            Engines::engine_catalogue[engine_idx]->draw_state_options(StateControl::main_ctrl->t_gui.engine);
+            Engines::engine_catalogue[engine_idx]->draw_state_options(StateControl::main_client->t_gui.engine);
         }
         ImGui::End();
     }
