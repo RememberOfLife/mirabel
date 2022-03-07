@@ -4,7 +4,7 @@ General purpose board game playing GUI.
 
 ## Future Features
 * Engine Integration
-* Online (Multiplayer) Play
+* Online/Offline Multiplayer
 
 
 additionally requires stb for compiling nanovg
@@ -104,7 +104,10 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
-* where to store state info from the engine like uci opts?
+* where to store state info for things like:
+  * engine uci opts
+  * engine best moves and other infor like nps etc..
+  * player names and other multiplayer info that comes in from the networkthread
 * what to do when engine is loaded but no game?
   * engine should not crash, just return garbage
 * localization

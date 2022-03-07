@@ -90,16 +90,16 @@ namespace Frontends {
         }
         switch (event.type) {
             case SDL_MOUSEMOTION: {
-                mx = event.motion.x;
-                my = event.motion.y;
+                mx = event.motion.x - x_px;
+                my = event.motion.y - y_px;
             } break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     bool new_pickup = false;
                     // is proper left mouse button down event
-                    int mX = event.button.x;
-                    int mY = event.button.y;
+                    int mX = event.button.x - x_px;
+                    int mY = event.button.y - y_px;
                     mX -= w_px/2-(8*square_size)/2;
                     mY -= h_px/2-(8*square_size)/2;
                     for (int y = 0; y < 8; y++) {

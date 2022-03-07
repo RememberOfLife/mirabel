@@ -89,8 +89,8 @@ namespace Frontends {
         }
         switch (event.type) {
             case SDL_MOUSEMOTION: {
-                mx = event.motion.x;
-                my = event.motion.y;
+                mx = event.motion.x - x_px;
+                my = event.motion.y - y_px;
             } break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
@@ -100,8 +100,8 @@ namespace Frontends {
                     const float fitting_hex_radius = button_size+padding;
                     const float flat_radius = sin(hex_angle) * fitting_hex_radius;
                     int board_sizer = (2*size-1);
-                    float mX = event.button.x;
-                    float mY = event.button.y;
+                    float mX = event.button.x - x_px;
+                    float mY = event.button.y - y_px;
                     mX -= w_px / 2;
                     mY -= h_px / 2;
                     if (!flat_top) {

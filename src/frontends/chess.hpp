@@ -18,9 +18,10 @@ namespace Frontends {
 
     class Chess : public Frontend {
 
-        //TODO hoevring over possible moves should highlight the targeted move square
+        //TODO hovering over possible moves should highlight the targeted move square
         //TODO display when you king is in check
         //TODO draw arrows and markers with right click
+        //TODO when trying to move another piece, while there already is a pinned piece, re-set the pin to the new target
 
         private:
 

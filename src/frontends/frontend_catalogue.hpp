@@ -16,6 +16,8 @@ namespace Frontends {
 
             float w_px;
             float h_px;
+            float x_px;
+            float y_px;
 
             virtual ~Frontend() = default;
 

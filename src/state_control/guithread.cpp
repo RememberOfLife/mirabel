@@ -134,8 +134,11 @@ namespace StateControl {
         bool show_hud = true;
         bool fullscreen = false;
         bool show_demo_window = false;
-        float w_px = imgui_io->DisplaySize.x;
-        float h_px = imgui_io->DisplaySize.y;
+        ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
+        float w_px = imgui_viewport->WorkSize.x;
+        float h_px = imgui_viewport->WorkSize.y;
+        float x_px = imgui_viewport->WorkPos.x;
+        float y_px = imgui_viewport->WorkPos.y;
 
         bool ctrl_left = false;
         bool ctrl_right = false;
@@ -337,11 +340,14 @@ namespace StateControl {
 
 
             //TODO put this in the sdl resize event, make a resize function on the context app
-            ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
             w_px = imgui_viewport->WorkSize.x;
             h_px = imgui_viewport->WorkSize.y;
+            x_px = imgui_viewport->WorkPos.x;
+            y_px = imgui_viewport->WorkPos.y;
             frontend->w_px = w_px;
             frontend->h_px = h_px;
+            frontend->x_px = x_px;
+            frontend->y_px = y_px;
             // rendering
             glViewport(0, 0, (int)w_px, (int)h_px);
             glMatrixMode(GL_PROJECTION);
