@@ -333,6 +333,7 @@ namespace StateControl {
                 if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
                 if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
                 if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
+                if (MetaGui::show_connection_window) MetaGui::connection_window(&MetaGui::show_connection_window);
                 if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
                 if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
                 if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);

@@ -32,6 +32,9 @@ namespace MetaGui {
     void log_unregister(uint32_t log_id);
     void log_clear(uint32_t log_id);
 
+    extern bool show_connection_window;
+    void connection_window(bool* p_open);
+
     extern bool show_game_config_window;
     void game_config_window(bool* p_open); // select game, parameter config (e.g. board size), game state editing
     extern uint32_t base_game_idx;
@@ -88,65 +91,5 @@ namespace MetaGui {
 
     // total match list
     // - overview over all matches played on the server
-
-    // connection window for connecting to ip and port
-    // struct TextFilters
-    // {
-    //     // return 0 (pass) if the character is allowed
-    //     static int FilterSanitizedTextLetters(ImGuiInputTextCallbackData* data)
-    //     {
-    //         if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", (char)data->EventChar))
-    //             return 0;
-    //         return 1;
-    //     }
-    //     static int FilterAddressLetters(ImGuiInputTextCallbackData* data)
-    //     {
-    //         if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:", (char)data->EventChar))
-    //             return 0;
-    //         return 1;
-    //     }
-    // };
-    // static void GUI_ShowConnectionWindow(bool* p_open)
-    // {
-    //     ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
-    //     ImGui::Begin("Connection", p_open, window_flags);
-    //     static bool connect = false;
-    //     if (connect) {
-    //         ImGui::BeginDisabled();
-    //     }
-    //     static char server_address[64] = "";
-    //     ImGui::InputText("server address", server_address, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterAddressLetters);
-    //     static char lobby_name[64] = "";
-    //     ImGui::InputText("lobby name", lobby_name, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterSanitizedTextLetters);
-    //     static bool hide_pw = true;
-    //     static char password[64] = "";
-    //     ImGuiInputTextFlags password_flags = ImGuiInputTextFlags_CallbackCharFilter;
-    //     if (hide_pw) {
-    //         password_flags |= ImGuiInputTextFlags_Password;
-    //     }
-    //     ImGui::InputText("password", password, 64, password_flags, TextFilters::FilterSanitizedTextLetters);
-    //     ImGui::SameLine();
-    //     if (ImGui::Button(hide_pw ? "Show" : "Hide")) {
-    //         hide_pw = !hide_pw;
-    //     }
-    //     static char username[64] = "";
-    //     ImGui::InputText("username", username, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterSanitizedTextLetters);
-    //     if (connect) {
-    //         ImGui::EndDisabled();
-    //     }
-    //     ImGui::Separator();
-    //     if (!connect) {
-    //         if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {
-    //             connect = true;
-    //         }
-    //     } else {
-    //         if (ImGui::Button("Cancel")) {
-    //             connect = false;
-    //         }
-    //         ImGui::SameLine();
-    //         ImGui::ProgressBar(0.5f, ImVec2(-1.0f, 0.0f));
-    //     }
-    //     ImGui::End();
-    // }
 
 } // namespace MetaGui

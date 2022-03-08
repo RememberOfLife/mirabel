@@ -49,6 +49,10 @@ http://www.cmyr.net/blog/gui-framework-ingredients.html
 https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
+networking wrapper:
+https://github.com/libsdl-org/SDL_net
+^ make sure this actually has tls, otherwise use another lib
+
 ## issues
 
 
@@ -105,6 +109,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * design networking structure for offline/online server play
   * SDL_net for tcp connections
+  * when connecting to the offline server, use some sort of passthrough for the networkthreads so the messages directly reach the in/out queues of the correspondant
+  * network adapter has outqueue for sending and inqueue pointer to the guithread inbox
+  * guithread also needs to hold some connection state for online/offline and network latency + heartbeat etc..
 * is the server a separate executable to the client?
   * would enable building and using the server with just surena as a dependency
 * where to store state info for things like:

@@ -7,8 +7,8 @@ namespace StateControl {
 
         public:
 
-            GuiThread t_gui;
             TimeoutCrashThread t_timeout;
+            GuiThread t_gui;
             // networkthread
             
             Client();

@@ -21,6 +21,9 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Logs", "F4", show_logs_window)) {
                     show_logs_window = !show_logs_window;
                 }
+                if (ImGui::MenuItem("Connection", NULL, show_connection_window)) {
+                    show_connection_window = !show_connection_window;
+                }
                 if (ImGui::MenuItem("Game Config", "CTRL + G", show_game_config_window)) {
                     show_game_config_window = !show_game_config_window;
                 }

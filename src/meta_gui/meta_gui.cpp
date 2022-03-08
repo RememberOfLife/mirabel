@@ -16,6 +16,8 @@ namespace MetaGui {
     const uint32_t LOG_DEFAULT_BUFFER_SIZE = 8192;
     const std::chrono::steady_clock::time_point LOG_START_TIME = std::chrono::steady_clock::now();
 
+    bool show_connection_window = false;
+
     bool show_game_config_window = false;
 
     bool show_frontend_config_window = false;
