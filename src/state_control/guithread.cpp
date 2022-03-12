@@ -4,6 +4,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
+#include "SDL_net.h"
 #include "nanovg_gl.h"
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
@@ -33,6 +34,12 @@ namespace StateControl {
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
         {
             fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
+            exit(-1);
+        }
+        // setup SDL_net
+        if ( SDLNet_Init() < 0 ) {
+            SDL_Quit();
+            fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(-1);
         }
 

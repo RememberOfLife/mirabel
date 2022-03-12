@@ -6,17 +6,20 @@ General purpose board game playing GUI.
 * Engine Integration
 * Online/Offline Multiplayer
 
-
-additionally requires stb for compiling nanovg
+## dependencies
+* SDL
+* imgui
+* nanovg (+ stb)
+* SDL_net
+* surena
 
 import blocks style:
 * all standard libs
-* imports from dependencies in order [SDL, nanovg, imgui, surena]
+* imports from dependencies in order [SDL, SDL_net, nanovg, imgui, surena]
 * imports from own src tree
 * import header for things implemented in this source file
 
-
-https://stackoverflow.com/questions/28395833/using-sdl2-with-cmake
+## misc
 
 // usual gameboard colors
 //rgb(201, 144, 73) "wood" normal
@@ -49,9 +52,8 @@ http://www.cmyr.net/blog/gui-framework-ingredients.html
 https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
-networking wrapper:
-https://github.com/libsdl-org/SDL_net
-^ make sure this actually has tls, otherwise use another lib
+ssl wrapper for the raw sockets:
+https://github.com/openssl/openssl
 
 ## issues
 

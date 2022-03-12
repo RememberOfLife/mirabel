@@ -9,6 +9,8 @@ find_package(OpenGL REQUIRED)
 find_package(SDL2 REQUIRED)
 
 set(INCLUDES
+    lib/SDL_net
+
     lib/nanovg/src
 
     lib/imgui/backends
@@ -20,6 +22,11 @@ set(INCLUDES
 )
 
 set(SOURCES
+    lib/SDL_net/SDLnet.c
+    lib/SDL_net/SDLnetselect.c
+    lib/SDL_net/SDLnetTCP.c
+    lib/SDL_net/SDLnetUDP.c
+
     lib/nanovg/src/nanovg_gl.c
     lib/nanovg/src/nanovg.c
 

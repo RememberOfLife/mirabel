@@ -1,6 +1,17 @@
 #pragma once
 
+#include <cstdint>
+
 namespace StateControl {
+
+    enum BP : uint8_t {
+        BP_NULL = 0,
+        BP_OK,
+        BP_NOK,
+        BP_PING,
+        BP_PONG,
+        BP_TEXT,
+    };
 
     class Server {
 

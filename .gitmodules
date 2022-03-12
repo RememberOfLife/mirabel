@@ -1,6 +1,12 @@
 [submodule "lib/imgui"]
 	path = lib/imgui
 	url = https://github.com/ocornut/imgui
+[submodule "lib/nanovg"]
+	path = lib/nanovg
+	url = https://github.com/inniyah/nanovg
+[submodule "lib/SDL_net"]
+	path = lib/SDL_net
+	url = https://github.com/libsdl-org/SDL_net
 [submodule "lib/surena"]
 	path = lib/surena
 	url = https://github.com/RememberOfLife/surena
