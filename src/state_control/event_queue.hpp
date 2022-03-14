@@ -1,5 +1,6 @@
 #pragma once
 
+#include <condition_variable>
 #include <deque>
 #include <mutex>
 
@@ -13,8 +14,9 @@ namespace StateControl {
     struct event_queue {
         std::mutex m;
         std::deque<event> q;
+        std::condition_variable cv;
         void push(event e);
-        event pop();
+        event pop(uint32_t timeout_ms = 0); // wait until timeout or event to pop available, non blocking if 0, returns NULL event if none available
         event peek();
         uint32_t size();
         void clear();

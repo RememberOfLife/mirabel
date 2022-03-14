@@ -114,6 +114,8 @@ set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-Wno-implicit-function-de
 target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 target_link_libraries(mirabel nanovg)
 
+# set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-Wall") # do after nanovg so we dont reenable warnings there
+
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 
 target_link_libraries(mirabel Threads::Threads)

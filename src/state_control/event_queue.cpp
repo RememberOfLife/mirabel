@@ -1,3 +1,7 @@
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <mutex>
 #include <cstdint>
 
 #include "meta_gui/meta_gui.hpp"
@@ -11,25 +15,35 @@ namespace StateControl {
         {
             m.lock();
             q.push_back(event(e));
+            cv.notify_all();
             m.unlock();
         }
 
-        event event_queue::pop()
+        event event_queue::pop(uint32_t timeout_ms)
         {
-            m.lock();
+            std::unique_lock<std::mutex> lock(m);
             if (q.size() == 0) {
-                m.unlock();
-                return event(EVENT_TYPE_NULL);
+                if (timeout_ms > 0) {
+                    cv.wait_for(lock, std::chrono::milliseconds(timeout_ms));
+                }
+                if (q.size() == 0) {
+                    // queue has no available events after timeout, return null event
+                    return event(EVENT_TYPE_NULL);
+                }
+                // go on to output an available event if one has become available
             }
             event r = event(q.front());
             q.pop_front();
-            m.unlock();
             return r;
         }
         
         event event_queue::peek()
         {
             m.lock();
+            if (q.size() == 0) {
+                m.unlock();
+                return event(EVENT_TYPE_NULL);
+            }
             event r = event(q.front());
             m.unlock();
             return r;

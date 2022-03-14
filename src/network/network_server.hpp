@@ -2,12 +2,13 @@
 
 #include "state_control/event_queue.hpp"
 
-#include "network/network_adapter.hpp"
-
 namespace Network {
 
-    class NetworkServer : public NetworkAdapter {
+    class NetworkServer {
         private:
+            StateControl::event_queue send_queue;
+            StateControl::event_queue* recv_queue;
+
             std::thread runner;
 
             //TODO the actual network socket
@@ -16,9 +17,9 @@ namespace Network {
             NetworkServer();
             ~NetworkServer();
 
-            void loop() override;
-            void start() override;
-            void join() override;
+            void loop();
+            void start();
+            void join();
     };
 
 }

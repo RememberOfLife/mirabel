@@ -1,20 +1,34 @@
+#include "SDL_net.h"
+
 #include "network/network_client.hpp"
 
 namespace Network {
 
-    void NetworkClient::loop()
+    NetworkClient::NetworkClient()
+    {
+        socketset = SDLNet_AllocSocketSet(1);
+    }
+
+    void NetworkClient::send_loop()
+    {
+        while(1) {}
+    }
+
+    void NetworkClient::recv_loop()
     {
         while(1) {}
     }
     
     void NetworkClient::start()
     {
-        runner = std::thread(&NetworkClient::loop, this);
+        send_runner = std::thread(&NetworkClient::send_loop, this);
+        recv_runner = std::thread(&NetworkClient::recv_loop, this);
     }
     
     void NetworkClient::join()
     {
-        runner.join();
+        send_runner.join();
+        recv_runner.join();
     }
     
 }

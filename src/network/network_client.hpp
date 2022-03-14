@@ -1,24 +1,31 @@
 #include <thread>
 
-#include "state_control/event_queue.hpp"
+#include "SDL_net.h"
 
-#include "network/network_adapter.hpp"
+#include "state_control/event_queue.hpp"
 
 namespace Network {
 
-    class NetworkClient : public NetworkAdapter {
+    class NetworkClient {
         private:
-            std::thread runner;
+            StateControl::event_queue send_queue;
+            StateControl::event_queue* recv_queue;
 
-            //TODO the actual network socket
+            std::thread send_runner;
+            std::thread recv_runner;
+
+            IPaddress server_ip;
+            TCPsocket socket = NULL;
+            SDLNet_SocketSet socketset = NULL;
 
         public:
             NetworkClient();
             ~NetworkClient();
 
-            void loop() override;
-            void start() override;
-            void join() override;
+            void send_loop();
+            void recv_loop();
+            void start();
+            void join();
     };
 
 }

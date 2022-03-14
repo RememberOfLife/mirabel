@@ -58,6 +58,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 ## todo
 * rename statecontrol to control
+* merge guithread into client
 * simple single lobby multiplayer protocol
 * make watchdog work with arbitrary queues and proper cond var
   * let there be one watchdog thread that knows multiple queues registered to it?
@@ -187,5 +188,4 @@ http://www.cmyr.net/blog/druid-dynamism.html
       * client/server has a sendqueue, set to networkadapters sendqueue, or client/server in offline passthrough
       * network adapter has one read and one write thread
     * all events contain all the necessary info, e.g. lobby ids etc
-    * ==> event_queue needs blocking wait for event or timeout
     * ==> when scheduling work from network events into server worker threads keep track who got which lobby the last time and give it to them the next time agains, makes for better caching
