@@ -1,4 +1,19 @@
 cmake_minimum_required(VERSION 3.18)
+set (CMAKE_CXX_STANDARD 11)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if(CMAKE_BUILD_TYPE EQUAL "RELEASE")
+    if(supported AND )
+        message(STATUS "IPO/LTO enabled")
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(STATUS "IPO/LTO not supported: <${error}>")
+    endif()
+else()
+    message(STATUS "IPO/LTO disabled in non-release build")
+endif()
+
 project(mirabel)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -7,6 +22,13 @@ find_package(Threads REQUIRED)
 find_package(OpenGL REQUIRED)
 
 find_package(SDL2 REQUIRED)
+
+find_package(OpenSSL REQUIRED)
+
+set(SOURCES_NANOVG
+    lib/nanovg/src/nanovg_gl.c
+    lib/nanovg/src/nanovg.c
+)
 
 set(INCLUDES
     lib/SDL_net
@@ -86,7 +108,11 @@ set(SOURCES
 )
 
 add_executable(mirabel ${SOURCES})
-target_compile_definitions(mirabel PUBLIC NANOVG_GL3)
+
+add_library(nanovg ${SOURCES_NANOVG})
+set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-Wno-implicit-function-declaration")
+target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
+target_link_libraries(mirabel nanovg)
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 
@@ -98,5 +124,7 @@ target_link_libraries(mirabel ${OPENGL_LIBRARIES})
 target_link_libraries(mirabel dl)
 include_directories(mirabel ${SDL2_INCLUDE_DIRS})
 target_link_libraries(mirabel ${SDL2_LIBRARIES})
+
+target_link_libraries(mirabel OpenSSL::SSL)
 
 set_target_properties(mirabel PROPERTIES EXPORT_COMPILE_COMMANDS true)
