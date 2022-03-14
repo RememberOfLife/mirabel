@@ -37,8 +37,8 @@ namespace Network {
     {
         send_queue.push(StateControl::event(StateControl::EVENT_TYPE_EXIT)); // stop send_runner
         // stop recv_runner
-        SDLNet_TCP_Close(socket);
         SDLNet_TCP_DelSocket(socketset, socket);
+        SDLNet_TCP_Close(socket);
         socket = NULL;
         send_runner.join(); // socket closed, join dead send_runner
         recv_runner.join(); // socket closed, join dead recv_runner
@@ -46,9 +46,12 @@ namespace Network {
 
     void NetworkClient::send_loop()
     {
+        uint32_t buffer_size = 1024;
+        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recylced buffer for outgoing data, if something requires more, alloc it specially
+        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
         // wait until event available
         bool quit = false;
-        while (!quit) {
+        while (!quit && socket != NULL) {
             StateControl::event e = send_queue.pop(UINT32_MAX);
             switch (e.type) {
                 case StateControl::EVENT_TYPE_NULL: {
@@ -61,17 +64,22 @@ namespace Network {
                 //TODO heartbeat
                 default: {
                     MetaGui::logf("#I networkclient: send event, type: %d\n", e.type);
+                    //TODO for now just sends the types of events
+                    *db_event_type = e.type;
+                    SDLNet_TCP_Send(socket, data_buffer, sizeof(StateControl::EVENT_TYPE));
                 } break;
             }
         }
+        free(data_buffer);
     }
 
     void NetworkClient::recv_loop()
     {
         uint32_t buffer_size = 1024;
         uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recylced buffer for incoming data
+        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
         while (socket != NULL) {
-            int ready = SDLNet_CheckSockets(socketset, 10); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
+            int ready = SDLNet_CheckSockets(socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
             if (ready == -1) {
                 break;
             }
@@ -82,10 +90,11 @@ namespace Network {
                     SDLNet_TCP_DelSocket(socketset, socket);
                     SDLNet_TCP_Close(socket);
                     socket = NULL;
+                    MetaGui::log("#W networkclient: connection closed unexpectedly\n");
                     break;
-                } else {
-                    // data received, switch on it
-
+                } else if (recv_len >= sizeof(StateControl::EVENT_TYPE)) {
+                    // at least event type data received, switch on it
+                    MetaGui::logf("#I networkclient: received event, type: %d\n", *db_event_type);
                 }
             }
         }

@@ -2,23 +2,20 @@
 
 #include <cstdint>
 
-namespace StateControl {
+#include "network/network_server.hpp"
+#include "state_control/guithread.hpp"
+#include "state_control/event_queue.hpp"
 
-    enum BP : uint8_t {
-        BP_NULL = 0,
-        BP_OK,
-        BP_NOK,
-        BP_PING,
-        BP_PONG,
-        BP_TEXT,
-    };
+namespace StateControl {
 
     class Server {
 
         public:
 
             //TimeoutCrashThread t_timeout;
-            // networkthread
+            event_queue inbox;
+            Network::NetworkServer* t_network = NULL;
+            event_queue* network_send_queue = NULL;
 
             Server(); //TODO this should probably take the argument if offline, i.e. no db, auto create single lobby and give all perms
             ~Server();

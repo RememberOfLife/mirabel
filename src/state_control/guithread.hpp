@@ -22,7 +22,6 @@ namespace StateControl {
             ImGuiIO* imgui_io;
             NVGcontext* nanovg_ctx;
 
-            std::thread running_thread;
             event_queue inbox;
 
             surena::Game* game;
@@ -32,9 +31,6 @@ namespace StateControl {
             GuiThread();
             ~GuiThread();
             void loop();
-
-            void start();
-            void join();
 
     };
 

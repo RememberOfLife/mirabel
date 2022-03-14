@@ -11,7 +11,7 @@
 
 namespace StateControl {
 
-    enum EVENT_TYPE {
+    enum EVENT_TYPE : uint32_t {
         // special events
         EVENT_TYPE_NULL = 0, // ignored event
         EVENT_TYPE_HEARTBEAT, //TODO this should be a universal thing taking a queue where to put the heartbeat response into, i.e. PING+PONG

@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
 
+#include "state_control/event.hpp"
+
 #include "state_control/server.hpp"
 
 namespace StateControl {
@@ -86,29 +88,34 @@ namespace StateControl {
                 TCPsocket incoming_sock;
                 incoming_sock = SDLNet_TCP_Accept(serve_sock);
                 if (incoming_sock != NULL) {
-                    uint8_t data = BP_OK;
+                    uint32_t data = EVENT_TYPE_NETWORK_PROTOCOL_OK;
                     if (the_conn.sock != NULL) {
                         // already have a conn, refuse new connection
-                        data = BP_NOK;
-                        SDLNet_TCP_Send(incoming_sock, &data, 1);
+                        data = EVENT_TYPE_NETWORK_PROTOCOL_NOK;
+                        SDLNet_TCP_Send(incoming_sock, &data, sizeof(StateControl::EVENT_TYPE));
                         SDLNet_TCP_Close(incoming_sock);
                         printf("refused new connection [%d]\n", connection_count++);
                     } else {
                         // accept incoming connection and place it in the connection slot
-                        SDLNet_TCP_Send(incoming_sock, &data, 1);
+                        SDLNet_TCP_Send(incoming_sock, &data, sizeof(StateControl::EVENT_TYPE));
                         the_conn.sock = incoming_sock;
                         the_conn.peer = *SDLNet_TCP_GetPeerAddress(incoming_sock);
                         SDLNet_TCP_AddSocket(socketset, the_conn.sock);
                         active_connection_id = connection_count;
                         printf("accepted new connection [%d]\n", connection_count++);
                     }
+                } else {
+                    fprintf(stderr, "[FATAL] server socket closed unexpectedly: %s\n", SDLNet_GetError());
+                    exit(1);
                 }
             }
 
             // check for anything new on client
             if (SDLNet_SocketReady(the_conn.sock)) {
                 uint8_t in_data[512]; // data buffer for incoming data
+                uint32_t* id_event_type = reinterpret_cast<uint32_t*>(in_data);
                 uint8_t out_data[512];
+                uint32_t* od_event_type = reinterpret_cast<uint32_t*>(out_data);
                 if ( SDLNet_TCP_Recv(the_conn.sock, in_data, 512) <= 0 ) {
                     // connection closed
                     printf("connection closed [%d]\n", active_connection_id);
@@ -116,20 +123,14 @@ namespace StateControl {
                     SDLNet_TCP_Close(the_conn.sock);
                     the_conn.sock = NULL;
                 } else {
-                    switch (in_data[0]) {
-                        case BP_PING: {
+                    switch (*id_event_type) {
+                        case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                             printf("received ping, sending pong\n");
-                            out_data[0] = BP_PONG;
-                            SDLNet_TCP_Send(the_conn.sock, out_data, 1);
-                        } break;
-                        case BP_TEXT: {
-                            in_data[511] = '\0'; // force a nullbyte at the end of the message
-                            printf("received text: %s\n", in_data+1);
-                            out_data[0] = BP_OK;
-                            SDLNet_TCP_Send(the_conn.sock, out_data, 1);
+                            *od_event_type = EVENT_TYPE_NETWORK_PROTOCOL_PONG;
+                            SDLNet_TCP_Send(the_conn.sock, out_data, sizeof(StateControl::EVENT_TYPE));
                         } break;
                         default: {
-                            printf("received unexpected packet type\n");
+                            printf("received unexpected packet type %d\n", *od_event_type);
                         } break;
                     }
                 }

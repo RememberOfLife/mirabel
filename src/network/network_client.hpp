@@ -12,8 +12,6 @@ namespace Network {
         private:
             std::thread send_runner;
             std::thread recv_runner;
-            // e.g. recv_runner exists automatically if there is no socket to listen on, then send runner spins it up and down
-            //TODO ^ is this legit?
 
             IPaddress server_ip;
             TCPsocket socket = NULL;

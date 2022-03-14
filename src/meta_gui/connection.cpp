@@ -92,7 +92,6 @@ namespace MetaGui {
         //REMOVE
         if (connected && ImGui::Button("PING")) {
             StateControl::main_client->network_send_queue->push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_PROTOCOL_PING));
-            // somehow this spams the log with net client send_runner receiving null events?!
         }
         //REMOVE
 
