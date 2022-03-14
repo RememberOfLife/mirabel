@@ -14,8 +14,8 @@
 namespace MetaGui {
 
     /*TODO FEATURES
+        - thread safety!!!
         - some way to save logs, possibly just also write debug log to std error
-        - thread safety?
         - make proper highlighting (log levels) with an enum (for the log function)
         - proper ringbuffer
             - buffer health display

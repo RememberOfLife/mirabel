@@ -1,4 +1,5 @@
 #include <cstddef>
+#include <memory>
 
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
@@ -14,23 +15,9 @@ namespace StateControl {
         type(type)
     {}
 
-    event::event(const event& e):
-        type(e.type)
+    event::event(const event& e)
     {
-        switch (e.type) {
-            case EVENT_TYPE_GAME_LOAD: {
-                game.game = e.game.game;
-            } break;
-            case EVENT_TYPE_GAME_MOVE: {
-                move.code = e.move.code;
-            } break;
-            case EVENT_TYPE_FRONTEND_LOAD: {
-                frontend.frontend = e.frontend.frontend;
-            } break;
-            case EVENT_TYPE_ENGINE_LOAD: {
-                engine.engine = e.engine.engine;
-            } break;
-        }
+        memcpy(this, &e, sizeof(event));
     }
 
     event event::create_game_event(uint32_t type, surena::Game *game)

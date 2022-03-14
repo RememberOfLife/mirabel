@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "SDL_net.h"
+
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 
@@ -10,17 +12,27 @@
 namespace StateControl {
 
     enum EVENT_TYPE {
+        // special events
         EVENT_TYPE_NULL = 0, // ignored event
         EVENT_TYPE_HEARTBEAT, //TODO this should be a universal thing taking a queue where to put the heartbeat response into, i.e. PING+PONG
         EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
+        // normal events
         EVENT_TYPE_GAME_LOAD,
         EVENT_TYPE_GAME_UNLOAD,
         EVENT_TYPE_GAME_MOVE,
         EVENT_TYPE_GAME_INTERNAL_UPDATE,
+        // client only events
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,
         EVENT_TYPE_ENGINE_LOAD,
         EVENT_TYPE_ENGINE_UNLOAD,
+        // networking events
+        EVENT_TYPE_NETWORK_ADAPTER_LOAD,
+        EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE,
+        EVENT_TYPE_NETWORK_PROTOCOL_OK,
+        EVENT_TYPE_NETWORK_PROTOCOL_NOK,
+        EVENT_TYPE_NETWORK_PROTOCOL_PING,
+        EVENT_TYPE_NETWORK_PROTOCOL_PONG,
     };
 
     struct game_event {

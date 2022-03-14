@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 
 #include "SDL_net.h"
@@ -8,24 +10,27 @@ namespace Network {
 
     class NetworkClient {
         private:
-            StateControl::event_queue send_queue;
-            StateControl::event_queue* recv_queue;
-
             std::thread send_runner;
             std::thread recv_runner;
+            // e.g. recv_runner exists automatically if there is no socket to listen on, then send runner spins it up and down
+            //TODO ^ is this legit?
 
             IPaddress server_ip;
             TCPsocket socket = NULL;
             SDLNet_SocketSet socketset = NULL;
 
         public:
+            StateControl::event_queue send_queue;
+            StateControl::event_queue* recv_queue;
+
             NetworkClient();
             ~NetworkClient();
 
+            bool open(const char* host_address);
+            void close();
+
             void send_loop();
             void recv_loop();
-            void start();
-            void join();
     };
 
 }

@@ -2,6 +2,16 @@
 
 namespace Network {
 
+    NetworkServer::NetworkServer()
+    {
+        
+    }
+
+    NetworkServer::~NetworkServer()
+    {
+        
+    }
+
     void NetworkServer::loop()
     {
         while(1) {}

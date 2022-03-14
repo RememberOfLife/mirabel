@@ -162,7 +162,7 @@ namespace StateControl {
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
 
-            for (event e = inbox.pop(); e.type != 0; e = inbox.pop()) {
+            for (event e = inbox.pop(); e.type != StateControl::EVENT_TYPE_NULL; e = inbox.pop()) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
@@ -220,6 +220,23 @@ namespace StateControl {
                         frontend->set_engine(NULL);
                         delete engine;
                         engine = NULL;
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
+                        // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
+                        if (main_client->t_network != NULL) {
+                            // have to check if it actually still exists, might have deconstructed already if connection was refused
+                            StateControl::main_client->network_send_queue = &main_client->t_network->send_queue;
+                        }
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
+                        // network adapter died or closed, reset it
+                        if (main_client->t_network == NULL) {
+                            break; // closed properly, don't do anything 
+                        }
+                        main_client->t_network->close();
+                        delete main_client->t_network;
+                        main_client->t_network = NULL;
+                        main_client->network_send_queue = NULL;
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unknown event, type: %d\n", e.type);

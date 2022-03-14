@@ -31,7 +31,7 @@ namespace StateControl {
             // check inbox approximately each 30fps frame, this provides responsive exit bahviour
             std::this_thread::sleep_for(std::chrono::milliseconds(interval_budget_ms));
 
-            for (event e = inbox.pop(); e.type != 0; e = inbox.pop()) {
+            for (event e = inbox.pop(); e.type != StateControl::EVENT_TYPE_NULL; e = inbox.pop()) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {

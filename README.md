@@ -57,6 +57,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 
 
 ## todo
+* highest prio, make the meta gui logger threadsafe
 * rename statecontrol to control
 * merge guithread into client
 * simple single lobby multiplayer protocol

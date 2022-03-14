@@ -1,3 +1,5 @@
+#pragma once
+
 #include <thread>
 
 #include "state_control/event_queue.hpp"

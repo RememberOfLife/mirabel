@@ -9,6 +9,9 @@ namespace StateControl {
 
     //TODO all networking code here will eventually move to the networking adapter
 
+    static uint32_t connection_count = 0;
+    static uint32_t active_connection_id = 0;
+
     static uint16_t server_port = 61801;
     static IPaddress server_ip;
     static TCPsocket serve_sock = NULL;
@@ -89,14 +92,15 @@ namespace StateControl {
                         data = BP_NOK;
                         SDLNet_TCP_Send(incoming_sock, &data, 1);
                         SDLNet_TCP_Close(incoming_sock);
-                        printf("refused new connection\n");
+                        printf("refused new connection [%d]\n", connection_count++);
                     } else {
                         // accept incoming connection and place it in the connection slot
                         SDLNet_TCP_Send(incoming_sock, &data, 1);
                         the_conn.sock = incoming_sock;
                         the_conn.peer = *SDLNet_TCP_GetPeerAddress(incoming_sock);
                         SDLNet_TCP_AddSocket(socketset, the_conn.sock);
-                        printf("accepted new connection\n");
+                        active_connection_id = connection_count;
+                        printf("accepted new connection [%d]\n", connection_count++);
                     }
                 }
             }
@@ -107,7 +111,7 @@ namespace StateControl {
                 uint8_t out_data[512];
                 if ( SDLNet_TCP_Recv(the_conn.sock, in_data, 512) <= 0 ) {
                     // connection closed
-                    printf("connection closed\n");
+                    printf("connection closed [%d]\n", active_connection_id);
                     SDLNet_TCP_DelSocket(socketset, the_conn.sock);
                     SDLNet_TCP_Close(the_conn.sock);
                     the_conn.sock = NULL;
