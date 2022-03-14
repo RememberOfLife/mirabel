@@ -15,7 +15,7 @@ namespace MetaGui {
 
     //REMOVE
     using StateControl::BP;
-    static IPaddress server_ip = {INADDR_ANY, 61801};
+    static IPaddress server_ip;
     static TCPsocket my_sock = NULL;
     static SDLNet_SocketSet socketset = SDLNet_AllocSocketSet(1);
     static char* current_message = (char*)malloc(512);

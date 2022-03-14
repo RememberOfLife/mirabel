@@ -58,7 +58,7 @@ namespace StateControl {
                 } else {
                     // if the gui has not responded to out heartbeat in timeout ms, quit
                     fprintf(stderr, "[FATAL] guithread failed to provide heartbeat\n");
-                    exit(-1);
+                    exit(1);
                 }
             }
 
@@ -69,12 +69,12 @@ namespace StateControl {
 
     void TimeoutCrashThread::start()
     {
-        running_thread = std::thread(&TimeoutCrashThread::loop, this);
+        runner = std::thread(&TimeoutCrashThread::loop, this);
     }
     
     void TimeoutCrashThread::join()
     {
-        running_thread.join();
+        runner.join();
     }
     
 

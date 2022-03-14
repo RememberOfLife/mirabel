@@ -49,9 +49,6 @@ set(SOURCES
     lib/SDL_net/SDLnetTCP.c
     lib/SDL_net/SDLnetUDP.c
 
-    lib/nanovg/src/nanovg_gl.c
-    lib/nanovg/src/nanovg.c
-
     lib/imgui/backends/imgui_impl_opengl3.cpp
     lib/imgui/backends/imgui_impl_sdl.cpp
     lib/imgui/imgui_demo.cpp
@@ -93,6 +90,9 @@ set(SOURCES
     src/meta_gui/main_menu.cpp
     src/meta_gui/meta_gui.cpp
     src/meta_gui/stats.cpp
+
+    src/network/network_client.cpp
+    src/network/network_server.cpp
 
     src/prototype_util/direct_draw.cpp
     src/prototype_util/st_gui.cpp

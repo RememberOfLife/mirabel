@@ -34,13 +34,13 @@ namespace StateControl {
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
         {
             fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
-            exit(-1);
+            exit(1);
         }
         // setup SDL_net
         if ( SDLNet_Init() < 0 ) {
             SDL_Quit();
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
-            exit(-1);
+            exit(1);
         }
 
         const char* glsl_version = "#version 130";
@@ -104,12 +104,12 @@ namespace StateControl {
         int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
         if (font_id0 < 0) {
             fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
-            exit(-1);
+            exit(1);
         }
         int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
         if (font_id1 < 0) {
             fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
-            exit(-1);
+            exit(1);
         }
 
         // init default context
@@ -132,6 +132,7 @@ namespace StateControl {
 
         SDL_GL_DeleteContext(sdl_glcontext);
         SDL_DestroyWindow(sdl_window);
+        SDLNet_Quit();
         SDL_Quit();
     }
 

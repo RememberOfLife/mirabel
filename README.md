@@ -7,7 +7,8 @@ General purpose board game playing GUI.
 * Online/Offline Multiplayer
 
 ## dependencies
-* SDL
+* SDL (+ OpenGL)
+* OpenSSL
 * imgui
 * nanovg (+ stb)
 * SDL_net
@@ -52,13 +53,17 @@ http://www.cmyr.net/blog/gui-framework-ingredients.html
 https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
-ssl wrapper for the raw sockets:
-https://github.com/openssl/openssl
-
 ## issues
 
 
 ## todo
+* rename statecontrol to control
+* simple single lobby multiplayer protocol
+* make watchdog work with arbitrary queues and proper cond var
+  * let there be one watchdog thread that knows multiple queues registered to it?
+  * or should every object that wants a watchdog create its own wtachdog runner?
+* make event queue a proper producer-consumer semaphore
+* better ai integration
 * add fullscreen toggle to main menu bar
 * chess frontend sounds
 * chess frontend animations
@@ -70,10 +75,11 @@ https://github.com/openssl/openssl
   * https://github.com/jakebesworth/Simple-SDL2-Audio
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
-* put nanovg in another cmake target to hide its impl warnings
-* put correct cpp standard version in the cmake
+* place stb in deps?
 
 ## ideas
+* clientconfig and serverconfig struct to hold things like the palette and configurable settings + their defaults
+* logging wrapper functions for the server so that the offline server logs into the corresponding metagui logger, but the standalone one logs to stdout
 * path to res folder shouldnt be hardcoded
 * maybe make the state editor something like a toggle?
   * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from
@@ -88,6 +94,7 @@ https://github.com/openssl/openssl
   * "ttt.u/3d" matches tictactoe.ultimate/TicTacToe3D
 * reassignable keyboardshortcuts
 * offer some global color palette from the mirabel settings (can be edited there), every frontend may use this if it wants / if the user sets an option to do so
+  * global dark theme toggle
 * some sort of general config/settings meta storage which the application uses to store saved preferences for each game frontend and general etc..
 * some sort of async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
   * after enqueuing the gui gets back a struct where it can see if e.g. the object has finished constructing yet
@@ -95,6 +102,8 @@ https://github.com/openssl/openssl
   * also frontendwrappers could cache constructe frontends and just return the cached one, this would keep settings per runtime and reduce loading times after first loading
 * button for screenshots? unsure if this is a useful feature though
 * create icon, show it on the empty (default) frontend
+* combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
+* semver for all the components
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already
@@ -109,13 +118,7 @@ https://github.com/openssl/openssl
   * is the history manager actually kept there? or in another place
     * could also send an event to set the displayed state
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
-* design networking structure for offline/online server play
-  * SDL_net for tcp connections
-  * when connecting to the offline server, use some sort of passthrough for the networkthreads so the messages directly reach the in/out queues of the correspondant
-  * network adapter has outqueue for sending and inqueue pointer to the guithread inbox
-  * guithread also needs to hold some connection state for online/offline and network latency + heartbeat etc..
-* is the server a separate executable to the client?
-  * would enable building and using the server with just surena as a dependency
+* should the server be a separate executable to the client?
 * where to store state info for things like:
   * engine uci opts
   * engine best moves and other infor like nps etc..
@@ -165,3 +168,24 @@ https://github.com/openssl/openssl
   * how to smooth the animation for self played moves, i.e. when the user drops a drag-and-drop piece onto its target square
     * normally the move_event is pushed AFTER the inbox event_queue is processed (in the sdl event queue for inputs)
     * that way the piece will be reset for one frame until it is processed in the next one
+    * FIX: do what lichess does, just dont animate drag-and-drop pieces and only animate pinned and enemy moves
+* ==> networking structure for offline/online server play
+  * when connecting to the offline server, use some sort of passthrough for the networkthreads so the messages directly reach the in/out queues of the correspondant
+  * network adapter has outqueue for sending and inqueue pointer to the guithread inbox
+  * guithread also needs to hold some connection state for online/offline and network latency + heartbeat etc..
+  * networkadapter is different for client vs server:
+    * client holds only the server connection socket
+      * update last_interaction_time every time socket action happens, if it didnt happen for some time, send heartbeat with appropriate timeout for closing
+    * server holds a potentially very large list of sockets that have connected to it
+      * every client_connection holds the info for the user behind it, if authn and or is guest, and ssl state
+      * when connections cant be increased to fit more users, remove inactive connections, then remove guests (but only if new conn is user), then refuse
+      * how to handle server side heartbeat? i.e. how to notice if a client has timed out
+        * hold a linked list of all client_connections and on incoming socket action update the last_interaction_time and move it to the back
+        * then every once in a while we only need to check from the front of the list to get the most stale connections and potentially cull them
+      * if required, the socket sets and their connections could also be multithreaded (e.g. 1 for server sock and workers for every N client socks)
+    * offline adapter passthrough
+      * client/server has a sendqueue, set to networkadapters sendqueue, or client/server in offline passthrough
+      * network adapter has one read and one write thread
+    * all events contain all the necessary info, e.g. lobby ids etc
+    * ==> event_queue needs blocking wait for event or timeout
+    * ==> when scheduling work from network events into server worker threads keep track who got which lobby the last time and give it to them the next time agains, makes for better caching

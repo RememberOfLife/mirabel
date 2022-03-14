@@ -15,7 +15,7 @@ namespace StateControl {
             int initial_delay = 3000;
             int timeout_ms = 1000;
 
-            std::thread running_thread;
+            std::thread runner;
             event_queue inbox;
 
             TimeoutCrashThread();
