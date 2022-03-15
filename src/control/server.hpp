@@ -3,10 +3,10 @@
 #include <cstdint>
 
 #include "network/network_server.hpp"
-#include "state_control/guithread.hpp"
-#include "state_control/event_queue.hpp"
+#include "control/guithread.hpp"
+#include "control/event_queue.hpp"
 
-namespace StateControl {
+namespace Control {
 
     class Server {
 

@@ -4,9 +4,9 @@
 #include <deque>
 #include <mutex>
 
-#include "state_control/event.hpp"
+#include "control/event.hpp"
 
-namespace StateControl {
+namespace Control {
 
     //TODO this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
     // make sure to move pushed and popped elements

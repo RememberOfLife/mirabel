@@ -9,9 +9,9 @@
 #include "surena/game.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
-#include "state_control/event_queue.hpp"
+#include "control/event_queue.hpp"
 
-namespace StateControl {
+namespace Control {
 
     class GuiThread {
 

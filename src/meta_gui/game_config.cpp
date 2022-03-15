@@ -4,10 +4,10 @@
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
-#include "state_control/client.hpp"
-#include "state_control/event_queue.hpp"
-#include "state_control/event.hpp"
-#include "state_control/guithread.hpp"
+#include "control/client.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
+#include "control/guithread.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -26,20 +26,20 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
-        bool game_running = (StateControl::main_client->t_gui.game != NULL);
+        bool game_running = (Control::main_client->t_gui.game != NULL);
         // draw game start,stop,restart
         // locks all pre loading input elements if game is running, stop is only available if running
         if (game_running) {
             if (ImGui::Button("Restart")) {
-                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                Control::main_client->t_gui.inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_GAME_UNLOAD));
+                Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_GAME_UNLOAD));
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_client->t_gui.inbox.push(StateControl::event::create_game_event(StateControl::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                Control::main_client->t_gui.inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
             }
         }
         if (game_running) {
@@ -99,7 +99,7 @@ namespace MetaGui {
         // draw internal state editor, only if a game is running
         if (game_running) {
             if (ImGui::CollapsingHeader("State Editor", ImGuiTreeNodeFlags_DefaultOpen)) {
-                Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(StateControl::main_client->t_gui.game);
+                Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(Control::main_client->t_gui.game);
             }
         } else {
             ImGui::BeginDisabled();

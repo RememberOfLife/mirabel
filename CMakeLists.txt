@@ -65,6 +65,13 @@ set(SOURCES
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/util/fast_prng.cpp
 
+    src/control/client.cpp
+    src/control/event_queue.cpp
+    src/control/event.cpp
+    src/control/guithread.cpp
+    src/control/server.cpp
+    src/control/timeout_crash.cpp
+
     src/engines/builtin_surena.cpp
     src/engines/engine_catalogue.cpp
 
@@ -96,13 +103,6 @@ set(SOURCES
 
     src/prototype_util/direct_draw.cpp
     src/prototype_util/st_gui.cpp
-
-    src/state_control/client.cpp
-    src/state_control/event_queue.cpp
-    src/state_control/event.cpp
-    src/state_control/guithread.cpp
-    src/state_control/server.cpp
-    src/state_control/timeout_crash.cpp
     
     src/main.cpp
 )

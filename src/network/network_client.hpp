@@ -5,7 +5,7 @@
 
 #include "SDL_net.h"
 
-#include "state_control/event_queue.hpp"
+#include "control/event_queue.hpp"
 
 namespace Network {
 
@@ -21,8 +21,8 @@ namespace Network {
             uint32_t client_id = 0;
 
         public:
-            StateControl::event_queue send_queue;
-            StateControl::event_queue* recv_queue;
+            Control::event_queue send_queue;
+            Control::event_queue* recv_queue;
 
             NetworkClient();
             ~NetworkClient();

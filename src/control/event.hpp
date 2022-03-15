@@ -9,7 +9,7 @@
 
 #include "frontends/frontend_catalogue.hpp"
 
-namespace StateControl {
+namespace Control {
 
     //TODO types of keepalive checks:
     // heartbeat = direct queue object holder alive check

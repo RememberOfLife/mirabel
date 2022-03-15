@@ -1,11 +1,11 @@
 #pragma once
 
 #include "network/network_client.hpp"
-#include "state_control/guithread.hpp"
-#include "state_control/event_queue.hpp"
-#include "state_control/timeout_crash.hpp"
+#include "control/guithread.hpp"
+#include "control/event_queue.hpp"
+#include "control/timeout_crash.hpp"
 
-namespace StateControl {
+namespace Control {
 
     class Client {
 

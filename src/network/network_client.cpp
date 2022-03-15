@@ -5,8 +5,8 @@
 #include "SDL_net.h"
 
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/event_queue.hpp"
-#include "state_control/event.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
 
 #include "network/network_client.hpp"
 
@@ -47,7 +47,7 @@ namespace Network {
 
     void NetworkClient::close()
     {
-        send_queue.push(StateControl::event(StateControl::EVENT_TYPE_EXIT)); // stop send_runner
+        send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
         // stop recv_runner
         SDLNet_TCP_DelSocket(socketset, socket);
         SDLNet_TCP_Close(socket);
@@ -66,12 +66,12 @@ namespace Network {
         // wait until event available
         bool quit = false;
         while (!quit && socket != NULL) {
-            StateControl::event e = send_queue.pop(UINT32_MAX);
+            Control::event e = send_queue.pop(UINT32_MAX);
             switch (e.type) {
-                case StateControl::EVENT_TYPE_NULL: {
+                case Control::EVENT_TYPE_NULL: {
                     MetaGui::log("#W networkclient: received impossible null event\n");
                 } break;
-                case StateControl::EVENT_TYPE_EXIT: {
+                case Control::EVENT_TYPE_EXIT: {
                     quit = true;
                     break;
                 } break;
@@ -81,7 +81,7 @@ namespace Network {
                     MetaGui::logf("#I networkclient: send event, type: %d\n", e.type);
                     *db_event_type = e.type;
                     *(db_event_type+1) = client_id;
-                    int send_len = sizeof(StateControl::event);
+                    int send_len = sizeof(Control::event);
                     int sent_len = SDLNet_TCP_Send(socket, data_buffer, send_len);
                     if (sent_len != send_len) {
                         MetaGui::log("#W networkclient: packet sending failed\n");
@@ -96,8 +96,7 @@ namespace Network {
     void NetworkClient::recv_loop()
     {
         uint32_t buffer_size = 1024;
-        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
-        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
+        uint8_t* data_buffer_base = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
 
         while (socket != NULL) {
             int ready = SDLNet_CheckSockets(socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
@@ -105,7 +104,7 @@ namespace Network {
                 break;
             }
             if (SDLNet_SocketReady(socket)) {
-                int recv_len = SDLNet_TCP_Recv(socket, data_buffer, buffer_size);
+                int recv_len = SDLNet_TCP_Recv(socket, data_buffer_base, buffer_size);
                 if (recv_len <= 0) {
                     // connection closed
                     SDLNet_TCP_DelSocket(socketset, socket);
@@ -113,25 +112,40 @@ namespace Network {
                     socket = NULL;
                     MetaGui::log("#W networkclient: connection closed unexpectedly\n");
                     break;
-                } else if (recv_len >= sizeof(StateControl::event)) {
-                    // at least event data received, switch on it
-                    switch (*db_event_type) {
-                        case StateControl::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
-                            client_id = *(db_event_type+1);
-                            MetaGui::logf("#I networkclient: assigned client id %d\n", client_id);
-                        } break;
-                        default: {
-                            //TODO universal packet->event decoding, then place it in the recv_queue
-                            MetaGui::logf("#I networkclient: received event, type: %d\n", *db_event_type);
-                        } break;
+                } else {
+                    // one call to recv may receive MULTIPLE packets at once, process them all
+                    uint8_t* data_buffer = data_buffer_base;
+                    while (true) {
+                        if (recv_len < sizeof(Control::event)) {
+                            MetaGui::logf("#W networkclient: discarding %d unusable bytes of received data\n", recv_len);
+                            break;
+                        }
+                        // at least one packet here, process it from data_buffer
+                        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
+                        // switch on type
+                        switch (*db_event_type) {
+                            case Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
+                                client_id = *(db_event_type+1);
+                                MetaGui::logf("#I networkclient: assigned client id %d\n", client_id);
+                            } break;
+                            default: {
+                                //TODO universal packet->event decoding, then place it in the recv_queue
+                                MetaGui::logf("#I networkclient: received event, type: %d\n", *db_event_type);
+                            } break;
+                        }
+                        data_buffer += sizeof(Control::event);
+                        recv_len -= sizeof(Control::event);
+                        if (recv_len == 0) {
+                            break;
+                        }
                     }
                 }
             }
         }
 
-        free(data_buffer);
+        free(data_buffer_base);
         // if the connection is closed, enqueue a connection closed event to ensure the gui resets its connection
-        recv_queue->push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
     }
     
 }

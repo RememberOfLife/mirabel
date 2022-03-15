@@ -6,9 +6,9 @@
 
 #include "meta_gui/meta_gui.hpp"
 
-#include "state_control/event_queue.hpp"
+#include "control/event_queue.hpp"
 
-namespace StateControl {
+namespace Control {
 
     
         void event_queue::push(event e)

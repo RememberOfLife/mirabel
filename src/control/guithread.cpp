@@ -16,14 +16,14 @@
 #include "frontends/tictactoe.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "state_control/client.hpp"
-#include "state_control/event.hpp"
-#include "state_control/event_queue.hpp"
-#include "state_control/timeout_crash.hpp"
+#include "control/client.hpp"
+#include "control/event.hpp"
+#include "control/event_queue.hpp"
+#include "control/timeout_crash.hpp"
 
-#include "state_control/guithread.hpp"
+#include "control/guithread.hpp"
 
-namespace StateControl {
+namespace Control {
 
     GuiThread::GuiThread():
         game(NULL),
@@ -162,7 +162,7 @@ namespace StateControl {
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
 
-            for (event e = inbox.pop(); e.type != StateControl::EVENT_TYPE_NULL; e = inbox.pop()) {
+            for (event e = inbox.pop(); e.type != Control::EVENT_TYPE_NULL; e = inbox.pop()) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
@@ -225,7 +225,7 @@ namespace StateControl {
                         // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
                         if (main_client->t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
-                            StateControl::main_client->network_send_queue = &(main_client->t_network->send_queue);
+                            Control::main_client->network_send_queue = &(main_client->t_network->send_queue);
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {

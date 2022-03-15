@@ -7,9 +7,9 @@
 #include "frontends/frontend_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 
-#include "state_control/event.hpp"
+#include "control/event.hpp"
 
-namespace StateControl {
+namespace Control {
 
     event::event(uint32_t type):
         type(type),

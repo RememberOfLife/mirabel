@@ -5,11 +5,11 @@
 #include "SDL_net.h"
 
 #include "network/network_server.hpp"
-#include "state_control/event.hpp"
+#include "control/event.hpp"
 
-#include "state_control/server.hpp"
+#include "control/server.hpp"
 
-namespace StateControl {
+namespace Control {
 
     //TODO all networking code here will eventually move to the networking adapter
 

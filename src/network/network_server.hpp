@@ -5,7 +5,7 @@
 
 #include "SDL_net.h"
 
-#include "state_control/event_queue.hpp"
+#include "control/event_queue.hpp"
 
 namespace Network {
 
@@ -39,8 +39,8 @@ namespace Network {
             //TODO doubly linked list for client activity
 
         public:
-            StateControl::event_queue send_queue;
-            StateControl::event_queue* recv_queue;
+            Control::event_queue send_queue;
+            Control::event_queue* recv_queue;
 
             NetworkServer();
             ~NetworkServer();

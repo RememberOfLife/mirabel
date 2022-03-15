@@ -1,10 +1,10 @@
-#include "state_control/event_queue.hpp"
-#include "state_control/event.hpp"
-#include "state_control/timeout_crash.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
+#include "control/timeout_crash.hpp"
 
-#include "state_control/client.hpp"
+#include "control/client.hpp"
 
-namespace StateControl {
+namespace Control {
 
     Client* main_client = NULL;
 

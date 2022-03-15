@@ -6,10 +6,10 @@
 #include "imgui.h"
 
 #include "network/network_client.hpp"
-#include "state_control/client.hpp"
-#include "state_control/event_queue.hpp"
-#include "state_control/event.hpp"
-#include "state_control/guithread.hpp"
+#include "control/client.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
+#include "control/guithread.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -49,18 +49,18 @@ namespace MetaGui {
             return;
         }
 
-        bool connected = (StateControl::main_client->network_send_queue != NULL);
+        bool connected = (Control::main_client->network_send_queue != NULL);
         if (connected) {
             if (ImGui::Button("Disconnect", ImVec2(-1.0f, 0.0f))) {
-                StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+                Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
             }
         } else {
             if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {
                 Network::NetworkClient* net_client = new Network::NetworkClient();
                 if (net_client->open(server_address, server_port)) {
-                    net_client->recv_queue = &StateControl::main_client->t_gui.inbox;
-                    StateControl::main_client->t_network = net_client;
-                    StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_ADAPTER_LOAD));
+                    net_client->recv_queue = &Control::main_client->t_gui.inbox;
+                    Control::main_client->t_network = net_client;
+                    Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_LOAD));
                 } else {
                     delete net_client;
                 }
@@ -91,7 +91,7 @@ namespace MetaGui {
 
         //REMOVE
         if (connected && ImGui::Button("PING")) {
-            StateControl::main_client->network_send_queue->push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_PROTOCOL_PING));
+            Control::main_client->network_send_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
         }
         //REMOVE
 

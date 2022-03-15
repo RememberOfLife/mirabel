@@ -5,8 +5,8 @@
 
 #include "SDL_net.h"
 
-#include "state_control/event_queue.hpp"
-#include "state_control/event.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
 
 #include "network/network_server.hpp"
 
@@ -67,7 +67,7 @@ namespace Network {
         SDLNet_TCP_DelSocket(server_socketset, server_socket);
         SDLNet_TCP_Close(server_socket);
         server_socket = NULL;
-        send_queue.push(StateControl::event(StateControl::EVENT_TYPE_EXIT)); // stop send_runner
+        send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
         // stop recv_runner
         for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
             TCPsocket* client_socket = &(client_connections[i].socket);
@@ -113,9 +113,9 @@ namespace Network {
                 }
                 if (connection_slot == NULL) {
                     // no slot available for new client connection, drop it
-                    *db_event_type = StateControl::EVENT_TYPE_NETWORK_PROTOCOL_NOK;
-                    int send_len = sizeof(StateControl::event);
-                    int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(StateControl::event));
+                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_NOK;
+                    int send_len = sizeof(Control::event);
+                    int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
                     if (sent_len != send_len) {
                         printf("[WARN] packet sending failed\n");
                     }
@@ -123,22 +123,20 @@ namespace Network {
                     printf("[INFO] refused new connection\n");
                 } else {
                     // slot available for new client, accept it
-                    *db_event_type = StateControl::EVENT_TYPE_NETWORK_PROTOCOL_OK;
+                    // send protocol ok
+                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_OK;
                     *(db_event_type+1) = 0;
-                    int send_len = sizeof(StateControl::event);
-                    int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(StateControl::event));
+                    int send_len = sizeof(Control::event);
+                    int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
                     if (sent_len != send_len) {
                         printf("[WARN] packet sending failed\n");
                     }
-                    //BUG somehow this second packet doesnt come through
-                    //FIXME use event for now
-                    send_queue.push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET, connection_id));
-                    // *db_event_type = StateControl::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
-                    // *(db_event_type+1) = connection_id;
-                    // sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(StateControl::event));
-                    // if (sent_len != send_len) {
-                    //     printf("[WARN] packet sending failed\n");
-                    // }
+                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
+                    *(db_event_type+1) = connection_id;
+                    sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
+                    if (sent_len != send_len) {
+                        printf("[WARN] packet sending failed\n");
+                    }
                     connection_slot->socket = incoming_socket;
                     connection_slot->peer = *SDLNet_TCP_GetPeerAddress(incoming_socket);
                     connection_slot->client_id = connection_id;
@@ -161,12 +159,12 @@ namespace Network {
         // wait until event available
         bool quit = false;
         while (!quit) {
-            StateControl::event e = send_queue.pop(UINT32_MAX);
+            Control::event e = send_queue.pop(UINT32_MAX);
             switch (e.type) {
-                case StateControl::EVENT_TYPE_NULL: {
+                case Control::EVENT_TYPE_NULL: {
                     printf("[WARN] received impossible null event\n");
                 } break;
-                case StateControl::EVENT_TYPE_EXIT: {
+                case Control::EVENT_TYPE_EXIT: {
                     quit = true;
                     break;
                 } break;
@@ -187,7 +185,7 @@ namespace Network {
                     }
                     *db_event_type = e.type;
                     *(db_event_type+1) = e.client_id;
-                    int send_len = sizeof(StateControl::event);
+                    int send_len = sizeof(Control::event);
                     int sent_len = SDLNet_TCP_Send(target_client->socket, data_buffer, send_len);
                     if (sent_len != send_len) {
                         printf("[WARN] packet sending failed\n");
@@ -202,8 +200,8 @@ namespace Network {
     void NetworkServer::recv_loop()
     {
         uint32_t buffer_size = 1024;
-        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
-        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
+        uint8_t* data_buffer_base = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
+        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer_base);
 
         while (true) {
             int ready = SDLNet_CheckSockets(client_socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
@@ -218,7 +216,7 @@ namespace Network {
                 ready_client = &(client_connections[i]);
 
                 // handle data for the ready_client
-                int recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer, buffer_size);
+                int recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer_base, buffer_size);
                 if (recv_len <= 0) {
                     // connection closed
                     SDLNet_TCP_DelSocket(client_socketset, ready_client->socket);
@@ -226,28 +224,44 @@ namespace Network {
                     printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
                     ready_client->socket = NULL;
                     ready_client->client_id = 0;
-                } else if (recv_len >= sizeof(StateControl::event)) {
-                    // at least event type data received, switch on it
-                    //TODO universal packet->event decoding, then place it in the recv_queue
-                    printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, *db_event_type);
+                } else {
+                    // one call to recv may receive MULTIPLE packets at once, process them all
+                    uint8_t* data_buffer = data_buffer_base;
+                    while (true) {
+                        if (recv_len < sizeof(Control::event)) {
+                            printf("[WARN] discarding %d unusable bytes of received data\n", recv_len);
+                            break;
+                        }
+                        // at least one packet here, process it from data_buffer
+                        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
+                        
+                        // at least event type data received, switch on it
+                        //TODO universal packet->event decoding, then place it in the recv_queue
+                        printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, *db_event_type);
 
-                    if (*(db_event_type+1) != ready_client->client_id) {
-                        printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, *(db_event_type+1));
+                        if (*(db_event_type+1) != ready_client->client_id) {
+                            printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, *(db_event_type+1));
+                        }
+
+                        //REMOVE for testing answer ping with pong
+                        if (*db_event_type == Control::EVENT_TYPE_NETWORK_PROTOCOL_PING) {
+                            printf("[DEBUG] ping from client sending pong\n");
+                            *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG;
+                            SDLNet_TCP_Send(ready_client->socket, data_buffer, sizeof(Control::event));
+                        }
+
+                        data_buffer += sizeof(Control::event);
+                        recv_len -= sizeof(Control::event);
+                        if (recv_len == 0) {
+                            break;
+                        }
                     }
-
-                    //REMOVE for testing answer ping with pong
-                    if (*db_event_type == StateControl::EVENT_TYPE_NETWORK_PROTOCOL_PING) {
-                        printf("[DEBUG] ping from client sending pong\n");
-                        *db_event_type = StateControl::EVENT_TYPE_NETWORK_PROTOCOL_PONG;
-                        SDLNet_TCP_Send(ready_client->socket, data_buffer, sizeof(StateControl::event));
-                    }
-
                 }
 
             }
         }
 
-        free(data_buffer);
+        free(data_buffer_base);
         //TODO does anyone need to know that the recv_loop closed?
     }
 
