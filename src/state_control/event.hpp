@@ -11,6 +11,11 @@
 
 namespace StateControl {
 
+    //TODO types of keepalive checks:
+    // heartbeat = direct queue object holder alive check
+    // protocol ping just pings the connected network adapter, do not place in recv_queue
+    // adapter ping pings into the recv_queue of the connected adapter, i.e. gets to the server main loop where protocol ping gets swallowed by the adapter
+
     enum EVENT_TYPE : uint32_t {
         // special events
         EVENT_TYPE_NULL = 0, // ignored event
@@ -27,12 +32,15 @@ namespace StateControl {
         EVENT_TYPE_ENGINE_LOAD,
         EVENT_TYPE_ENGINE_UNLOAD,
         // networking events
+        // adapter events work with adapter<->main_queue
+        // protocol events work with adapter<->adapter, they should not reach the main queue, and ignored if they do
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE,
         EVENT_TYPE_NETWORK_PROTOCOL_OK,
         EVENT_TYPE_NETWORK_PROTOCOL_NOK,
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
+        EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
     };
 
     struct game_event {
@@ -53,6 +61,7 @@ namespace StateControl {
 
     struct event {
         uint32_t type;
+        uint32_t client_id; //TODO is this really a user id, or more akin to a connection id?
         union {
             game_event game;
             move_event move;
@@ -60,6 +69,7 @@ namespace StateControl {
             engine_event engine;
         };
         event(uint32_t type);
+        event(uint32_t type, uint32_t client_id);
         event(const event& e);
         static event create_game_event(uint32_t type, surena::Game* game);
         static event create_move_event(uint32_t type, uint64_t code);

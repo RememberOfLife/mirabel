@@ -1,5 +1,5 @@
 #include <cstddef>
-#include <memory>
+#include <cstdlib>
 
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
@@ -12,7 +12,13 @@
 namespace StateControl {
 
     event::event(uint32_t type):
-        type(type)
+        type(type),
+        client_id(0)
+    {}
+
+    event::event(uint32_t type, uint32_t client_id):
+        type(type),
+        client_id(client_id)
     {}
 
     event::event(const event& e)

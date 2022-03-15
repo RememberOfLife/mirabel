@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <thread>
 
 #include "SDL_net.h"
@@ -17,6 +18,8 @@ namespace Network {
             TCPsocket socket = NULL;
             SDLNet_SocketSet socketset = NULL;
 
+            uint32_t client_id = 0;
+
         public:
             StateControl::event_queue send_queue;
             StateControl::event_queue* recv_queue;
@@ -24,7 +27,7 @@ namespace Network {
             NetworkClient();
             ~NetworkClient();
 
-            bool open(const char* host_address);
+            bool open(const char* host_address, uint16_t host_port);
             void close();
 
             void send_loop();

@@ -225,7 +225,7 @@ namespace StateControl {
                         // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
                         if (main_client->t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
-                            StateControl::main_client->network_send_queue = &main_client->t_network->send_queue;
+                            StateControl::main_client->network_send_queue = &(main_client->t_network->send_queue);
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
@@ -239,7 +239,7 @@ namespace StateControl {
                         main_client->network_send_queue = NULL;
                     } break;
                     default: {
-                        MetaGui::logf("#W guithread: received unknown event, type: %d\n", e.type);
+                        MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);
                     } break;
                 }
             }

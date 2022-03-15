@@ -1,5 +1,5 @@
 #include <chrono>
-#include <stdio.h>
+#include <cstdio>
 #include <thread>
 
 #include "meta_gui/meta_gui.hpp"

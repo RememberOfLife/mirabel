@@ -1,8 +1,10 @@
 #include <cstdint>
+#include <cstdio>
 
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
 
+#include "network/network_server.hpp"
 #include "state_control/event.hpp"
 
 #include "state_control/server.hpp"
@@ -39,39 +41,24 @@ namespace StateControl {
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(1);
         }
-        socketset = SDLNet_AllocSocketSet(2);
-        if (socketset == NULL) {
-            fprintf(stderr, "[FATAL] could not create socket set: %s\n", SDLNet_GetError());
+        
+        Network::NetworkServer* net_server = new Network::NetworkServer();
+        if (!net_server->open(NULL, 61801)) {
+            fprintf(stderr, "[FATAL] networkserver failed to open\n");
             exit(1);
         }
-        if (SDLNet_ResolveHost(&server_ip, NULL, server_port) != 0) {
-            fprintf(stderr, "[FATAL] could not resolve server address\n");
-        }
-        uint8_t address_dec[4];
-        for (int i = 0; i < 4; i++) {
-            address_dec[i] = (server_ip.host>>(8*(3-i)))&0xFF;
-        }
-        printf("starting server on ip: %d.%d.%d.%d:%d\n", address_dec[0], address_dec[1], address_dec[2], address_dec[3], server_ip.port);
-        serve_sock = SDLNet_TCP_Open(&server_ip);
-        if (serve_sock == NULL) {
-            fprintf(stderr, "[FATAL] could not create server socket: %s\n", SDLNet_GetError());
-            exit(1);
-        }
-        SDLNet_TCP_AddSocket(socketset, serve_sock);
+        t_network = net_server;
+        net_server->recv_queue = &inbox;
+        inbox.push(event(EVENT_TYPE_NETWORK_ADAPTER_LOAD));
 
-        printf("init finished, listening..\n");
+        printf("[INFO] networkserver constructed\n");
     }
 
     Server::~Server()
     {
-        if (serve_sock != NULL) {
-            SDLNet_TCP_Close(serve_sock);
-            serve_sock = NULL;
-        }
-        if (socketset != NULL) {
-            SDLNet_FreeSocketSet(socketset);
-            socketset = NULL;
-        }
+        printf("[INFO] server shutting down\n");
+        t_network->close();
+        delete t_network;
         SDLNet_Quit();
         SDL_Quit();
     }
@@ -80,62 +67,28 @@ namespace StateControl {
     {
         bool quit = false;
         while (!quit) {
-            // wait until something happens on the sockets
-            SDLNet_CheckSockets(socketset, UINT32_MAX);
-
-            // handle new connection
-            if (SDLNet_SocketReady(serve_sock)) {
-                TCPsocket incoming_sock;
-                incoming_sock = SDLNet_TCP_Accept(serve_sock);
-                if (incoming_sock != NULL) {
-                    uint32_t data = EVENT_TYPE_NETWORK_PROTOCOL_OK;
-                    if (the_conn.sock != NULL) {
-                        // already have a conn, refuse new connection
-                        data = EVENT_TYPE_NETWORK_PROTOCOL_NOK;
-                        SDLNet_TCP_Send(incoming_sock, &data, sizeof(StateControl::EVENT_TYPE));
-                        SDLNet_TCP_Close(incoming_sock);
-                        printf("refused new connection [%d]\n", connection_count++);
-                    } else {
-                        // accept incoming connection and place it in the connection slot
-                        SDLNet_TCP_Send(incoming_sock, &data, sizeof(StateControl::EVENT_TYPE));
-                        the_conn.sock = incoming_sock;
-                        the_conn.peer = *SDLNet_TCP_GetPeerAddress(incoming_sock);
-                        SDLNet_TCP_AddSocket(socketset, the_conn.sock);
-                        active_connection_id = connection_count;
-                        printf("accepted new connection [%d]\n", connection_count++);
+            event e = inbox.pop(UINT32_MAX);
+            switch (e.type) {
+                case EVENT_TYPE_NULL: {
+                    printf("[WARN] received impossible null event\n");
+                } break;
+                case EVENT_TYPE_EXIT: {
+                    quit = true;
+                    break;
+                } break;
+                //TODO heartbeat
+                case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
+                    if (t_network != NULL) {
+                        network_send_queue = &(t_network->send_queue);
+                        printf("[INFO] networkserver adapter loaded\n");
                     }
-                } else {
-                    fprintf(stderr, "[FATAL] server socket closed unexpectedly: %s\n", SDLNet_GetError());
-                    exit(1);
-                }
-            }
-
-            // check for anything new on client
-            if (SDLNet_SocketReady(the_conn.sock)) {
-                uint8_t in_data[512]; // data buffer for incoming data
-                uint32_t* id_event_type = reinterpret_cast<uint32_t*>(in_data);
-                uint8_t out_data[512];
-                uint32_t* od_event_type = reinterpret_cast<uint32_t*>(out_data);
-                if ( SDLNet_TCP_Recv(the_conn.sock, in_data, 512) <= 0 ) {
-                    // connection closed
-                    printf("connection closed [%d]\n", active_connection_id);
-                    SDLNet_TCP_DelSocket(socketset, the_conn.sock);
-                    SDLNet_TCP_Close(the_conn.sock);
-                    the_conn.sock = NULL;
-                } else {
-                    switch (*id_event_type) {
-                        case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
-                            printf("received ping, sending pong\n");
-                            *od_event_type = EVENT_TYPE_NETWORK_PROTOCOL_PONG;
-                            SDLNet_TCP_Send(the_conn.sock, out_data, sizeof(StateControl::EVENT_TYPE));
-                        } break;
-                        default: {
-                            printf("received unexpected packet type %d\n", *od_event_type);
-                        } break;
-                    }
-                }
+                } break;
+                default: {
+                    printf("[WARN] received unexpeted event, type: %d\n", e.type);
+                } break;
             }
         }
+        printf("[INFO] server exiting main loop\n");
     }
 
 }

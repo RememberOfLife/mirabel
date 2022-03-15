@@ -36,7 +36,7 @@ namespace MetaGui {
     {
         //TODO put these in the metagui static space
         static char server_address[64] = "127.0.0.1"; //TODO for debugging purposes this is loopback
-        static char server_port[64] = "61801"; // default mirabel port
+        static uint16_t server_port = 61801; // default mirabel port
 
         ImVec2 center = ImGui::GetMainViewport()->GetCenter();
         ImGui::SetNextWindowPos(center, ImGuiCond_FirstUseEver, ImVec2(0.5f, 1.0f));
@@ -57,7 +57,7 @@ namespace MetaGui {
         } else {
             if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {
                 Network::NetworkClient* net_client = new Network::NetworkClient();
-                if (net_client->open(server_address)) {
+                if (net_client->open(server_address, server_port)) {
                     net_client->recv_queue = &StateControl::main_client->t_gui.inbox;
                     StateControl::main_client->t_network = net_client;
                     StateControl::main_client->t_gui.inbox.push(StateControl::event(StateControl::EVENT_TYPE_NETWORK_ADAPTER_LOAD));
@@ -70,7 +70,7 @@ namespace MetaGui {
             ImGui::BeginDisabled();
         }
         ImGui::InputText("address", server_address, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterAddressLetters);
-        ImGui::InputText("port", server_port, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterSanitizedTextLetters);
+        ImGui::InputScalar("port", ImGuiDataType_U16, &server_port);
         if (connected) {
             ImGui::EndDisabled();
         }
