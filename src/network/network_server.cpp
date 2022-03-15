@@ -189,13 +189,14 @@ namespace Network {
                     if (e.raw_data) {
                         if (e.raw_length > base_buffer_size-send_len) {
                             // if raw data is too big for our reusable buffer, malloc a fitting one
-                            data_buffer = (uint8_t*)malloc(e.raw_length);
+                            data_buffer = (uint8_t*)malloc(send_len+e.raw_length);
                         }
                         memcpy(data_buffer+send_len, e.raw_data, e.raw_length);
                         send_len += e.raw_length;
                     } else {
                         e.raw_length = 0; // not really necessary
                     }
+                    free(e.raw_data);
                     e.raw_data = NULL; // security: don't expose internal pointer to raw data
                     memcpy(data_buffer, &e, sizeof(Control::event));
                     int sent_len = SDLNet_TCP_Send(target_client->socket, data_buffer, send_len);
@@ -261,7 +262,7 @@ namespace Network {
                         // if there is a raw data payload attached to the event, get that too
                         if (recv_event.raw_length > 0) {
                             recv_event.raw_data = malloc(recv_event.raw_length);
-                            uint32_t raw_overhang = recv_event.raw_length - recv_len;
+                            int raw_overhang = static_cast<int>(recv_event.raw_length) - recv_len; //HACK type horror here
                             if (raw_overhang <= 0) {
                                 // whole raw data payload is captured in the remaining data buffer
                                 // there might even be more packets behind that
@@ -269,14 +270,30 @@ namespace Network {
                                 data_buffer += recv_event.raw_length;
                                 recv_len -= recv_event.raw_length;
                             } else {
-                                //TODO handle events that span multiple receive calls
-                                printf("[ERROR] lost packet data spanning multiple receive calls\n");
+                                // the current raw data segment is extending beyond the buffer we received
+                                // we want to read ONLY those bytes of the raw data segment we're missing
+                                // any events that may still be read after that will just fire SDLNet_CheckSockets 
+                                // they will be processed in the next buffer charge
+                                memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
+                                // malloc space for the overhang data, and read exactly that
+                                data_buffer = (uint8_t*)malloc(raw_overhang);
+                                int overhang_recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer, raw_overhang);
+                                if (overhang_recv_len != raw_overhang) {
+                                    // did not receive all the missing bytes, might be disastrous for the event
+                                    printf("[ERROR] received only %d bytes of overhang, expected %d, event might be corrupted\n", overhang_recv_len, raw_overhang);
+                                    //TODO drop event to null type?
+                                    memset(((uint8_t*)recv_event.raw_data)+recv_len+overhang_recv_len,
+                                        0x00, recv_event.raw_length-(recv_len+overhang_recv_len)); // at least zero out any left over bytes
+                                }
+                                mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
+                                free(data_buffer);
+                                recv_len = 0;
                             }
                         }
                         // switch on type
                         switch (recv_event.type) {
                             case Control::EVENT_TYPE_NETWORK_PROTOCOL_PING: {
-                                printf("[DEBUG] ping from client sending pong\n");
+                                printf("[INFO] ping from client sending pong\n");
                                 send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
                             } break;
                             default: {

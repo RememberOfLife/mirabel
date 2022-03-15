@@ -46,6 +46,7 @@ namespace Control {
     {
         memcpy(this, &other, sizeof(event));
         other.raw_data = NULL;
+            other.type = EVENT_TYPE_NULL;
     }
 
     // copy assign
@@ -71,6 +72,7 @@ namespace Control {
             free(this->raw_data);
             memcpy(this, &other, sizeof(event));
             other.raw_data = NULL;
+            other.type = EVENT_TYPE_NULL;
         }
         return *this;
     }
