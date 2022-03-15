@@ -4,9 +4,9 @@
 
 #include "SDL_net.h"
 
-#include "meta_gui/meta_gui.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
+#include "meta_gui/meta_gui.hpp"
 
 #include "network/network_client.hpp"
 

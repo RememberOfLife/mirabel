@@ -2,12 +2,11 @@
 
 #include "imgui.h"
 
-#include "frontends/frontend_catalogue.hpp"
-#include "games/game_catalogue.hpp"
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/guithread.hpp"
+#include "frontends/frontend_catalogue.hpp"
+#include "games/game_catalogue.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -42,7 +41,7 @@ namespace MetaGui {
         }
         if (!selected_few_compatible && selected_few_idx > 0) {
             selected_few_idx = 0;
-            Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+            Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
         }
         if (compatible_few.size() > 0 && selected_few_idx == 0) {
             selected_few_idx = compatible_few_idx[0];
@@ -56,15 +55,15 @@ namespace MetaGui {
         }
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
-                Control::main_client->t_gui.inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                Control::main_client->inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->t_gui.inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                Control::main_client->inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
         }
         if (disable_fronend_loader) {
@@ -108,7 +107,7 @@ namespace MetaGui {
         ImGui::Separator();
         if (fronend_running) {
             if (ImGui::CollapsingHeader("Graphics Options", ImGuiTreeNodeFlags_DefaultOpen)) {
-                Control::main_client->t_gui.frontend->draw_options();
+                Control::main_client->frontend->draw_options();
             }
         } else {
             ImGui::BeginDisabled();

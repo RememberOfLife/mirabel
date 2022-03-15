@@ -7,7 +7,6 @@
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/guithread.hpp"
 
 #include "control/timeout_crash.hpp"
 
@@ -21,7 +20,7 @@ namespace Control {
     
     void TimeoutCrashThread::loop()
     {
-        main_client->t_gui.inbox.push(event(EVENT_TYPE_HEARTBEAT));
+        main_client->inbox.push(event(EVENT_TYPE_HEARTBEAT));
         bool quit = false;
         const int interval_budget_ms = (1000)/30;
         bool gui_heartbeat = false;
@@ -54,7 +53,7 @@ namespace Control {
                     gui_last_heartbeat_ms -= timeout_ms;
                     gui_heartbeat = false;
                     // re-issue heartbeat to gui
-                    main_client->t_gui.inbox.push(event(EVENT_TYPE_HEARTBEAT));
+                    main_client->inbox.push(event(EVENT_TYPE_HEARTBEAT));
                 } else {
                     // if the gui has not responded to out heartbeat in timeout ms, quit
                     fprintf(stderr, "[FATAL] guithread failed to provide heartbeat\n");

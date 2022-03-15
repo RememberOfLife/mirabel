@@ -59,8 +59,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 ## todo
 * highest prio, make the meta gui logger threadsafe
 * networkclient: how to increase timeout of check socketset, server will have the same problem
-* rename statecontrol to control
-* merge guithread into client
 * simple single lobby multiplayer protocol
 * make watchdog work with arbitrary queues and proper cond var
   * let there be one watchdog thread that knows multiple queues registered to it?

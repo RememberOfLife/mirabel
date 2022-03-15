@@ -4,12 +4,11 @@
 #include "surena/games/tictactoe.hpp"
 #include "surena/game.hpp"
 
-#include "games/game_catalogue.hpp"
-#include "meta_gui/meta_gui.hpp"
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/guithread.hpp"
+#include "games/game_catalogue.hpp"
+#include "meta_gui/meta_gui.hpp"
 
 #include "games/tictactoe.hpp"
 
@@ -71,7 +70,7 @@ namespace Games {
                             // modified state via imgui, clone+edit+load
                             surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                             game_clone->set_cell(ix, iy, imgui_check);
-                            Control::main_client->t_gui.inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                            Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
                         }
                     }
                 }
@@ -99,7 +98,7 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_current_player(imgui_current);
-                    Control::main_client->t_gui.inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                    Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
                 // edit: result
                 int board_result = game->get_result();
@@ -125,7 +124,7 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_result(imgui_result);
-                    Control::main_client->t_gui.inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                    Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
                 }
             }
 

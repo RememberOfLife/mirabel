@@ -6,13 +6,12 @@
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 
-#include "games/game_catalogue.hpp"
-#include "games/tictactoe_ultimate.hpp"
-#include "prototype_util/direct_draw.hpp"
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/guithread.hpp"
+#include "games/game_catalogue.hpp"
+#include "games/tictactoe_ultimate.hpp"
+#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/tictactoe_ultimate.hpp"
 
@@ -87,7 +86,7 @@ namespace Frontends {
                                     if (event.type == SDL_MOUSEBUTTONUP) {
                                         if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && game->get_cell_local(ix, iy) == 0) {
                                             uint64_t move_code = ix | (iy<<4);
-                                            Control::main_client->t_gui.inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
+                                            Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
                                         }
                                         board_buttons[iy][ix].mousedown = false;
                                     }

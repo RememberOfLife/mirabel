@@ -1,9 +1,17 @@
 #pragma once
 
-#include "network/network_client.hpp"
-#include "control/guithread.hpp"
+#include <thread>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
+#include "imgui.h"
+#include "surena/game.hpp"
+
 #include "control/event_queue.hpp"
 #include "control/timeout_crash.hpp"
+#include "frontends/frontend_catalogue.hpp"
+#include "network/network_client.hpp"
 
 namespace Control {
 
@@ -12,15 +20,24 @@ namespace Control {
         public:
 
             TimeoutCrashThread t_timeout;
-            GuiThread t_gui;
             Network::NetworkClient* t_network = NULL;
             event_queue* network_send_queue = NULL;
             // offline server likely somewhere here
-            
+
+            SDL_Window* sdl_window;
+            SDL_GLContext sdl_glcontext;
+            ImGuiIO* imgui_io;
+            NVGcontext* nanovg_ctx;
+
+            event_queue inbox;
+
+            surena::Game* game = NULL;
+            Frontends::Frontend* frontend = NULL;
+            surena::Engine* engine = NULL;
+
             Client();
             ~Client();
-
-            // distribute function that takes an event and pushes it into all non null queues
+            void loop();
 
     };
 

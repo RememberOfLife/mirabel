@@ -4,8 +4,8 @@
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
 
-#include "network/network_server.hpp"
 #include "control/event.hpp"
+#include "network/network_server.hpp"
 
 #include "control/server.hpp"
 

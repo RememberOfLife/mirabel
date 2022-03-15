@@ -8,14 +8,13 @@
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 
+#include "control/client.hpp"
+#include "control/event_queue.hpp"
+#include "control/event.hpp"
 #include "games/game_catalogue.hpp"
 #include "games/havannah.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "prototype_util/direct_draw.hpp"
-#include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
-#include "control/guithread.hpp"
 
 #include "frontends/havannah.hpp"
 
@@ -116,7 +115,7 @@ namespace Frontends {
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 if (board_buttons[y*board_sizer+x].hovered && board_buttons[y*board_sizer+x].mousedown && game->get_cell(x, y) == 0) {
                                     uint64_t move_code = y | (x<<8);
-                                    Control::main_client->t_gui.inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
+                                    Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
                                 board_buttons[y*board_sizer+x].mousedown = false;
                             }

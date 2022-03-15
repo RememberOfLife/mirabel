@@ -5,7 +5,6 @@
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/guithread.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -35,7 +34,7 @@ namespace MetaGui {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
-                    Control::main_client->t_gui.inbox.push(Control::event(Control::EVENT_TYPE_EXIT));
+                    Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_EXIT));
                 }
                 ImGui::EndMenu();
             }

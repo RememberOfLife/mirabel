@@ -2,9 +2,8 @@
 
 #include <cstdint>
 
-#include "network/network_server.hpp"
-#include "control/guithread.hpp"
 #include "control/event_queue.hpp"
+#include "network/network_server.hpp"
 
 namespace Control {
 

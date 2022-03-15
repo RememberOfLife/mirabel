@@ -68,7 +68,6 @@ set(SOURCES
     src/control/client.cpp
     src/control/event_queue.cpp
     src/control/event.cpp
-    src/control/guithread.cpp
     src/control/server.cpp
     src/control/timeout_crash.cpp
 
