@@ -59,10 +59,9 @@ namespace Network {
 
     void NetworkClient::send_loop()
     {
-        uint32_t buffer_size = 1024;
-        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for outgoing data, if something requires more, alloc it specially
-        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
-        
+        uint32_t base_buffer_size = 1024;
+        uint8_t* data_buffer_base = (uint8_t*)malloc(base_buffer_size); // recycled buffer for outgoing data
+
         // wait until event available
         bool quit = false;
         while (!quit && socket != NULL) {
@@ -77,20 +76,35 @@ namespace Network {
                 } break;
                 //TODO heartbeat
                 default: {
-                    //TODO universal event->packet encoding
-                    MetaGui::logf("#I networkclient: send event, type: %d\n", e.type);
-                    *db_event_type = e.type;
-                    *(db_event_type+1) = client_id;
+                    // universal event->packet encoding, for POD events
+                    uint8_t* data_buffer = data_buffer_base;
+                    e.client_id = client_id;
                     int send_len = sizeof(Control::event);
+                    if (e.raw_data) {
+                        if (e.raw_length > base_buffer_size-send_len) {
+                            // if raw data is too big for our reusable buffer, malloc a fitting one
+                            data_buffer = (uint8_t*)malloc(e.raw_length);
+                        }
+                        memcpy(data_buffer+send_len, e.raw_data, e.raw_length);
+                        send_len += e.raw_length;
+                    } else {
+                        e.raw_length = 0; // not really necessary
+                    }
+                    e.raw_data = NULL; // security: don't expose internal pointer to raw data
+                    memcpy(data_buffer, &e, sizeof(Control::event));
                     int sent_len = SDLNet_TCP_Send(socket, data_buffer, send_len);
                     if (sent_len != send_len) {
                         MetaGui::log("#W networkclient: packet sending failed\n");
                     }
+                    if (data_buffer != data_buffer_base) {
+                        free(data_buffer);
+                    }
+                    MetaGui::logf("#I networkclient: sent event, type %d, len %d\n", e.type, send_len);
                 } break;
             }
         }
 
-        free(data_buffer);
+        free(data_buffer_base);
     }
 
     void NetworkClient::recv_loop()
@@ -113,28 +127,46 @@ namespace Network {
                     MetaGui::log("#W networkclient: connection closed unexpectedly\n");
                     break;
                 } else {
-                    // one call to recv may receive MULTIPLE packets at once, process them all
+                    // one call to recv may receive MULTIPLE events at once, process them all
                     uint8_t* data_buffer = data_buffer_base;
                     while (true) {
                         if (recv_len < sizeof(Control::event)) {
                             MetaGui::logf("#W networkclient: discarding %d unusable bytes of received data\n", recv_len);
                             break;
                         }
-                        // at least one packet here, process it from data_buffer
-                        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
+                        // universal packet->event decoding, then place it in the recv_queue
+                        // at least one event here, process it from data_buffer
+                        Control::event recv_event = Control::event();
+                        memcpy(&recv_event, data_buffer, sizeof(Control::event));
+                        // update size of remaining buffer
+                        data_buffer += sizeof(Control::event);
+                        recv_len -= sizeof(Control::event);
+                        // if there is a raw data payload attached to the event, get that too
+                        if (recv_event.raw_length > 0) {
+                            recv_event.raw_data = malloc(recv_event.raw_length);
+                            uint32_t raw_overhang = recv_event.raw_length - recv_len;
+                            if (raw_overhang <= 0) {
+                                // whole raw data payload is captured in the remaining data buffer
+                                // there might even be more packets behind that
+                                memcpy(recv_event.raw_data, data_buffer, recv_event.raw_length);
+                                data_buffer += recv_event.raw_length;
+                                recv_len -= recv_event.raw_length;
+                            } else {
+                                //TODO handle events that span multiple receive calls
+                                MetaGui::logf("#E lost packet data spanning multiple receive calls\n");
+                            }
+                        }
                         // switch on type
-                        switch (*db_event_type) {
+                        switch (recv_event.type) {
                             case Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
-                                client_id = *(db_event_type+1);
+                                client_id = recv_event.client_id;
                                 MetaGui::logf("#I networkclient: assigned client id %d\n", client_id);
                             } break;
                             default: {
-                                //TODO universal packet->event decoding, then place it in the recv_queue
-                                MetaGui::logf("#I networkclient: received event, type: %d\n", *db_event_type);
+                                MetaGui::logf("#I networkclient: received event, type: %d\n", recv_event.type);
+                                recv_queue->push(recv_event);
                             } break;
                         }
-                        data_buffer += sizeof(Control::event);
-                        recv_len -= sizeof(Control::event);
                         if (recv_len == 0) {
                             break;
                         }

@@ -152,10 +152,9 @@ namespace Network {
 
     void NetworkServer::send_loop()
     {
-        uint32_t buffer_size = 1024;
-        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for outgoing data, if something requires more, alloc it specially
-        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
-        
+        uint32_t base_buffer_size = 1024;
+        uint8_t* data_buffer_base = (uint8_t*)malloc(base_buffer_size); // recycled buffer for outgoing data
+
         // wait until event available
         bool quit = false;
         while (!quit) {
@@ -170,8 +169,7 @@ namespace Network {
                 } break;
                 //TODO heartbeat
                 default: {
-                    //TODO universal event->packet encoding
-                    printf("[INFO] send event to client id %d, type: %d\n", e.client_id, e.type);
+                    // find target client connection to send to
                     client_connection* target_client = NULL;
                     for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                         if (client_connections[i].client_id == e.client_id) {
@@ -180,21 +178,39 @@ namespace Network {
                         }
                     }
                     if (target_client == NULL) {
-                        printf("[WARN] failed to find connection for sending event\n");
+                        printf("[WARN] failed to find connection for sending event, discarded %lu bytes\n",
+                            sizeof(Control::event) + ((e.raw_data) ? e.raw_length : 0));
                         break;
                     }
-                    *db_event_type = e.type;
-                    *(db_event_type+1) = e.client_id;
+                    // universal event->packet encoding, for POD events
+                    uint8_t* data_buffer = data_buffer_base;
+                    e.client_id = e.client_id;
                     int send_len = sizeof(Control::event);
+                    if (e.raw_data) {
+                        if (e.raw_length > base_buffer_size-send_len) {
+                            // if raw data is too big for our reusable buffer, malloc a fitting one
+                            data_buffer = (uint8_t*)malloc(e.raw_length);
+                        }
+                        memcpy(data_buffer+send_len, e.raw_data, e.raw_length);
+                        send_len += e.raw_length;
+                    } else {
+                        e.raw_length = 0; // not really necessary
+                    }
+                    e.raw_data = NULL; // security: don't expose internal pointer to raw data
+                    memcpy(data_buffer, &e, sizeof(Control::event));
                     int sent_len = SDLNet_TCP_Send(target_client->socket, data_buffer, send_len);
                     if (sent_len != send_len) {
                         printf("[WARN] packet sending failed\n");
                     }
+                    if (data_buffer != data_buffer_base) {
+                        free(data_buffer);
+                    }
+                    printf("[INFO] sent event to client id %d, type %d, len %d\n", e.client_id, e.type, send_len);
                 } break;
             }
         }
 
-        free(data_buffer);
+        free(data_buffer_base);
     }
 
     void NetworkServer::recv_loop()
@@ -214,7 +230,6 @@ namespace Network {
                     continue;
                 }
                 ready_client = &(client_connections[i]);
-
                 // handle data for the ready_client
                 int recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer_base, buffer_size);
                 if (recv_len <= 0) {
@@ -225,39 +240,55 @@ namespace Network {
                     ready_client->socket = NULL;
                     ready_client->client_id = 0;
                 } else {
-                    // one call to recv may receive MULTIPLE packets at once, process them all
+                    // one call to recv may receive MULTIPLE events at once, process them all
                     uint8_t* data_buffer = data_buffer_base;
                     while (true) {
                         if (recv_len < sizeof(Control::event)) {
                             printf("[WARN] discarding %d unusable bytes of received data\n", recv_len);
                             break;
                         }
-                        // at least one packet here, process it from data_buffer
-                        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
-                        
-                        // at least event type data received, switch on it
-                        //TODO universal packet->event decoding, then place it in the recv_queue
-                        printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, *db_event_type);
-
-                        if (*(db_event_type+1) != ready_client->client_id) {
-                            printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, *(db_event_type+1));
+                        // universal packet->event decoding, then place it in the recv_queue
+                        // at least one event here, process it from data_buffer
+                        Control::event recv_event = Control::event();
+                        memcpy(&recv_event, data_buffer, sizeof(Control::event));
+                        if (recv_event.client_id != ready_client->client_id) {
+                            printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, recv_event.client_id);
+                            recv_event.client_id = ready_client->client_id;
                         }
-
-                        //REMOVE for testing answer ping with pong
-                        if (*db_event_type == Control::EVENT_TYPE_NETWORK_PROTOCOL_PING) {
-                            printf("[DEBUG] ping from client sending pong\n");
-                            *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG;
-                            SDLNet_TCP_Send(ready_client->socket, data_buffer, sizeof(Control::event));
-                        }
-
+                        // update size of remaining buffer
                         data_buffer += sizeof(Control::event);
                         recv_len -= sizeof(Control::event);
+                        // if there is a raw data payload attached to the event, get that too
+                        if (recv_event.raw_length > 0) {
+                            recv_event.raw_data = malloc(recv_event.raw_length);
+                            uint32_t raw_overhang = recv_event.raw_length - recv_len;
+                            if (raw_overhang <= 0) {
+                                // whole raw data payload is captured in the remaining data buffer
+                                // there might even be more packets behind that
+                                memcpy(recv_event.raw_data, data_buffer, recv_event.raw_length);
+                                data_buffer += recv_event.raw_length;
+                                recv_len -= recv_event.raw_length;
+                            } else {
+                                //TODO handle events that span multiple receive calls
+                                printf("[ERROR] lost packet data spanning multiple receive calls\n");
+                            }
+                        }
+                        // switch on type
+                        switch (recv_event.type) {
+                            case Control::EVENT_TYPE_NETWORK_PROTOCOL_PING: {
+                                printf("[DEBUG] ping from client sending pong\n");
+                                send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
+                            } break;
+                            default: {
+                                printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, recv_event.type);
+                                recv_queue->push(recv_event);
+                            } break;
+                        }
                         if (recv_len == 0) {
                             break;
                         }
                     }
                 }
-
             }
         }
 

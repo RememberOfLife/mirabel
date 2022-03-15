@@ -22,6 +22,7 @@ namespace Frontends {
         //TODO display when you king is in check
         //TODO draw arrows and markers with right click
         //TODO when trying to move another piece, while there already is a pinned piece, re-set the pin to the new target
+        //TODO gamebreaking!! some way to select what piece a pawn should promote into, currently pawn promotion is impossible
 
         private:
 

@@ -23,6 +23,7 @@ namespace Network {
             // connected client sockets
             uint32_t client_connection_bucket_size = 2; // must be <= UINT32_MAX-2
             struct client_connection {
+                //TODO holds all required user info, still missing authn user_id (u64), ssl state
                 TCPsocket socket;
                 IPaddress peer;
                 uint32_t client_id;

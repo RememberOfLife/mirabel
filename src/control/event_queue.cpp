@@ -28,7 +28,7 @@ namespace Control {
                 }
                 if (q.size() == 0) {
                     // queue has no available events after timeout, return null event
-                    return event(EVENT_TYPE_NULL);
+                    return event();
                 }
                 // go on to output an available event if one has become available
             }
@@ -42,7 +42,7 @@ namespace Control {
             m.lock();
             if (q.size() == 0) {
                 m.unlock();
-                return event(EVENT_TYPE_NULL);
+                return event();
             }
             event r = event(q.front());
             m.unlock();

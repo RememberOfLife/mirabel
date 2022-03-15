@@ -11,19 +11,73 @@
 
 namespace Control {
 
+    event::event():
+        type(EVENT_TYPE_NULL),
+        client_id(0),
+        raw_data(NULL)
+    {}
+
     event::event(uint32_t type):
         type(type),
-        client_id(0)
+        client_id(0),
+        raw_data(NULL)
     {}
 
     event::event(uint32_t type, uint32_t client_id):
         type(type),
-        client_id(client_id)
+        client_id(client_id),
+        raw_data(NULL)
     {}
 
-    event::event(const event& e)
+    // copy construct
+    // deep copy everything from other into self
+    event::event(const event& other)
     {
-        memcpy(this, &e, sizeof(event));
+        memcpy(this, &other, sizeof(event));
+        if (other.raw_data) {
+            this->raw_data = malloc(other.raw_length);
+            memcpy(this->raw_data, other.raw_data, other.raw_length);
+        }
+    }
+
+    // move construct
+    // take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
+    event::event(event&& other)
+    {
+        memcpy(this, &other, sizeof(event));
+        other.raw_data = NULL;
+    }
+
+    // copy assign
+    // deep delete self owned resources, then deep copy from other into self
+    event& event::operator=(const event& other)
+    {
+        if (&other != this) {
+            free(this->raw_data);
+            memcpy(this, &other, sizeof(event));
+            if (other.raw_data) {
+                this->raw_data = malloc(other.raw_length);
+                memcpy(this->raw_data, other.raw_data, other.raw_length);
+            }
+        }
+        return *this;
+    }
+
+    // move assign
+    // deep delete self owned resources, then take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
+    event& event::operator=(event&& other)
+    {
+        if (&other != this) {
+            free(this->raw_data);
+            memcpy(this, &other, sizeof(event));
+            other.raw_data = NULL;
+        }
+        return *this;
+    }
+
+    event::~event()
+    {
+        free(raw_data);
     }
 
     event event::create_game_event(uint32_t type, surena::Game *game)

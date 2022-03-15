@@ -41,6 +41,7 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
+        EVENT_TYPE_NETWORK_PROTOCOL_RAW_DATA_TEST,
     };
 
     struct game_event {
@@ -61,16 +62,25 @@ namespace Control {
 
     struct event {
         uint32_t type;
-        uint32_t client_id; //TODO is this really a user id, or more akin to a connection id?
+        uint32_t client_id;
+        // raw data segment, owned by the event
+        // when serializing over network this is read and sent together with the packet
+        uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data
+        void* raw_data;
         union {
             game_event game;
             move_event move;
             frontend_event frontend;
             engine_event engine;
         };
+        event();
         event(uint32_t type);
         event(uint32_t type, uint32_t client_id);
-        event(const event& e);
+        event(const event& other); // copy construct
+        event(event&& other); // move construct
+        event& operator=(const event& other); // copy assign
+        event& operator=(event&& other); // move assign
+        ~event();
         static event create_game_event(uint32_t type, surena::Game* game);
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);

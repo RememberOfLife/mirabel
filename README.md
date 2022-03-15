@@ -17,7 +17,7 @@ General purpose board game playing GUI.
 import blocks style:
 * all standard libs
 * imports from dependencies in order [SDL, SDL_net, nanovg, imgui, surena]
-* imports from own src tree
+* imports from own src tree in source tree order
 * import header for things implemented in this source file
 
 ## misc
@@ -54,11 +54,15 @@ https://linebender.org/druid/widget.html
 http://www.cmyr.net/blog/druid-dynamism.html
 
 ## issues
-
+* security: incoming packets from the user on the server need to be sanitized
+  * e.g. currently user can make server run out of memory and even just ouright force exit it
 
 ## todo
 * highest prio, make the meta gui logger threadsafe
 * networkclient: how to increase timeout of check socketset, server will have the same problem
+* rework events to be 'plain-old-data' so that they can easily be copied
+  * every event has raw data segment, this should automatically be sent along the network if used, enables uniform support for non POD data
+* there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * simple single lobby multiplayer protocol
 * make watchdog work with arbitrary queues and proper cond var
   * let there be one watchdog thread that knows multiple queues registered to it?
@@ -172,14 +176,11 @@ http://www.cmyr.net/blog/druid-dynamism.html
     * that way the piece will be reset for one frame until it is processed in the next one
     * FIX: do what lichess does, just dont animate drag-and-drop pieces and only animate pinned and enemy moves
 * ==> networking structure for offline/online server play
-  * when connecting to the offline server, use some sort of passthrough for the networkthreads so the messages directly reach the in/out queues of the correspondant
-  * network adapter has outqueue for sending and inqueue pointer to the guithread inbox
   * guithread also needs to hold some connection state for online/offline and network latency + heartbeat etc..
   * networkadapter is different for client vs server:
     * client holds only the server connection socket
       * update last_interaction_time every time socket action happens, if it didnt happen for some time, send heartbeat with appropriate timeout for closing
     * server holds a potentially very large list of sockets that have connected to it
-      * every client_connection holds the info for the user behind it, if authn and or is guest, and ssl state
       * when connections cant be increased to fit more users, remove inactive connections, then remove guests (but only if new conn is user), then refuse
       * how to handle server side heartbeat? i.e. how to notice if a client has timed out
         * hold a linked list of all client_connections and on incoming socket action update the last_interaction_time and move it to the back
