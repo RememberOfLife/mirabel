@@ -28,9 +28,10 @@ namespace MetaGui {
         bool game_running = (Control::main_client->game != NULL);
         // draw game start,stop,restart
         // locks all pre loading input elements if game is running, stop is only available if running
+        //HACK options are currently still just buffered by the base_game_variant class that provides the new game, this will not work for network loads, because they do not have options set yet
         if (game_running) {
             if (ImGui::Button("Restart")) {
-                Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
@@ -38,7 +39,7 @@ namespace MetaGui {
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game()));
+                Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name));
             }
         }
         if (game_running) {

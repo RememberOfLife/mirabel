@@ -1,5 +1,6 @@
 #include <cstddef>
 #include <cstdlib>
+#include <cstring>
 
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
@@ -23,10 +24,24 @@ namespace Control {
         raw_data(NULL)
     {}
 
+    event::event(uint32_t type, uint32_t raw_length, void* raw_data):
+        type(type),
+        client_id(0),
+        raw_length(raw_length),
+        raw_data(raw_data)
+    {}
+
     event::event(uint32_t type, uint32_t client_id):
         type(type),
         client_id(client_id),
         raw_data(NULL)
+    {}
+
+    event::event(uint32_t type, uint32_t client_id, uint32_t raw_length, void* raw_data):
+        type(type),
+        client_id(client_id),
+        raw_length(raw_length),
+        raw_data(raw_data)
     {}
 
     // copy construct
@@ -82,10 +97,13 @@ namespace Control {
         free(raw_data);
     }
 
-    event event::create_game_event(uint32_t type, surena::Game *game)
+    event event::create_game_event(uint32_t type, const char* base_game, const char* base_game_variant)
     {
         event e = event(type);
-        e.game.game = game;
+        e.raw_length = strlen(base_game) + strlen(base_game_variant) + 2; // +2 zero terminators
+        e.raw_data = malloc(e.raw_length);
+        strcpy(static_cast<char*>(e.raw_data), base_game);
+        strcpy(static_cast<char*>(e.raw_data)+strlen(base_game)+1, base_game_variant);
         return e;
     }
 

@@ -24,8 +24,8 @@ namespace Control {
         // normal events
         EVENT_TYPE_GAME_LOAD,
         EVENT_TYPE_GAME_UNLOAD,
+        EVENT_TYPE_GAME_IMPORT_STATE,
         EVENT_TYPE_GAME_MOVE,
-        EVENT_TYPE_GAME_INTERNAL_UPDATE,
         // client only events
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,
@@ -41,10 +41,6 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
-    };
-
-    struct game_event {
-        surena::Game* game;
     };
 
     struct move_event {
@@ -64,23 +60,24 @@ namespace Control {
         uint32_t client_id;
         // raw data segment, owned by the event
         // when serializing over network this is read and sent together with the packet
-        uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data
+        uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data, some way to keep two accessors?
         void* raw_data;
         union {
-            game_event game;
             move_event move;
             frontend_event frontend;
             engine_event engine;
         };
         event();
         event(uint32_t type);
+        event(uint32_t type, uint32_t raw_length, void* raw_data);
         event(uint32_t type, uint32_t client_id);
+        event(uint32_t type, uint32_t client_id, uint32_t raw_length, void* raw_data);
         event(const event& other); // copy construct
         event(event&& other); // move construct
         event& operator=(const event& other); // copy assign
         event& operator=(event&& other); // move assign
         ~event();
-        static event create_game_event(uint32_t type, surena::Game* game);
+        static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant);
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
         static event create_engine_event(uint32_t type, surena::Engine* frontend);

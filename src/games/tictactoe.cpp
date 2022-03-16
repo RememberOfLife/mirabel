@@ -70,7 +70,11 @@ namespace Games {
                             // modified state via imgui, clone+edit+load
                             surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                             game_clone->set_cell(ix, iy, imgui_check);
-                            Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                            uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                            char* game_state_buffer = (char*)malloc(game_state_buffer_len);
+                            game_clone->export_state(game_state_buffer);
+                            Control::main_client->inbox.push(
+                                Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
                         }
                     }
                 }
@@ -98,7 +102,11 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_current_player(imgui_current);
-                    Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                    uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                    char* game_state_buffer = (char*)malloc(game_state_buffer_len);
+                    game_clone->export_state(game_state_buffer);
+                    Control::main_client->inbox.push(
+                        Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
                 }
                 // edit: result
                 int board_result = game->get_result();
@@ -124,7 +132,11 @@ namespace Games {
                     // modified state via imgui, clone+edit+load
                     surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
                     game_clone->set_result(imgui_result);
-                    Control::main_client->inbox.push(Control::event::create_game_event(Control::EVENT_TYPE_GAME_LOAD, game_clone));
+                    uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                    char* game_state_buffer = (char*)malloc(game_state_buffer_len);
+                    game_clone->export_state(game_state_buffer);
+                    Control::main_client->inbox.push(
+                        Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
                 }
             }
 

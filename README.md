@@ -58,6 +58,9 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * e.g. currently user can make server run out of memory and even just ouright force exit it
 
 ## todo
+* fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
+  1. make EVENT_TYPE_GAME_OPTION to set options, do this right when something is selected, potentially very bloaty
+  2. append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
 * rework events to be 'plain-old-data' so that they can easily be copied
 * simple single lobby multiplayer protocol
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless

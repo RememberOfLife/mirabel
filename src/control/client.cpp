@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
@@ -183,7 +184,41 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         delete game;
-                        game = e.game.game;
+                        // reset everything in case we can't find the game later on
+                        game = NULL;
+                        frontend->set_game(game);
+                        if (engine) {
+                            engine->set_gamestate(game);
+                        }
+                        // find game in games catalogue by provided strings
+                        //TODO should probably use an ordered map for the catalogue instead of a vector at this point
+                        bool game_found = false;
+                        uint32_t base_game_idx = 0;
+                        const char* base_game_name = static_cast<char*>(e.raw_data);
+                        uint32_t game_variant_idx = 0;
+                        const char* game_variant_name = static_cast<char*>(e.raw_data)+strlen(base_game_name)+1;
+                        for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
+                            if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
+                                game_found = true;
+                                break;
+                            }
+                        }
+                        if (!game_found) {
+                            MetaGui::logf("#W guithread: failed to find base game: %s\n", base_game_name);
+                            break;
+                        }
+                        game_found = false;
+                        for (; game_variant_idx < Games::game_catalogue[base_game_idx].variants.size(); game_variant_idx++) {
+                            if (strcmp(Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, game_variant_name) == 0) {
+                                game_found = true;
+                                break;
+                            }
+                        }
+                        if (!game_found) {
+                            MetaGui::logf("#W guithread: failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
+                            break;
+                        }
+                        game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
                         frontend->set_game(game);
                         if (engine) {
                             engine->set_gamestate(game->clone());
@@ -196,6 +231,14 @@ namespace Control {
                         }
                         delete game;
                         game = NULL;
+                    } break;
+                    case EVENT_TYPE_GAME_IMPORT_STATE: {
+                        if (game) {
+                            game->import_state(static_cast<char*>(e.raw_data));
+                            if (engine) {
+                                engine->set_gamestate(NULL);
+                            }
+                        }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
                         game->apply_move(e.move.code);

@@ -24,6 +24,7 @@ namespace Games {
             std::vector<BaseGameVariant*> variants;
     };
 
+    //TODO maybe this should be an ordered map because string->base_game lookups will be common with the string api, same for variant and impl
     extern std::vector<BaseGame> game_catalogue;
 
 }
