@@ -1,10 +1,13 @@
 # mirabel
 
-General purpose board game playing GUI.
-
-## Future Features
-* Engine Integration
+General purpose board game playing GUI and server with some useful features.
 * Online/Offline Multiplayer
+* Engine Integration
+
+Future features will include:
+* Windows support.
+* Support for games using random moves, hidden information and simultaneous moves.
+* Plugin support for loading more games, frontends and engines.
 
 ## dependencies
 * SDL (+ OpenGL)
@@ -61,7 +64,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
   1. make EVENT_TYPE_GAME_OPTION to set options, do this right when something is selected, potentially very bloaty
   2. append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
-* rework events to be 'plain-old-data' so that they can easily be copied
 * simple single lobby multiplayer protocol
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
@@ -86,6 +88,8 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * place stb in deps?
 
 ## ideas
+* ??? is the offline server even required? events are mirrored and the client holds all state for itself aswell anyway
+* server supports a single lobby mode, this could also act as the offline server
 * clientconfig and serverconfig struct to hold things like the palette and configurable settings + their defaults
 * logging wrapper functions for the server so that the offline server logs into the corresponding metagui logger, but the standalone one logs to stdout
 * path to res folder shouldnt be hardcoded
@@ -164,7 +168,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
-  * a lobby has a trusted/untrusted state, depending on if the game is loaded from a player or only stored in full on the server
 * ==> engine compatiblity
   * e.g. uci-engine is a wrapper for an executable that can be specified via an option
 * ==> animation within frontends?
@@ -189,6 +192,5 @@ http://www.cmyr.net/blog/druid-dynamism.html
       * if required, the socket sets and their connections could also be multithreaded (e.g. 1 for server sock and workers for every N client socks)
     * offline adapter passthrough
       * client/server has a sendqueue, set to networkadapters sendqueue, or client/server in offline passthrough
-      * network adapter has one read and one write thread
     * all events contain all the necessary info, e.g. lobby ids etc
     * ==> when scheduling work from network events into server worker threads keep track who got which lobby the last time and give it to them the next time agains, makes for better caching

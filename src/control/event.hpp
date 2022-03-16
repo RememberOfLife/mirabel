@@ -31,16 +31,17 @@ namespace Control {
         EVENT_TYPE_FRONTEND_UNLOAD,
         EVENT_TYPE_ENGINE_LOAD,
         EVENT_TYPE_ENGINE_UNLOAD,
-        // networking events
-        // adapter events work with adapter<->main_queue
-        // protocol events work with adapter<->adapter, they should not reach the main queue, and ignored if they do
+        // networking events: adapter events; work with adapter<->main_queue
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE,
+        // networking events: protocol events; work with adapter<->adapter, they should not reach the main queue, and ignored if they do
         EVENT_TYPE_NETWORK_PROTOCOL_OK,
         EVENT_TYPE_NETWORK_PROTOCOL_NOK,
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
+        // lobby events: deal with client/server communication
+        EVENT_TYPE_LOBBY_HELLO, //TODO for obvious reasons this does not work for multi lobby servers
     };
 
     struct move_event {

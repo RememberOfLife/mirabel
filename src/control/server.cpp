@@ -3,6 +3,7 @@
 
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
+#include "surena/game.hpp"
 
 #include "control/event.hpp"
 #include "network/network_server.hpp"
@@ -77,11 +78,35 @@ namespace Control {
                     break;
                 } break;
                 //TODO heartbeat
+                case EVENT_TYPE_LOBBY_HELLO: {
+                    // we only have one lobby for now
+                    if (lobby) {
+                        lobby->AddUser(e.client_id);
+                    }
+                } break;
+                case EVENT_TYPE_GAME_LOAD:
+                case EVENT_TYPE_GAME_UNLOAD:
+                case EVENT_TYPE_GAME_IMPORT_STATE:
+                case EVENT_TYPE_GAME_MOVE: {
+                    // we only have one lobby for now
+                    if (lobby) {
+                        lobby->HandleEvent(e);
+                    }
+                } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                     if (t_network != NULL) {
                         network_send_queue = &(t_network->send_queue);
                         printf("[INFO] networkserver adapter loaded\n");
+                        //TODO creating the lobby here is very ugly
+                        lobby = new Lobby(network_send_queue, 2);
+                        printf("[INFO] lobby created\n");
                     }
+                } break;
+                case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
+                    // network adapter died or closed
+                    // crash fatal for now
+                    printf("[FATAL] networkserver died\n");
+                    exit(1);
                 } break;
                 default: {
                     printf("[WARN] received unexpeted event, type: %d\n", e.type);

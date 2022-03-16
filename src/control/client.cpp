@@ -223,6 +223,10 @@ namespace Control {
                         if (engine) {
                             engine->set_gamestate(game->clone());
                         }
+                        // everything successful, pass to server
+                        if (network_send_queue && e.client_id == 0) {
+                            network_send_queue->push(e);
+                        }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
                         frontend->set_game(NULL);
@@ -231,22 +235,40 @@ namespace Control {
                         }
                         delete game;
                         game = NULL;
+                        // everything successful, pass to server
+                        if (network_send_queue && e.client_id == 0) {
+                            network_send_queue->push(e);
+                        }
                     } break;
                     case EVENT_TYPE_GAME_IMPORT_STATE: {
-                        if (game) {
-                            game->import_state(static_cast<char*>(e.raw_data));
-                            if (engine) {
-                                engine->set_gamestate(NULL);
-                            }
+                        if (!game) {
+                            MetaGui::log("#W attempted state import on null game\n");
+                            break;
+                        }
+                        game->import_state(static_cast<char*>(e.raw_data));
+                        if (engine) {
+                            engine->set_gamestate(NULL);
+                        }
+                        // everything successful, pass to server
+                        if (network_send_queue && e.client_id == 0) {
+                            network_send_queue->push(e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
+                        if (!game) {
+                            MetaGui::log("#W attempted move on null game\n");
+                            break;
+                        }
                         game->apply_move(e.move.code);
                         if (engine) {
                             engine->apply_move(e.move.code);
                         }
                         if (game->player_to_move() == 0) {
                             MetaGui::logf("game done: winner is player %d\n", game->get_result());
+                        }
+                        // everything successful, pass to server
+                        if (network_send_queue && e.client_id == 0) {
+                            network_send_queue->push(e);
                         }
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
@@ -274,20 +296,22 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                         // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
-                        if (main_client->t_network != NULL) {
+                        if (t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
-                            Control::main_client->network_send_queue = &(main_client->t_network->send_queue);
+                            network_send_queue = &(t_network->send_queue);
+                            //TODO server should send its state as sync automatically, maybe we should reset it ourselves anyway
+                            network_send_queue->push(event(EVENT_TYPE_LOBBY_HELLO)); //HACK tell server to add us to the lobby
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
                         // network adapter died or closed, reset it
-                        if (main_client->t_network == NULL) {
+                        if (t_network == NULL) {
                             break; // closed properly, don't do anything 
                         }
-                        main_client->t_network->close();
-                        delete main_client->t_network;
-                        main_client->t_network = NULL;
-                        main_client->network_send_queue = NULL;
+                        t_network->close();
+                        delete t_network;
+                        t_network = NULL;
+                        network_send_queue = NULL;
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);
@@ -348,6 +372,9 @@ namespace Control {
                         fullscreen = !fullscreen;
                         // borderless fullscreen
                         SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                    }
+                    if (event.key.keysym.sym == SDLK_c && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_connection_window = !MetaGui::show_connection_window;
                     }
                     if (event.key.keysym.sym == SDLK_g && (ctrl_left || ctrl_right)) {
                         MetaGui::show_game_config_window = !MetaGui::show_game_config_window;

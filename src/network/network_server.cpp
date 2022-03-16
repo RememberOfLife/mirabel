@@ -147,7 +147,8 @@ namespace Network {
         }
 
         free(data_buffer);
-        //TODO does anyone need to know that the server_loop closed?
+        // if server_loop closes, notify server so it can handle it
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
     }
 
     void NetworkServer::send_loop()
@@ -281,11 +282,11 @@ namespace Network {
                                 if (overhang_recv_len != raw_overhang) {
                                     // did not receive all the missing bytes, might be disastrous for the event
                                     printf("[ERROR] received only %d bytes of overhang, expected %d, event might be corrupted\n", overhang_recv_len, raw_overhang);
-                                    //TODO drop event to null type?
-                                    memset(((uint8_t*)recv_event.raw_data)+recv_len+overhang_recv_len,
-                                        0x00, recv_event.raw_length-(recv_len+overhang_recv_len)); // at least zero out any left over bytes
+                                    // drop event to null type, will be discarded later
+                                    recv_event.type = Control::EVENT_TYPE_NULL;
+                                } else {
+                                    mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
                                 }
-                                mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
                                 free(data_buffer);
                                 recv_len = 0;
                             }
@@ -310,7 +311,8 @@ namespace Network {
         }
 
         free(data_buffer_base);
-        //TODO does anyone need to know that the recv_loop closed?
+        // if server_loop closes, notify server so it can handle it
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
     }
 
 }

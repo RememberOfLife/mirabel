@@ -163,12 +163,12 @@ namespace Network {
                                 int overhang_recv_len = SDLNet_TCP_Recv(socket, data_buffer, raw_overhang);
                                 if (overhang_recv_len != raw_overhang) {
                                     // did not receive all the missing bytes, might be disastrous for the event
-                                    MetaGui::logf("#E received only %d bytes of overhang, expected %d, event might be corrupted\n", overhang_recv_len, raw_overhang);
-                                    //TODO drop event to null type?
-                                    memset(((uint8_t*)recv_event.raw_data)+recv_len+overhang_recv_len,
-                                        0x00, recv_event.raw_length-(recv_len+overhang_recv_len)); // at least zero out any left over bytes
+                                    MetaGui::logf("#E received only %d bytes of overhang, expected %d, event dropped\n", overhang_recv_len, raw_overhang);
+                                    // drop event to null type, will be discarded later
+                                    recv_event.type = Control::EVENT_TYPE_NULL;
+                                } else {
+                                    mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
                                 }
-                                mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
                                 free(data_buffer);
                                 recv_len = 0;
                             }
