@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -14,7 +15,6 @@
 namespace MetaGui {
 
     /*TODO FEATURES
-        - thread safety!!!
         - some way to save logs, possibly just also write debug log to std error
         - make proper highlighting (log levels) with an enum (for the log function)
         - proper ringbuffer
@@ -34,6 +34,7 @@ namespace MetaGui {
     };
 
     struct logger {
+        std::mutex m;
         const char* name;
         size_t buffer_size;
         ImGuiTextBuffer log_buffer;
@@ -62,6 +63,7 @@ namespace MetaGui {
 
     void logger::show()
     {
+        m.lock();
         ImGui::BeginChild("scrolling", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
         const char* buf = log_buffer.begin();
         const char* buf_end = log_buffer.end();
@@ -109,10 +111,12 @@ namespace MetaGui {
             ImGui::SetScrollHereY(1.0f);
         }
         ImGui::EndChild();
+        m.unlock();
     }
 
     void logger::log(const char* str, const char* str_end)
     {
+        m.lock();
         int old_size = log_buffer.size();
         log_buffer.append(str, str_end);
         for (int new_size = log_buffer.size(); old_size < new_size; old_size++) {
@@ -143,10 +147,12 @@ namespace MetaGui {
         if (!visible && update_dirty > dirty) {
             dirty = update_dirty;
         }
+        m.unlock();
     }
     
     void logger::logfv(const char* fmt, va_list args)
     {
+        m.lock();
         int old_size = log_buffer.size();
         log_buffer.appendfv(fmt, args);
         for (int new_size = log_buffer.size(); old_size < new_size; old_size++) {
@@ -177,18 +183,21 @@ namespace MetaGui {
         if (!visible && update_dirty > dirty) {
             dirty = update_dirty;
         }
+        m.unlock();
     }
 
     void logger::clear()
     {
+        m.lock();
         log_buffer.clear();
         log_line_offsets.clear();
         log_line_offsets.push_back(0);
         log_line_timestamps.clear();
+        m.unlock();
     }
 
     static uint32_t next_log_id = DEBUG_LOG+1;
-    static std::unordered_map<uint32_t, logger> logs = {{DEBUG_LOG, logger("DEBUG", LOG_DEFAULT_BUFFER_SIZE)}};
+    static std::unordered_map<uint32_t, logger*> logs = {{DEBUG_LOG, new logger("DEBUG", LOG_DEFAULT_BUFFER_SIZE)}};
     static std::vector<uint32_t> visible_logs = {DEBUG_LOG}; // this keeps the order of the visible logs
     static uint32_t visible_log = DEBUG_LOG;
 
@@ -200,7 +209,7 @@ namespace MetaGui {
     bool log_exists(const char* name)
     {
         for (int i = 0; i < visible_logs.size(); i++) {
-            if (strcmp(logs[visible_logs[i]].name, name) == 0) {
+            if (strcmp(logs[visible_logs[i]]->name, name) == 0) {
                 return true;
             }
         }
@@ -223,7 +232,7 @@ namespace MetaGui {
             for (int log_n = 0; log_n < visible_logs.size(); log_n++)
             {
                 uint32_t current_log_id = visible_logs[log_n];
-                logger* current_log = &logs[current_log_id];
+                logger* current_log = logs[current_log_id];
                 switch (current_log->dirty) {
                     case LOG_LEVEL_NONE: {
                         ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(190, 190, 190, 255));
@@ -285,7 +294,7 @@ namespace MetaGui {
     void log(uint32_t log_id, const char* str, const char* str_end)
     {
         if (log_exists(log_id)) {
-            logs[log_id].log(str, str_end);
+            logs[log_id]->log(str, str_end);
         }
     }
     
@@ -294,7 +303,7 @@ namespace MetaGui {
         if (log_exists(log_id)) {
             va_list args;
             va_start(args, fmt);
-            logs[log_id].logfv(fmt, args);
+            logs[log_id]->logfv(fmt, args);
             va_end(args);
         }
         
@@ -303,7 +312,7 @@ namespace MetaGui {
     void logfv(uint32_t log_id, const char* fmt, va_list args)
     {
         if (log_exists(log_id)) {
-            logs[log_id].logfv(fmt, args);
+            logs[log_id]->logfv(fmt, args);
         }
     }
 
@@ -313,7 +322,7 @@ namespace MetaGui {
             logf("#W registering logger#%d with an already existing name: %s\n", next_log_id, name);
         }
         logf("#I registering logger#%d: %s\n", next_log_id, name);
-        logs[next_log_id] = logger(name, buffer_size);
+        logs[next_log_id] = new logger(name, buffer_size);
         visible_logs.push_back(next_log_id);
         return next_log_id++;
     }
@@ -328,7 +337,7 @@ namespace MetaGui {
             logf("#W attempted un-register of unknown logger#%d\n", log_id);
             return;
         }
-        logs[log_id].clear();
+        logs[log_id]->clear();
         logs.erase(log_id);
         visible_logs.erase(std::remove(visible_logs.begin(), visible_logs.end(), log_id), visible_logs.end());
         if (visible_log == log_id) {
@@ -343,8 +352,8 @@ namespace MetaGui {
             logf("#W attempted clear of unknown logger#%d\n", log_id);
             return;
         }
-        logs[log_id].clear();
-        logf("#I cleared logger#%d: %s\n", log_id, logs[log_id].name);
+        logs[log_id]->clear();
+        logf("#I cleared logger#%d: %s\n", log_id, logs[log_id]->name);
     }
 
 }

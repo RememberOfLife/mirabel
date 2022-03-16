@@ -46,7 +46,7 @@ namespace Control {
     {
         memcpy(this, &other, sizeof(event));
         other.raw_data = NULL;
-            other.type = EVENT_TYPE_NULL;
+        other.type = EVENT_TYPE_NULL;
     }
 
     // copy assign

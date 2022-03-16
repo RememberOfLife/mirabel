@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.18)
 set (CMAKE_CXX_STANDARD 11)
 
+project(mirabel C CXX)
+
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
-if(CMAKE_BUILD_TYPE EQUAL "RELEASE")
-    if(supported AND )
+if(NOT CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg].*")
+    if(supported)
         message(STATUS "IPO/LTO enabled")
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     else()
@@ -13,8 +15,6 @@ if(CMAKE_BUILD_TYPE EQUAL "RELEASE")
 else()
     message(STATUS "IPO/LTO disabled in non-release build")
 endif()
-
-project(mirabel)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -109,11 +109,11 @@ set(SOURCES
 add_executable(mirabel ${SOURCES})
 
 add_library(nanovg ${SOURCES_NANOVG})
-set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-Wno-implicit-function-declaration")
+target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
 target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 target_link_libraries(mirabel nanovg)
 
-# set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-Wall") # do after nanovg so we dont reenable warnings there
+# target_compile_options(mirabel PRIVATE "-Wall") # do after nanovg so we dont reenable warnings there
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 

@@ -8,15 +8,15 @@ General purpose board game playing GUI.
 
 ## dependencies
 * SDL (+ OpenGL)
-* OpenSSL
-* imgui
-* nanovg (+ stb)
 * SDL_net
+* OpenSSL
+* nanovg (+ stb)
+* imgui
 * surena
 
 import blocks style:
 * all standard libs
-* imports from dependencies in order [SDL, SDL_net, nanovg, imgui, surena]
+* imports from dependencies in order as listed above
 * imports from own src tree in source tree order
 * import header for things implemented in this source file
 
@@ -58,17 +58,16 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * e.g. currently user can make server run out of memory and even just ouright force exit it
 
 ## todo
-* highest prio, make the meta gui logger threadsafe
-* networkclient: how to increase timeout of check socketset, server will have the same problem
 * rework events to be 'plain-old-data' so that they can easily be copied
-  * every event has raw data segment, this should automatically be sent along the network if used, enables uniform support for non POD data
-* there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * simple single lobby multiplayer protocol
+* server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
+* there is a lot of reuse in the networking code, maybe reduce it through some event methods
+* openssl for networking
 * make watchdog work with arbitrary queues and proper cond var
   * let there be one watchdog thread that knows multiple queues registered to it?
   * or should every object that wants a watchdog create its own wtachdog runner?
 * make event queue a proper producer-consumer semaphore
-* openssl for networking
+* network client should try reconnecting itself on lost connection, cache access params for that
 * better ai integration
 * add fullscreen toggle to main menu bar
 * chess frontend sounds
@@ -124,7 +123,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
   * is the history manager actually kept there? or in another place
     * could also send an event to set the displayed state
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
-* should the server be a separate executable to the client?
 * where to store state info for things like:
   * engine uci opts
   * engine best moves and other infor like nps etc..
