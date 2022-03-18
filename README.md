@@ -59,14 +59,16 @@ http://www.cmyr.net/blog/druid-dynamism.html
 ## issues
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
-* functionality: networking isnt working in LAN across multiple pcs? is this a problem with mirabel or the LAN config
 
 ## todo
+* windows build
+* use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
+  * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
   1. make EVENT_TYPE_GAME_OPTION to set options, do this right when something is selected, potentially very bloaty
   2. append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
-* simple single lobby multiplayer protocol
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
+  * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * openssl for networking
 * make watchdog work with arbitrary queues and proper cond var
@@ -76,6 +78,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * network client should try reconnecting itself on lost connection, cache access params for that
 * better ai integration
 * add fullscreen toggle to main menu bar
+* rework everything to use nanovg and remove DD, it is no longer required
 * chess frontend sounds
 * chess frontend animations
 * change window title according to the loaded game and frontend
@@ -117,6 +120,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * create icon, show it on the empty (default) frontend
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components
+* some genral purpose icon set for the whole thing, goes together with the color palette, usable by frontends if they want
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already
@@ -164,6 +168,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * ==> manage player specific views for games with simultaneous moves or hidden information
   * frontend requires info on what view it should render, i.e. render only hidden info or move placer for the player of that view
   * auto switch view to player_to_move / next player if setting for that is given
+  * can start with views for e.g. chess
 * ==> resources like textures
   * can be generated on first launch into some local cache directory
   * not available for sounds?

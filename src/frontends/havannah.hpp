@@ -19,11 +19,13 @@ namespace Frontends {
 
             int size;
 
+            // runtime graphics options 
             bool flat_top = false;
             float button_size = 25;
             float padding = 2.5;
-            //TODO add slider for size of placed stones, maybe shape too?
-            //TODO add toggle for visually 'connecting' adjacent same colored stones
+            float stone_size_mult = 0.8;
+            bool hex_stones = false;
+            float connections_width = 0; //TODO same for virtual connections?
 
             struct sbtn {
                 float x;
@@ -39,7 +41,7 @@ namespace Frontends {
             int mx;
             int my;
 
-            //TODO remove empty buttons
+            //TODO remove empty buttons and just malloc those actually required
             sbtn board_buttons[361]; // enough buttons for size 10
 
             Havannah();

@@ -290,7 +290,7 @@ namespace Frontends {
 
     void Chess::draw_options()
     {
-        ImGui::SliderFloat("square size", &square_size, 40, 125, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("square size", &square_size, 40, 175, "%.3f", ImGuiSliderFlags_AlwaysClamp);
     }
 
     Chess_FEW::Chess_FEW():

@@ -205,7 +205,8 @@ namespace Frontends {
                     DD::Pop();
                     continue;
                 }
-                switch (game->get_cell(x, y)) {
+                surena::Havannah::COLOR cell_color = game->get_cell(x, y);
+                switch (cell_color) {
                     case surena::Havannah::COLOR_NONE: {
                         if (board_buttons[y*board_sizer+x].hovered) {
                             DD::SetRGB255(220, 197, 161);
@@ -216,18 +217,67 @@ namespace Frontends {
                     case surena::Havannah::COLOR_WHITE: {
                         DD::SetRGB255(141, 35, 35);
                         DD::SetFill();
-                        DD::DrawCircle(0, 0, button_size*0.6);
+                        if (hex_stones) {
+                            DD::DrawRegularPolygon(6, 0, 0, button_size*stone_size_mult);
+                        } else {
+                            DD::DrawCircle(0, 0, button_size*stone_size_mult);
+                        }
                     } break;
                     case surena::Havannah::COLOR_BLACK: {
                         DD::SetRGB255(25, 25, 25);
                         DD::SetFill();
-                        DD::DrawCircle(0, 0, button_size*0.6);
+                        if (hex_stones) {
+                            DD::DrawRegularPolygon(6, 0, 0, button_size*stone_size_mult);
+                        } else {
+                            DD::DrawCircle(0, 0, button_size*stone_size_mult);
+                        }
                     } break;
                     case surena::Havannah::COLOR_INVALID: {
                         assert(false);
                     } break;
                 }
-                //TODO draw colored connections to same player pieces
+                // draw colored connections to same player pieces
+                if (connections_width > 0 && cell_color != surena::Havannah::COLOR_NONE) {
+                    float connection_draw_width = button_size * connections_width;
+                    // draw for self<->{1(x-1,y),3(x,y-1),2(x-1,y-1)}
+                    uint8_t connections_to_draw = 0;
+                    if (cell_color == game->get_cell(x-1, y) && game->get_cell(x-1, y) != surena::Havannah::COLOR_INVALID) {
+                        connections_to_draw |= 0b001;
+                    }
+                    if (cell_color == game->get_cell(x, y-1) && game->get_cell(x, y-1) != surena::Havannah::COLOR_INVALID) {
+                        connections_to_draw |= 0b100;
+                    }
+                    if (cell_color == game->get_cell(x-1, y-1) && game->get_cell(x-1, y-1) != surena::Havannah::COLOR_INVALID) {
+                        connections_to_draw |= 0b010;
+                    }
+                    if (connections_to_draw) {
+                        DD::Push();
+                        DD::Rotate(-DD::PI/6);
+                        switch (cell_color) {
+                            case surena::Havannah::COLOR_WHITE: {
+                                DD::SetRGB255(141, 35, 35);
+                            } break;
+                            case surena::Havannah::COLOR_BLACK: {
+                                DD::SetRGB255(25, 25, 25);
+                            } break;
+                            case surena::Havannah::COLOR_NONE:
+                            case surena::Havannah::COLOR_INVALID: {
+                                assert(false);
+                            } break;
+                        }
+                        DD::SetFill();
+                        DD::Rotate(-DD::PI-DD::PI/3);
+                        for (int rot = 0; rot < 3; rot++) {
+                            DD::Rotate(DD::PI/3);
+                            if (!((connections_to_draw >> rot)&0b1)) {
+                                continue;
+                            }
+                            DD::DrawRectangle(-connection_draw_width/2, -connection_draw_width/2, connection_draw_width+button_size+padding, connection_draw_width);
+                        }
+                        DD::Pop();
+                    }
+                }
+                // draw engine best move
                 if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
                     DD::SetRGB255(125, 187, 248);
                     DD::SetStroke();
@@ -243,8 +293,11 @@ namespace Frontends {
     void Havannah::draw_options()
     {
         ImGui::Checkbox("flat top", &flat_top);
-        ImGui::SliderFloat("button size", &button_size, 10, 90, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("button size", &button_size, 10, 100, "%.3f", ImGuiSliderFlags_AlwaysClamp);
         ImGui::SliderFloat("padding", &padding, 0, 20, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("stone size", &stone_size_mult, 0.1, 1, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::Checkbox("hex stones", &hex_stones);
+        ImGui::SliderFloat("connections width", &connections_width, 0, 0.8, "%.3f", ImGuiSliderFlags_AlwaysClamp);
     }
 
     void Havannah::rotate_cords(float& x, float&y, float angle)
