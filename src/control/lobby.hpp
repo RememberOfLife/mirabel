@@ -15,6 +15,8 @@ namespace Control {
             event_queue* send_queue;
 
             // uint64_t id;
+            char* base_game;
+            char* game_variant;
             surena::Game* game;
             // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user 
             uint16_t max_users;
@@ -24,6 +26,7 @@ namespace Control {
             ~Lobby();
 
             void AddUser(uint32_t client_id);
+            void RemoveUser(uint32_t client_id);
 
             void HandleEvent(event e); // handle events that are specifically assigned to this lobby
 

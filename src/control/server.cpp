@@ -78,10 +78,16 @@ namespace Control {
                     break;
                 } break;
                 //TODO heartbeat
-                case EVENT_TYPE_LOBBY_HELLO: {
+                case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                     // we only have one lobby for now
                     if (lobby) {
                         lobby->AddUser(e.client_id);
+                    }
+                } break;
+                case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
+                    // we only have one lobby for now
+                    if (lobby) {
+                        lobby->RemoveUser(e.client_id);
                     }
                 } break;
                 case EVENT_TYPE_GAME_LOAD:

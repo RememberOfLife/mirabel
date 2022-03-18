@@ -34,6 +34,8 @@ namespace Control {
         // networking events: adapter events; work with adapter<->main_queue
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE,
+        EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED,
+        EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED,
         // networking events: protocol events; work with adapter<->adapter, they should not reach the main queue, and ignored if they do
         EVENT_TYPE_NETWORK_PROTOCOL_OK,
         EVENT_TYPE_NETWORK_PROTOCOL_NOK,
@@ -41,7 +43,6 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
         // lobby events: deal with client/server communication
-        EVENT_TYPE_LOBBY_HELLO, //TODO for obvious reasons this does not work for multi lobby servers
     };
 
     struct move_event {

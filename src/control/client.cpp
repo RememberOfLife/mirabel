@@ -218,6 +218,10 @@ namespace Control {
                             MetaGui::logf("#W guithread: failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
                             break;
                         }
+                        // update metagui combobox selection
+                        MetaGui::base_game_idx = base_game_idx;
+                        MetaGui::game_variant_idx = game_variant_idx;
+                        // actually load the game
                         game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
                         frontend->set_game(game);
                         if (engine) {
@@ -299,8 +303,7 @@ namespace Control {
                         if (t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
                             network_send_queue = &(t_network->send_queue);
-                            //TODO server should send its state as sync automatically, maybe we should reset it ourselves anyway
-                            network_send_queue->push(event(EVENT_TYPE_LOBBY_HELLO)); //HACK tell server to add us to the lobby
+                            // server sends its state as sync automatically, maybe we should reset it ourselves anyway
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {

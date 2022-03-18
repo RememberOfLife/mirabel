@@ -59,6 +59,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 ## issues
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
+* functionality: networking isnt working in LAN across multiple pcs? is this a problem with mirabel or the LAN config
 
 ## todo
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading

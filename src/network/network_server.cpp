@@ -141,6 +141,7 @@ namespace Network {
                     connection_slot->peer = *SDLNet_TCP_GetPeerAddress(incoming_socket);
                     connection_slot->client_id = connection_id;
                     SDLNet_TCP_AddSocket(client_socketset, connection_slot->socket);
+                    recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, connection_slot->client_id));
                     printf("[INFO] accepted new connection, client id %d\n", connection_id);
                 }
             }
@@ -238,6 +239,7 @@ namespace Network {
                     // connection closed
                     SDLNet_TCP_DelSocket(client_socketset, ready_client->socket);
                     SDLNet_TCP_Close(ready_client->socket);
+                    recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, ready_client->client_id));
                     printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
                     ready_client->socket = NULL;
                     ready_client->client_id = 0;

@@ -13,6 +13,8 @@ namespace Control {
     Lobby::Lobby(event_queue* send_queue, uint16_t max_users):
         send_queue(send_queue),
         game(NULL),
+        base_game(NULL),
+        game_variant(NULL),
         max_users(max_users),
         user_client_ids(static_cast<uint32_t*>(malloc(max_users*sizeof(uint32_t))))
     {
@@ -24,6 +26,9 @@ namespace Control {
     Lobby::~Lobby()
     {
         free(user_client_ids);
+        free(game_variant);
+        free(base_game);
+        delete game;
     }
 
     void Lobby::AddUser(uint32_t client_id)
@@ -31,10 +36,33 @@ namespace Control {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == 0) {
                 user_client_ids[i] = client_id;
+                if (game) {
+                    // send sync info to user, load + state import
+                    event e_load = event::create_game_event(EVENT_TYPE_GAME_LOAD, base_game, game_variant);
+                    e_load.client_id = client_id;
+                    send_queue->push(e_load);
+                    uint32_t game_state_buffer_len = game->export_state(NULL);
+                    char* game_state_buffer = (char*)malloc(game_state_buffer_len);
+                    game->export_state(game_state_buffer);
+                    send_queue->push(Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, client_id, game_state_buffer_len, game_state_buffer));
+                } else {
+                    send_queue->push(Control::event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
+                }
                 return;
             }
         }
         printf("[ERROR] could not add user to lobby\n");
+    }
+
+    void Lobby::RemoveUser(uint32_t client_id)
+    {
+        for (uint32_t i = 0; i < max_users; i++) {
+            if (user_client_ids[i] == client_id) {
+                user_client_ids[i] = 0;
+                return;
+            }
+        }
+        printf("[ERROR] could not find user to remove from lobby\n");
     }
 
     void Lobby::HandleEvent(event e)
@@ -73,6 +101,13 @@ namespace Control {
                     break;
                 }
                 game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                // update game name strings
+                free(base_game);
+                free(game_variant);
+                base_game = (char*)malloc(strlen(base_game_name)+1);
+                game_variant = (char*)malloc(strlen(game_variant_name)+1);
+                strcpy(base_game, base_game_name);
+                strcpy(game_variant, game_variant_name);
                 printf("[INFO] game loaded: %s.%s\n", base_game_name, game_variant_name);
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);

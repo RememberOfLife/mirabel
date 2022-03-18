@@ -22,6 +22,8 @@ namespace Frontends {
             bool flat_top = false;
             float button_size = 25;
             float padding = 2.5;
+            //TODO add slider for size of placed stones, maybe shape too?
+            //TODO add toggle for visually 'connecting' adjacent same colored stones
 
             struct sbtn {
                 float x;
