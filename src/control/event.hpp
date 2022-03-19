@@ -43,6 +43,8 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
         // lobby events: deal with client/server communication
+        EVENT_TYPE_LOBBY_CHAT_MSG, //TODO contains msgId(for removal),client_id(who sent the message),timestamp,text
+        EVENT_TYPE_LOBBY_CHAT_DEL,
     };
 
     struct move_event {
@@ -57,6 +59,10 @@ namespace Control {
         surena::Engine* engine;
     };
 
+    struct msg_del_event {
+        uint32_t msg_id;
+    };
+
     struct event {
         uint32_t type;
         uint32_t client_id;
@@ -68,6 +74,7 @@ namespace Control {
             move_event move;
             frontend_event frontend;
             engine_event engine;
+            msg_del_event msg_del;
         };
         event();
         event(uint32_t type);
@@ -83,6 +90,8 @@ namespace Control {
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
         static event create_engine_event(uint32_t type, surena::Engine* frontend);
+        static event create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text);
+        static event create_chat_del_event(uint32_t type, uint32_t msg_id);
     };
 
 }

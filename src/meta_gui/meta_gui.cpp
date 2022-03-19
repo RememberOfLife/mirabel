@@ -24,4 +24,6 @@ namespace MetaGui {
 
     bool show_engine_window = false;
 
+    bool show_chat_window = false;
+
 }

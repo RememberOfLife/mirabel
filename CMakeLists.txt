@@ -88,6 +88,7 @@ set(SOURCES
     src/games/tictactoe_ultimate.cpp
     src/games/tictactoe.cpp
 
+    src/meta_gui/chat.cpp
     src/meta_gui/confirm_exit.cpp
     src/meta_gui/connection.cpp
     src/meta_gui/engine.cpp

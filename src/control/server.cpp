@@ -93,7 +93,9 @@ namespace Control {
                 case EVENT_TYPE_GAME_LOAD:
                 case EVENT_TYPE_GAME_UNLOAD:
                 case EVENT_TYPE_GAME_IMPORT_STATE:
-                case EVENT_TYPE_GAME_MOVE: {
+                case EVENT_TYPE_GAME_MOVE:
+                case EVENT_TYPE_LOBBY_CHAT_MSG:
+                case EVENT_TYPE_LOBBY_CHAT_DEL: {
                     // we only have one lobby for now
                     if (lobby) {
                         lobby->HandleEvent(e);

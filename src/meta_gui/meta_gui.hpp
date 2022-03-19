@@ -48,6 +48,13 @@ namespace MetaGui {
     extern bool show_engine_window;
     void engine_window(bool* p_open);
 
+    extern bool show_chat_window;
+    void chat_window(bool* p_open);
+    extern bool focus_chat_input;
+    void chat_msg_add(uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text); // copies the text to internals
+    void chat_msg_del(uint32_t msg_id);
+    void chat_clear();
+
     //##############################
     // format for windows is:
     // extern bool show_NAME_windowtype;
@@ -55,11 +62,6 @@ namespace MetaGui {
     // ... other window specific exposed functions
 
     // other windows we might need
-
-    // "Chat"
-    // - chat of the current lobby
-    // - how to make text colored but copyable?
-    // - a button on every message to enable copyability?!
 
     // "UserList"
     // - list of users (only chat or global?)

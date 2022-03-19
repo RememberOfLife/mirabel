@@ -298,12 +298,26 @@ namespace Control {
                         delete engine;
                         engine = NULL;
                     } break;
+                    case EVENT_TYPE_LOBBY_CHAT_MSG: {
+                        // get data from msg
+                        //TODO this should use the future get event info struct thing
+                        //TODO also these casts are hideous
+                        uint32_t m_msg_id = *reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data));
+                        uint32_t m_client_id = *reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t));
+                        uint64_t m_timestamp = *reinterpret_cast<uint64_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2);
+                        char* m_text = static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2+sizeof(uint64_t);
+                        MetaGui::chat_msg_add(m_msg_id, m_client_id, m_timestamp, m_text);
+                    } break;
+                    case EVENT_TYPE_LOBBY_CHAT_DEL: {
+                        MetaGui::chat_msg_del(e.msg_del.msg_id);
+                    } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                         // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
                         if (t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
                             network_send_queue = &(t_network->send_queue);
                             // server sends its state as sync automatically, maybe we should reset it ourselves anyway
+                            MetaGui::chat_clear();
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
@@ -315,6 +329,7 @@ namespace Control {
                         delete t_network;
                         t_network = NULL;
                         network_send_queue = NULL;
+                        MetaGui::chat_clear();
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);
@@ -388,6 +403,12 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_e && (ctrl_left || ctrl_right)) {
                         MetaGui::show_engine_window = !MetaGui::show_engine_window;
                     }
+                    if (event.key.keysym.sym == SDLK_t && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_chat_window = !MetaGui::show_chat_window;
+                    }
+                    if (MetaGui::show_chat_window && event.key.keysym.sym == SDLK_RETURN) {
+                        MetaGui::focus_chat_input = true;
+                    }
                     if (event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
                         try_quit = true;
                         break;
@@ -443,6 +464,7 @@ namespace Control {
                 if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
                 if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
                 if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
+                if (MetaGui::show_chat_window) MetaGui::chat_window(&MetaGui::show_chat_window);
             }
 
 

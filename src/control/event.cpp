@@ -128,4 +128,23 @@ namespace Control {
         return e;
     }
 
+    event event::create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text)
+    {
+        event e = event(type);
+        e.raw_length = sizeof(msg_id) + sizeof(client_id) + sizeof(timestamp) + strlen(text) + 1;
+        e.raw_data = malloc(e.raw_length);
+        memcpy(static_cast<char*>(e.raw_data), &msg_id, sizeof(uint32_t));
+        memcpy(static_cast<char*>(e.raw_data)+sizeof(uint32_t), &client_id, sizeof(uint32_t));
+        memcpy(static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2, &timestamp, sizeof(uint64_t));
+        strcpy(static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2+sizeof(uint64_t), text);
+        return e;
+    }
+
+    event event::create_chat_del_event(uint32_t type, uint32_t msg_id)
+    {
+        event e = event(type);
+        e.msg_del.msg_id = msg_id;
+        return e;
+    }
+
 }

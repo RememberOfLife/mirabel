@@ -186,7 +186,6 @@ namespace Network {
                     }
                     // universal event->packet encoding, for POD events
                     uint8_t* data_buffer = data_buffer_base;
-                    e.client_id = e.client_id;
                     int send_len = sizeof(Control::event);
                     if (e.raw_data) {
                         if (e.raw_length > base_buffer_size-send_len) {

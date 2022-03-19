@@ -1,5 +1,8 @@
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+
+#include <SDL2/SDL.h>
 
 #include "surena/game.hpp"
 
@@ -9,6 +12,8 @@
 #include "games/game_catalogue.hpp"
 
 namespace Control {
+
+    static uint32_t lobby_msg_id_ctr = 1; //REMOVE put this somewhere better
 
     Lobby::Lobby(event_queue* send_queue, uint16_t max_users):
         send_queue(send_queue),
@@ -48,6 +53,10 @@ namespace Control {
                 } else {
                     send_queue->push(Control::event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
                 }
+                char* msg_buf = (char*)malloc(32);
+                sprintf(msg_buf, "client joined: %d\n", client_id);
+                SendToAllButOne(event::create_chat_msg_event(EVENT_TYPE_LOBBY_CHAT_MSG, lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                free(msg_buf);
                 return;
             }
         }
@@ -59,6 +68,10 @@ namespace Control {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == client_id) {
                 user_client_ids[i] = 0;
+                char* msg_buf = (char*)malloc(32);
+                sprintf(msg_buf, "client left: %d\n", client_id);
+                SendToAllButOne(event::create_chat_msg_event(EVENT_TYPE_LOBBY_CHAT_MSG, lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                free(msg_buf);
                 return;
             }
         }
@@ -141,6 +154,24 @@ namespace Control {
                 }
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
+            } break;
+            case EVENT_TYPE_LOBBY_CHAT_MSG: {
+                // get data from msg
+                //TODO this should use the future get event info struct thing
+                //TODO also these casts are hideous
+                uint32_t* m_msg_id = reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data));
+                uint32_t* m_client_id = reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t));
+                uint64_t* m_timestamp = reinterpret_cast<uint64_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2);
+                char* m_text = static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2+sizeof(uint64_t);
+                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.client_id, m_text);
+                *m_msg_id = lobby_msg_id_ctr++;
+                *m_client_id = e.client_id;
+                *m_timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
+                // send message to everyone
+                SendToAllButOne(e, 0);
+            } break;
+            case EVENT_TYPE_LOBBY_CHAT_DEL: {
+                SendToAllButOne(e, 0);
             } break;
         }
     }
