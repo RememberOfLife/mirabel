@@ -33,7 +33,8 @@ namespace Control {
         EVENT_TYPE_ENGINE_UNLOAD,
         // networking events: adapter events; work with adapter<->main_queue
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
-        EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE,
+        EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED,
+        EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED,
         EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED,
         EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED,
         // networking events: protocol events; work with adapter<->adapter, they should not reach the main queue, and ignored if they do
@@ -43,7 +44,7 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
         // lobby events: deal with client/server communication
-        EVENT_TYPE_LOBBY_CHAT_MSG, //TODO contains msgId(for removal),client_id(who sent the message),timestamp,text
+        EVENT_TYPE_LOBBY_CHAT_MSG, // contains msgId(for removal),client_id(who sent the message),timestamp,text
         EVENT_TYPE_LOBBY_CHAT_DEL,
     };
 

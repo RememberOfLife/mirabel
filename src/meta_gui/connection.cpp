@@ -47,28 +47,32 @@ namespace MetaGui {
         }
 
         bool connected = (Control::main_client->network_send_queue != NULL);
-        if (connected) {
+        bool connecting = (!connected && (Control::main_client->t_network != NULL));
+        if (connecting) {
+            ImGui::BeginDisabled();
+            ImGui::Button("Connecting..", ImVec2(-1.0f, 0.0f));
+            ImGui::EndDisabled();
+        } else if (connected) {
             if (ImGui::Button("Disconnect", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             }
         } else {
             if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {
                 Network::NetworkClient* net_client = new Network::NetworkClient();
+                net_client->recv_queue = &Control::main_client->inbox;
                 if (net_client->open(server_address, server_port)) {
-                    net_client->recv_queue = &Control::main_client->inbox;
                     Control::main_client->t_network = net_client;
-                    Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_LOAD));
                 } else {
                     delete net_client;
                 }
             }
         }
-        if (connected) {
+        if (connected || connecting) {
             ImGui::BeginDisabled();
         }
         ImGui::InputText("address", server_address, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterAddressLetters);
         ImGui::InputScalar("port", ImGuiDataType_U16, &server_port);
-        if (connected) {
+        if (connected || connecting) {
             ImGui::EndDisabled();
         }
         ImGui::Separator();

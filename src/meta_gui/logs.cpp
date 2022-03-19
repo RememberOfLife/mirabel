@@ -23,6 +23,7 @@ namespace MetaGui {
         - ability to choose a log level for every log, that is actually displayed and filter out everything else
         - should log tabs be reorderable?
         - mechanism for managing log tab visibility
+        - default logger should probably not be named "debug" might confuse with log levels later on
     */
 
     enum LOG_LEVEL {

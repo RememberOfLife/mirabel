@@ -10,6 +10,7 @@ Future features will include:
 * Plugin support for loading more games, frontends and engines.
 
 ## dependencies
+
 * SDL (+ OpenGL)
 * SDL_net
 * OpenSSL
@@ -23,58 +24,61 @@ import blocks style:
 * imports from own src tree in source tree order
 * import header for things implemented in this source file
 
-## misc
+## resources
 
-// usual gameboard colors
-//rgb(201, 144, 73) "wood" normal
-//rgb(240, 217, 181) "wood" light
-//rgb(161, 119, 67) "wood" dark
-//rgb(236, 236, 236) white
-//rgb(210, 210, 210) white accent
-//rgb(11, 11, 11) black
-//rgb(25, 25, 25) black accent
-//rgb(199, 36, 73) neon red/pink
-//rgb(37, 190, 223) neon cyan
-//rgb(120, 25, 25) dark red or use (141, 35, 35)
-//rgb(24, 38, 120) dark blue
+Some frontends may require loading resources, e.g. textures and sounds. These resources are placed in the `res/` folder.
+* General purpose fonts, textures and sounds go into `res/fonts/{fontname}/`, `res/textures/` and `res/sounds/` respectively.
+* Game specific resources go into `res/games/{gamename}/`. Multiple frontends may share these game specific resources.
+* Frontend specific resources go into `res/frontends/{frontendname}/`.
 
-// sounds required:
-// - card pickup
-// - card placement
-// - card shuffle light
-// - card shuffle heavy
-// - pencil on paper, one scratch
-// - pencil on paper, multiple scratches
-// - "wood/stone" piece placement
-// - "wood/stone" piece capture
-// - game start beep
-// - game end jingle
-// - low on time beep
-
-gui:
-http://www.cmyr.net/blog/gui-framework-ingredients.html
-https://linebender.org/druid/widget.html
-http://www.cmyr.net/blog/druid-dynamism.html
+### todos
+Collect more general resources:
+* sounds
+  * card pickup
+  * card placement
+  * card shuffle light
+  * card shuffle heavy
+  * pencil on paper, one scratch
+  * pencil on paper, multiple scratches
+  * "wood/stone" piece placement
+  * "wood/stone" piece capture
+  * game start beep
+  * game end jingle
+  * low on time beep
+* textures / icons
+* usual gameboard colors (these will actually be placed in the config for the global palette in the future):
+  * rgb(201, 144, 73) "wood" normal
+  * rgb(240, 217, 181) "wood" light
+  * rgb(161, 119, 67) "wood" dark
+  * rgb(236, 236, 236) white
+  * rgb(210, 210, 210) white accent
+  * rgb(11, 11, 11) black
+  * rgb(25, 25, 25) black accent
+  * rgb(199, 36, 73) neon red/pink
+  * rgb(37, 190, 223) neon cyan
+  * rgb(120, 25, 25) dark red or use rgb(141, 35, 35)
+  * rgb(24, 38, 120) dark blue
 
 ## issues
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
+* functionality: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
 
 ## todo
 * windows build
 * use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
   * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
-  1. make EVENT_TYPE_GAME_OPTION to set options, do this right when something is selected, potentially very bloaty
-  2. append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
+  * append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * openssl for networking
 * make watchdog work with arbitrary queues and proper cond var
   * let there be one watchdog thread that knows multiple queues registered to it?
-  * or should every object that wants a watchdog create its own wtachdog runner?
+  * or should every object that wants a watchdog create its own watchdog runner?
 * make event queue a proper producer-consumer semaphore
+* any way to differentiate between closed connections from error or proper closing? i.e. recv always gives 0 no matter what, can't read server NOK
 * network client should try reconnecting itself on lost connection, cache access params for that
 * better ai integration
 * add fullscreen toggle to main menu bar
@@ -92,6 +96,7 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * place stb in deps?
 
 ## ideas
+* maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
 * ??? is the offline server even required? events are mirrored and the client holds all state for itself aswell anyway
 * server supports a single lobby mode, this could also act as the offline server
 * clientconfig and serverconfig struct to hold things like the palette and configurable settings + their defaults
@@ -120,7 +125,6 @@ http://www.cmyr.net/blog/druid-dynamism.html
 * create icon, show it on the empty (default) frontend
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components
-* some genral purpose icon set for the whole thing, goes together with the color palette, usable by frontends if they want
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already

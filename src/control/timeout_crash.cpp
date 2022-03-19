@@ -43,7 +43,7 @@ namespace Control {
                         gui_heartbeat = true;
                     } break;
                     default: {
-                        MetaGui::logf("#W timeout_crash: received unknown event, type: %d\n", e.type);
+                        MetaGui::logf("#W timeout_crash: received unexpected event, type: %d\n", e.type);
                     } break;
                 }
             }

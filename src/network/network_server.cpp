@@ -149,7 +149,7 @@ namespace Network {
 
         free(data_buffer);
         // if server_loop closes, notify server so it can handle it
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
 
     void NetworkServer::send_loop()
@@ -313,7 +313,7 @@ namespace Network {
 
         free(data_buffer_base);
         // if server_loop closes, notify server so it can handle it
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
 
 }

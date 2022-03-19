@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <thread>
 
 #include "SDL_net.h"
@@ -22,6 +23,7 @@ namespace Network {
 
     NetworkClient::~NetworkClient()
     {
+        free(server_address);
         SDLNet_FreeSocketSet(socketset);
     }
 
@@ -30,18 +32,10 @@ namespace Network {
         if (socketset == NULL) {
             return false;
         }
-        if (SDLNet_ResolveHost(&server_ip, host_address, host_port)) {
-            MetaGui::log("#W networkclient: could not resolve host address\n");
-            return false;
-        }
-        socket = SDLNet_TCP_Open(&server_ip);
-        if (socket == NULL) {
-            MetaGui::log("#W networkclient: socket failed to open\n");
-            return false;
-        }
-        SDLNet_TCP_AddSocket(socketset, socket); // cant fail, we only have one socket for our size 1 set
+        server_address = (char*)malloc(strlen(host_address)+1);
+        strcpy(server_address, host_address);
+        server_port = host_port;
         send_runner = std::thread(&NetworkClient::send_loop, this); // socket open, start send_runner
-        recv_runner = std::thread(&NetworkClient::recv_loop, this); // socket open, start recv_runner
         return true;
     }
 
@@ -53,12 +47,29 @@ namespace Network {
         SDLNet_TCP_Close(socket);
         socket = NULL;
         // everything closed, join dead runners
-        send_runner.join();
-        recv_runner.join();
+        send_runner.join(); // send_runner joins recv_runner for us
     }
 
     void NetworkClient::send_loop()
     {
+        // open the socket
+        if (SDLNet_ResolveHost(&server_ip, server_address, server_port)) {
+            MetaGui::log("#W networkclient: could not resolve host address\n");
+            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            return;
+        }
+        socket = SDLNet_TCP_Open(&server_ip);
+        if (socket == NULL) {
+            MetaGui::log("#W networkclient: socket failed to open\n");
+            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            return;
+        }
+        SDLNet_TCP_AddSocket(socketset, socket); // cant fail, we only have one socket for our size 1 set
+
+        // everything fine, enter the actual send loop and start recv_runner
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED));
+        recv_runner = std::thread(&NetworkClient::recv_loop, this); // socket open, start recv_runner
+
         uint32_t base_buffer_size = 1024;
         uint8_t* data_buffer_base = (uint8_t*)malloc(base_buffer_size); // recycled buffer for outgoing data
 
@@ -106,6 +117,8 @@ namespace Network {
         }
 
         free(data_buffer_base);
+
+        recv_runner.join();
     }
 
     void NetworkClient::recv_loop()
@@ -194,7 +207,7 @@ namespace Network {
 
         free(data_buffer_base);
         // if the connection is closed, enqueue a connection closed event to ensure the gui resets its connection
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE));
+        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
     
 }

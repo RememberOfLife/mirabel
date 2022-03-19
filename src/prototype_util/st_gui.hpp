@@ -34,6 +34,11 @@ namespace STGui {
     };
 
     /*
+
+    http://www.cmyr.net/blog/gui-framework-ingredients.html
+    https://linebender.org/druid/widget.html
+    http://www.cmyr.net/blog/druid-dynamism.html
+
     workflow for interaction
         - sdl mouse events
             - instead of static position and click mask

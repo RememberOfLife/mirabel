@@ -311,7 +311,7 @@ namespace Control {
                     case EVENT_TYPE_LOBBY_CHAT_DEL: {
                         MetaGui::chat_msg_del(e.msg_del.msg_id);
                     } break;
-                    case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
+                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED: {
                         // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
                         if (t_network != NULL) {
                             // have to check if it actually still exists, might have deconstructed already if connection was refused
@@ -320,7 +320,7 @@ namespace Control {
                             MetaGui::chat_clear();
                         }
                     } break;
-                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
+                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: {
                         // network adapter died or closed, reset it
                         if (t_network == NULL) {
                             break; // closed properly, don't do anything 

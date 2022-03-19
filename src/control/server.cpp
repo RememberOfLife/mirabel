@@ -110,7 +110,7 @@ namespace Control {
                         printf("[INFO] lobby created\n");
                     }
                 } break;
-                case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSE: {
+                case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: {
                     // network adapter died or closed
                     // crash fatal for now
                     printf("[FATAL] networkserver died\n");

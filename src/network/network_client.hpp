@@ -14,6 +14,8 @@ namespace Network {
             std::thread send_runner;
             std::thread recv_runner;
 
+            char* server_address;
+            uint16_t server_port;
             IPaddress server_ip;
             TCPsocket socket = NULL;
             SDLNet_SocketSet socketset = NULL;
