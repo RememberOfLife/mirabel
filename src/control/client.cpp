@@ -3,6 +3,10 @@
 #include <cstdio>
 #include <cstring>
 
+#ifdef WIN32
+#include <GL/glew.h>
+#endif
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "SDL_net.h"
@@ -33,6 +37,10 @@ namespace Control {
         // start watchdog so it can oversee explicit construction
         main_client = this; //HACK this is a very ugly method of making sure that the timeout crash thread has valid inbox to point to..
         t_timeout.start();
+
+#ifdef WIN32
+        glewInit();
+#endif
 
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
@@ -105,16 +113,16 @@ namespace Control {
         glEnable(GL_BLEND);
 
         nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
-        int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
-        if (font_id0 < 0) {
-            fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
-            exit(1);
-        }
-        int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
-        if (font_id1 < 0) {
-            fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
-            exit(1);
-        }
+        // int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
+        // if (font_id0 < 0) {
+        //     fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
+        //     exit(1);
+        // }
+        // int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
+        // if (font_id1 < 0) {
+        //     fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
+        //     exit(1);
+        // }
 
         // init default context
         frontend = new Frontends::EmptyFrontend();

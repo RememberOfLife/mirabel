@@ -124,9 +124,19 @@ target_link_libraries(mirabel Threads::Threads)
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
 target_link_libraries(mirabel ${OPENGL_LIBRARIES})
 
-target_link_libraries(mirabel dl)
+if(WIN32)
+    find_package(GLEW REQUIRED) # need glew for nanovg
+    target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
+    target_link_libraries(mirabel GLEW::GLEW)
+    target_link_libraries(mirabel ws2_32 iphlpapi) # for SDL_net
+    target_link_libraries(mirabel -mwindows) # we're a gui
+    target_compile_definitions(mirabel PRIVATE SDL_MAIN_HANDLED) # stop WinMain panic
+else()
+    target_link_libraries(mirabel dl)
+endif()
+
 include_directories(mirabel ${SDL2_INCLUDE_DIRS})
-target_link_libraries(mirabel ${SDL2_LIBRARIES})
+target_link_libraries(mirabel SDL2::SDL2-static SDL2::SDL2main)
 
 target_link_libraries(mirabel OpenSSL::SSL)
 
