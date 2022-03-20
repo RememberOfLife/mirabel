@@ -39,9 +39,10 @@ namespace Games {
                 }
                 //TODO proper state editor
                 // white is actually displayed red per default, but because that might be configurable it is kept uniform here
-                const char* check_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
-                ImGui::Text("player to move: %s", check_options[game->player_to_move()]);
-                ImGui::Text("result: %s", check_options[game->get_result()]);
+                const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
+                const char* result_options[4] = {"DRAW", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
+                ImGui::Text("player to move: %s", move_options[game->player_to_move()]);
+                ImGui::Text("result: %s", result_options[game->get_result()]);
                 //TODO expose winningcondition
             }
 

@@ -35,11 +35,15 @@ namespace Control {
     Client::Client()
     {
         // start watchdog so it can oversee explicit construction
-        main_client = this; //HACK this is a very ugly method of making sure that the timeout crash thread has valid inbox to point to..
+        main_client = this; //HACK this is a very ugly method of making sure that the timeout crash thread has a valid inbox to point to..
         t_timeout.start();
 
 #ifdef WIN32
-        glewInit();
+        GLenum glew_err = glewInit();
+        if (glew_err != GLEW_OK) {
+            fprintf(stderr, "[FATAL] glew init error: %s\n", glewGetErrorString(glew_err));
+            exit(1);
+        }
 #endif
 
         // setup SDL
@@ -113,16 +117,14 @@ namespace Control {
         glEnable(GL_BLEND);
 
         nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
-        // int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
-        // if (font_id0 < 0) {
-        //     fprintf(stderr, "[FATAL] nvg failed to load font 0\n");
-        //     exit(1);
-        // }
-        // int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
-        // if (font_id1 < 0) {
-        //     fprintf(stderr, "[FATAL] nvg failed to load font 1\n");
-        //     exit(1);
-        // }
+        int font_id0 = nvgCreateFont(nanovg_ctx, "df", "../res/fonts/opensans/OpenSans-Regular.ttf");
+        if (font_id0 < 0) {
+            printf("[ERROR] nvg failed to load font 0\n");
+        }
+        int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
+        if (font_id1 < 0) {
+            printf("[ERROR] nvg failed to load font 1\n");
+        }
 
         // init default context
         frontend = new Frontends::EmptyFrontend();

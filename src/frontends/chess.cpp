@@ -50,6 +50,7 @@ namespace Frontends {
         for (int i = 0; i < 12; i++) {
             if (sprites[i] < 0) {
                 MetaGui::logf("#E chess: sprite loading failure #%d\n", i);
+                //TODO any backup?
             }
         }
         // setup buttons for drag and drop
@@ -200,6 +201,28 @@ namespace Frontends {
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
         nvgTranslate(dc, w_px/2-(8*square_size)/2, h_px/2-(8*square_size)/2);
+        // colored board border for current/winning player
+        float border_size = square_size*0.1;
+        nvgBeginPath(dc);
+        nvgStrokeWidth(dc, border_size);
+        nvgRect(dc, -border_size, -border_size, 8*square_size+2*border_size, 8*square_size+2*border_size);
+        if (!game) {
+            nvgStrokeColor(dc, nvgRGB(128, 128, 128));
+        } else {
+            uint8_t color_player = (game->player_to_move() == 0 ? game->get_result() : game->player_to_move());
+            switch (color_player) {
+                case surena::Chess::PLAYER_NONE: {
+                    nvgStrokeColor(dc, nvgRGB(128, 128, 128));
+                } break;
+                case surena::Chess::PLAYER_WHITE: {
+                    nvgStrokeColor(dc, nvgRGB(236, 236, 236));
+                } break;
+                case surena::Chess::PLAYER_BLACK: {
+                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                } break;
+            }
+        }
+        nvgStroke(dc);
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 int iy = 7-y;

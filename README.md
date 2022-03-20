@@ -3,9 +3,9 @@
 General purpose board game playing GUI and server with some useful features.
 * Online/Offline Multiplayer
 * Engine Integration
+* Windows Builds
 
 Future features will include:
-* Windows support.
 * Support for games using random moves, hidden information and simultaneous moves.
 * Plugin support for loading more games, frontends and engines.
 
@@ -14,7 +14,7 @@ Future features will include:
 * SDL (+ OpenGL)
 * SDL_net
 * OpenSSL
-* nanovg (+ stb)
+* nanovg (+ stb + GLEW)
 * imgui
 * surena
 
@@ -62,10 +62,14 @@ Collect more general resources:
 ## issues
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
-* functionality: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
+* security/performance: a network adapter expecting more overhang data, can be tricked into listening infinitely on a dead socket
+  * e.g. send an event containing 1000B of raw data (but actually only send 1024B), server reads 1024B, tries to listen for 8B overhang and gets stuck
+* usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
+* usability: all graphical scalings (imgui+frontends) are way too small on high resolution displays
+* graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 
 ## todo
-* windows build
+* put connection+chat window into the main menu bar
 * use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
   * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
@@ -93,7 +97,7 @@ Collect more general resources:
   * https://github.com/jakebesworth/Simple-SDL2-Audio
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
-* place stb in deps?
+* place stb in deps? also genrally decide if we'd rather link everything static or dynamically?
 
 ## ideas
 * maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
@@ -101,6 +105,8 @@ Collect more general resources:
 * server supports a single lobby mode, this could also act as the offline server
 * clientconfig and serverconfig struct to hold things like the palette and configurable settings + their defaults
 * logging wrapper functions for the server so that the offline server logs into the corresponding metagui logger, but the standalone one logs to stdout
+  * do debug log statements get a macro? feels like they bloat performance at runtime otherwise
+  * should log level be variable at runtime?
 * path to res folder shouldnt be hardcoded
 * maybe make the state editor something like a toggle?
   * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from

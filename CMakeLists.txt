@@ -131,12 +131,13 @@ if(WIN32)
     target_link_libraries(mirabel ws2_32 iphlpapi) # for SDL_net
     target_link_libraries(mirabel -mwindows) # we're a gui
     target_compile_definitions(mirabel PRIVATE SDL_MAIN_HANDLED) # stop WinMain panic
+    target_link_libraries(mirabel SDL2::SDL2-static SDL2::SDL2main) # static sdl on windows
 else()
     target_link_libraries(mirabel dl)
+    target_link_libraries(mirabel SDL2::SDL2)
 endif()
 
 include_directories(mirabel ${SDL2_INCLUDE_DIRS})
-target_link_libraries(mirabel SDL2::SDL2-static SDL2::SDL2main)
 
 target_link_libraries(mirabel OpenSSL::SSL)
 

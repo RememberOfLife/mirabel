@@ -179,6 +179,28 @@ namespace Frontends {
         if (!flat_top) {
             DD::Rotate(hex_angle/2);
         }
+        // colored board border for current/winning player
+        if (!game) {
+            DD::SetRGB255(161, 119, 67);
+        } else {
+            uint8_t color_player = (game->player_to_move() == 0 ? game->get_result() : game->player_to_move());
+            switch (color_player) {
+                case surena::Havannah::COLOR_NONE: {
+                    DD::SetRGB255(128, 128, 128);
+                } break;
+                case surena::Havannah::COLOR_WHITE: {
+                    DD::SetRGB255(141, 35, 35);
+                } break;
+                case surena::Havannah::COLOR_BLACK: {
+                    DD::SetRGB255(25, 25, 25);
+                } break;
+            }
+        }
+        DD::SetFill();
+        DD::DrawRegularPolygon(6, 0, 0, static_cast<float>(size*2)*flat_radius+flat_radius*0.5);
+        DD::SetRGB255(201, 144, 73);
+        DD::DrawRegularPolygon(6, 0, 0, static_cast<float>(size*2)*flat_radius);
+        // translate back up to board rendering position and render board
         DD::Translate(-(size*flat_radius)+flat_radius, -((3*size-3)*fitting_hex_radius)/2);
         for (int y = 0; y < board_sizer; y++) {
             for (int x = 0; x < board_sizer; x++) {
@@ -272,7 +294,7 @@ namespace Frontends {
                             if (!((connections_to_draw >> rot)&0b1)) {
                                 continue;
                             }
-                            DD::DrawRectangle(-connection_draw_width/2, -connection_draw_width/2, connection_draw_width+button_size+padding, connection_draw_width);
+                            DD::DrawRectangle(-connection_draw_width/2, -connection_draw_width/2, connection_draw_width+flat_radius*2, connection_draw_width);
                         }
                         DD::Pop();
                     }
