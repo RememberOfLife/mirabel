@@ -19,7 +19,8 @@ namespace Control {
     enum EVENT_TYPE : uint32_t {
         // special events
         EVENT_TYPE_NULL = 0, // ignored event
-        EVENT_TYPE_HEARTBEAT, //TODO this should be a universal thing taking a queue where to put the heartbeat response into, i.e. PING+PONG
+        EVENT_TYPE_HEARTBEAT, // purely local event between queueholder and timeoutcrash, networking uses protocol_ping events
+        EVENT_TYPE_HEARTBEAT_RESET,
         EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
         // normal events
         EVENT_TYPE_GAME_LOAD,
@@ -48,6 +49,10 @@ namespace Control {
         EVENT_TYPE_LOBBY_CHAT_DEL,
     };
 
+    struct heartbeat_event {
+        uint32_t id;
+    };
+
     struct move_event {
         uint64_t code;
     };
@@ -72,6 +77,7 @@ namespace Control {
         uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data, some way to keep two accessors?
         void* raw_data;
         union {
+            heartbeat_event heartbeat;
             move_event move;
             frontend_event frontend;
             engine_event engine;
@@ -87,6 +93,7 @@ namespace Control {
         event& operator=(const event& other); // copy assign
         event& operator=(event&& other); // move assign
         ~event();
+        static event create_heartbeat_event(uint32_t type, uint32_t id);
         static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant);
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);

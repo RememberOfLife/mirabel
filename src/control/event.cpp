@@ -97,6 +97,13 @@ namespace Control {
         free(raw_data);
     }
 
+    event event::create_heartbeat_event(uint32_t type, uint32_t id)
+    {
+        event e = event(type);
+        e.heartbeat.id = id;
+        return e;
+    }
+
     event event::create_game_event(uint32_t type, const char* base_game, const char* base_game_variant)
     {
         event e = event(type);

@@ -1,5 +1,9 @@
 #include <chrono>
+#include <climits>
+#include <cstdint>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <thread>
 
 #include "meta_gui/meta_gui.hpp"
@@ -12,69 +16,165 @@
 
 namespace Control {
 
-    TimeoutCrashThread::TimeoutCrashThread()
+    void TimeoutCrash::timeout_info::send_heartbeat()
+    {
+        q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, id));
+    }
+
+    TimeoutCrash::timeout_item::timeout_item():
+        id(0),
+        name(NULL),
+        q(NULL)
     {}
 
-    TimeoutCrashThread::~TimeoutCrashThread()
+    TimeoutCrash::timeout_item::timeout_item(event_queue* target_queue, uint32_t new_id, const char* new_name, int new_initial_delay, int new_timeout_ms):
+        id(new_id),
+        timeout_ms(new_timeout_ms),
+        last_heartbeat_age(-new_initial_delay),
+        heartbeat_answered(false),
+        q(target_queue)
+    {
+        name = (char*)malloc(strlen(new_name)+1);
+        strcpy(name, new_name);
+    }
+
+    TimeoutCrash::TimeoutCrash()
+    {}
+
+    TimeoutCrash::~TimeoutCrash()
     {}
     
-    void TimeoutCrashThread::loop()
+    void TimeoutCrash::loop()
     {
-        main_client->inbox.push(event(EVENT_TYPE_HEARTBEAT));
         bool quit = false;
-        const int interval_budget_ms = (1000)/30;
-        bool gui_heartbeat = false;
-        int gui_last_heartbeat_ms = -initial_delay;
-
         while (!quit) {
-            // check inbox approximately each 30fps frame, this provides responsive exit bahviour
-            std::this_thread::sleep_for(std::chrono::milliseconds(interval_budget_ms));
 
-            for (event e = inbox.pop(); e.type != Control::EVENT_TYPE_NULL; e = inbox.pop()) {
+            // get the time to sleep until we need to check the earliest heartbeat again
+            m.lock();
+            int heartbeat_deadline = INT_MAX; // in ms as everything here is
+            std::unordered_map<uint32_t, timeout_item>::iterator map_iter = timeout_items.begin();
+            while (map_iter != timeout_items.end()) {
+                timeout_item& tii = map_iter->second;
+                int item_deadline = tii.timeout_ms - tii.last_heartbeat_age;
+                if (item_deadline < heartbeat_deadline) {
+                    heartbeat_deadline = item_deadline;
+                }
+                map_iter++;
+            }
+            m.unlock();
+
+            std::chrono::steady_clock::time_point sleep_start = std::chrono::steady_clock::now();
+            event e = inbox.pop(heartbeat_deadline);
+            std::chrono::steady_clock::time_point sleep_stop = std::chrono::steady_clock::now();
+            int real_sleep_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_stop-sleep_start).count();
+            // upon wakeup, check for heartbeat responses
+            m.lock();
+            for (; e.type != Control::EVENT_TYPE_NULL; e = inbox.pop()) {
                 // process event e
-                // e.g. game updates, load other ctx or game, etc..
                 switch (e.type) {
                     case EVENT_TYPE_EXIT: {
                         quit = true;
-                        MetaGui::log("#I timeout_crash: exit\n");
+                        MetaGui::log("#I timeout_crash: exit\n"); //TODO may only exit once all timeout_items are cleaned up, lest they use our deleted inbox
                         break;
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
-                        gui_heartbeat = true;
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            timeout_items[e.heartbeat.id].heartbeat_answered = true;
+                        } else {
+                            MetaGui::logf("#E timeout_crash: received heartbeat for unknown timeout item #%d\n", e.heartbeat.id);
+                        }
+                    } break;
+                    case EVENT_TYPE_HEARTBEAT_RESET: {
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            timeout_items[e.heartbeat.id].last_heartbeat_age -=real_sleep_time;
+                        } else {
+                            MetaGui::logf("#E timeout_crash: received heartbeat reset for unknown timeout item #%d\n", e.heartbeat.id);
+                        }
                     } break;
                     default: {
                         MetaGui::logf("#W timeout_crash: received unexpected event, type: %d\n", e.type);
                     } break;
                 }
             }
-
-            if (gui_last_heartbeat_ms > timeout_ms) {
-                if (gui_heartbeat) {
-                    gui_last_heartbeat_ms -= timeout_ms;
-                    gui_heartbeat = false;
-                    // re-issue heartbeat to gui
-                    main_client->inbox.push(event(EVENT_TYPE_HEARTBEAT));
-                } else {
-                    // if the gui has not responded to out heartbeat in timeout ms, quit
-                    fprintf(stderr, "[FATAL] guithread failed to provide heartbeat\n");
-                    exit(1);
+            // add slept time to all heartbeat ages (except new ones), might've woken up earlier than expected
+            map_iter = timeout_items.begin();
+            while (map_iter != timeout_items.end()) {
+                timeout_item& tii = map_iter->second;
+                tii.last_heartbeat_age += real_sleep_time;
+                if (tii.last_heartbeat_age >= tii.timeout_ms) {
+                    // heartbeat deadline
+                    if (tii.heartbeat_answered)  {
+                        tii.last_heartbeat_age -= tii.timeout_ms;
+                        tii.heartbeat_answered = false;
+                        tii.q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, tii.id));
+                    } else {
+                        // if the item has not responded to our heartbeat in timeout ms, quit
+                        fprintf(stderr, "[FATAL] timeout item #%d failed to provide heartbeat: %s\n", tii.id, tii.name);
+                        exit(1);
+                    }
                 }
+                map_iter++;
             }
+            m.unlock();
 
-            gui_last_heartbeat_ms += interval_budget_ms;
         }
     }
     
 
-    void TimeoutCrashThread::start()
+    void TimeoutCrash::start()
     {
-        runner = std::thread(&TimeoutCrashThread::loop, this);
+        runner = std::thread(&TimeoutCrash::loop, this);
     }
     
-    void TimeoutCrashThread::join()
+    void TimeoutCrash::join()
     {
         runner.join();
     }
     
+    TimeoutCrash::timeout_info TimeoutCrash::register_timeout_item(event_queue* target_queue, const char* name, int initial_delay, int timeout_ms)
+    {
+        m.lock();
+        uint32_t item_id = next_id++;
+        if (timeout_item_exists(name)) {
+            MetaGui::logf("#W registering timeout item #%d with an already existing name: %s\n", item_id, name);
+        }
+        timeout_items[item_id] = timeout_item(target_queue, item_id, name, initial_delay, timeout_ms);
+        timeout_items[item_id].q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, item_id));
+        m.unlock();
+        // force wakeup the looping thread to re-calculate nearest deadline, also dont add sleep to the new one
+        inbox.push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT_RESET, item_id)); 
+        return timeout_info{item_id, &inbox};
+    }
+
+    void TimeoutCrash::unregister_timeout_item(uint32_t id)
+    {
+        m.lock();
+        if (!timeout_item_exists(id)) {
+            MetaGui::logf("#W attempted un-register of unknown timeout item #%d\n", next_id);
+            m.unlock();
+            return;
+        }
+        // free name string and erase from map
+        free(timeout_items[id].name);
+        timeout_items.erase(id);
+        m.unlock();
+    }
+
+    bool TimeoutCrash::timeout_item_exists(uint32_t id)
+    {
+        return timeout_items.find(id) != timeout_items.end();
+    }
+
+    bool TimeoutCrash::timeout_item_exists(const char* name)
+    {
+        std::unordered_map<uint32_t, timeout_item>::iterator map_iter = timeout_items.begin();
+        while (map_iter != timeout_items.end()) {
+            if (strcmp(map_iter->second.name, name) == 0) {
+                return true;
+            }
+            map_iter++;
+        }
+        return false;
+    }
 
 }

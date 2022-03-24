@@ -6,6 +6,7 @@
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
+#include "control/timeout_crash.hpp"
 #include "network/network_client.hpp"
 
 #include "meta_gui/meta_gui.hpp"
@@ -58,7 +59,7 @@ namespace MetaGui {
             }
         } else {
             if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {
-                Network::NetworkClient* net_client = new Network::NetworkClient();
+                Network::NetworkClient* net_client = new Network::NetworkClient(&Control::main_client->t_tc);
                 net_client->recv_queue = &Control::main_client->inbox;
                 if (net_client->open(server_address, server_port)) {
                     Control::main_client->t_network = net_client;

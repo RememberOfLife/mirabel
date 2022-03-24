@@ -19,7 +19,9 @@ namespace Control {
 
         public:
 
-            TimeoutCrashThread t_timeout;
+            TimeoutCrash t_tc; // client owns this
+            TimeoutCrash::timeout_info tc_info;
+
             Network::NetworkClient* t_network = NULL;
             event_queue* network_send_queue = NULL;
             // offline server likely somewhere here

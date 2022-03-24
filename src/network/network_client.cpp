@@ -13,8 +13,11 @@
 
 namespace Network {
 
-    NetworkClient::NetworkClient()
+    NetworkClient::NetworkClient(Control::TimeoutCrash* use_tc)
     {
+        if (use_tc) {
+            tc = use_tc;
+        }
         socketset = SDLNet_AllocSocketSet(1);
         if (socketset == NULL) {
             MetaGui::log("#E networkclient: failed to allocate socketset\n");
@@ -66,6 +69,10 @@ namespace Network {
         }
         SDLNet_TCP_AddSocket(socketset, socket); // cant fail, we only have one socket for our size 1 set
 
+        if (tc) {
+            tc_info = tc->register_timeout_item(&send_queue, "networkclient", 0, 1000);
+        }
+
         // everything fine, enter the actual send loop and start recv_runner
         recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED));
         recv_runner = std::thread(&NetworkClient::recv_loop, this); // socket open, start recv_runner
@@ -85,7 +92,9 @@ namespace Network {
                     quit = true;
                     break;
                 } break;
-                //TODO heartbeat
+                case Control::EVENT_TYPE_HEARTBEAT: {
+                    tc_info.send_heartbeat();
+                } break;
                 default: {
                     // universal event->packet encoding, for POD events
                     uint8_t* data_buffer = data_buffer_base;
@@ -118,7 +127,13 @@ namespace Network {
 
         free(data_buffer_base);
 
-        recv_runner.join();
+        recv_runner.join(); // recv_runner might fail to join if it gets stuck
+
+        // unregister timeout crash AFTER joining runner to avoid this
+        //TODO should really use some meachnism to ensure proper time for cleanup here
+        if (tc) {
+            tc->unregister_timeout_item(tc_info.id);
+        }
     }
 
     void NetworkClient::recv_loop()

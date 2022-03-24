@@ -35,8 +35,8 @@ namespace Control {
     Client::Client()
     {
         // start watchdog so it can oversee explicit construction
-        main_client = this; //HACK this is a very ugly method of making sure that the timeout crash thread has a valid inbox to point to..
-        t_timeout.start();
+        t_tc.start();
+        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
 #ifdef WIN32
         GLenum glew_err = glewInit();
@@ -132,9 +132,10 @@ namespace Control {
 
     Client::~Client()
     {
-        //TODO maybe this should oversee destruction aswell
-        t_timeout.inbox.push(EVENT_TYPE_EXIT);
-        t_timeout.join();
+        t_tc.unregister_timeout_item(tc_info.id);
+
+        t_network->close();
+        delete t_network;
 
         delete engine;
         delete frontend;
@@ -153,6 +154,9 @@ namespace Control {
         SDLNet_Quit();
         SDL_Quit();
 
+        //TODO maybe this should properly oversee destruction aswell
+        t_tc.inbox.push(EVENT_TYPE_EXIT);
+        t_tc.join();
     }
 
     void Client::loop()
@@ -190,7 +194,7 @@ namespace Control {
                         break;
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
-                        t_timeout.inbox.push(EVENT_TYPE_HEARTBEAT);
+                        tc_info.send_heartbeat();
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         delete game;

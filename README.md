@@ -78,11 +78,8 @@ Collect more general resources:
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * openssl for networking
-* make watchdog work with arbitrary queues and proper cond var
-  * let there be one watchdog thread that knows multiple queues registered to it?
-  * or should every object that wants a watchdog create its own watchdog runner?
 * make event queue a proper producer-consumer semaphore
-* any way to differentiate between closed connections from error or proper closing? i.e. recv always gives 0 no matter what, can't read server NOK
+* differentiate between closed connections from error or proper closing
 * network client should try reconnecting itself on lost connection, cache access params for that
 * better ai integration
 * add fullscreen toggle to main menu bar
