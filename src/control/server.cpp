@@ -30,6 +30,10 @@ namespace Control {
 
     Server::Server()
     {
+        // start watchdog so it can oversee explicit construction
+        t_tc.start();
+        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
+
         //TODO no setup and cleanup for sdl+net if running offline
         // setup SDL
         if ( SDL_Init(0) < 0 ) {
@@ -57,11 +61,17 @@ namespace Control {
 
     Server::~Server()
     {
+        t_tc.unregister_timeout_item(tc_info.id);
+
         printf("[INFO] server shutting down\n");
         t_network->close();
         delete t_network;
         SDLNet_Quit();
         SDL_Quit();
+
+        //TODO maybe this should properly oversee destruction aswell
+        t_tc.inbox.push(EVENT_TYPE_EXIT);
+        t_tc.join();
     }
 
     void Server::loop()
@@ -77,7 +87,9 @@ namespace Control {
                     quit = true;
                     break;
                 } break;
-                //TODO heartbeat
+                case EVENT_TYPE_HEARTBEAT: {
+                    tc_info.send_heartbeat();
+                } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                     // we only have one lobby for now
                     if (lobby) {

@@ -69,18 +69,20 @@ Collect more general resources:
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 
 ## todo
-* put connection+chat window into the main menu bar
-* use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
-  * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
-* fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
-  * append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
+* rewrite network to use openssl
+  * there is a lot of reuse in the networking code, maybe reduce it through some event methods
+* rework network protocol for intentional disconnect
+  * differentiate between closed connections from error or proper closing
+* rework network protocol for single lobby server with password
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
-* there is a lot of reuse in the networking code, maybe reduce it through some event methods
-* openssl for networking
-* make event queue a proper producer-consumer semaphore
-* differentiate between closed connections from error or proper closing
+* fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
+  * append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
+* use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
+  * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * network client should try reconnecting itself on lost connection, cache access params for that
+* put connection+chat window into the main menu bar
+* make event queue a proper producer-consumer semaphore
 * better ai integration
 * add fullscreen toggle to main menu bar
 * rework everything to use nanovg and remove DD, it is no longer required

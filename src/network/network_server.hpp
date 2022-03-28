@@ -11,6 +11,8 @@ namespace Network {
 
     class NetworkServer {
         private:
+            //TODO use timeoutcrash
+
             std::thread server_runner;
             //TODO these may also be multiple runners, split among shards of the connected clients
             std::thread send_runner;

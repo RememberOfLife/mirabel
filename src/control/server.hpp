@@ -4,6 +4,7 @@
 
 #include "control/event_queue.hpp"
 #include "control/lobby.hpp"
+#include "control/timeout_crash.hpp"
 #include "network/network_server.hpp"
 
 namespace Control {
@@ -12,7 +13,9 @@ namespace Control {
 
         public:
 
-            //TimeoutCrashThread t_timeout;
+            TimeoutCrash t_tc;
+            TimeoutCrash::timeout_info tc_info;
+
             Network::NetworkServer* t_network = NULL;
             event_queue* network_send_queue = NULL;
 
