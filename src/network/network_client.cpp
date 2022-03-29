@@ -15,12 +15,13 @@ namespace Network {
 
     NetworkClient::NetworkClient(Control::TimeoutCrash* use_tc)
     {
+        log_id = MetaGui::log_register("NetworkClient");
         if (use_tc) {
             tc = use_tc;
         }
         socketset = SDLNet_AllocSocketSet(1);
         if (socketset == NULL) {
-            MetaGui::log("#E networkclient: failed to allocate socketset\n");
+            MetaGui::log(log_id, "#E failed to allocate socketset\n");
         }
     }
 
@@ -28,6 +29,7 @@ namespace Network {
     {
         free(server_address);
         SDLNet_FreeSocketSet(socketset);
+        MetaGui::log_unregister(log_id);
     }
 
     bool NetworkClient::open(const char* host_address, uint16_t host_port)
@@ -57,20 +59,20 @@ namespace Network {
     {
         // open the socket
         if (SDLNet_ResolveHost(&server_ip, server_address, server_port)) {
-            MetaGui::log("#W networkclient: could not resolve host address\n");
+            MetaGui::log(log_id, "#W could not resolve host address\n");
             recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
         socket = SDLNet_TCP_Open(&server_ip);
         if (socket == NULL) {
-            MetaGui::log("#W networkclient: socket failed to open\n");
+            MetaGui::log(log_id, "#W socket failed to open\n");
             recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
         SDLNet_TCP_AddSocket(socketset, socket); // cant fail, we only have one socket for our size 1 set
 
         if (tc) {
-            tc_info = tc->register_timeout_item(&send_queue, "networkclient", 0, 1000);
+            tc_info = tc->register_timeout_item(&send_queue, "networkclient", 1000, 1000);
         }
 
         // everything fine, enter the actual send loop and start recv_runner
@@ -86,7 +88,7 @@ namespace Network {
             Control::event e = send_queue.pop(UINT32_MAX);
             switch (e.type) {
                 case Control::EVENT_TYPE_NULL: {
-                    MetaGui::log("#W networkclient: received impossible null event\n");
+                    MetaGui::log(log_id, "#W received impossible null event\n");
                 } break;
                 case Control::EVENT_TYPE_EXIT: {
                     quit = true;
@@ -115,22 +117,24 @@ namespace Network {
                     memcpy(data_buffer, &e, sizeof(Control::event));
                     int sent_len = SDLNet_TCP_Send(socket, data_buffer, send_len);
                     if (sent_len != send_len) {
-                        MetaGui::log("#W networkclient: packet sending failed\n");
+                        MetaGui::log(log_id, "#W packet sending failed\n");
                     }
                     if (data_buffer != data_buffer_base) {
                         free(data_buffer);
                     }
-                    MetaGui::logf("#I networkclient: sent event, type %d, len %d\n", e.type, send_len);
+                    MetaGui::logf(log_id, "#I sent event, type %d, len %d\n", e.type, send_len);
                 } break;
             }
+        }
+
+        if (tc) {
+            tc_info.pre_quit(1000);
         }
 
         free(data_buffer_base);
 
         recv_runner.join(); // recv_runner might fail to join if it gets stuck
 
-        // unregister timeout crash AFTER joining runner to avoid this
-        //TODO should really use some meachnism to ensure proper time for cleanup here
         if (tc) {
             tc->unregister_timeout_item(tc_info.id);
         }
@@ -143,6 +147,7 @@ namespace Network {
 
         while (socket != NULL) {
             int ready = SDLNet_CheckSockets(socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
+            //TODO if we have to go out of waiting anyway every once in a while, the maybe check a dedicated heartbeat inbox here too?
             if (ready == -1) {
                 break;
             }
@@ -153,14 +158,14 @@ namespace Network {
                     SDLNet_TCP_DelSocket(socketset, socket);
                     SDLNet_TCP_Close(socket);
                     socket = NULL;
-                    MetaGui::log("#W networkclient: connection closed unexpectedly\n");
+                    MetaGui::log(log_id, "#W connection closed unexpectedly\n");
                     break;
                 } else {
                     // one call to recv may receive MULTIPLE events at once, process them all
                     uint8_t* data_buffer = data_buffer_base;
                     while (true) {
                         if (recv_len < sizeof(Control::event)) {
-                            MetaGui::logf("#W networkclient: discarding %d unusable bytes of received data\n", recv_len);
+                            MetaGui::logf(log_id, "#W discarding %d unusable bytes of received data\n", recv_len);
                             break;
                         }
                         // universal packet->event decoding, then place it in the recv_queue
@@ -191,7 +196,7 @@ namespace Network {
                                 int overhang_recv_len = SDLNet_TCP_Recv(socket, data_buffer, raw_overhang);
                                 if (overhang_recv_len != raw_overhang) {
                                     // did not receive all the missing bytes, might be disastrous for the event
-                                    MetaGui::logf("#E received only %d bytes of overhang, expected %d, event dropped\n", overhang_recv_len, raw_overhang);
+                                    MetaGui::logf(log_id, "#E received only %d bytes of overhang, expected %d, event dropped\n", overhang_recv_len, raw_overhang);
                                     // drop event to null type, will be discarded later
                                     recv_event.type = Control::EVENT_TYPE_NULL;
                                 } else {
@@ -205,10 +210,10 @@ namespace Network {
                         switch (recv_event.type) {
                             case Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
                                 client_id = recv_event.client_id;
-                                MetaGui::logf("#I networkclient: assigned client id %d\n", client_id);
+                                MetaGui::logf(log_id, "#I assigned client id %d\n", client_id);
                             } break;
                             default: {
-                                MetaGui::logf("#I networkclient: received event, type: %d\n", recv_event.type);
+                                MetaGui::logf(log_id, "#I received event, type: %d\n", recv_event.type);
                                 recv_queue->push(recv_event);
                             } break;
                         }

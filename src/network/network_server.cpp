@@ -89,6 +89,7 @@ namespace Network {
 
         while (server_socket != NULL) {
             int ready = SDLNet_CheckSockets(server_socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
+            //TODO if we have to go out of waiting anyway every once in a while, the maybe check a dedicated heartbeat inbox here too?
             if (ready == -1) {
                 break;
             }
@@ -223,6 +224,7 @@ namespace Network {
 
         while (true) {
             int ready = SDLNet_CheckSockets(client_socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
+            //TODO if we have to go out of waiting anyway every once in a while, the maybe check a dedicated heartbeat inbox here too?
             if (ready == -1) {
                 break;
             }

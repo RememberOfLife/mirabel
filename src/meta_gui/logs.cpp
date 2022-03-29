@@ -255,21 +255,23 @@ namespace MetaGui {
                 bool visible = ImGui::BeginTabItem(current_log->name);
                 ImGui::PopStyleColor();
                 current_log->visible = visible;
-                // collapsing header with info + settings about the log
-                if (ImGui::CollapsingHeader("Logger", ImGuiTreeNodeFlags_DefaultOpen)) {
-                    ImGui::AlignTextToFramePadding();
-                    ImGui::Text("line count: %lu", current_log->log_line_offsets.size()-1);
-                    ImGui::SameLine();
-                    ImGui::NextColumn();
-                    const char* text_auto_scroll = "auto-scroll";
-                    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(text_auto_scroll).x - ImGui::GetScrollX() - 3 * ImGui::GetStyle().ItemSpacing.x);
-                    ImGui::Checkbox(text_auto_scroll, &current_log->auto_scroll);
-                    ImGui::Separator();
-                }
                 if (visible) {
                     visible_log = current_log_id;
+
+                    // collapsing header with info + settings about the log
+                    if (ImGui::CollapsingHeader("Logger", ImGuiTreeNodeFlags_DefaultOpen)) {
+                        ImGui::AlignTextToFramePadding();
+                        ImGui::Text("line count: %lu", current_log->log_line_offsets.size()-1);
+                        ImGui::SameLine();
+                        ImGui::NextColumn();
+                        const char* text_auto_scroll = "auto-scroll";
+                        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetColumnWidth() - ImGui::CalcTextSize(text_auto_scroll).x - ImGui::GetScrollX() - 3 * ImGui::GetStyle().ItemSpacing.x);
+                        ImGui::Checkbox(text_auto_scroll, &current_log->auto_scroll);
+                        ImGui::Separator();
+                    }
                     current_log->show();
                     current_log->dirty = LOG_LEVEL_NONE;
+                    
                     ImGui::EndTabItem();
                 }
                 ImGui::PopID();

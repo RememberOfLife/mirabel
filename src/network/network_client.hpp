@@ -7,6 +7,7 @@
 
 #include "control/event_queue.hpp"
 #include "control/timeout_crash.hpp"
+#include "meta_gui/meta_gui.hpp"
 
 namespace Network {
 
@@ -14,6 +15,8 @@ namespace Network {
         private:
             Control::TimeoutCrash* tc; // we don't own this
             Control::TimeoutCrash::timeout_info tc_info;
+
+            uint32_t log_id;
 
             std::thread send_runner;
             std::thread recv_runner;

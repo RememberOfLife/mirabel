@@ -97,10 +97,11 @@ namespace Control {
         free(raw_data);
     }
 
-    event event::create_heartbeat_event(uint32_t type, uint32_t id)
+    event event::create_heartbeat_event(uint32_t type, uint32_t id, uint32_t time)
     {
         event e = event(type);
         e.heartbeat.id = id;
+        e.heartbeat.time = time;
         return e;
     }
 

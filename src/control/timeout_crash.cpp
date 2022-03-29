@@ -21,10 +21,16 @@ namespace Control {
         q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, id));
     }
 
+    void TimeoutCrash::timeout_info::pre_quit(uint32_t timeout)
+    {
+        q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT_PREQUIT, id, timeout));
+    }
+
     TimeoutCrash::timeout_item::timeout_item():
         id(0),
         name(NULL),
-        q(NULL)
+        q(NULL),
+        quit(false)
     {}
 
     TimeoutCrash::timeout_item::timeout_item(event_queue* target_queue, uint32_t new_id, const char* new_name, int new_initial_delay, int new_timeout_ms):
@@ -32,7 +38,8 @@ namespace Control {
         timeout_ms(new_timeout_ms),
         last_heartbeat_age(-new_initial_delay),
         heartbeat_answered(false),
-        q(target_queue)
+        q(target_queue),
+        quit(false)
     {
         name = (char*)malloc(strlen(new_name)+1);
         strcpy(name, new_name);
@@ -79,16 +86,40 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
                         if (timeout_item_exists(e.heartbeat.id)) {
-                            timeout_items[e.heartbeat.id].heartbeat_answered = true;
+                            if (!timeout_items[e.heartbeat.id].quit) {
+                                timeout_items[e.heartbeat.id].heartbeat_answered = true;
+                            } else {
+                                MetaGui::logf("#W timeout_crash: received heartbeat for prequit timeout item #%d\n", e.heartbeat.id);
+                            }
                         } else {
                             MetaGui::logf("#E timeout_crash: received heartbeat for unknown timeout item #%d\n", e.heartbeat.id);
                         }
                     } break;
+                    case EVENT_TYPE_HEARTBEAT_PREQUIT: {
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            if (!timeout_items[e.heartbeat.id].quit) {
+                                // set item to timeout in e.heartbeat.time ms if it isnt unregistered until then
+                                timeout_items[e.heartbeat.id].heartbeat_answered = false;
+                                timeout_items[e.heartbeat.id].last_heartbeat_age = -real_sleep_time;
+                                timeout_items[e.heartbeat.id].timeout_ms = e.heartbeat.time;
+                                timeout_items[e.heartbeat.id].quit = true;
+                            } else {
+                                MetaGui::logf("#W timeout_crash: received prequit for prequit timeout item #%d\n", e.heartbeat.id);
+                            }
+                        } else {
+                            //HACK just ignore this, is not an issue because some queues might unregister before the prequit has been acknowledged
+                            // MetaGui::logf("#E timeout_crash: received prequit for unknown timeout item #%d\n", e.heartbeat.id);
+                        }
+                    } break;
                     case EVENT_TYPE_HEARTBEAT_RESET: {
                         if (timeout_item_exists(e.heartbeat.id)) {
-                            timeout_items[e.heartbeat.id].last_heartbeat_age -=real_sleep_time;
+                            if (!timeout_items[e.heartbeat.id].quit) {
+                                timeout_items[e.heartbeat.id].last_heartbeat_age -= real_sleep_time;
+                            } else {
+                                MetaGui::logf("#W timeout_crash: received reset for prequit timeout item #%d\n", e.heartbeat.id);
+                            }
                         } else {
-                            MetaGui::logf("#E timeout_crash: received heartbeat reset for unknown timeout item #%d\n", e.heartbeat.id);
+                            MetaGui::logf("#E timeout_crash: received reset for unknown timeout item #%d\n", e.heartbeat.id);
                         }
                     } break;
                     default: {
@@ -109,7 +140,11 @@ namespace Control {
                         tii.q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, tii.id));
                     } else {
                         // if the item has not responded to our heartbeat in timeout ms, quit
-                        fprintf(stderr, "[FATAL] timeout item #%d failed to provide heartbeat: %s\n", tii.id, tii.name);
+                        if (!tii.quit) {
+                            fprintf(stderr, "[FATAL] timeout item #%d failed to provide heartbeat: %s\n", tii.id, tii.name);
+                        } else {
+                            fprintf(stderr, "[FATAL] timeout item #%d failed to unregister in time: %s\n", tii.id, tii.name);
+                        }
                         exit(1);
                     }
                 }
@@ -142,7 +177,7 @@ namespace Control {
         timeout_items[item_id].q->push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT, item_id));
         m.unlock();
         // force wakeup the looping thread to re-calculate nearest deadline, also dont add sleep to the new one
-        inbox.push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT_RESET, item_id)); 
+        inbox.push(event::create_heartbeat_event(EVENT_TYPE_HEARTBEAT_RESET, item_id));
         return timeout_info{item_id, &inbox};
     }
 

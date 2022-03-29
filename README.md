@@ -67,8 +67,11 @@ Collect more general resources:
 * usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
 * usability: all graphical scalings (imgui+frontends) are way too small on high resolution displays
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
+* security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 
 ## todo
+* add option to disable timeoutcrash thread for debugging
+* move event (across the network) should use strings for universal compatiblity
 * rewrite network to use openssl
   * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * rework network protocol for intentional disconnect
@@ -82,8 +85,10 @@ Collect more general resources:
   * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * network client should try reconnecting itself on lost connection, cache access params for that
 * put connection+chat window into the main menu bar
+* use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
 * make event queue a proper producer-consumer semaphore
 * better ai integration
+  * engine wrapper could read from the engines outgoing queue
 * add fullscreen toggle to main menu bar
 * rework everything to use nanovg and remove DD, it is no longer required
 * chess frontend sounds
@@ -148,6 +153,9 @@ Collect more general resources:
   * engine uci opts
   * engine best moves and other infor like nps etc..
   * player names and other multiplayer info that comes in from the networkthread
+  * generic "extension" struct for more data, e.g. every field gets a rating
+    * and a generic one for things that everything must support, i.e. best move and rating for every player
+    * then the engine can check back with the frontend what extensions it supports, and writes into them the data it has, if any
 * what to do when engine is loaded but no game?
   * engine should not crash, just return garbage
 * localization

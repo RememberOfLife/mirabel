@@ -55,7 +55,7 @@ namespace MetaGui {
             ImGui::EndDisabled();
         } else if (connected) {
             if (ImGui::Button("Disconnect", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED)); // use unload event instead
             }
         } else {
             if (ImGui::Button("Connect", ImVec2(-1.0f, 0.0f))) {

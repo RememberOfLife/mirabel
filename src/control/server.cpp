@@ -14,20 +14,6 @@ namespace Control {
 
     //TODO all networking code here will eventually move to the networking adapter
 
-    static uint32_t connection_count = 0;
-    static uint32_t active_connection_id = 0;
-
-    static uint16_t server_port = 61801;
-    static IPaddress server_ip;
-    static TCPsocket serve_sock = NULL;
-    static SDLNet_SocketSet socketset = NULL;
-
-    struct connection {
-        TCPsocket sock;
-        IPaddress peer;
-    };
-    static connection the_conn = {NULL};
-
     Server::Server()
     {
         // start watchdog so it can oversee explicit construction
@@ -61,15 +47,18 @@ namespace Control {
 
     Server::~Server()
     {
-        t_tc.unregister_timeout_item(tc_info.id);
+        tc_info.pre_quit(2000);
 
         printf("[INFO] server shutting down\n");
-        t_network->close();
-        delete t_network;
+        delete lobby;
+        if (t_network) {
+            t_network->close();
+            delete t_network;
+        }
         SDLNet_Quit();
         SDL_Quit();
 
-        //TODO maybe this should properly oversee destruction aswell
+        t_tc.unregister_timeout_item(tc_info.id);
         t_tc.inbox.push(EVENT_TYPE_EXIT);
         t_tc.join();
     }

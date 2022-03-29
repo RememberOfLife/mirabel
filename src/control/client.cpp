@@ -132,10 +132,12 @@ namespace Control {
 
     Client::~Client()
     {
-        t_tc.unregister_timeout_item(tc_info.id);
+        tc_info.pre_quit(2000);
 
-        t_network->close();
-        delete t_network;
+        if (t_network) {
+            t_network->close();
+            delete t_network;
+        }
 
         delete engine;
         delete frontend;
@@ -154,7 +156,7 @@ namespace Control {
         SDLNet_Quit();
         SDL_Quit();
 
-        //TODO maybe this should properly oversee destruction aswell
+        t_tc.unregister_timeout_item(tc_info.id);
         t_tc.inbox.push(EVENT_TYPE_EXIT);
         t_tc.join();
     }

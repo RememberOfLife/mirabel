@@ -20,6 +20,7 @@ namespace Control {
         // special events
         EVENT_TYPE_NULL = 0, // ignored event
         EVENT_TYPE_HEARTBEAT, // purely local event between queueholder and timeoutcrash, networking uses protocol_ping events
+        EVENT_TYPE_HEARTBEAT_PREQUIT, // theoretically functions as a HEARTBEAT + HEARTBEAT_SET_TIMEOUT would
         EVENT_TYPE_HEARTBEAT_RESET,
         EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
         // normal events
@@ -34,6 +35,7 @@ namespace Control {
         EVENT_TYPE_ENGINE_UNLOAD,
         // networking events: adapter events; work with adapter<->main_queue
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
+        EVENT_TYPE_NETWORK_ADAPTER_UNLOAD,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED,
         EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED,
@@ -51,6 +53,7 @@ namespace Control {
 
     struct heartbeat_event {
         uint32_t id;
+        uint32_t time;
     };
 
     struct move_event {
@@ -72,6 +75,7 @@ namespace Control {
     struct event {
         uint32_t type;
         uint32_t client_id;
+        // uint32_t lobby_id; //TODO will go here instead of padding
         // raw data segment, owned by the event
         // when serializing over network this is read and sent together with the packet
         uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data, some way to keep two accessors?
@@ -93,7 +97,7 @@ namespace Control {
         event& operator=(const event& other); // copy assign
         event& operator=(event&& other); // move assign
         ~event();
-        static event create_heartbeat_event(uint32_t type, uint32_t id);
+        static event create_heartbeat_event(uint32_t type, uint32_t id, uint32_t time = 0);
         static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant);
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
