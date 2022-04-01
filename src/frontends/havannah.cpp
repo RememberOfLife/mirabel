@@ -230,7 +230,7 @@ namespace Frontends {
                 surena::Havannah::COLOR cell_color = game->get_cell(x, y);
                 switch (cell_color) {
                     case surena::Havannah::COLOR_NONE: {
-                        if (board_buttons[y*board_sizer+x].hovered) {
+                        if (board_buttons[y*board_sizer+x].hovered && game->player_to_move() > surena::Havannah::COLOR_NONE) {
                             DD::SetRGB255(220, 197, 161);
                             DD::SetFill();
                             DD::DrawRegularPolygon(6, 0, 0, button_size*0.9);

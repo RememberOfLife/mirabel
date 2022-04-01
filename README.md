@@ -70,7 +70,7 @@ Collect more general resources:
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 
 ## todo
-* add option to disable timeoutcrash thread for debugging
+* add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * move event (across the network) should use strings for universal compatiblity
 * rewrite network to use openssl
   * there is a lot of reuse in the networking code, maybe reduce it through some event methods

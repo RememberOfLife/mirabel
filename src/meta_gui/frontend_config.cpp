@@ -39,11 +39,13 @@ namespace MetaGui {
                     }
                 }
         }
-        if (!selected_few_compatible && selected_few_idx > 0) {
+        // if a frontend is running, which is not the empty frontend, and not compatible, unload it
+        if (running_few_idx > 0 && !selected_few_compatible && selected_few_idx > 0) {
             selected_few_idx = 0;
             Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
         }
-        if (compatible_few.size() > 0 && selected_few_idx == 0) {
+        // if the selected frontend is no longer compatible, but there are alternatives, select the first one of them instead
+        if (compatible_few.size() > 0 && !selected_few_compatible) {
             selected_few_idx = compatible_few_idx[0];
         }
         bool fronend_running = (running_few_idx > 0);

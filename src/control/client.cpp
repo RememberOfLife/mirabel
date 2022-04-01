@@ -38,14 +38,6 @@ namespace Control {
         t_tc.start();
         tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
-#ifdef WIN32
-        GLenum glew_err = glewInit();
-        if (glew_err != GLEW_OK) {
-            fprintf(stderr, "[FATAL] glew init error: %s\n", glewGetErrorString(glew_err));
-            exit(1);
-        }
-#endif
-
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
         {
@@ -76,6 +68,14 @@ namespace Control {
         sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
         sdl_glcontext = SDL_GL_CreateContext(sdl_window);
         SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
+
+#ifdef WIN32
+        GLenum glew_err = glewInit();
+        if (glew_err != GLEW_OK) {
+            fprintf(stderr, "[FATAL] glew init error: %s\n", glewGetErrorString(glew_err));
+            exit(1);
+        }
+#endif
 
         // setup imgui context
         IMGUI_CHECKVERSION();

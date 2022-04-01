@@ -140,7 +140,7 @@ namespace Frontends {
                     DD::SetStroke();
                     DD::SetRGB255(25, 25, 25);
                     DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.3);
-                } else if (board_buttons[y][x].hovered) {
+                } else if (board_buttons[y][x].hovered && game->player_to_move() > surena::TicTacToe::PLAYER_NONE) {
                     DD::SetRGB255(220, 197, 161);
                     DD::SetFill();
                     DD::DrawRectangle(board_buttons[y][x].x+button_size*0.05, board_buttons[y][x].y+button_size*0.05, board_buttons[y][x].w-button_size*0.1, board_buttons[y][x].h-button_size*0.1);

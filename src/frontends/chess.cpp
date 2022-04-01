@@ -233,6 +233,24 @@ namespace Frontends {
                 nvgRect(dc, base_x, base_y, square_size, square_size);
                 nvgFillColor(dc, ((x + y) % 2 == 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67));
                 nvgFill(dc);
+                // draw rank and file
+                static char char_buf[2] = "-";
+                float text_padding = square_size * 0.05;
+                nvgFontSize(dc, square_size * 0.17);
+                nvgFontFace(dc, "ff");
+                nvgFillColor(dc, ((x + y) % 2 == 1) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67)); // flip color from base square
+                if (x == 7) {
+                    char_buf[0] = '1'+iy;
+                    nvgBeginPath(dc);
+                    nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
+                    nvgText(dc, base_x + square_size - text_padding, base_y + text_padding, char_buf, NULL);
+                }
+                if (iy == 0) {
+                    char_buf[0] = 'a'+x;
+                    nvgBeginPath(dc);
+                    nvgTextAlign(dc, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+                    nvgText(dc, base_x + text_padding, base_y + square_size - text_padding, char_buf, NULL);
+                }
                 if (!game) {
                     continue;
                 }
