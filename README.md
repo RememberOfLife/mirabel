@@ -70,13 +70,12 @@ Collect more general resources:
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 
 ## todo
+* add connection state display + handling to connections window
+* there is a lot of reuse in the networking code, maybe reduce it through some event methods
+* rework network protocol for intentional disconnect
+* rework network protocol for single lobby server with password
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * move event (across the network) should use strings for universal compatiblity
-* rewrite network to use openssl
-  * there is a lot of reuse in the networking code, maybe reduce it through some event methods
-* rework network protocol for intentional disconnect
-  * differentiate between closed connections from error or proper closing
-* rework network protocol for single lobby server with password
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * fix EVENT_TYPE_GAME_LOAD to encode options for remote loading

@@ -28,6 +28,7 @@ namespace Network {
         size_t fragment_length;
         connection(uint32_t client_id = 0); // construct empty and NULL
         ~connection();
+        void reset();
     };
 
     // client uses this with files both NULL

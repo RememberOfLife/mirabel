@@ -26,6 +26,19 @@ namespace Network {
         free(fragment_buf);
     }
 
+    void connection::reset()
+    {
+        state = PROTOCOL_CONNECTION_STATE_NONE;
+        socket = NULL;
+        client_id = 0;
+        ssl_session = NULL;
+        send_bio = NULL;
+        recv_bio = NULL;
+        free(fragment_buf);
+        fragment_buf = NULL;
+        fragment_length = 0;
+    }
+
     SSL_CTX* util_ssl_ctx_init(UTIL_SSL_CTX_TYPE type, const char* chain_file, const char* key_file)
     {
         SSL_CTX* ctx = NULL;
@@ -145,7 +158,7 @@ namespace Network {
                 return false;
             } break;
         }
-        return false;
+        return true;
     }
 
     void util_ssl_session_free(connection* conn)
@@ -159,14 +172,8 @@ namespace Network {
     int verify_peer_cb(int ok, X509_STORE_CTX* cert_ctx)
     {
         // "ok" will never fail on its own if the diy check passes
-        // this should really just set a verify failed bit in the connection so we know to close it instead of keeping on transfering data
-        // additionally if the user wants to keep a verification failing connection anyway, we can show a warning, and choose to ignore the fail here
-        printf("+ verify peer callback: ok#%d\n", ok);
-        if (ok == 0) {
-            printf("+ verify failed, passing anyway\n");
-        }
+        // if the user wants to keep a verification failing connection anyway, we can show a warning, and choose to ignore the fail here
         return 1; 
-        //TODO implement this by flipping a "cancelled error protocol state in the connection?"
     }
 
     size_t util_cert_get_subjects(X509* cert, char*** r_names, int* r_count)
@@ -211,6 +218,7 @@ namespace Network {
             ret_count += san_names_count;
         }
         ret_names = (char**)malloc(sizeof(char*) * ret_count);
+        ret_count = 0;
         if (common_name_str != NULL) {
             // copy common name into result
             tmp_str_size = strlen(common_name_str);

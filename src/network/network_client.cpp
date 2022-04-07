@@ -1,4 +1,3 @@
-#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -131,35 +130,35 @@ namespace Network {
                             case PROTOCOL_CONNECTION_STATE_INITIALIZING: {
                                 MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on unsecured connection dropped\n", e.type);
                             } break;
+                            default:
                             case PROTOCOL_CONNECTION_STATE_WARNHELD: {
                                 MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on unaccepted connection dropped\n", e.type);
                             } break;
-                            default: { assert(0); };
                         }
                         break;
                     }
                     // universal event->packet encoding, for POD events
                     uint8_t* data_buffer = data_buffer_base;
                     e.client_id = conn.client_id;
-                    int send_len = sizeof(Control::event);
+                    int write_len = sizeof(Control::event);
                     if (e.raw_data) {
-                        if (e.raw_length > base_buffer_size-send_len) {
+                        if (e.raw_length > base_buffer_size-write_len) {
                             // if raw data is too big for our reusable buffer, malloc a fitting one
-                            data_buffer = (uint8_t*)malloc(send_len+e.raw_length);
+                            data_buffer = (uint8_t*)malloc(write_len+e.raw_length);
                         }
-                        memcpy(data_buffer+send_len, e.raw_data, e.raw_length);
-                        send_len += e.raw_length;
+                        memcpy(data_buffer+write_len, e.raw_data, e.raw_length);
+                        write_len += e.raw_length;
                     } else {
                         e.raw_length = 0; // security: don't expose side-channel of an unsanitized value
                     }
                     free(e.raw_data);
                     e.raw_data = NULL; // security: don't expose internal pointer to raw data
                     memcpy(data_buffer, &e, sizeof(Control::event));
-                    int sent_len = SSL_write(conn.ssl_session, data_buffer, send_len);
-                    if (sent_len != send_len) {
+                    int wrote_len = SSL_write(conn.ssl_session, data_buffer, write_len);
+                    if (wrote_len != write_len) {
                         MetaGui::log(log_id, "#W ssl write failed\n");
                     } else {
-                        MetaGui::logf(log_id, "wrote event, type %d, len %d\n", e.type, send_len);
+                        MetaGui::logf(log_id, "wrote event, type %d, len %d\n", e.type, write_len);
                     }
                     if (data_buffer != data_buffer_base) {
                         free(data_buffer);
@@ -169,9 +168,14 @@ namespace Network {
                     // either ssl wants to write, but we dont have anything to send to trigger this ourselves
                     // or fallthrough from event send ssl write, in any case just send forward ssl->tcp
                     while (true) {
+                        int pend_len = BIO_ctrl_pending(conn.send_bio);
+                        if (pend_len == 0) {
+                            // nothing pending to send
+                            break;
+                        }
                         int send_len = BIO_read(conn.send_bio, data_buffer_base, base_buffer_size);
                         if (send_len == 0) {
-                            // nothing (more) to send
+                            // empty read, can this happen?
                             break;
                         }
                         int sent_len = SDLNet_TCP_Send(conn.socket, data_buffer_base, send_len);
@@ -226,6 +230,7 @@ namespace Network {
                         // refused by server without pre close
                         MetaGui::log(log_id, "#I connection refused without pre-close\n");
                     } break;
+                    default:
                     case PROTOCOL_CONNECTION_STATE_INITIALIZING:
                     case PROTOCOL_CONNECTION_STATE_WARNHELD:
                     case PROTOCOL_CONNECTION_STATE_ACCEPTED: {
@@ -302,11 +307,31 @@ namespace Network {
                 // get result of cert verification
                 long verify_result = SSL_get_verify_result(conn.ssl_session);
                 conn.state = PROTOCOL_CONNECTION_STATE_WARNHELD; // set to warn per default, overwrite to accepted only on OK
+                // print server cert thumbprint in all cases
+                //TODO use something shorter? or base 64?
+                const size_t SHA256_LEN = 32;
+                uint8_t hash_buf[SHA256_LEN]; // sha256 produces 32bytes by definition
+                unsigned int hash_len = 0;
+                int hash_ok = X509_digest(peer_cert, EVP_sha256(), (unsigned char*)hash_buf, &hash_len);
+                if (hash_ok == 0 || hash_len != SHA256_LEN) {
+                    MetaGui::log(log_id, "server cert (THUMBPRINT FAILURE)\n");
+                } else {
+                    char str_buf[3*SHA256_LEN]; // size for 2 hex symbols per byte, one separator between each, and the NUL terminator
+                    char* str_buf_m = str_buf;
+                    for (size_t i = 0; i < SHA256_LEN; i++) {
+                        str_buf_m += sprintf(str_buf_m, "%02x", hash_buf[i]);
+                        if (i < SHA256_LEN-1) {
+                            str_buf_m += sprintf(str_buf_m, ":");
+                        }
+                    }
+                    str_buf[sizeof(str_buf)-1] = '\0';
+                    MetaGui::logf(log_id, "server cert thumbprint (%s)\n", str_buf);
+                }
                 switch (verify_result) {
                     case X509_V_OK: {
                         // no verification errors, promote to accepted
                         conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
-                        MetaGui::log(log_id, "#W server cert verification passed\n");
+                        MetaGui::log(log_id, "server cert verification passed\n");
                     } break;
                     case X509_V_ERR_CERT_HAS_EXPIRED: {
                         BIO* print_bio = BIO_new(BIO_s_mem()); // bio for printing details about the failure
@@ -321,33 +346,13 @@ namespace Network {
                         BIO_free(print_bio);
                     } break;
                     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: {
-                        //TODO use something shorter?
-                        const size_t SHA256_LEN = 32;
-                        uint8_t hash_buf[SHA256_LEN]; // sha256 produces 32bytes by definition
-                        unsigned int hash_len = 0;
-                        int hash_ok = X509_digest(peer_cert, EVP_sha256(), (unsigned char*)hash_buf, &hash_len);
-                        if (hash_ok == 0 || hash_len != SHA256_LEN) {
-                            MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert (THUMBPRINT FAILURE)\n");
-                        } else {
-                            char str_buf[3*SHA256_LEN]; // size for 2 hex symbols per byte, one separator between each, and the NUL terminator
-                            char* str_buf_m = str_buf;
-                            for (size_t i = 0; i < SHA256_LEN; i++) {
-                                sprintf(str_buf_m, "%02x", hash_buf[i]);
-                                str_buf_m += 2;
-                                if (i < SHA256_LEN-1) {
-                                    sprintf(str_buf_m, ":");
-                                    str_buf_m++;
-                                }
-                            }
-                            str_buf[sizeof(str_buf)-1] = '\0';
-                            MetaGui::logf(log_id, "#W server cert verification failed: depth zero self signed cert (%s)\n", str_buf);
-                        }
+                        MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert\n");
                     } break;
                     case X509_V_ERR_HOSTNAME_MISMATCH: {
                         char** name_list;
                         int name_count;
                         size_t names_totalsize = util_cert_get_subjects(peer_cert, &name_list, &name_count);
-                        char* str_buf = (char*)malloc(names_totalsize + name_count*2 + 1); // need extra space for ", "
+                        char* str_buf = (char*)malloc(names_totalsize + name_count*2 - 1); // need extra space for ", "
                         char* str_buf_m = str_buf;
                         for (int i = 0; i < name_count; i++) {
                             strcpy(str_buf_m, name_list[i]);
@@ -359,7 +364,7 @@ namespace Network {
                             }
                         }
                         *str_buf_m = '\0';
-                        MetaGui::log(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
+                        MetaGui::logf(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
                         free(str_buf);
                         util_cert_free_subjects(name_list, name_count);
                     } break;
@@ -367,6 +372,10 @@ namespace Network {
                         MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
                     } break;
                 }
+                //REMOVE
+                conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
+                MetaGui::log(log_id, "#W connection force accepted\n");
+                //REMOVE
                 X509_free(peer_cert);
                 //TODO expiry, dz self signed, hostname mismatch: should all push an adapter event so the connection window offers a button for the user to accept the connection anyway
             }
@@ -381,6 +390,7 @@ namespace Network {
                 // no data available to process
                 continue;
             }
+            recv_len = im_rd;
             
             //TODO PROBLEM: the data we get from SSL_read may not be in complete packets
             //^ we need to buffer incomplete packets, and ssl_read the rest onto them later, i.e. rework entire section here
@@ -424,6 +434,9 @@ namespace Network {
                         data_buffer += recv_event.raw_length;
                         recv_len -= recv_event.raw_length;
                     } else {
+                        //TODO do fragmentation
+                        fprintf(stderr, "[FATAL] fragmentation not implemented");
+                        exit(1);
                         // the current raw data segment is extending beyond the buffer we received
                         // we want to read ONLY those bytes of the raw data segment we're missing
                         // any events that may still be read after that will just fire SDLNet_CheckSockets 
@@ -431,7 +444,7 @@ namespace Network {
                         memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
                         // malloc space for the overhang data, and read exactly that
                         data_buffer = (uint8_t*)malloc(raw_overhang);
-                        int overhang_recv_len = SSL_read(conn.ssl_session, data_buffer, raw_overhang);
+                        int overhang_recv_len = SSL_read(conn.ssl_session, data_buffer, raw_overhang); //TODO will never work
                         if (overhang_recv_len != raw_overhang) {
                             //TODO this does not necessarily mean corruption, probably the rest will just arrive later, buffer this partial event
                             // did not receive all the missing bytes, might be disastrous for the event
@@ -450,6 +463,9 @@ namespace Network {
                     case Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
                         conn.client_id = recv_event.client_id;
                         MetaGui::logf(log_id, "#I re-assigned client id %d\n", conn.client_id);
+                    } break;
+                    case Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG: {
+                        MetaGui::log(log_id, "received pong\n");
                     } break;
                     default: {
                         // general purpose events get pushed to the recv queue

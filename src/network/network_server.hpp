@@ -36,7 +36,7 @@ namespace Network {
 
             //TODO test the proper self exit of this in the server, -> deconstruction and cleanup
 
-            //TODO doubly linked list for client activity
+            //TODO doubly linked list for client activity + client counter per bucket
 
         public:
             Control::event_queue send_queue;
