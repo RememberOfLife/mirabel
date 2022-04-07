@@ -33,6 +33,8 @@ namespace Control {
         EVENT_TYPE_FRONTEND_UNLOAD,
         EVENT_TYPE_ENGINE_LOAD,
         EVENT_TYPE_ENGINE_UNLOAD,
+        // networking events: internal events
+        EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE,
         // networking events: adapter events; work with adapter<->main_queue
         EVENT_TYPE_NETWORK_ADAPTER_LOAD,
         EVENT_TYPE_NETWORK_ADAPTER_UNLOAD,
@@ -72,6 +74,14 @@ namespace Control {
         uint32_t msg_id;
     };
 
+    //TODO pack with
+    // #pragma pack(1)
+    // typedef struct {
+    //     data goes here...
+    // } __atribute__((aligned(4))) event_netdata;
+    // then use:
+    // struct event : public event_netdata { ... }
+
     struct event {
         uint32_t type;
         uint32_t client_id;
@@ -80,6 +90,7 @@ namespace Control {
         // when serializing over network this is read and sent together with the packet
         uint32_t raw_length; // len could be stuffed into the first 4 bytes of raw_data, some way to keep two accessors?
         void* raw_data;
+        // char _padding[8-sizeof(size_t)]; // when using padding
         union {
             heartbeat_event heartbeat;
             move_event move;

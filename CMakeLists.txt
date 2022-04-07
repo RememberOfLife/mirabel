@@ -101,6 +101,7 @@ set(SOURCES
 
     src/network/network_client.cpp
     src/network/network_server.cpp
+    src/network/util.cpp
 
     src/prototype_util/direct_draw.cpp
     src/prototype_util/st_gui.cpp

@@ -4,10 +4,13 @@
 #include <thread>
 
 #include "SDL_net.h"
+#include <openssl/ssl.h>
 
 #include "control/event_queue.hpp"
 #include "control/timeout_crash.hpp"
 #include "meta_gui/meta_gui.hpp"
+#include "network/protocol.hpp"
+#include "network/util.hpp"
 
 namespace Network {
 
@@ -18,16 +21,17 @@ namespace Network {
 
             uint32_t log_id;
 
+            //TODO figure out how the network client pushes out state updates for the connection metagui window, just use the recv queue?
+            
             std::thread send_runner;
             std::thread recv_runner;
 
+            SSL_CTX* ssl_ctx;
+
             char* server_address;
             uint16_t server_port;
-            IPaddress server_ip;
-            TCPsocket socket = NULL;
             SDLNet_SocketSet socketset = NULL;
-
-            uint32_t client_id = 0;
+            connection conn; // client id starts out as 0 before reassignment
 
         public:
             Control::event_queue send_queue;

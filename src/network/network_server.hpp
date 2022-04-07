@@ -4,8 +4,10 @@
 #include <thread>
 
 #include "SDL_net.h"
+#include <openssl/ssl.h>
 
 #include "control/event_queue.hpp"
+#include "network/util.hpp"
 
 namespace Network {
 
@@ -18,27 +20,22 @@ namespace Network {
             std::thread send_runner;
             std::thread recv_runner;
 
+            SSL_CTX* ssl_ctx;
+
             // server socket
             IPaddress server_ip;
             TCPsocket server_socket = NULL;
             SDLNet_SocketSet server_socketset = NULL;
             // connected client sockets
-            uint32_t client_connection_bucket_size = 2; // must be <= UINT32_MAX-2
-            struct client_connection {
-                //TODO holds all required user info, still missing authn user_id (u64), ssl state
-                TCPsocket socket;
-                IPaddress peer;
-                uint32_t client_id;
-            };
-            client_connection* client_connections = NULL;
+            uint32_t client_connection_bucket_size = 2; // must be <= UINT32_MAX-2 //TODO set higher for proper use
+            connection* client_connections = NULL;
             SDLNet_SocketSet client_socketset = NULL;
 
             //TODO adding a newly connected client to the client socketset is probably not threadsafe with the recv_runner that is waiting for the set
-            // most other components of the network server are likely not threadsafe either
+            // most other components of the network server (and maybe client) are likely not threadsafe either
 
             //TODO test the proper self exit of this in the server, -> deconstruction and cleanup
 
-            //TODO struct for connected client
             //TODO doubly linked list for client activity
 
         public:

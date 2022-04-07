@@ -4,9 +4,11 @@
 #include <thread>
 
 #include "SDL_net.h"
+#include <openssl/ssl.h>
 
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
+#include "network/util.hpp"
 
 #include "network/network_server.hpp"
 
@@ -18,23 +20,30 @@ namespace Network {
         if (server_socketset == NULL) {
             printf("[ERROR] failed to allocate server socketset\n");
         }
-        client_connections = (client_connection*)malloc(client_connection_bucket_size*sizeof(client_connection));
+        client_connections = (connection*)malloc(client_connection_bucket_size*sizeof(connection));
         if (client_connections == NULL) {
             printf("[ERROR] failed to allocate client connections bucket\n");
         }
         for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
-            client_connections[i].socket = NULL;
-            client_connections[i].client_id = 0;
+            client_connections[i] = connection();
         }
         client_socketset = SDLNet_AllocSocketSet(client_connection_bucket_size);
         if (client_socketset == NULL) {
             printf("[ERROR] failed to allocate client socketset\n");
         }
+        ssl_ctx = util_ssl_ctx_init(UTIL_SSL_CTX_TYPE_SERVER, "./server-fullchain.pem", "./server-privkey.pem"); //TODO dont hardcode cert names
+        if (ssl_ctx == NULL) {
+            printf("[ERROR] failed to init ssl ctx\n");
+        }
     }
 
     NetworkServer::~NetworkServer()
     {
+        util_ssl_ctx_free(ssl_ctx);
         SDLNet_FreeSocketSet(client_socketset);
+        for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
+            client_connections[i].~connection();
+        }
         free(client_connections);
         SDLNet_FreeSocketSet(server_socketset);
     }
@@ -74,6 +83,7 @@ namespace Network {
             SDLNet_TCP_DelSocket(client_socketset, *client_socket);
             SDLNet_TCP_Close(*client_socket);
             *client_socket = NULL;
+            util_ssl_session_free(&(client_connections[i]));
         }
         // everything closed, join dead runners
         server_runner.join();
@@ -103,7 +113,7 @@ namespace Network {
                 }
                 // check if there is still space for a new client connection
                 //TODO link clients into a list so this is O(1), also generally keep counter of clients per bucket
-                client_connection* connection_slot = NULL;
+                connection* connection_slot = NULL;
                 uint32_t connection_id = 0;
                 for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                     if (client_connections[i].socket == NULL) {
@@ -124,22 +134,16 @@ namespace Network {
                     printf("[INFO] refused new connection\n");
                 } else {
                     // slot available for new client, accept it
-                    // send protocol ok
-                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_OK;
-                    *(db_event_type+1) = 0;
+                    // send protocol client id set, functions as ok if set as initial
+                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
+                    *(db_event_type+1) = connection_id;
                     int send_len = sizeof(Control::event);
                     int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
                     if (sent_len != send_len) {
                         printf("[WARN] packet sending failed\n");
                     }
-                    *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
-                    *(db_event_type+1) = connection_id;
-                    sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
-                    if (sent_len != send_len) {
-                        printf("[WARN] packet sending failed\n");
-                    }
                     connection_slot->socket = incoming_socket;
-                    connection_slot->peer = *SDLNet_TCP_GetPeerAddress(incoming_socket);
+                    connection_slot->peer_addr = *SDLNet_TCP_GetPeerAddress(incoming_socket);
                     connection_slot->client_id = connection_id;
                     SDLNet_TCP_AddSocket(client_socketset, connection_slot->socket);
                     recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, connection_slot->client_id));
@@ -173,7 +177,7 @@ namespace Network {
                 //TODO heartbeat
                 default: {
                     // find target client connection to send to
-                    client_connection* target_client = NULL;
+                    connection* target_client = NULL;
                     for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                         if (client_connections[i].client_id == e.client_id) {
                             target_client = &(client_connections[i]);
@@ -228,7 +232,7 @@ namespace Network {
             if (ready == -1) {
                 break;
             }
-            client_connection* ready_client = NULL;
+            connection* ready_client = NULL;
             for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                 if (!SDLNet_SocketReady(client_connections[i].socket)) {
                     continue;
