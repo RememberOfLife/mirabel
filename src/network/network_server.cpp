@@ -41,9 +41,6 @@ namespace Network {
     {
         util_ssl_ctx_free(ssl_ctx);
         SDLNet_FreeSocketSet(client_socketset);
-        for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
-            client_connections[i].~connection();
-        }
         free(client_connections);
         SDLNet_FreeSocketSet(server_socketset);
     }
@@ -352,27 +349,35 @@ namespace Network {
                         SSL_do_handshake(ready_client->ssl_session);
                         // queue generic want write, just in case ssl may want to write
                         send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, ready_client->client_id));
-                        continue;
+                        if (!SSL_is_init_finished(ready_client->ssl_session)) {
+                            continue;
+                        }
                     }
                     // handshake is finished, promote connection state if possible
                     // no verification necessary on server side
                     ready_client->state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
+                    printf("[INFO] client %d connection accepted\n", ready_client->client_id);
                     recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, ready_client->client_id)); // inform server that client is connected and ready to use
                 }
 
                 // PROTOCOL_CONNECTION_STATE_WARNHELD, server never uses this
 
-                int im_rd = SSL_read(ready_client->ssl_session, data_buffer_base, buffer_size); // read as much from ssl as we can to jumpstart event processing
-                if (im_rd == 0) {
-                    // no data available to process
+                data_buffer = data_buffer_base;
+                recv_len = 0;
+                while (recv_len < buffer_size) {
+                    // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
+                    int im_rd = SSL_read(ready_client->ssl_session, data_buffer+recv_len, buffer_size-recv_len); // read as much from ssl as we can to jumpstart event processing
+                    if (im_rd == 0) {
+                        break;
+                    }
+                    recv_len += im_rd;
+                }
+                if (recv_len == 0) {
+                    // empty ssl read, don't do processing
                     continue;
                 }
-                recv_len = im_rd;
-                
-                //TODO same fragmentation problem that we have on the client side
 
                 // one call to recv may receive MULTIPLE events at once, process them all
-                data_buffer = data_buffer_base;
                 while (true) {
                     if (recv_len < sizeof(Control::event)) {
                         printf("[WARN] discarding %d unusable bytes of received data\n", recv_len);
@@ -400,9 +405,6 @@ namespace Network {
                             data_buffer += recv_event.raw_length;
                             recv_len -= recv_event.raw_length;
                         } else {
-                            //TODO do fragmentation
-                            fprintf(stderr, "[FATAL] fragmentation not implemented");
-                            exit(1);
                             // the current raw data segment is extending beyond the buffer we received
                             // we want to read ONLY those bytes of the raw data segment we're missing
                             // any events that may still be read after that will just fire SDLNet_CheckSockets 
@@ -410,7 +412,7 @@ namespace Network {
                             memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
                             // malloc space for the overhang data, and read exactly that
                             data_buffer = (uint8_t*)malloc(raw_overhang);
-                            int overhang_recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer, raw_overhang); //TODO this will never work
+                            int overhang_recv_len = SSL_read(ready_client->ssl_session, data_buffer, raw_overhang);
                             if (overhang_recv_len != raw_overhang) {
                                 // did not receive all the missing bytes, might be disastrous for the event
                                 printf("[ERROR] received only %d bytes of overhang, expected %d, event might be corrupted\n", overhang_recv_len, raw_overhang);
@@ -438,7 +440,11 @@ namespace Network {
                         break;
                     }
                 }
+
+                // loop into ready check on next client connection
             }
+
+            // loop into next wait on socketset
         }
 
         free(data_buffer_base);

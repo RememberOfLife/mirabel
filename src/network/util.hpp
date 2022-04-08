@@ -24,10 +24,7 @@ namespace Network {
         SSL* ssl_session;
         BIO* send_bio; // ssl writes into this, we read and send out over the socket
         BIO* recv_bio; // we dump socket recv data here and make ssl read from this
-        uint8_t* fragment_buf;
-        size_t fragment_length;
         connection(uint32_t client_id = 0); // construct empty and NULL
-        ~connection();
         void reset();
     };
 

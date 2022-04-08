@@ -16,15 +16,8 @@ namespace Network {
         client_id(client_id),
         ssl_session(NULL),
         send_bio(NULL),
-        recv_bio(NULL),
-        fragment_buf(NULL),
-        fragment_length(0)
+        recv_bio(NULL)
     {}
-
-    connection::~connection()
-    {
-        free(fragment_buf);
-    }
 
     void connection::reset()
     {
@@ -34,9 +27,6 @@ namespace Network {
         ssl_session = NULL;
         send_bio = NULL;
         recv_bio = NULL;
-        free(fragment_buf);
-        fragment_buf = NULL;
-        fragment_length = 0;
     }
 
     SSL_CTX* util_ssl_ctx_init(UTIL_SSL_CTX_TYPE type, const char* chain_file, const char* key_file)

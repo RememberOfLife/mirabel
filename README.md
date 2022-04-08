@@ -68,9 +68,12 @@ Collect more general resources:
 * usability: all graphical scalings (imgui+frontends) are way too small on high resolution displays
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
+* network: if we try to send data on a client connection that just closed, segfault
 
 ## todo
 * add connection state display + handling to connections window
+  * use adapter events to send out info from the network adapter to the recv queue?
+  * recv queue owner should not set the network_send_queue just because t_network exists, everything that sends should just check for a valid send queue
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * rework network protocol for intentional disconnect
 * rework network protocol for single lobby server with password

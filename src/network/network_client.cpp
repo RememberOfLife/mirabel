@@ -291,8 +291,11 @@ namespace Network {
                     SSL_do_handshake(conn.ssl_session);
                     // queue generic want write, just in case ssl may want to write
                     send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE));
-                    continue;
+                    if (!SSL_is_init_finished(conn.ssl_session)) {
+                        continue;
+                    }
                 }
+                MetaGui::log(log_id, "ssl connection established\n");
                 // handshake is finished, promote connection state if possible
                 // SSL peer verification:
                 // make sure server presented a certificate
@@ -372,10 +375,10 @@ namespace Network {
                         MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
                     } break;
                 }
-                //REMOVE
+                //REWORK
                 conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
                 MetaGui::log(log_id, "#W connection force accepted\n");
-                //REMOVE
+                //REWORK
                 X509_free(peer_cert);
                 //TODO expiry, dz self signed, hostname mismatch: should all push an adapter event so the connection window offers a button for the user to accept the connection anyway
             }
@@ -385,32 +388,22 @@ namespace Network {
                 continue;
             }
 
-            int im_rd = SSL_read(conn.ssl_session, data_buffer_base, buffer_size); // read as much from ssl as we can to jumpstart event processing
-            if (im_rd == 0) {
-                // no data available to process
+            data_buffer = data_buffer_base;
+            recv_len = 0;
+            while (recv_len < buffer_size) {
+                // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
+                int im_rd = SSL_read(conn.ssl_session, data_buffer+recv_len, buffer_size-recv_len); // read as much from ssl as we can to jumpstart event processing
+                if (im_rd == 0) {
+                    break;
+                }
+                recv_len += im_rd;
+            }
+            if (recv_len == 0) {
+                // empty ssl read, don't do processing
                 continue;
             }
-            recv_len = im_rd;
-            
-            //TODO PROBLEM: the data we get from SSL_read may not be in complete packets
-            //^ we need to buffer incomplete packets, and ssl_read the rest onto them later, i.e. rework entire section here
-            
-            // if fragment exists then read any ssl data onto the end of it,
-            //   if fragment size >= event size then try to read if it wants any raw data
-            //     if it wants raw data, malloc enough space into the fragment to accept as much
-            //     doesnt want raw data, packet is complete, process it
-            //   fragment still not complete, go to sleep for more data
-            // no fragment, normal processing
-            // normal processing of data buffer in loop:
-            // still enough data left to form a whole event? form it
-            //   wants raw data, then try to read as much as it wants
-            //     if there isnt enough then put it into a fragment
-            //     if there is enough data then build it onto the event and push it
-            //   doesnt want raw data, push it
-            // not enough data left to form an event, put it into a fragment for the connection
 
             // one call to recv may receive MULTIPLE events at once, process them all
-            data_buffer = data_buffer_base;
             while (true) {
                 if (recv_len < sizeof(Control::event)) {
                     MetaGui::logf(log_id, "#W discarding %d unusable bytes of received data\n", recv_len);
@@ -434,9 +427,6 @@ namespace Network {
                         data_buffer += recv_event.raw_length;
                         recv_len -= recv_event.raw_length;
                     } else {
-                        //TODO do fragmentation
-                        fprintf(stderr, "[FATAL] fragmentation not implemented");
-                        exit(1);
                         // the current raw data segment is extending beyond the buffer we received
                         // we want to read ONLY those bytes of the raw data segment we're missing
                         // any events that may still be read after that will just fire SDLNet_CheckSockets 
@@ -444,9 +434,8 @@ namespace Network {
                         memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
                         // malloc space for the overhang data, and read exactly that
                         data_buffer = (uint8_t*)malloc(raw_overhang);
-                        int overhang_recv_len = SSL_read(conn.ssl_session, data_buffer, raw_overhang); //TODO will never work
+                        int overhang_recv_len = SSL_read(conn.ssl_session, data_buffer, raw_overhang);
                         if (overhang_recv_len != raw_overhang) {
-                            //TODO this does not necessarily mean corruption, probably the rest will just arrive later, buffer this partial event
                             // did not receive all the missing bytes, might be disastrous for the event
                             MetaGui::logf(log_id, "#E received only %d bytes of overhang, expected %d, event dropped\n", overhang_recv_len, raw_overhang);
                             // drop event to null type, will be discarded later

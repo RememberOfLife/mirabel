@@ -24,6 +24,8 @@ namespace MetaGui {
         - should log tabs be reorderable?
         - mechanism for managing log tab visibility
         - default logger should probably not be named "debug" might confuse with log levels later on
+        - when a logger unregisters, possibly let it still be open just mark it as orphaned so the user can read e.g. errors
+            - when a logger with the same name registers again, reuse the orphaned logger
     */
 
     enum LOG_LEVEL {

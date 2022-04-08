@@ -337,6 +337,7 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: {
+                        network_send_queue = NULL;
                         // network adapter died or closed, reset it
                         if (t_network == NULL) {
                             break; // closed properly, don't do anything 
@@ -344,7 +345,6 @@ namespace Control {
                         t_network->close();
                         delete t_network;
                         t_network = NULL;
-                        network_send_queue = NULL;
                         MetaGui::chat_clear();
                     } break;
                     default: {

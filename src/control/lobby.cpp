@@ -13,7 +13,7 @@
 
 namespace Control {
 
-    static uint32_t lobby_msg_id_ctr = 1; //REMOVE put this somewhere better
+    static uint32_t lobby_msg_id_ctr = 1; //REWORK put this somewhere better
 
     Lobby::Lobby(event_queue* send_queue, uint16_t max_users):
         send_queue(send_queue),
