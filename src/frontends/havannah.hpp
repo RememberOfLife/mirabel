@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "surena/games/havannah.hpp"
 #include "surena/game.hpp"
 
@@ -13,6 +15,8 @@ namespace Frontends {
     class Havannah : public Frontend {
 
         public:
+
+            NVGcontext* dc;
 
             surena::Havannah* game;
             surena::Engine* engine;

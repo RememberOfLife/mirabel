@@ -32,6 +32,9 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Engine", "CTRL + E", show_engine_window)) {
                     show_engine_window = !show_engine_window;
                 }
+                if (ImGui::MenuItem("Chat", "CTRL + T", show_chat_window)) {
+                    show_chat_window = !show_chat_window;
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
                     Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_EXIT));

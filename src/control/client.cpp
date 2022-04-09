@@ -34,6 +34,8 @@ namespace Control {
 
     Client::Client()
     {
+        main_client = this;
+
         // start watchdog so it can oversee explicit construction
         t_tc.start();
         tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);

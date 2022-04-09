@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "surena/game.hpp"
 
 #include "games/game_catalogue.hpp"
@@ -10,6 +12,8 @@
 namespace Frontends {
 
     class EmptyFrontend : public Frontend {
+        private:
+            NVGcontext* dc;
         public:
             EmptyFrontend();
             ~EmptyFrontend();

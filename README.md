@@ -62,13 +62,12 @@ Collect more general resources:
 ## issues
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
-* security/performance: a network adapter expecting more overhang data, can be tricked into listening infinitely on a dead socket
-  * e.g. send an event containing 1000B of raw data (but actually only send 1024B), server reads 1024B, tries to listen for 8B overhang and gets stuck
 * usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
 * usability: all graphical scalings (imgui+frontends) are way too small on high resolution displays
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 * network: if we try to send data on a client connection that just closed, segfault
+  * could send an event to the send queue to make it deconstruct and release a closed connection
 
 ## todo
 * add connection state display + handling to connections window
@@ -86,13 +85,11 @@ Collect more general resources:
 * use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
   * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
 * network client should try reconnecting itself on lost connection, cache access params for that
-* put connection+chat window into the main menu bar
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
 * make event queue a proper producer-consumer semaphore
 * better ai integration
   * engine wrapper could read from the engines outgoing queue
 * add fullscreen toggle to main menu bar
-* rework everything to use nanovg and remove DD, it is no longer required
 * chess frontend sounds
 * chess frontend animations
 * change window title according to the loaded game and frontend
@@ -101,6 +98,7 @@ Collect more general resources:
   * https://gist.github.com/armornick/3447121
   * https://metacpan.org/pod/SDL2::audio
   * https://github.com/jakebesworth/Simple-SDL2-Audio
+* network recv event processing loop could just use an ssl read every iteration, b/c every read only gives bytes from ONE write, i.e. one event
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 * place stb in deps? also genrally decide if we'd rather link everything static or dynamically?

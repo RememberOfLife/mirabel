@@ -1,20 +1,24 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
 
+#include "control/client.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/empty_frontend.hpp"
 
 namespace Frontends {
 
     EmptyFrontend::EmptyFrontend()
-    {}
+    {
+        dc = Control::main_client->nanovg_ctx;
+    }
 
     EmptyFrontend::~EmptyFrontend()
     {}
@@ -33,8 +37,12 @@ namespace Frontends {
 
     void EmptyFrontend::render()
     {
-        DD::SetRGB(0.45, 0.55, 0.6);
-        DD::Clear();
+        nvgSave(dc);
+        nvgBeginPath(dc);
+        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgFillColor(dc, nvgRGB(114, 140, 153));
+        nvgFill(dc);
+        nvgRestore(dc);
     }
 
     void EmptyFrontend::draw_options()

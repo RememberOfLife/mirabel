@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "surena/games/tictactoe.hpp"
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
@@ -14,6 +16,8 @@ namespace Frontends {
     class TicTacToe : public Frontend {
 
         private:
+
+            NVGcontext* dc;
 
             surena::TicTacToe* game;
             surena::Engine* engine;

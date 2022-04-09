@@ -1,6 +1,8 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/tictactoe_ultimate.hpp"
 #include "surena/engine.hpp"
@@ -11,7 +13,6 @@
 #include "control/event.hpp"
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe_ultimate.hpp"
-#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/tictactoe_ultimate.hpp"
 
@@ -25,6 +26,7 @@ namespace Frontends {
         game(NULL),
         engine(NULL)
     {
+        dc = Control::main_client->nanovg_ctx;
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 for (int ly = 0; ly < 3; ly++) {
@@ -135,33 +137,38 @@ namespace Frontends {
     {
         float local_baord_size = 3*button_size+2*local_padding;
         uint8_t global_target = game ? game->get_global_target() : 0;
-        DD::SetRGB255(201, 144, 73);
-        DD::Clear();
-        DD::Push();
-        DD::Translate(w_px/2-(3*local_baord_size+2*global_padding)/2, h_px/2-(3*local_baord_size+2*global_padding)/2);
+        nvgSave(dc);
+        nvgBeginPath(dc);
+        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgFillColor(dc, nvgRGB(201, 144, 73));
+        nvgFill(dc);
+        nvgTranslate(dc, w_px/2-(3*local_baord_size+2*global_padding)/2, h_px/2-(3*local_baord_size+2*global_padding)/2);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 uint8_t local_result = (game ? game->get_cell_global(gx, 2-gy) : 0);
                 float base_x = gx*(local_baord_size+global_padding);
                 float base_y = gy*(local_baord_size+global_padding);
                 if (local_result > 0) {
-                    DD::SetLineWidth(local_baord_size*0.175);
-                    DD::SetFill();
-                    DD::SetRGB255(161, 119, 67);
-                    DD::DrawRectangle(base_x, base_y, local_baord_size, local_baord_size);
+                    nvgBeginPath(dc);
+                    nvgRect(dc, base_x, base_y, local_baord_size, local_baord_size);
+                    nvgFillColor(dc, nvgRGB(161, 119, 67));
+                    nvgFill(dc);
+                    nvgBeginPath(dc);
+                    nvgStrokeWidth(dc, local_baord_size*0.175);
+                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     switch (local_result) {
                         case 1: {
                             // X
-                            DD::SetStroke();
-                            DD::SetRGB255(25, 25, 25);
-                            DD::DrawLine(base_x+local_baord_size*0.175, base_y+local_baord_size*0.175, base_x+local_baord_size*0.825, base_y+local_baord_size*0.825);
-                            DD::DrawLine(base_x+local_baord_size*0.175, base_y+local_baord_size*0.825, base_x+local_baord_size*0.825, base_y+local_baord_size*0.175);
+                            nvgMoveTo(dc, base_x+local_baord_size*0.175, base_y+local_baord_size*0.175);
+                            nvgLineTo(dc, base_x+local_baord_size*0.825, base_y+local_baord_size*0.825);
+                            nvgMoveTo(dc, base_x+local_baord_size*0.175, base_y+local_baord_size*0.825);
+                            nvgLineTo(dc, base_x+local_baord_size*0.825, base_y+local_baord_size*0.175);
+                            nvgStroke(dc);
                         } break;
                         case 2: {
                             // O
-                            DD::SetStroke();
-                            DD::SetRGB255(25, 25, 25);
-                            DD::DrawCircle(base_x+local_baord_size/2, base_y+local_baord_size/2, local_baord_size*0.3);
+                            nvgCircle(dc, base_x+local_baord_size/2, base_y+local_baord_size/2, local_baord_size*0.3);
+                            nvgStroke(dc);
                         } break;
                         case 3: {
                             //TODO draw something for a draw
@@ -173,14 +180,15 @@ namespace Frontends {
                     for (int lx = 0; lx < 3; lx++) {
                         float base_x = static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding);
                         float base_y = static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding);
-                        DD::SetLineWidth(button_size*0.175);
-                        DD::SetFill();
+                        nvgStrokeWidth(dc, button_size*0.175);
+                        nvgBeginPath(dc);
+                        nvgRect(dc, base_x, base_y, button_size, button_size);
                         if (game && game->player_to_move() != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
-                            DD::SetRGB255(240, 217, 181);
+                            nvgFillColor(dc, nvgRGB(240, 217, 181));
                         } else {
-                            DD::SetRGB255(161, 119, 67);
+                            nvgFillColor(dc, nvgRGB(161, 119, 67));
                         }
-                        DD::DrawRectangle(base_x, base_y, button_size, button_size);
+                        nvgFill(dc);
                         if (!game) {
                             continue;
                         }
@@ -189,30 +197,36 @@ namespace Frontends {
                         uint8_t player_in_cell = game->get_cell_local(ix, iy);
                         if (player_in_cell == 1) {
                             // X
-                            DD::SetStroke();
-                            DD::SetRGB255(25, 25, 25);
-                            DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.175, base_x+button_size*0.825, base_y+button_size*0.825);
-                            DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.825, base_x+button_size*0.825, base_y+button_size*0.175);
+                            nvgBeginPath(dc);
+                            nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                            nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.175);
+                            nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.825);
+                            nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.825);
+                            nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.175);
+                            nvgStroke(dc);
                         } else if (player_in_cell == 2) {
                             // O
-                            DD::SetStroke();
-                            DD::SetRGB255(25, 25, 25);
-                            DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.3);
+                            nvgBeginPath(dc);
+                            nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                            nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.3);
+                            nvgStroke(dc);
                         } else if (board_buttons[iy][ix].hovered && game->player_to_move() > 0) {
-                            DD::SetRGB255(220, 197, 161);
-                            DD::SetFill();
-                            DD::DrawRectangle(board_buttons[iy][ix].x+button_size*0.05, board_buttons[iy][ix].y+button_size*0.05, board_buttons[iy][ix].w-button_size*0.1, board_buttons[iy][ix].h-button_size*0.1);
+                            nvgBeginPath(dc);
+                            nvgFillColor(dc, nvgRGB(220, 197, 161));
+                            nvgRect(dc, board_buttons[iy][ix].x+button_size*0.05, board_buttons[iy][ix].y+button_size*0.05, board_buttons[iy][ix].w-button_size*0.1, board_buttons[iy][ix].h-button_size*0.1);
+                            nvgFill(dc);
                         }
                         if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((iy<<4)|ix)) {
-                            DD::SetRGB255(125, 187, 248);
-                            DD::SetFill();
-                            DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.15);
+                            nvgBeginPath(dc);
+                            nvgFillColor(dc, nvgRGB(125, 187, 248));
+                            nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.15);
+                            nvgFill(dc);
                         }
                     }
                 }
             }
         }
-        DD::Pop();
+        nvgRestore(dc);
     }
 
     void TicTacToe_Ultimate::draw_options()

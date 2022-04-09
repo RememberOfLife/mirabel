@@ -1,6 +1,8 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/tictactoe.hpp"
 #include "surena/engine.hpp"
@@ -11,7 +13,6 @@
 #include "control/event.hpp"
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe.hpp"
-#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/tictactoe.hpp"
 
@@ -25,6 +26,7 @@ namespace Frontends {
         game(NULL),
         engine(NULL)
     {
+        dc = Control::main_client->nanovg_ctx;
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
                 board_buttons[y][x] = sbtn{
@@ -109,50 +111,59 @@ namespace Frontends {
 
     void TicTacToe::render()
     {
-        DD::SetLineWidth(button_size*0.175);
-        DD::SetRGB255(201, 144, 73);
-        DD::Clear();
-        DD::Push();
-        DD::Translate(w_px/2-(3*button_size+2*padding)/2, h_px/2-(3*button_size+2*padding)/2);
+        nvgSave(dc);
+        nvgStrokeWidth(dc, button_size*0.175);
+        nvgBeginPath(dc);
+        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgFillColor(dc, nvgRGB(201, 144, 73));
+        nvgFill(dc);
+        nvgTranslate(dc, w_px/2-(3*button_size+2*padding)/2, h_px/2-(3*button_size+2*padding)/2);
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
                 float base_x = static_cast<float>(x)*(button_size+padding);
                 float base_y = (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding);
-                DD::SetFill();
+                nvgBeginPath(dc);
+                nvgRect(dc, base_x, base_y, button_size, button_size);
                 if (!game || game->player_to_move() == 0) {
-                    DD::SetRGB255(161, 119, 67);
+                    nvgFillColor(dc, nvgRGB(161, 119, 67));
                 } else {
-                    DD::SetRGB255(240, 217, 181);
+                    nvgFillColor(dc, nvgRGB(240, 217, 181));
                 }
-                DD::DrawRectangle(base_x, base_y, button_size, button_size);
+                nvgFill(dc);
                 if (!game) {
                     continue;
                 }
                 uint8_t player_in_cell = game->get_cell(x, y);
                 if (player_in_cell == 1) {
                     // X
-                    DD::SetStroke();
-                    DD::SetRGB255(25, 25, 25);
-                    DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.175, base_x+button_size*0.825, base_y+button_size*0.825);
-                    DD::DrawLine(base_x+button_size*0.175, base_y+button_size*0.825, base_x+button_size*0.825, base_y+button_size*0.175);
+                    nvgBeginPath(dc);
+                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                    nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.175);
+                    nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.825);
+                    nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.825);
+                    nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.175);
+                    nvgStroke(dc);
                 } else if (player_in_cell == 2) {
                     // O
-                    DD::SetStroke();
-                    DD::SetRGB255(25, 25, 25);
-                    DD::DrawCircle(base_x+button_size/2, base_y+button_size/2, button_size*0.3);
+                    nvgBeginPath(dc);
+                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                    nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.3);
+                    nvgStroke(dc);
                 } else if (board_buttons[y][x].hovered && game->player_to_move() > surena::TicTacToe::PLAYER_NONE) {
-                    DD::SetRGB255(220, 197, 161);
-                    DD::SetFill();
-                    DD::DrawRectangle(board_buttons[y][x].x+button_size*0.05, board_buttons[y][x].y+button_size*0.05, board_buttons[y][x].w-button_size*0.1, board_buttons[y][x].h-button_size*0.1);
+                    nvgBeginPath(dc);
+                    nvgFillColor(dc, nvgRGB(220, 197, 161));
+                    nvgRect(dc, board_buttons[y][x].x+button_size*0.05, board_buttons[y][x].y+button_size*0.05, board_buttons[y][x].w-button_size*0.1, board_buttons[y][x].h-button_size*0.1);
+                    nvgFill(dc);
                 }
                 if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((y<<2)|x)) {
-                    DD::SetRGB255(125, 187, 248);
-                    DD::SetFill();
-                    DD::DrawCircle(board_buttons[y][x].x+button_size/2, board_buttons[y][x].y+button_size/2, button_size*0.15);
+                    nvgBeginPath(dc);
+                    nvgFillColor(dc, nvgRGB(125, 187, 248));
+                    nvgCircle(dc, board_buttons[y][x].x+button_size/2, board_buttons[y][x].y+button_size/2, button_size*0.15);
+                    nvgFill(dc);
                 }
             }
         }
-        DD::Pop();
+        nvgRestore(dc);
     }
 
     void TicTacToe::draw_options()

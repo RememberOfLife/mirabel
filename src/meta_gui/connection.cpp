@@ -83,7 +83,7 @@ namespace MetaGui {
         // when connection failed, log the reason
         // on successful connection: log
         // while connected: "connected (LXXms HXXXX)" where L ist latency and H is time since last heartbeat
-        ImGui::Text("Status: ");
+        ImGui::Text("Status:");
         ImGui::SameLine();
         if (connected) {
             ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "connected");
@@ -91,13 +91,8 @@ namespace MetaGui {
             ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "offline");
         }
 
-        //REWORK
-        if (connected && ImGui::Button("PING")) {
-            Control::main_client->network_send_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
-        }
-        //REWORK
-
-        //TODO when the server was found we need to send our authentication request so it sends us a valid auth token to use in all future requests
+        //TODO after a connection was established, if verification failed show info + accept
+        //TODO after connection accepted, login as guest or user?
 
         // static bool hide_pw = true;
         // static char password[64] = "";
@@ -112,6 +107,13 @@ namespace MetaGui {
         // }
         // static char username[64] = "";
         // ImGui::InputText("username", username, 64, ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterSanitizedTextLetters);
+
+
+        //REWORK
+        if (connected && ImGui::Button("PING")) {
+            Control::main_client->network_send_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
+        }
+        //REWORK
 
         ImGui::End();
     }

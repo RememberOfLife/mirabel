@@ -3,6 +3,8 @@
 #include <cstdint>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_opengl.h>
+#include "nanovg_gl.h"
 #include "imgui.h"
 #include "surena/games/havannah.hpp"
 #include "surena/engine.hpp"
@@ -14,7 +16,6 @@
 #include "games/game_catalogue.hpp"
 #include "games/havannah.hpp"
 #include "meta_gui/meta_gui.hpp"
-#include "prototype_util/direct_draw.hpp"
 
 #include "frontends/havannah.hpp"
 
@@ -36,7 +37,9 @@ namespace Frontends {
     Havannah::Havannah():
         game(NULL),
         engine(NULL)
-    {}
+    {
+        dc = Control::main_client->nanovg_ctx;
+    }
 
     Havannah::~Havannah()
     {}
@@ -172,36 +175,42 @@ namespace Frontends {
         const float fitting_hex_radius = button_size+padding;
         const float flat_radius = sin(hex_angle) * fitting_hex_radius;
         int board_sizer = (2*size-1);
-        DD::SetRGB255(201, 144, 73);
-        DD::Clear();
-        DD::Push();
-        DD::Translate(w_px/2, h_px/2);
+        nvgSave(dc);
+        nvgBeginPath(dc);
+        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgFillColor(dc, nvgRGB(201, 144, 73));
+        nvgFill(dc);
+        nvgTranslate(dc, w_px/2, h_px/2);
         if (!flat_top) {
-            DD::Rotate(hex_angle/2);
+            nvgRotate(dc, hex_angle/2);
         }
         // colored board border for current/winning player
+        nvgBeginPath(dc);
         if (!game) {
-            DD::SetRGB255(161, 119, 67);
+            nvgStrokeColor(dc, nvgRGB(161, 119, 67));
         } else {
             uint8_t color_player = (game->player_to_move() == 0 ? game->get_result() : game->player_to_move());
             switch (color_player) {
                 case surena::Havannah::COLOR_NONE: {
-                    DD::SetRGB255(128, 128, 128);
+                    nvgStrokeColor(dc, nvgRGB(128, 128, 128));
                 } break;
                 case surena::Havannah::COLOR_WHITE: {
-                    DD::SetRGB255(141, 35, 35);
+                    nvgStrokeColor(dc, nvgRGB(141, 35, 35));
                 } break;
                 case surena::Havannah::COLOR_BLACK: {
-                    DD::SetRGB255(25, 25, 25);
+                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                 } break;
             }
         }
-        DD::SetFill();
-        DD::DrawRegularPolygon(6, 0, 0, static_cast<float>(size*2)*flat_radius+flat_radius*0.5);
-        DD::SetRGB255(201, 144, 73);
-        DD::DrawRegularPolygon(6, 0, 0, static_cast<float>(size*2)*flat_radius);
+        nvgStrokeWidth(dc, flat_radius*0.5);
+        nvgMoveTo(dc, static_cast<float>(size*2)*flat_radius, 0);
+        for (int i = 0; i < 6; i++) {
+            nvgRotate(dc, M_PI/3);
+            nvgLineTo(dc, static_cast<float>(size*2)*flat_radius, 0);
+        }
+        nvgStroke(dc);
         // translate back up to board rendering position and render board
-        DD::Translate(-(size*flat_radius)+flat_radius, -((3*size-3)*fitting_hex_radius)/2);
+        nvgTranslate(dc, -(size*flat_radius)+flat_radius, -((3*size-3)*fitting_hex_radius)/2);
         for (int y = 0; y < board_sizer; y++) {
             for (int x = 0; x < board_sizer; x++) {
                 if (!(x - y < size) || !(y - x < size)) {
@@ -213,46 +222,66 @@ namespace Frontends {
                     base_x += flat_radius;
                 }
                 float base_y = y*(fitting_hex_radius*1.5);
-                DD::SetFill();
+                nvgBeginPath(dc);
                 if (!game || game->player_to_move() == 0) {
-                    DD::SetRGB255(161, 119, 67);
+                    nvgFillColor(dc, nvgRGB(161, 119, 67));
                 } else {
-                    DD::SetRGB255(240, 217, 181);
+                    nvgFillColor(dc, nvgRGB(240, 217, 181));
                 }
-                DD::Push();
-                DD::Translate(base_x, base_y);
-                DD::Rotate(hex_angle/2);
-                DD::DrawRegularPolygon(6, 0, 0, button_size);
+                nvgSave(dc);
+                nvgTranslate(dc, base_x, base_y);
+                nvgRotate(dc, hex_angle/2);
+                nvgMoveTo(dc, button_size, 0);
+                for (int i = 0; i < 6; i++) {
+                    nvgRotate(dc, M_PI/3);
+                    nvgLineTo(dc, button_size, 0);
+                }
+                nvgFill(dc);
                 if (!game) {
-                    DD::Pop();
+                    nvgRestore(dc);
                     continue;
                 }
                 surena::Havannah::COLOR cell_color = game->get_cell(x, y);
                 switch (cell_color) {
                     case surena::Havannah::COLOR_NONE: {
                         if (board_buttons[y*board_sizer+x].hovered && game->player_to_move() > surena::Havannah::COLOR_NONE) {
-                            DD::SetRGB255(220, 197, 161);
-                            DD::SetFill();
-                            DD::DrawRegularPolygon(6, 0, 0, button_size*0.9);
+                            nvgBeginPath(dc);
+                            nvgFillColor(dc, nvgRGB(220, 197, 161));
+                            nvgMoveTo(dc, button_size*0.9, 0);
+                            for (int i = 0; i < 6; i++) {
+                                nvgRotate(dc, M_PI/3);
+                                nvgLineTo(dc, button_size*0.9, 0);
+                            }
+                            nvgFill(dc);
                         }
                     } break;
                     case surena::Havannah::COLOR_WHITE: {
-                        DD::SetRGB255(141, 35, 35);
-                        DD::SetFill();
+                        nvgBeginPath(dc);
+                        nvgFillColor(dc, nvgRGB(141, 35, 35));
                         if (hex_stones) {
-                            DD::DrawRegularPolygon(6, 0, 0, button_size*stone_size_mult);
+                            nvgMoveTo(dc, button_size*stone_size_mult, 0);
+                            for (int i = 0; i < 6; i++) {
+                                nvgRotate(dc, M_PI/3);
+                                nvgLineTo(dc, button_size*stone_size_mult, 0);
+                            }
                         } else {
-                            DD::DrawCircle(0, 0, button_size*stone_size_mult);
+                            nvgCircle(dc, 0, 0, button_size*stone_size_mult);
                         }
+                        nvgFill(dc);
                     } break;
                     case surena::Havannah::COLOR_BLACK: {
-                        DD::SetRGB255(25, 25, 25);
-                        DD::SetFill();
+                        nvgBeginPath(dc);
+                        nvgFillColor(dc, nvgRGB(25, 25, 25));
                         if (hex_stones) {
-                            DD::DrawRegularPolygon(6, 0, 0, button_size*stone_size_mult);
+                            nvgMoveTo(dc, button_size*stone_size_mult, 0);
+                            for (int i = 0; i < 6; i++) {
+                                nvgRotate(dc, M_PI/3);
+                                nvgLineTo(dc, button_size*stone_size_mult, 0);
+                            }
                         } else {
-                            DD::DrawCircle(0, 0, button_size*stone_size_mult);
+                            nvgCircle(dc, 0, 0, button_size*stone_size_mult);
                         }
+                        nvgFill(dc);
                     } break;
                     case surena::Havannah::COLOR_INVALID: {
                         assert(false);
@@ -273,43 +302,48 @@ namespace Frontends {
                         connections_to_draw |= 0b010;
                     }
                     if (connections_to_draw) {
-                        DD::Push();
-                        DD::Rotate(-DD::PI/6);
+                        nvgSave(dc);
+                        nvgRotate(dc, -M_PI/6);
+                        nvgBeginPath(dc);
                         switch (cell_color) {
                             case surena::Havannah::COLOR_WHITE: {
-                                DD::SetRGB255(141, 35, 35);
+                                nvgStrokeColor(dc, nvgRGB(141, 35, 35));
                             } break;
                             case surena::Havannah::COLOR_BLACK: {
-                                DD::SetRGB255(25, 25, 25);
+                                nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                             } break;
                             case surena::Havannah::COLOR_NONE:
                             case surena::Havannah::COLOR_INVALID: {
                                 assert(false);
                             } break;
                         }
-                        DD::SetFill();
-                        DD::Rotate(-DD::PI-DD::PI/3);
+                        nvgRotate(dc, -M_PI-M_PI/3);
                         for (int rot = 0; rot < 3; rot++) {
-                            DD::Rotate(DD::PI/3);
+                            nvgRotate(dc, M_PI/3);
                             if (!((connections_to_draw >> rot)&0b1)) {
                                 continue;
                             }
-                            DD::DrawRectangle(-connection_draw_width/2, -connection_draw_width/2, connection_draw_width+flat_radius*2, connection_draw_width);
+                            nvgRect(dc, -connection_draw_width/2, -connection_draw_width/2, connection_draw_width+flat_radius*2, connection_draw_width);
                         }
-                        DD::Pop();
+                        nvgFill(dc);
+                        nvgRestore(dc);
                     }
                 }
                 // draw engine best move
                 if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
-                    DD::SetRGB255(125, 187, 248);
-                    DD::SetStroke();
-                    DD::SetLineWidth(button_size*0.1);
-                    DD::DrawRegularPolygon(6, 0, 0, button_size*0.95);
+                    nvgStrokeColor(dc, nvgRGB(125, 187, 248));
+                    nvgStrokeWidth(dc, button_size*0.1);
+                    nvgMoveTo(dc, button_size*0.95, 0);
+                    for (int i = 0; i < 6; i++) {
+                        nvgRotate(dc, M_PI/3);
+                        nvgLineTo(dc, button_size*0.95, 0);
+                    }
+                    nvgStroke(dc);
                 }
-                DD::Pop();
+                nvgRestore(dc);
             }
         }
-        DD::Pop();
+        nvgRestore(dc);
     }
 
     void Havannah::draw_options()
