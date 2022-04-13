@@ -114,6 +114,8 @@ add_executable(mirabel ${SOURCES})
 add_library(nanovg ${SOURCES_NANOVG})
 target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
 target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
+# The stb repo can be cloned into lib/stb if not available as system package.
+target_include_directories(nanovg SYSTEM BEFORE PRIVATE lib/stb)
 target_link_libraries(mirabel nanovg)
 
 # target_compile_options(mirabel PRIVATE "-Wall") # do after nanovg so we dont reenable warnings there
