@@ -44,7 +44,7 @@ namespace MetaGui {
         uint16_t server_port;
         RUNNING_STATE adapter; //TODO this might be replacable by local comparisons in the window code
         RUNNING_STATE connection;
-        char* server_cert_thumbprint;
+        uint8_t* server_cert_thumbprint;
         char* verifail_reason;
         char username[32];
         char password[32];

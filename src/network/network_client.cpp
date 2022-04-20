@@ -334,15 +334,16 @@ namespace Network {
                     str_buf[sizeof(str_buf)-1] = '\0';
                     MetaGui::logf(log_id, "server cert thumbprint (%s)\n", str_buf);
                 }
-                //TODO send thumbprint event? or is it part of accepted and verifail?
                 // prepare connection state event for client
-                Control::event event_cs;
+                Control::event event_cs = Control::event();
+                event_cs.raw_length = SHA256_LEN; // reserve some space for the thumbprint
                 switch (verify_result) {
                     case X509_V_OK: {
                         // no verification errors, promote to accepted
                         conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
                         MetaGui::log(log_id, "server cert verification passed\n");
-                        event_cs = Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT);
+                        event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT;
+                        event_cs.raw_data = malloc(event_cs.raw_length);
                     } break;
                     case X509_V_ERR_CERT_HAS_EXPIRED: {
                         BIO* print_bio = BIO_new(BIO_s_mem()); // bio for printing details about the failure
@@ -353,21 +354,21 @@ namespace Network {
                         char* time_str = (char*)malloc(time_str_len);
                         BIO_read(print_bio, time_str, time_str_len);
                         MetaGui::logf(log_id, "#W server cert verification failed: cert has expired (%s)\n", time_str);
-                        const char err_str[] = "expired (%s)";
-                        event_cs = Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
-                        event_cs.raw_length = strlen(err_str) + 1 + time_str_len;
+                        const char* err_str = "expired (%s)";
+                        event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        event_cs.raw_length += strlen(err_str) + 1 + time_str_len;
                         event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data, err_str, time_str);
+                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, time_str);
                         free(time_str);
                         BIO_free(print_bio);
                     } break;
                     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: {
                         MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert\n");
-                        const char err_str[] = "depth zero self signed";
-                        event_cs = Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
-                        event_cs.raw_length = strlen(err_str) + 1;
+                        const char* err_str = "depth zero self signed";
+                        event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        event_cs.raw_length += strlen(err_str) + 1;
                         event_cs.raw_data = malloc(event_cs.raw_length);
-                        strcpy((char*)event_cs.raw_data, err_str);
+                        strcpy((char*)event_cs.raw_data+SHA256_LEN, err_str);
                     } break;
                     case X509_V_ERR_HOSTNAME_MISMATCH: {
                         char** name_list;
@@ -386,25 +387,26 @@ namespace Network {
                         }
                         *str_buf_m = '\0';
                         MetaGui::logf(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
-                        const char err_str[] = "hostname mismatch (%s)";
-                        event_cs = Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
-                        event_cs.raw_length = strlen(err_str) + 1 + (str_buf_m - str_buf);
+                        const char* err_str = "hostname mismatch (%s)";
+                        event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        event_cs.raw_length += strlen(err_str) + 1 + (str_buf_m - str_buf);
                         event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data, err_str, str_buf);
+                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, str_buf);
                         free(str_buf);
                         util_cert_free_subjects(name_list, name_count);
                     } break;
                     default: {
                         MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
-                        const char err_str[] = "x509 v err %lu";
-                        event_cs = Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
-                        event_cs.raw_length = strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
+                        const char* err_str = "x509 v err %lu";
+                        event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        event_cs.raw_length += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
                         event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data, err_str, verify_result);
+                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, verify_result);
                     } break;
                 }
                 X509_free(peer_cert);
                 // expiry, dz self signed, hostname mismatch all push an adapter event so the connection window offers a button for the user to accept the connection anyway, if everything is fine we push the connection accept instead
+                memcpy((char*)event_cs.raw_data, hash_buf, SHA256_LEN); // place thumbprint before the reason string
                 recv_queue->push(event_cs);
             }
 

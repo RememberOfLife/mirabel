@@ -79,17 +79,12 @@ namespace MetaGui {
         }
         ImGui::Separator();
 
-        //TODO make this a table of status lines
-        //TODO make this a sidebar box like the cert verification box?
-        //TODO proper status line, show state of adapter,ssl-conn,auth
-        // when offline: "offline"
+        //TODO proper status line
         // when trying to connect: "connecting.. (timeout in XXXXms)"
-        // when connection failed, log the reason
-        // on successful connection: log
         // while connected: "connected (LXXms HXXXX)" where L ist latency and H is time since last heartbeat
         ImGui::Text("Status:");
         ImGui::SameLine();
-        switch (conn_info.connection) {
+        switch (conn_info.adapter) {
             case RUNNING_STATE_NONE: {
                 ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "offline");
             } break;
@@ -98,13 +93,76 @@ namespace MetaGui {
             } break;
             case RUNNING_STATE_DONE: {
                 ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "connected");
+                switch (conn_info.connection) {
+                    case RUNNING_STATE_NONE: break;
+                    case RUNNING_STATE_ONGOING: {      
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), " (ssl)");
+                    } break;
+                    case RUNNING_STATE_DONE: {
+                        ImGui::SameLine();
+                        ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "+ ssl");
+                        ImGui::SameLine();
+                        switch (conn_info.authentication) {
+                            case RUNNING_STATE_NONE: {   
+                                ImGui::TextDisabled(" (auth)");
+                            } break;
+                            case RUNNING_STATE_ONGOING: {   
+                                ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), " (auth)");
+                            } break;
+                            case RUNNING_STATE_DONE: {
+                                ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "+ auth");
+                            } break;
+                        }
+                    } break;
+                }
             } break;
         }
+
         if (conn_info.server_cert_thumbprint) {
-            //TODO how does this get here? extra event?
-            ImGui::Text("Thumbprint:");
+            //TODO show only first n bytes, then on hover show everything in a matrix
+            ImGui::Text("Thumbprint: ");
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, -1)); //TODO can we just skip proper vertical spacing here?
+            const int show_bytes = 8;
+            for (int i = 0; i < show_bytes; i++) {
+                ImGui::SameLine();
+                ImGui::Text("%02x", *(conn_info.server_cert_thumbprint+i));
+                if (i < show_bytes - 1) {
+                    ImGui::SameLine();
+                    ImGui::TextUnformatted(":");
+                }
+            }
+            ImGui::PopStyleVar();
             ImGui::SameLine();
-            ImGui::Text("%s", conn_info.server_cert_thumbprint);
+            if (ImGui::SmallButton("F")) {
+                ImGui::OpenPopup("full_thumbprint");
+            }
+            if (ImGui::BeginPopup("full_thumbprint"))
+            {
+                const int show_bytes_x = 8;
+                int show_bytes_y = Network::SHA256_LEN / show_bytes_x;
+                int show_bytes_x_overflow = Network::SHA256_LEN - (show_bytes_x*show_bytes_y);
+                if (show_bytes_x_overflow > 1) {
+                    show_bytes_y++;
+                }
+                for (int i = 0; i < show_bytes_y; i++) {
+                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, -1)); //TODO can we just skip proper vertical spacing here?
+                    int show_bytes_x_cur = (i == show_bytes_y - 1 && show_bytes_x_overflow > 0 ? show_bytes_x_overflow : show_bytes_x);
+                    for (int j = 0; j < show_bytes_x_cur; j++) {
+                        ImGui::SameLine();
+                        ImGui::Text("%02x", *(conn_info.server_cert_thumbprint+i*show_bytes_x+j));
+                        if (j < show_bytes_x_cur - 1) {
+                            ImGui::SameLine();
+                            ImGui::TextUnformatted(":");
+                        }
+                    }
+                    ImGui::PopStyleVar();
+                    if (i < show_bytes_y - 1) {
+                        ImGui::NewLine();
+                    }
+                }
+                ImGui::EndPopup();
+            }
         }
         ImGui::Separator();
 
@@ -132,7 +190,7 @@ namespace MetaGui {
             ImGui::PopStyleColor();
         }
 
-        if (false && conn_info.connection == RUNNING_STATE_DONE) { //REWORK put in when auth gets here
+        if (true && conn_info.connection == RUNNING_STATE_DONE) { //REWORK put in when auth gets here
             bool disable_authentication = conn_info.authentication > RUNNING_STATE_NONE;
             if (disable_authentication) {
                 ImGui::BeginDisabled();
@@ -153,6 +211,7 @@ namespace MetaGui {
             }
             switch (conn_info.authentication) {
                 case RUNNING_STATE_NONE: {
+                    //TODO swap button
                     if (ImGui::Button("Guest")) {
                         //TODO
                     }

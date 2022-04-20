@@ -25,6 +25,7 @@
 #include "frontends/tictactoe.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
+#include "network/protocol.hpp"
 
 #include "control/client.hpp"
 
@@ -349,14 +350,19 @@ namespace Control {
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_ONGOING;
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
+                        if (e.raw_data) {
+                            MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
+                            memcpy(MetaGui::conn_info.server_cert_thumbprint, e.raw_data, Network::SHA256_LEN);
+                        }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
                         //REWORK when auth gets here this gets moved to an adapter auth event
                         inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
-                        MetaGui::conn_info.verifail_reason = (char*)e.raw_data;
-                        e.raw_data = NULL;
-                        e.raw_length = 0;
+                        MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
+                        memcpy(MetaGui::conn_info.server_cert_thumbprint, e.raw_data, Network::SHA256_LEN);
+                        MetaGui::conn_info.verifail_reason = (char*)malloc(strlen((char*)e.raw_data) + 1);
+                        strcpy(MetaGui::conn_info.verifail_reason, (char*)e.raw_data+Network::SHA256_LEN);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                         // finalize connection by setting the sending queue, this transitions from initialization into usage

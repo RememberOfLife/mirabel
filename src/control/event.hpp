@@ -50,6 +50,10 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
+        EVENT_TYPE_NETWORK_PROTOCOL_AUTHINFO,
+        // user events: deal with the general user information on the connected server
+        EVENT_TYPE_USER_AUTHN,
+        EVENT_TYPE_USER_AUTHFAIL,
         // lobby events: deal with client/server communication
         EVENT_TYPE_LOBBY_CHAT_MSG, // contains msgId(for removal),client_id(who sent the message),timestamp,text
         EVENT_TYPE_LOBBY_CHAT_DEL,

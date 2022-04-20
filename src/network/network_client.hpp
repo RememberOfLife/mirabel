@@ -37,6 +37,8 @@ namespace Network {
             Control::event_queue send_queue;
             Control::event_queue* recv_queue;
 
+            //TODO atomic ping and heartbeat times (hb might go into event)
+
             NetworkClient(Control::TimeoutCrash* use_tc);
             ~NetworkClient();
 

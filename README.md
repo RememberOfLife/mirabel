@@ -168,6 +168,9 @@ Collect more general resources:
 * how are guithread state variables exposed? e.g. where to store fullscreen and frame_work_time such that it can be read from the outside?
 
 ### integration workflow
+* ==> server guests can add their own guest password
+  * hiddenfeature, add '#' to the username e.g. "guestname#138754"
+  * or just dont do it at all
 * ==> offline ai play:
   * engine has an option to enable auto search and auto move when certain players are playing
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
