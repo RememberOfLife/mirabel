@@ -329,25 +329,43 @@ namespace Control {
                     case EVENT_TYPE_LOBBY_CHAT_DEL: {
                         MetaGui::chat_msg_del(e.msg_del.msg_id);
                     } break;
-                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED: {
-                        // network adapter has already been stored in its final place, we just finalize the loading by setting the sending queue
-                        if (t_network != NULL) {
-                            // have to check if it actually still exists, might have deconstructed already if connection was refused
-                            network_send_queue = &(t_network->send_queue);
-                            // server sends its state as sync automatically, maybe we should reset it ourselves anyway
-                            MetaGui::chat_clear();
-                        }
-                    } break;
-                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: {
-                        network_send_queue = NULL;
-                        // network adapter died or closed, reset it
+                    /* skip EVENT_TYPE_NETWORK_ADAPTER_LOAD, t_network gets filled by the metagui connection window*/
+                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: // died while trying to connect
+                    case EVENT_TYPE_NETWORK_ADAPTER_UNLOAD: { // metagui wants to disconnect
                         if (t_network == NULL) {
-                            break; // closed properly, don't do anything 
+                            // need this to catch adapter recv runner socket close after proper unload
+                            break;
                         }
+                        network_send_queue = NULL;
                         t_network->close();
                         delete t_network;
                         t_network = NULL;
                         MetaGui::chat_clear();
+                        MetaGui::connection_info_reset();
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED: {
+                        // tcp opened
+                        MetaGui::conn_info.adapter = MetaGui::RUNNING_STATE_DONE;
+                        MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_ONGOING;
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
+                        MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
+                        //REWORK when auth gets here this gets moved to an adapter auth event
+                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
+                        MetaGui::conn_info.verifail_reason = (char*)e.raw_data;
+                        e.raw_data = NULL;
+                        e.raw_length = 0;
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
+                        // finalize connection by setting the sending queue, this transitions from initialization into usage
+                        network_send_queue = &(t_network->send_queue);
+                        // server sends its state as sync automatically, //TODO maybe we should reset it ourselves anyway?
+                        MetaGui::chat_clear();
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
+                        //TODO we have been disconnected?
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);

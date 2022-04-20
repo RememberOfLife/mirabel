@@ -427,6 +427,7 @@ namespace Network {
                     }
                     // switch on type
                     switch (recv_event.type) {
+                        case Control::EVENT_TYPE_NULL: break; // drop null events
                         case Control::EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                             printf("[INFO] ping from client sending pong\n");
                             send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));

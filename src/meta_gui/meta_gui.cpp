@@ -17,6 +17,18 @@ namespace MetaGui {
     const std::chrono::steady_clock::time_point LOG_START_TIME = std::chrono::steady_clock::now();
 
     bool show_connection_window = false;
+    //BUG gcc bug makes this ugly for now https://stackoverflow.com/questions/70172941/c99-designator-member-outside-of-aggregate-initializer
+    connection_info conn_info = connection_info{
+        /*.server_address = */"127.0.0.1", //TODO for debugging purposes this is loopback
+        .server_port = 61801, // default mirabel port
+        .adapter = RUNNING_STATE_NONE,
+        .connection = RUNNING_STATE_NONE,
+        .server_cert_thumbprint = NULL,
+        .verifail_reason = NULL,
+        /*.username = */"",
+        /*.password = */"",
+        .authentication = RUNNING_STATE_NONE,
+    };
 
     bool show_game_config_window = false;
 

@@ -34,6 +34,24 @@ namespace MetaGui {
 
     extern bool show_connection_window;
     void connection_window(bool* p_open);
+    enum RUNNING_STATE {
+        RUNNING_STATE_NONE,
+        RUNNING_STATE_ONGOING,
+        RUNNING_STATE_DONE,
+    };
+    struct connection_info {
+        char server_address[64];
+        uint16_t server_port;
+        RUNNING_STATE adapter; //TODO this might be replacable by local comparisons in the window code
+        RUNNING_STATE connection;
+        char* server_cert_thumbprint;
+        char* verifail_reason;
+        char username[32];
+        char password[32];
+        RUNNING_STATE authentication;
+    };
+    extern connection_info conn_info;
+    void connection_info_reset();
 
     extern bool show_game_config_window;
     void game_config_window(bool* p_open); // select game, parameter config (e.g. board size), game state editing

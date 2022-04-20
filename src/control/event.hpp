@@ -40,6 +40,8 @@ namespace Control {
         EVENT_TYPE_NETWORK_ADAPTER_UNLOAD,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED,
         EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED,
+        EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT,
+        EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL,
         EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED,
         EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED,
         // networking events: protocol events; work with adapter<->adapter, they should not reach the main queue, and ignored if they do

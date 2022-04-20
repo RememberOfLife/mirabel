@@ -17,6 +17,7 @@ namespace Network {
     };
 
     struct connection {
+        //TODO state for the server so it knows if a connection has authenticated already, and if it is accepted by the client or warnheld
         PROTOCOL_CONNECTION_STATE state;
         TCPsocket socket = NULL;
         IPaddress peer_addr;
