@@ -25,9 +25,14 @@ namespace MetaGui {
         .connection = RUNNING_STATE_NONE,
         .server_cert_thumbprint = NULL,
         .verifail_reason = NULL,
+        .auth_info = false,
+        .authentication = RUNNING_STATE_NONE,
+        .auth_allow_login = false,
+        .auth_allow_guest = false,
+        .auth_want_guest_pw = false,
         /*.username = */"",
         /*.password = */"",
-        .authentication = RUNNING_STATE_NONE,
+        .authfail_reason = NULL,
     };
 
     bool show_game_config_window = false;

@@ -22,6 +22,8 @@ namespace Control {
             uint16_t max_users;
             uint32_t* user_client_ids; //TODO should use some user struct, for now just stores client ids of connected clients
 
+            uint32_t lobby_msg_id_ctr = 1;
+
             Lobby(event_queue* send_queue, uint16_t max_users);
             ~Lobby();
 

@@ -351,16 +351,19 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
                         if (e.raw_data) {
+                            free(MetaGui::conn_info.server_cert_thumbprint);
                             MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
                             memcpy(MetaGui::conn_info.server_cert_thumbprint, e.raw_data, Network::SHA256_LEN);
                         }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
-                        //REWORK when auth gets here this gets moved to an adapter auth event
-                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                        // request auth info from server
+                        t_network->send_queue.push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHINFO, 0, true, NULL, NULL));
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
+                        free(MetaGui::conn_info.server_cert_thumbprint);
                         MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
                         memcpy(MetaGui::conn_info.server_cert_thumbprint, e.raw_data, Network::SHA256_LEN);
+                        free(MetaGui::conn_info.verifail_reason);
                         MetaGui::conn_info.verifail_reason = (char*)malloc(strlen((char*)e.raw_data) + 1);
                         strcpy(MetaGui::conn_info.verifail_reason, (char*)e.raw_data+Network::SHA256_LEN);
                     } break;
@@ -372,6 +375,34 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
                         //TODO we have been disconnected?
+                    } break;
+                    case EVENT_TYPE_USER_AUTHINFO: {
+                        // we got the auth info from the server, set it up for display in the metagui conn info, also advance state
+                        // if is_guest is true the server accepts guest logins, otherwise not
+                        MetaGui::conn_info.auth_allow_guest = e.user_auth.is_guest;
+                        // if username is NULL the server does NOT accept user logins
+                        MetaGui::conn_info.auth_allow_login = (e.user_auth.username(e.raw_data) != NULL);
+                        // if password is NULL the server does NOT require a server password for guests
+                        MetaGui::conn_info.auth_want_guest_pw = (e.user_auth.password(e.raw_data) != NULL);
+                        // if the server does not accept user AND guest logins wait for user to press guest login, enable pw input if wanted
+                        MetaGui::conn_info.auth_info = true;
+                    } break;
+                    case EVENT_TYPE_USER_AUTHN: {
+                        // we received our authn credentials from the server
+                        strcpy(MetaGui::conn_info.username, e.user_auth.username(e.raw_data)); // set username in authinfo, as received, may be assigned guest name
+                        //TODO should probably store it somewhere else too
+                        MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_DONE;
+                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                    } break;
+                    case EVENT_TYPE_USER_AUTHFAIL: {
+                        // server told us our authn failed / it signed us out after we requested logout
+                        if (e.raw_data) {
+                            free(MetaGui::conn_info.authfail_reason);
+                            MetaGui::conn_info.authfail_reason = (char*)e.raw_data;
+                            e.raw_data = NULL;
+                            e.raw_length = 0;
+                        }
+                        MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);

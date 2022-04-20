@@ -51,8 +51,8 @@ namespace Control {
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,
-        EVENT_TYPE_NETWORK_PROTOCOL_AUTHINFO,
         // user events: deal with the general user information on the connected server
+        EVENT_TYPE_USER_AUTHINFO,
         EVENT_TYPE_USER_AUTHN,
         EVENT_TYPE_USER_AUTHFAIL,
         // lobby events: deal with client/server communication
@@ -75,6 +75,15 @@ namespace Control {
 
     struct engine_event {
         surena::Engine* engine;
+    };
+
+    //TODO important: find some proper way to streamline pointer stuffed events across network and creation
+    struct user_auth_event {
+        bool is_guest;
+        size_t username_size;
+        size_t password_size;
+        const char* username(void* raw_data);
+        const char* password(void* raw_data);
     };
 
     struct msg_del_event {
@@ -103,6 +112,7 @@ namespace Control {
             move_event move;
             frontend_event frontend;
             engine_event engine;
+            user_auth_event user_auth;
             msg_del_event msg_del;
         };
         event();
@@ -120,6 +130,7 @@ namespace Control {
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
         static event create_engine_event(uint32_t type, surena::Engine* frontend);
+        static event create_user_auth_event(uint32_t type, uint32_t client_id, bool is_guest, const char* username, const char* password);
         static event create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text);
         static event create_chat_del_event(uint32_t type, uint32_t msg_id);
     };

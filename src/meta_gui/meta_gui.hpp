@@ -46,9 +46,14 @@ namespace MetaGui {
         RUNNING_STATE connection;
         uint8_t* server_cert_thumbprint;
         char* verifail_reason;
+        bool auth_info;
+        RUNNING_STATE authentication;
+        bool auth_allow_login;
+        bool auth_allow_guest;
+        bool auth_want_guest_pw;
         char username[32];
         char password[32];
-        RUNNING_STATE authentication;
+        char* authfail_reason;
     };
     extern connection_info conn_info;
     void connection_info_reset();

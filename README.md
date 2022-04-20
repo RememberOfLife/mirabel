@@ -67,11 +67,11 @@ Collect more general resources:
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 * network: if we try to send data on a client connection that just closed, segfault
-  * could send an event to the send queue to make it deconstruct and release a closed connection
+  * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
+  * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
-* rework network protocol for single lobby server with password
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * move event (across the network) should use strings for universal compatiblity
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
@@ -201,7 +201,6 @@ Collect more general resources:
     * that way the piece will be reset for one frame until it is processed in the next one
     * FIX: do what lichess does, just dont animate drag-and-drop pieces and only animate pinned and enemy moves
 * ==> networking structure for offline/online server play
-  * guithread also needs to hold some connection state for online/offline and network latency + heartbeat etc..
   * networkadapter is different for client vs server:
     * client holds only the server connection socket
       * update last_interaction_time every time socket action happens, if it didnt happen for some time, send heartbeat with appropriate timeout for closing

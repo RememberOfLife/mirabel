@@ -1,5 +1,6 @@
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
@@ -101,6 +102,28 @@ namespace Control {
                     if (lobby) {
                         lobby->HandleEvent(e);
                     }
+                } break;
+                case EVENT_TYPE_USER_AUTHINFO: {
+                    // client wants to have the authinfo, serve it
+                    event e_auth_info = event::create_user_auth_event(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL);
+                    network_send_queue->push(e_auth_info);
+                } break;
+                case EVENT_TYPE_USER_AUTHN: {
+                    // client wants to auth with given credentials, send back authn or authfail
+                    //TODO we only accept named guests for now
+                    if (!e.user_auth.is_guest) {
+                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "user logins not accepted", NULL));
+                        break;
+                    }
+                    if (e.user_auth.username(e.raw_data) == NULL || strlen(e.user_auth.username(e.raw_data)) < 4) {
+                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "guest name < 4 characters", NULL));
+                        break;
+                    }
+                    network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHN, e.client_id, true, e.user_auth.username(e.raw_data), NULL));
+                } break;
+                case EVENT_TYPE_USER_AUTHFAIL: {
+                    // client wants to logout but keep the connection, we tell them we logged them out
+                    network_send_queue->push(event(EVENT_TYPE_USER_AUTHFAIL, e.client_id));
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                     if (t_network != NULL) {

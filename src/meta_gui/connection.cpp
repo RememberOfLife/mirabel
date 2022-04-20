@@ -103,9 +103,13 @@ namespace MetaGui {
                         ImGui::SameLine();
                         ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "+ ssl");
                         ImGui::SameLine();
+                        if (!conn_info.auth_info) {
+                            ImGui::TextDisabled(" (auth)");
+                            break;
+                        }
                         switch (conn_info.authentication) {
                             case RUNNING_STATE_NONE: {   
-                                ImGui::TextDisabled(" (auth)");
+                                ImGui::Text(" (auth)");
                             } break;
                             case RUNNING_STATE_ONGOING: {   
                                 ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), " (auth)");
@@ -195,21 +199,38 @@ namespace MetaGui {
             ImGui::PopStyleColor();
         }
 
-        if (conn_info.connection == RUNNING_STATE_DONE) { //REWORK put in when auth gets here
+        bool disable_login = !conn_info.auth_allow_login;
+        bool disable_guest = !conn_info.auth_allow_guest && !disable_login;
+        bool disable_un = disable_login && !conn_info.auth_allow_guest;
+        bool disable_pw = disable_login && !conn_info.auth_want_guest_pw;
+
+        if (conn_info.connection == RUNNING_STATE_DONE && conn_info.auth_info) {
             bool disable_authentication = conn_info.authentication > RUNNING_STATE_NONE;
             if (disable_authentication) {
                 ImGui::BeginDisabled();
             }
+            if (disable_un) {
+                ImGui::BeginDisabled();
+            }
             ImGui::InputText("username", conn_info.username, sizeof(connection_info::username), ImGuiInputTextFlags_CallbackCharFilter, TextFilters::FilterSanitizedTextLetters);
+            if (disable_un) {
+                ImGui::EndDisabled();
+            }
             static bool hide_pw = true;
             ImGuiInputTextFlags password_flags = ImGuiInputTextFlags_CallbackCharFilter;
             if (hide_pw || disable_authentication) {
                 password_flags |= ImGuiInputTextFlags_Password;
             }
+            if (disable_pw) {
+                ImGui::BeginDisabled();
+            }
             ImGui::InputText("password", conn_info.password, sizeof(connection_info::password), password_flags, TextFilters::FilterSanitizedTextLetters);
             ImGui::SameLine();
             if (ImGui::SmallButton(hide_pw ? "S" : "H")) {
                 hide_pw = !hide_pw;
+            }
+            if (disable_pw) {
+                ImGui::EndDisabled();
             }
             if (disable_authentication) {
                 ImGui::EndDisabled();
@@ -217,25 +238,48 @@ namespace MetaGui {
             switch (conn_info.authentication) {
                 case RUNNING_STATE_NONE: {
                     float btn_width = ImGui::CalcItemWidth();
+                    if (disable_login) {
+                        ImGui::BeginDisabled();
+                    }
                     if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
-                        //TODO
+                        Control::main_client->t_network->send_queue.push(Control::event::create_user_auth_event(
+                            Control::EVENT_TYPE_USER_AUTHN, 0, false, conn_info.username, conn_info.password));
+                        conn_info.authentication = RUNNING_STATE_ONGOING;
+                        free(conn_info.authfail_reason);
+                        conn_info.authfail_reason = NULL;
+                    }
+                    if (disable_login) {
+                        ImGui::EndDisabled();
                     }
                     ImGui::SameLine();
                     btn_width = ImGui::GetContentRegionAvail().x;
+                    if (disable_guest) {
+                        ImGui::BeginDisabled();
+                    }
                     if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
-                        //TODO
+                        Control::main_client->t_network->send_queue.push(Control::event::create_user_auth_event(
+                            Control::EVENT_TYPE_USER_AUTHN, 0, true, conn_info.username, conn_info.password));
+                        conn_info.authentication = RUNNING_STATE_ONGOING;
+                        free(conn_info.authfail_reason);
+                        conn_info.authfail_reason = NULL;
+                    }
+                    if (disable_guest) {
+                        ImGui::EndDisabled();
                     }
                 } break;
                 case RUNNING_STATE_ONGOING: {
                     ImGui::BeginDisabled();
-                    ImGui::Button("...", ImVec2(-1.0f, 0.0f));
+                    ImGui::Button("Authenticating..", ImVec2(-1.0f, 0.0f));
                     ImGui::EndDisabled();
                 } break;
                 case RUNNING_STATE_DONE: {
                     if (ImGui::Button("Logout", ImVec2(-1.0f, 0.0f))) {
-                        //TODO
+                        Control::main_client->t_network->send_queue.push(Control::event(Control::EVENT_TYPE_USER_AUTHFAIL));
                     }
                 } break;
+            }
+            if (conn_info.authfail_reason) {
+                ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "%s", conn_info.authfail_reason);
             }
         }
 
@@ -250,9 +294,15 @@ namespace MetaGui {
         conn_info.server_cert_thumbprint = NULL;
         free(conn_info.verifail_reason);
         conn_info.verifail_reason = NULL;
+        conn_info.auth_info = false;
+        conn_info.authentication = RUNNING_STATE_NONE;
+        conn_info.auth_allow_login = false;
+        conn_info.auth_allow_guest = false;
+        conn_info.auth_want_guest_pw = false;
         conn_info.username[0] = '\0';
         conn_info.password[0] = '\0';
-        conn_info.authentication = RUNNING_STATE_NONE;
+        free(conn_info.authfail_reason);
+        conn_info.authfail_reason = NULL;
     }
 
 }

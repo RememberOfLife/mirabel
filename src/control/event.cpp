@@ -12,6 +12,16 @@
 
 namespace Control {
 
+    const char* user_auth_event::username(void* raw_data)
+    {
+        return username_size > 0 ? (char*)raw_data : NULL;
+    }
+
+    const char* user_auth_event::password(void* raw_data)
+    {
+        return password_size > 0 ? (char*)raw_data+username_size : NULL;
+    }
+
     event::event():
         type(EVENT_TYPE_NULL),
         client_id(0),
@@ -133,6 +143,25 @@ namespace Control {
     {
         event e = event(type);
         e.engine.engine = engine;
+        return e;
+    }
+
+    event event::create_user_auth_event(uint32_t type, uint32_t client_id, bool is_guest, const char* username, const char* password)
+    {
+        event e = event(type, client_id);
+        e.user_auth.is_guest = is_guest;
+        e.user_auth.username_size = username ? strlen(username) + 1 : 0;
+        e.user_auth.password_size = password ? strlen(password) + 1 : 0;
+        if ((e.user_auth.username_size + e.user_auth.password_size) > 0) {
+            e.raw_length = e.user_auth.username_size + e.user_auth.password_size;
+            e.raw_data = malloc(e.raw_length);
+        }
+        if (username != NULL) {
+            strcpy((char*)e.raw_data, username);
+        }
+        if (password != NULL) {
+            strcpy((char*)e.raw_data+e.user_auth.username_size, password);
+        }
         return e;
     }
 
