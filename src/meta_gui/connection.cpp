@@ -118,9 +118,15 @@ namespace MetaGui {
                 }
             } break;
         }
+        if (Control::main_client->network_send_queue) {
+            ImGui::SameLine();
+            if (ImGui::SmallButton("PING")) {
+                Control::main_client->network_send_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
+            }
+        }
 
         if (conn_info.server_cert_thumbprint) {
-            //TODO show only first n bytes, then on hover show everything in a matrix
+            // show only first n bytes, then on click show everything in a matrix
             ImGui::Text("Thumbprint: ");
             ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, -1)); //TODO can we just skip proper vertical spacing here?
             const int show_bytes = 8;
@@ -167,7 +173,6 @@ namespace MetaGui {
         ImGui::Separator();
 
         if (conn_info.connection == RUNNING_STATE_ONGOING && conn_info.verifail_reason != NULL) {
-            //TODO after a connection was established, if verification failed show info + accept
             //TODO any way to make the border bigger? and maybe give the whole box a lighter background tone?
             ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, IM_COL32(226, 74, 117, 255));
             ImGui::BeginTable("sidebar_table", 1, ImGuiTableFlags_BordersV);
@@ -190,7 +195,7 @@ namespace MetaGui {
             ImGui::PopStyleColor();
         }
 
-        if (true && conn_info.connection == RUNNING_STATE_DONE) { //REWORK put in when auth gets here
+        if (conn_info.connection == RUNNING_STATE_DONE) { //REWORK put in when auth gets here
             bool disable_authentication = conn_info.authentication > RUNNING_STATE_NONE;
             if (disable_authentication) {
                 ImGui::BeginDisabled();
@@ -211,12 +216,13 @@ namespace MetaGui {
             }
             switch (conn_info.authentication) {
                 case RUNNING_STATE_NONE: {
-                    //TODO swap button
-                    if (ImGui::Button("Guest")) {
+                    float btn_width = ImGui::CalcItemWidth();
+                    if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
                         //TODO
                     }
                     ImGui::SameLine();
-                    if (ImGui::Button("Login", ImVec2(-1.0f, 0.0f))) {
+                    btn_width = ImGui::GetContentRegionAvail().x;
+                    if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
                         //TODO
                     }
                 } break;
@@ -232,12 +238,6 @@ namespace MetaGui {
                 } break;
             }
         }
-
-        //REWORK
-        if (Control::main_client->network_send_queue && ImGui::Button("PING")) {
-            Control::main_client->network_send_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
-        }
-        //REWORK
 
         ImGui::End();
     }

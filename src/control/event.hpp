@@ -47,6 +47,7 @@ namespace Control {
         // networking events: protocol events; work with adapter<->adapter, they should not reach the main queue, and ignored if they do
         EVENT_TYPE_NETWORK_PROTOCOL_OK,
         EVENT_TYPE_NETWORK_PROTOCOL_NOK,
+        EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT,
         EVENT_TYPE_NETWORK_PROTOCOL_PING,
         EVENT_TYPE_NETWORK_PROTOCOL_PONG,
         EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET,

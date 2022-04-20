@@ -54,11 +54,8 @@ namespace Network {
 
     void NetworkClient::close()
     {
+        send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT)); // notify server we're disconnecting
         send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
-        // stop recv_runner
-        SDLNet_TCP_DelSocket(socketset, conn.socket);
-        SDLNet_TCP_Close(conn.socket);
-        conn.socket = NULL;
         // everything closed, join dead runners
         send_runner.join(); // send_runner joins recv_runner for us
         util_ssl_session_free(&conn);
@@ -115,6 +112,10 @@ namespace Network {
                     MetaGui::log(log_id, "#W received impossible null event\n");
                 } break;
                 case Control::EVENT_TYPE_EXIT: {
+                    // stop recv_runner, if it isnt already
+                    SDLNet_TCP_DelSocket(socketset, conn.socket);
+                    SDLNet_TCP_Close(conn.socket);
+                    conn.socket = NULL;
                     quit = true;
                     break;
                 } break;
@@ -126,6 +127,11 @@ namespace Network {
                     recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT));
                 } break;
                 default: {
+                    if (conn.socket == NULL) {
+                        // this should never happen, send runner is the only one who unsets the socket
+                        MetaGui::log(log_id, "#W dropped outgoing event on NULL socket\n");
+                        break;
+                    }
                     if (conn.state != PROTOCOL_CONNECTION_STATE_ACCEPTED) {
                         switch (conn.state) {
                             case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
@@ -137,6 +143,7 @@ namespace Network {
                             } break;
                             default:
                             case PROTOCOL_CONNECTION_STATE_WARNHELD: {
+                                //TODO in theory we should still send protocol_disconnect events even while warnheld
                                 MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on unaccepted connection dropped\n", e.type);
                             } break;
                         }
@@ -223,10 +230,8 @@ namespace Network {
             }
             int recv_len = SDLNet_TCP_Recv(conn.socket, data_buffer_base, buffer_size);
             if (recv_len <= 0) {
-                // connection closed
-                SDLNet_TCP_DelSocket(socketset, conn.socket);
-                SDLNet_TCP_Close(conn.socket);
-                conn.socket = NULL;
+                // connection closed, notify send loop as well, don't unset the socket here or else some sending events might fail
+                send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
                 switch (conn.state) {
                     case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
                         // pass, everything fine
@@ -477,12 +482,16 @@ namespace Network {
                 // switch on type
                 switch (recv_event.type) {
                     case Control::EVENT_TYPE_NULL: break; // drop null events
+                    case Control::EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT: {
+                        //REWORK need more?
+                        conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
+                    } break;
                     case Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
                         conn.client_id = recv_event.client_id;
                         MetaGui::logf(log_id, "#I re-assigned client id %d\n", conn.client_id);
                     } break;
                     case Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG: {
-                        MetaGui::log(log_id, "received pong\n");
+                        MetaGui::log(log_id, "#I received pong\n");
                     } break;
                     default: {
                         // general purpose events get pushed to the recv queue

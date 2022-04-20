@@ -70,11 +70,7 @@ Collect more general resources:
   * could send an event to the send queue to make it deconstruct and release a closed connection
 
 ## todo
-* add connection state display + handling to connections window
-  * use adapter events to send out info from the network adapter to the recv queue?
-  * recv queue owner should not set the network_send_queue just because t_network exists, everything that sends should just check for a valid send queue
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
-* rework network protocol for intentional disconnect
 * rework network protocol for single lobby server with password
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * move event (across the network) should use strings for universal compatiblity
@@ -98,7 +94,6 @@ Collect more general resources:
   * https://gist.github.com/armornick/3447121
   * https://metacpan.org/pod/SDL2::audio
   * https://github.com/jakebesworth/Simple-SDL2-Audio
-* network recv event processing loop could just use an ssl read every iteration, b/c every read only gives bytes from ONE write, i.e. one event
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 * place stb in deps? also genrally decide if we'd rather link everything static or dynamically?

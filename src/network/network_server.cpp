@@ -314,12 +314,14 @@ namespace Network {
                             printf("[WARN] client id %d connection closed while initializing\n", ready_client->client_id);
                         } break;
                         case PROTOCOL_CONNECTION_STATE_WARNHELD:
-                        case PROTOCOL_CONNECTION_STATE_ACCEPTED: {
-                            // closed unexpectedly
-                            printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
-                        } /* fallthrough */
+                        case PROTOCOL_CONNECTION_STATE_ACCEPTED: // both closed unexpectedly
                         case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
                             // pass, everything fine
+                            if (ready_client->state == PROTOCOL_CONNECTION_STATE_PRECLOSE) {
+                                printf("[INFO] client id %d connection closed\n", ready_client->client_id);
+                            } else {
+                                printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
+                            }
                             recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, ready_client->client_id));
                         } break;
                     }
@@ -428,6 +430,10 @@ namespace Network {
                     // switch on type
                     switch (recv_event.type) {
                         case Control::EVENT_TYPE_NULL: break; // drop null events
+                        case Control::EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT: {
+                            //REWORK need more?
+                            ready_client->state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
+                        } break;
                         case Control::EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                             printf("[INFO] ping from client sending pong\n");
                             send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
