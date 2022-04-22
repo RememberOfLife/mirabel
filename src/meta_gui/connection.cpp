@@ -149,6 +149,9 @@ namespace MetaGui {
             }
             if (ImGui::BeginPopup("full_thumbprint"))
             {
+                if (ImGui::SmallButton("Close")) {
+                    ImGui::CloseCurrentPopup();
+                }
                 const int show_bytes_x = 8;
                 int show_bytes_y = Network::SHA256_LEN / show_bytes_x;
                 int show_bytes_x_overflow = Network::SHA256_LEN - (show_bytes_x*show_bytes_y);
@@ -159,11 +162,11 @@ namespace MetaGui {
                     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, -1)); //TODO can we just skip proper vertical spacing here?
                     int show_bytes_x_cur = (i == show_bytes_y - 1 && show_bytes_x_overflow > 0 ? show_bytes_x_overflow : show_bytes_x);
                     for (int j = 0; j < show_bytes_x_cur; j++) {
-                        ImGui::SameLine();
                         ImGui::Text("%02x", *(conn_info.server_cert_thumbprint+i*show_bytes_x+j));
+                        ImGui::SameLine();
                         if (j < show_bytes_x_cur - 1) {
-                            ImGui::SameLine();
                             ImGui::TextUnformatted(":");
+                            ImGui::SameLine();
                         }
                     }
                     ImGui::PopStyleVar();

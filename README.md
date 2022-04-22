@@ -71,6 +71,8 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
+  * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * move event (across the network) should use strings for universal compatiblity
@@ -80,9 +82,9 @@ Collect more general resources:
   * append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
 * use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
   * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
+  * !!! streamline pointer stuffed event (specific) structs across network and creation etc..
 * network client should try reconnecting itself on lost connection, cache access params for that
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
-* make event queue a proper producer-consumer semaphore
 * better ai integration
   * engine wrapper could read from the engines outgoing queue
 * add fullscreen toggle to main menu bar

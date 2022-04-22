@@ -375,6 +375,8 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
                         //TODO we have been disconnected?
+                        network_send_queue = NULL;
+                        MetaGui::chat_clear();
                     } break;
                     case EVENT_TYPE_USER_AUTHINFO: {
                         // we got the auth info from the server, set it up for display in the metagui conn info, also advance state
@@ -403,6 +405,7 @@ namespace Control {
                             e.raw_length = 0;
                         }
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
+                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED);
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);

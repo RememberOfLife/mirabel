@@ -359,6 +359,8 @@ namespace Network {
                     // no verification necessary on server side
                     ready_client->state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
                     printf("[INFO] client %d connection accepted\n", ready_client->client_id);
+                    //REWORK this never reaches the client at the right point in time, it is sent before the adapter is installed
+                    // somehow make sure we only USE the client when has authenticated, i.e. installed its adapter
                     recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, ready_client->client_id)); // inform server that client is connected and ready to use
                 }
 

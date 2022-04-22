@@ -27,7 +27,7 @@ namespace Network {
             TCPsocket server_socket = NULL;
             SDLNet_SocketSet server_socketset = NULL;
             // connected client sockets
-            uint32_t client_connection_bucket_size = 2; // must be <= UINT32_MAX-2 //TODO set higher for proper use
+            uint32_t client_connection_bucket_size = 256; // must be <= UINT32_MAX-2 //TODO set higher for proper use
             connection* client_connections = NULL;
             SDLNet_SocketSet client_socketset = NULL;
 

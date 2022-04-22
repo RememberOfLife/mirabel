@@ -4,6 +4,7 @@
 
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
+#include "surena/util/fast_prng.hpp"
 #include "surena/game.hpp"
 
 #include "control/event.hpp"
@@ -12,8 +13,6 @@
 #include "control/server.hpp"
 
 namespace Control {
-
-    //TODO all networking code here will eventually move to the networking adapter
 
     Server::Server()
     {
@@ -105,19 +104,42 @@ namespace Control {
                 } break;
                 case EVENT_TYPE_USER_AUTHINFO: {
                     // client wants to have the authinfo, serve it
-                    event e_auth_info = event::create_user_auth_event(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL);
-                    network_send_queue->push(e_auth_info);
+                    network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL));
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
                     // client wants to auth with given credentials, send back authn or authfail
-                    //TODO we only accept named guests for now
+                    //TODO save guest names and check for dupes
                     if (!e.user_auth.is_guest) {
                         network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "user logins not accepted", NULL));
                         break;
                     }
-                    if (e.user_auth.username(e.raw_data) == NULL || strlen(e.user_auth.username(e.raw_data)) < 4) {
-                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "guest name < 4 characters", NULL));
+                    if (e.user_auth.username(e.raw_data) == NULL) {
+                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name NULL", NULL));
                         break;
+                    }
+                    // validate that username uses only allowed characters
+                    for (int i = 0; i < e.user_auth.username_size; i++) {
+                        if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", *(char*)e.user_auth.username(e.raw_data)+i)) {
+                            network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name contains illegal characters", NULL));
+                            break;
+                        }
+                    }
+                    if (e.user_auth.username_size > 1 && e.user_auth.username_size <= 3) { // <= to account for zero terminator
+                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name < 3 characters", NULL));
+                        break;
+                    }
+                    if (e.user_auth.username_size <= 1) {
+                        free(e.raw_data);
+                        static fast_prng rng(123);
+                        const int assigned_length = 5;
+                        e.raw_length = 6+assigned_length;
+                        e.raw_data = malloc(6+assigned_length);
+                        e.user_auth.username_size = e.raw_length;
+                        char* str_p = (char*)e.raw_data;
+                        str_p += sprintf(str_p, "Guest");
+                        for (int i = 0; i < assigned_length; i++) {
+                            str_p += sprintf(str_p, "%d", rng.rand()%10);
+                        }
                     }
                     network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHN, e.client_id, true, e.user_auth.username(e.raw_data), NULL));
                 } break;

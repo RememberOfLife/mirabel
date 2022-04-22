@@ -10,3 +10,4 @@
 [submodule "lib/surena"]
 	path = lib/surena
 	url = https://github.com/RememberOfLife/surena
+    ignore = dirty
