@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.18)
+set (CMAKE_C_STANDARD 11)
 set (CMAKE_CXX_STANDARD 11)
 
 project(mirabel C CXX)
@@ -117,7 +118,11 @@ target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
 target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 target_link_libraries(mirabel nanovg)
 
-# target_compile_options(mirabel PRIVATE "-Wall") # do after nanovg so we dont reenable warnings there
+target_compile_options(mirabel PRIVATE
+    #"-Wall" # do after nanovg so we dont reenable warnings there
+    "-Werror" # warnings as errors
+    "-Wfatal-errors" # stop after first error
+)
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 

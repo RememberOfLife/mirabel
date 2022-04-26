@@ -1,11 +1,14 @@
 #pragma once
 
+#include <cassert>
 #include <cstdint>
 
 #include "SDL_net.h"
 
 #include "surena/engine.hpp"
 #include "surena/game.hpp"
+
+#include "control/event_base.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
 
@@ -58,6 +61,12 @@ namespace Control {
         // lobby events: deal with client/server communication
         EVENT_TYPE_LOBBY_CHAT_MSG, // contains msgId(for removal),client_id(who sent the message),timestamp,text
         EVENT_TYPE_LOBBY_CHAT_DEL,
+
+        EVENT_TYPE_TEST_NONE,
+        EVENT_TYPE_TEST_PLAIN,
+        EVENT_TYPE_TEST_STRING,
+
+        EVENT_TYPE_COUNT,
     };
 
     struct heartbeat_event {
@@ -94,7 +103,7 @@ namespace Control {
     // #pragma pack(1)
     // typedef struct {
     //     data goes here...
-    // } __atribute__((aligned(4))) event_netdata;
+    // } __attribute__((aligned(4))) event_netdata;
     // then use:
     // struct event : public event_netdata { ... }
 
@@ -134,5 +143,160 @@ namespace Control {
         static event create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text);
         static event create_chat_del_event(uint32_t type, uint32_t msg_id);
     };
+
+
+
+
+    struct f_event {
+        
+        EVENT_TYPE type;
+        uint32_t client_id;
+        uint32_t lobby_id;
+
+        //TODO pointer to serializer
+
+        f_event()
+        {
+            type = EVENT_TYPE_NULL;
+        }
+        f_event(EVENT_TYPE _type)
+        {
+            type = _type;
+        }
+
+        // event();
+        // event(uint32_t type);
+        // event(uint32_t type, uint32_t client_id);
+        // //TODO zero(); to set type to zero and set serializer
+        // event(const event& other); // copy construct
+        // event(event&& other); // move construct
+        // event& operator=(const event& other); // copy assign
+        // event& operator=(event&& other); // move assign
+        // ~event();
+
+        typedef event_plain_serializer<f_event> serializer;
+
+        //TODO put serialize here
+
+    };
+
+    struct f_event_test_plain : public f_event {
+        uint32_t myown;
+        f_event_test_plain(EVENT_TYPE _type, uint32_t _myown):
+            f_event(_type),
+            myown(_myown)
+        {}
+        typedef event_plain_serializer<f_event_test_plain> serializer;
+        //FIXME do we need this here?
+        //TODO currently *can* be skipped, but then the serialized size shows up wrong (i.e. missing our 4 bytes)
+    };
+
+    struct f_event_test_string : public f_event {
+        uint32_t myother;
+        char* mystring;
+        char* mystring2;
+        typedef event_string_serializer<f_event_test_string, 
+            &f_event_test_string::mystring,
+            &f_event_test_string::mystring2
+        > serializer;
+    };
+
+    template<EVENT_TYPE TYPE, class EVENT>
+    struct event_serializer_pair {
+        static constexpr EVENT_TYPE event_type = TYPE;
+        typedef EVENT event_t;
+    };
+    //TODO put all these things (excl. catalgue) into seperrate header
+    template<class ...EVENTS>
+    struct event_catalogue {
+        // static_assert(sizeof...(EVENTS) == EVENT_TYPE_COUNT, "event catalogue count mismatch"); //TODO put this in again
+        template<class X, class FIRST, class ...REST>
+        static constexpr size_t event_max_size_impl()
+        {
+            return (sizeof(typename FIRST::event_t) > event_max_size_impl<X, REST...>())
+                ? sizeof(typename FIRST::event_t) : event_max_size_impl<X, REST...>();
+        }
+        template<class X>
+        static constexpr size_t event_max_size_impl()
+        {
+            return 0;
+        }
+        static constexpr size_t event_max_size()
+        {
+            return event_max_size_impl<void, EVENTS...>();
+        }
+        template<class X, class FIRST, class ...REST>
+        static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
+        {
+            if (FIRST::event_type == type) {
+                return FIRST::event_t::serializer::instance();
+            }
+            return get_event_serializer_impl<X, REST...>(type);
+        }
+        template<class X>
+        static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
+        {
+            assert(0 && "not a valid type");
+        }
+        static event_serializer* get_event_serializer(EVENT_TYPE type)
+        {
+            return get_event_serializer_impl<void, EVENTS...>(type);
+        }
+    };
+    typedef event_catalogue<
+        event_serializer_pair<EVENT_TYPE_TEST_NONE, f_event>,
+        event_serializer_pair<EVENT_TYPE_TEST_PLAIN, f_event_test_plain>,
+        event_serializer_pair<EVENT_TYPE_TEST_STRING, f_event_test_string>
+    > EVENT_CATALGOUE;
+
+    // f_any_event is as large as the largest event
+    // use for arbitrary events, event arrays and deserialization where type and size are unknown
+    struct f_any_event : public f_event {
+        private:
+            char _padding[EVENT_CATALGOUE::event_max_size() - sizeof(f_event)];
+        public:
+            f_any_event()
+            {}
+            template<class EVENT>
+            f_any_event(EVENT e)
+            {
+                memcpy(this, &e, sizeof(e));
+            }
+            template<class EVENT>
+            void operator=(EVENT e)
+            {
+                memcpy(this, &e, sizeof(e));
+            }
+            template<class EVENT>
+            EVENT& cast()
+            {
+                return *(EVENT*)this;
+            }
+            //TODO deserialize here
+    };
+
+    //TODO get event serializer wrapper
+
+    template<class EVENT>
+    EVENT& event_cast(f_event& e)
+    {
+        return *(EVENT*)&e;
+    }
+
+    static size_t event_size(f_event* e)
+    {
+        return EVENT_CATALGOUE::get_event_serializer(e->type)->size(e);
+    }
+
+    static void event_serialize(f_event* e, void* buf)
+    {
+        EVENT_CATALGOUE::get_event_serializer(e->type)->serialize(e, &buf);
+    }
+
+    static void event_deserialize(f_any_event* e, void* buf, void* buf_end)
+    {
+        EVENT_TYPE et = *(EVENT_TYPE*)((char*)buf + sizeof(size_t));
+        EVENT_CATALGOUE::get_event_serializer(et)->deserialize(e, &buf, buf_end);
+    }
 
 }
