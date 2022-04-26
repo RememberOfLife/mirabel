@@ -53,7 +53,7 @@ void sandbox()
     } else {
         es.mystring = NULL;
     }
-    const char* thestr2 = NULL;//"shortstr";
+    const char* thestr2 = "shortstr";
     if (thestr2) {
         es.mystring2 = (char*)malloc(strlen(thestr2)+1);
         strcpy(es.mystring2, thestr2);
@@ -85,6 +85,16 @@ void sandbox()
     printf("u32 W: %d\n    R: %d\n", es.myother, es2.myother);
     printf("str W: \"%s\"\n    R: \"%s\"\n", es.mystring, es2.mystring);
     printf("str W: \"%s\"\n    R: \"%s\"\n", es.mystring2, es2.mystring2);
+
+    f_event_test_string es3;
+    event_copy(&es3, &es2);
+    printf("copied: %p %p\n", es2.mystring2, es3.mystring2);
+
+    // destroy events
+    event_destroy(&ep);
+    event_destroy(&es);
+    event_destroy(&es2);
+    event_destroy(&es3);
 
     exit(0);
 }

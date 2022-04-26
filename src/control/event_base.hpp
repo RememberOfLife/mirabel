@@ -14,11 +14,12 @@ namespace Control {
     struct f_event; // forward declare from event.hpp
 
     struct event_serializer {
+        static const bool is_plain = false;
         virtual size_t size(f_event* e) = 0;
         virtual void serialize(f_event* e, void** buf) = 0;
         virtual int deserialize(f_event* e, void** buf, void* buf_end) = 0;
-        //TODO copy
-        //TODO delete / free
+        virtual void copy(f_event* to, f_event* from) = 0;
+        virtual void destroy(f_event* e) = 0;
     };
 
     template<class EVENT, class ...EVENT_SERIALIZERS>
@@ -127,10 +128,41 @@ namespace Control {
             return deserialize_impl<void, EVENT_SERIALIZERS...>((EVENT*)e, buf, buf_end);
         }
 
+        template<class X, class FIRST, class ...REST>
+        static void copy_impl(EVENT* to, EVENT* from)
+        {
+            FIRST::static_copy(to, from);
+            copy_impl<X, REST...>(to, from);
+        }
+        template<class X>
+        static void copy_impl(EVENT* to, EVENT* from)
+        {}
+        void copy(f_event* to, f_event* from) override
+        {
+            memcpy(to, from, plain_size(from) - sizeof(size_t));
+            copy_impl<void, EVENT_SERIALIZERS...>((EVENT*)to, (EVENT*)from);
+        }
+
+        template<class X, class FIRST, class ...REST>
+        static void destroy_impl(EVENT* e)
+        {
+            FIRST::static_destroy(e);
+            destroy_impl<X, REST...>(e);
+        }
+        template<class X>
+        static void destroy_impl(EVENT* e)
+        {}
+        void destroy(f_event* e) override
+        {
+            destroy_impl<void, EVENT_SERIALIZERS...>((EVENT*)e);
+        }
+
     };
 
     template<class EVENT>
-    struct event_plain_serializer : public event_serializer_compositor<EVENT> {};
+    struct event_plain_serializer : public event_serializer_compositor<EVENT> {
+        static const bool is_plain = true;
+    };
 
     template<class EVENT, char* EVENT::*...STRINGS>
     struct event_string_serializer_impl : public event_serializer {
@@ -177,7 +209,7 @@ namespace Control {
         }
         size_t size(f_event* e) override
         {
-            return size_impl<void, STRINGS...>((EVENT*)e, 0);
+            return static_size(e);
         }
 
         template<class X, char* EVENT::*FIRST, char* EVENT::*...REST>
@@ -200,7 +232,6 @@ namespace Control {
                 memcpy((char*)*buf, e->*FIRST, str_len);
             }
             *buf = (char*)*buf + str_len;
-            // e->*FIRST = NULL; // this sets the string pointers of the event we're serializing to NULL
             serialize_impl<EVENT, REST...>(e, buf);
         }
         template<class X>
@@ -212,7 +243,7 @@ namespace Control {
         }
         void serialize(f_event* e, void** buf) override
         {
-            serialize_impl<void, STRINGS...>((EVENT*)e, buf);
+            static_serialize(e, buf);
         }
         
         template<class X, char* EVENT::*FIRST, char* EVENT::*...REST>
@@ -248,7 +279,51 @@ namespace Control {
         }
         int deserialize(f_event* e, void** buf, void* buf_end) override
         {
-            return deserialize_impl<void, STRINGS...>((EVENT*)e, buf, buf_end);
+            return static_deserialize(e, buf, buf_end);
+        }
+
+        template<class X, char* EVENT::*FIRST, char* EVENT::*...REST>
+        static void copy_impl(EVENT* to, EVENT* from)
+        {
+            if (from->*FIRST) {
+                //BUG ? we do not free whatever already was inside the target event before pasting our copy over it
+                size_t str_len = strlen(from->*FIRST) + 1;
+                to->*FIRST = (char*)malloc(str_len);
+                memcpy(to->*FIRST, from->*FIRST, str_len);
+            } else {
+                to->*FIRST = NULL;
+            }
+            copy_impl<X, REST...>(to, from);
+        }
+        template<class X>
+        static void copy_impl(EVENT* to, EVENT* from)
+        {}
+        static void static_copy(f_event* to, f_event* from)
+        {
+            copy_impl<void, STRINGS...>((EVENT*)to, (EVENT*)from);
+        }
+        void copy(f_event* to, f_event* from) override
+        {
+            static_copy(to, from);
+        }
+
+        template<class X, char* EVENT::*FIRST, char* EVENT::*...REST>
+        static void destroy_impl(EVENT* e)
+        {
+            free(e->*FIRST);
+            e->*FIRST = NULL;
+            destroy_impl<X, REST...>(e);
+        }
+        template<class X>
+        static void destroy_impl(EVENT* e)
+        {}
+        static void static_destroy(f_event* e)
+        {
+            destroy_impl<void, STRINGS...>((EVENT*)e);
+        }
+        void destroy(f_event* e) override
+        {
+            static_destroy(e);
         }
 
     };

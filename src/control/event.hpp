@@ -9,7 +9,6 @@
 #include "surena/game.hpp"
 
 #include "control/event_base.hpp"
-
 #include "frontends/frontend_catalogue.hpp"
 
 namespace Control {
@@ -146,14 +145,11 @@ namespace Control {
 
 
 
-
     struct f_event {
         
         EVENT_TYPE type;
         uint32_t client_id;
         uint32_t lobby_id;
-
-        //TODO pointer to serializer
 
         f_event()
         {
@@ -174,9 +170,10 @@ namespace Control {
         // event& operator=(event&& other); // move assign
         // ~event();
 
-        typedef event_plain_serializer<f_event> serializer;
+        //TODO put (de)serialize here
 
-        //TODO put serialize here
+        //WARNING don't use this directly, it will probably be the wrong one, use event_catalogue::get_event_serializer instead
+        typedef event_plain_serializer<f_event> serializer;
 
     };
 
@@ -186,9 +183,6 @@ namespace Control {
             f_event(_type),
             myown(_myown)
         {}
-        typedef event_plain_serializer<f_event_test_plain> serializer;
-        //FIXME do we need this here?
-        //TODO currently *can* be skipped, but then the serialized size shows up wrong (i.e. missing our 4 bytes)
     };
 
     struct f_event_test_string : public f_event {
@@ -209,7 +203,9 @@ namespace Control {
     //TODO put all these things (excl. catalgue) into seperrate header
     template<class ...EVENTS>
     struct event_catalogue {
+
         // static_assert(sizeof...(EVENTS) == EVENT_TYPE_COUNT, "event catalogue count mismatch"); //TODO put this in again
+
         template<class X, class FIRST, class ...REST>
         static constexpr size_t event_max_size_impl()
         {
@@ -225,10 +221,14 @@ namespace Control {
         {
             return event_max_size_impl<void, EVENTS...>();
         }
+
         template<class X, class FIRST, class ...REST>
         static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
         {
             if (FIRST::event_type == type) {
+                if (FIRST::event_t::serializer::is_plain) {
+                    return event_plain_serializer<typename FIRST::event_t>::instance();
+                }
                 return FIRST::event_t::serializer::instance();
             }
             return get_event_serializer_impl<X, REST...>(type);
@@ -242,6 +242,7 @@ namespace Control {
         {
             return get_event_serializer_impl<void, EVENTS...>(type);
         }
+
     };
     typedef event_catalogue<
         event_serializer_pair<EVENT_TYPE_TEST_NONE, f_event>,
@@ -278,7 +279,7 @@ namespace Control {
     //TODO get event serializer wrapper
 
     template<class EVENT>
-    EVENT& event_cast(f_event& e)
+    static EVENT& event_cast(f_event& e)
     {
         return *(EVENT*)&e;
     }
@@ -297,6 +298,16 @@ namespace Control {
     {
         EVENT_TYPE et = *(EVENT_TYPE*)((char*)buf + sizeof(size_t));
         EVENT_CATALGOUE::get_event_serializer(et)->deserialize(e, &buf, buf_end);
+    }
+
+    static void event_copy(f_event* to, f_event* from)
+    {
+        EVENT_CATALGOUE::get_event_serializer(from->type)->copy(to, from);
+    }
+    
+    static void event_destroy(f_event* e)
+    {
+        EVENT_CATALGOUE::get_event_serializer(e->type)->destroy(e);
     }
 
 }

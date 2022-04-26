@@ -132,6 +132,7 @@ Collect more general resources:
 * create icon, show it on the empty (default) frontend
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components
+* ability to play a plugin game without the server loading it, by just forwarding everything to the trusted host player
 
 ## problems
 * change how the frontends receive the nanovg context, they need it in the constructor already
