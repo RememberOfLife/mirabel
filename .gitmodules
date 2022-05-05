@@ -7,6 +7,9 @@
 [submodule "lib/SDL_net"]
 	path = lib/SDL_net
 	url = https://github.com/libsdl-org/SDL_net
+[submodule "lib/stb"]
+	path = lib/stb
+	url = https://github.com/nothings/stb
 [submodule "lib/surena"]
 	path = lib/surena
 	url = https://github.com/RememberOfLife/surena

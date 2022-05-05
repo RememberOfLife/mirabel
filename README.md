@@ -71,6 +71,10 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* add option to use different imgui font
+* integrate new surena game capi
+* finalize event rework by using it everywhere
+* super basic plugin manager
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
   * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
@@ -101,6 +105,8 @@ Collect more general resources:
 * place stb in deps? also genrally decide if we'd rather link everything static or dynamically?
 
 ## ideas
+* lobbies for hidden info / random move games could provide functionality to make their outcomes and playout provably fair
+  * https://crypto.stackexchange.com/questions/99927/provably-fair-card-deck-used-by-client-and-server
 * maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
 * ??? is the offline server even required? events are mirrored and the client holds all state for itself aswell anyway
 * server supports a single lobby mode, this could also act as the offline server

@@ -237,6 +237,7 @@ namespace Control {
         static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
         {
             assert(0 && "not a valid type");
+            return NULL;
         }
         static event_serializer* get_event_serializer(EVENT_TYPE type)
         {

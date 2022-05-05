@@ -26,6 +26,10 @@ find_package(SDL2 REQUIRED)
 
 find_package(OpenSSL REQUIRED)
 
+set(INCLUDES_NANOVG
+    lib
+)
+
 set(SOURCES_NANOVG
     lib/nanovg/src/nanovg_gl.c
     lib/nanovg/src/nanovg.c
@@ -114,6 +118,7 @@ set(SOURCES
 add_executable(mirabel ${SOURCES})
 
 add_library(nanovg ${SOURCES_NANOVG})
+target_include_directories(nanovg PRIVATE ${INCLUDES_NANOVG})
 target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
 target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 target_link_libraries(mirabel nanovg)
