@@ -7,9 +7,8 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/games/chess.hpp"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/games/chess.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -27,26 +26,26 @@ namespace Frontends {
     }
 
     Chess::Chess():
-        game(NULL),
-        engine(NULL)
+        the_game(NULL),
+        the_game_int(NULL)
     {
         dc = Control::main_client->nanovg_ctx;
         // load sprites from res folder
         for (int i = 0; i < 12; i++) {
             sprites[i] = -1;
         }
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pwk.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pwq.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pwr.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pwb.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pwn.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_WHITE*6-6+surena::Chess::PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pwp.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pbk.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pbq.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pbr.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pbb.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pbn.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        sprites[surena::Chess::PLAYER_BLACK*6-6+surena::Chess::PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pbp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pwk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pwq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pwr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pwb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pwn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pwp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_KING-1] = nvgCreateImage(dc, "../res/games/chess/pbk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_QUEEN-1] = nvgCreateImage(dc, "../res/games/chess/pbq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_ROOK-1] = nvgCreateImage(dc, "../res/games/chess/pbr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_BISHOP-1] = nvgCreateImage(dc, "../res/games/chess/pbb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_KNIGHT-1] = nvgCreateImage(dc, "../res/games/chess/pbn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_PAWN-1] = nvgCreateImage(dc, "../res/games/chess/pbp.png", NVG_IMAGE_GENERATE_MIPMAPS);
         for (int i = 0; i < 12; i++) {
             if (sprites[i] < 0) {
                 MetaGui::logf("#E chess: sprite loading failure #%d\n", i);
@@ -72,20 +71,19 @@ namespace Frontends {
         }
     }
 
-    void Chess::set_game(surena::Game* new_game)
+    void Chess::set_game(game* new_game)
     {
-        game = dynamic_cast<surena::Chess*>(new_game);
-    }
-
-    void Chess::set_engine(surena::Engine* new_engine)
-    {
-        engine = new_engine;
+        the_game = new_game;
+        the_game_int = the_game ? (chess_internal_methods*)the_game->methods->internal_methods : NULL;
     }
 
     void Chess::process_event(SDL_Event event)
     {
-        if (!game || game->player_to_move() == 0) {
-            // if no game, or game is done, don't process anything
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         switch (event.type) {
@@ -106,19 +104,21 @@ namespace Frontends {
                         for (int x = 0; x < 8; x++) {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONDOWN) { // on down event, pickup piece that is hovered, if any
+                                CHESS_piece sp;
+                                the_game_int->get_cell(the_game, x, y, &sp);
                                 if (passive_pin && board_buttons[y][x].hovered) {
                                     //TODO when placing a piece back onto itself to reset it, this will try to make that move
                                     // if a pinned piece is set, instead MOVE it to the mousedown location
                                     uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
-                                    std::vector<uint64_t> legal_moves = game->get_moves();
-                                    for (int i = 0; i < legal_moves.size(); i++) {
-                                        if (legal_moves[i] == target_move) {
+                                    the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
+                                    for (int i = 0; i < move_cnt; i++) {
+                                        if (moves[i] == target_move) {
                                             Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, target_move));
                                             break;
                                         }
                                     }
                                     // do not set new pickup here, so that the pin gets cleared automatically
-                                } else if (board_buttons[y][x].hovered && game->get_cell(x, y).type != surena::Chess::PIECE_TYPE_NONE && game->get_cell(x, y).player == game->player_to_move()) {
+                                } else if (board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == pbuf) {
                                     // new pickup
                                     new_pickup = true;
                                     mouse_pindx_x = x;
@@ -135,9 +135,9 @@ namespace Frontends {
                                         // dropped onto another square
                                         //TODO this code is getting hideous
                                         uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
-                                        std::vector<uint64_t> legal_moves = game->get_moves();
-                                        for (int i = 0; i < legal_moves.size(); i++) {
-                                            if (legal_moves[i] == target_move) {
+                                        the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
+                                        for (int i = 0; i < move_cnt; i++) {
+                                            if (moves[i] == target_move) {
                                                 Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, target_move));
                                                 break;
                                             }
@@ -164,7 +164,11 @@ namespace Frontends {
 
     void Chess::update()
     {
-        if (!game || game->player_to_move() == 0) {
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         // set button hovered
@@ -182,8 +186,8 @@ namespace Frontends {
         }
         //TODO should really cache these instead of loading them new every frame
         move_map.clear();
-        std::vector<uint64_t> moves = game->get_moves();
-        for (int i = 0; i < moves.size(); i++) {
+        the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
+        for (int i = 0; i < move_cnt; i++) {
             uint8_t m_from = (moves[i] >> 8) & 0xFF;
             if (move_map.find(m_from) == move_map.end()) {
                 move_map.emplace(m_from, std::vector<uint8_t>{});
@@ -206,21 +210,28 @@ namespace Frontends {
         nvgBeginPath(dc);
         nvgStrokeWidth(dc, border_size);
         nvgRect(dc, -border_size, -border_size, 8*square_size+2*border_size, 8*square_size+2*border_size);
-        if (!game) {
+        if (!the_game) {
             nvgStrokeColor(dc, nvgRGB(128, 128, 128));
         } else {
-            uint8_t color_player = (game->player_to_move() == 0 ? game->get_result() : game->player_to_move());
+            CHESS_PLAYER color_player = CHESS_PLAYER_NONE;
+            the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                the_game->methods->get_results(the_game, &pbuf_c, &pbuf);
+            }
+            color_player = (CHESS_PLAYER)pbuf;
             switch (color_player) {
-                case surena::Chess::PLAYER_NONE: {
+                case CHESS_PLAYER_NONE: {
                     nvgStrokeColor(dc, nvgRGB(128, 128, 128));
                 } break;
-                case surena::Chess::PLAYER_WHITE: {
+                case CHESS_PLAYER_WHITE: {
                     nvgStrokeColor(dc, nvgRGB(236, 236, 236));
                 } break;
-                case surena::Chess::PLAYER_BLACK: {
+                case CHESS_PLAYER_BLACK: {
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                 } break;
             }
+            // actually we just want the ptm in there, so reste it back to that
+            the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
         }
         nvgStroke(dc);
         for (int y = 0; y < 8; y++) {
@@ -251,11 +262,12 @@ namespace Frontends {
                     nvgTextAlign(dc, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
                     nvgText(dc, base_x + text_padding, base_y + square_size - text_padding, char_buf, NULL);
                 }
-                if (!game) {
+                if (!the_game) {
                     continue;
                 }
-                surena::Chess::piece piece_in_square = game->get_cell(x, iy);
-                if (piece_in_square.player == surena::Chess::PLAYER_NONE) {
+                CHESS_piece piece_in_square;
+                the_game_int->get_cell(the_game, x, iy, &piece_in_square);
+                if (piece_in_square.player == CHESS_PLAYER_NONE) {
                     continue;
                 }
                 float sprite_alpha = 1;
@@ -285,7 +297,9 @@ namespace Frontends {
                 int iy = (moves[i] & 0x0F);
                 float base_x = ix * square_size;
                 float base_y = (7-iy) * square_size;
-                if (game->get_cell(ix, iy).type == surena::Chess::PIECE_TYPE_NONE) {
+                CHESS_piece sp;
+                the_game_int->get_cell(the_game, ix, iy, &sp);
+                if (sp.type == CHESS_PIECE_TYPE_NONE) {
                     // is a move to empty square
                     nvgBeginPath(dc);
                     nvgCircle(dc, base_x+square_size/2, base_y+square_size/2, square_size*0.15);
@@ -319,7 +333,8 @@ namespace Frontends {
         nvgRestore(dc);
         // render pinned piece
         if (mouse_pindx_x >= 0 && !passive_pin) {
-            surena::Chess::piece pinned_piece = game->get_cell(mouse_pindx_x, mouse_pindx_y);
+            CHESS_piece pinned_piece;
+            the_game_int->get_cell(the_game, mouse_pindx_x, mouse_pindx_y, &pinned_piece);
             nvgBeginPath(dc);
             nvgRect(dc, mx-square_size/2, my-square_size/2, square_size, square_size);
             int sprite_idx = pinned_piece.player*6-6+pinned_piece.type-1;

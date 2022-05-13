@@ -14,7 +14,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event.hpp"
@@ -142,9 +142,8 @@ namespace Control {
             delete t_network;
         }
 
-        delete engine;
         delete frontend;
-        delete game;
+        delete the_game;
 
         //TODO delete loaded font images
 
@@ -202,13 +201,13 @@ namespace Control {
                         tc_info.send_heartbeat();
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
-                        delete game;
                         // reset everything in case we can't find the game later on
-                        game = NULL;
-                        frontend->set_game(game);
-                        if (engine) {
-                            engine->set_gamestate(game);
+                        frontend->set_game(NULL);
+                        if (the_game) {
+                            the_game->methods->destroy(the_game);
+                            free(the_game);
                         }
+                        the_game = NULL;
                         // find game in games catalogue by provided strings
                         //TODO should probably use an ordered map for the catalogue instead of a vector at this point
                         bool game_found = false;
@@ -241,11 +240,8 @@ namespace Control {
                         MetaGui::base_game_idx = base_game_idx;
                         MetaGui::game_variant_idx = game_variant_idx;
                         // actually load the game
-                        game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
-                        frontend->set_game(game);
-                        if (engine) {
-                            engine->set_gamestate(game->clone());
-                        }
+                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                        frontend->set_game(the_game);
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == 0) {
                             network_send_queue->push(e);
@@ -253,41 +249,43 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
                         frontend->set_game(NULL);
-                        if (engine) {
-                            engine->set_gamestate(NULL);
+                        if (the_game) {
+                            the_game->methods->destroy(the_game);
+                            free(the_game);
                         }
-                        delete game;
-                        game = NULL;
+                        the_game = NULL;
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == 0) {
                             network_send_queue->push(e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_IMPORT_STATE: {
-                        if (!game) {
+                        if (!the_game) {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;
                         }
-                        game->import_state(static_cast<char*>(e.raw_data));
-                        if (engine) {
-                            engine->set_gamestate(NULL);
-                        }
+                        the_game->methods->import_state(the_game, static_cast<char*>(e.raw_data));
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == 0) {
                             network_send_queue->push(e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
-                        if (!game) {
+                        if (!the_game) {
                             MetaGui::log("#W attempted move on null game\n");
                             break;
                         }
-                        game->apply_move(e.move.code);
-                        if (engine) {
-                            engine->apply_move(e.move.code);
-                        }
-                        if (game->player_to_move() == 0) {
-                            MetaGui::logf("game done: winner is player %d\n", game->get_result());
+                        player_id pbuf[253];
+                        uint8_t pbuf_cnt = 253;
+                        the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
+                        the_game->methods->make_move(the_game, pbuf[0], e.move.code); //FIXME ptm
+                        the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
+                        if (pbuf_cnt == 0) {
+                            the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
+                            if (pbuf_cnt == 0) {
+                                pbuf[0] = PLAYER_NONE;
+                            }
+                            MetaGui::logf("game done: winner is player %d\n", pbuf[0]);
                         }
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == 0) {
@@ -297,25 +295,13 @@ namespace Control {
                     case EVENT_TYPE_FRONTEND_LOAD: {
                         delete frontend;
                         frontend = e.frontend.frontend;
-                        frontend->set_game(game);
-                        frontend->set_engine(engine);
+                        frontend->set_game(the_game);
                         MetaGui::running_few_idx = MetaGui::selected_few_idx;
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
                         delete frontend;
                         frontend = new Frontends::EmptyFrontend();
                         MetaGui::running_few_idx = 0;
-                    } break;
-                    case EVENT_TYPE_ENGINE_LOAD: {
-                        delete engine;
-                        engine = e.engine.engine;
-                        engine->set_gamestate(game ? game->clone() : NULL);
-                        frontend->set_engine(engine);
-                    } break;
-                    case EVENT_TYPE_ENGINE_UNLOAD: {
-                        frontend->set_engine(NULL);
-                        delete engine;
-                        engine = NULL;
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_MSG: {
                         // get data from msg
@@ -508,7 +494,7 @@ namespace Control {
             }
             // user is trying to quit
             if (try_quit) {
-                if (!game) {
+                if (!the_game) {
                     quit = true;
                     break;
                 } else {

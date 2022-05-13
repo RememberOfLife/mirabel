@@ -4,7 +4,7 @@
 
 #include <SDL2/SDL.h>
 
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
@@ -15,7 +15,7 @@ namespace Control {
 
     Lobby::Lobby(event_queue* send_queue, uint16_t max_users):
         send_queue(send_queue),
-        game(NULL),
+        the_game(NULL),
         base_game(NULL),
         game_variant(NULL),
         max_users(max_users),
@@ -31,7 +31,7 @@ namespace Control {
         free(user_client_ids);
         free(game_variant);
         free(base_game);
-        delete game;
+        delete the_game;
     }
 
     void Lobby::AddUser(uint32_t client_id)
@@ -39,14 +39,15 @@ namespace Control {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == 0) {
                 user_client_ids[i] = client_id;
-                if (game) {
+                if (the_game) {
                     // send sync info to user, load + state import
                     event e_load = event::create_game_event(EVENT_TYPE_GAME_LOAD, base_game, game_variant);
                     e_load.client_id = client_id;
                     send_queue->push(e_load);
-                    uint32_t game_state_buffer_len = game->export_state(NULL);
+                    size_t game_state_buffer_len;
+                    the_game->methods->export_state(the_game, &game_state_buffer_len, NULL);
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
-                    game->export_state(game_state_buffer);
+                    the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
                     send_queue->push(Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, client_id, game_state_buffer_len, game_state_buffer));
                 } else {
                     send_queue->push(Control::event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
@@ -81,9 +82,12 @@ namespace Control {
         switch (e.type) {
             //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
             case EVENT_TYPE_GAME_LOAD: {
-                delete game;
                 // reset everything in case we can't find the game later on
-                game = NULL;
+                if (the_game) {
+                    the_game->methods->destroy(the_game);
+                    free(the_game);
+                }
+                the_game = NULL;
                 // find game in games catalogue by provided strings
                 bool game_found = false;
                 uint32_t base_game_idx = 0;
@@ -111,7 +115,7 @@ namespace Control {
                     printf("[WARN] failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
                     break;
                 }
-                game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
                 // update game name strings
                 free(base_game);
                 free(game_variant);
@@ -124,31 +128,42 @@ namespace Control {
                 SendToAllButOne(e, e.client_id);
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
-                delete game;
-                game = NULL;
+                if (the_game) {
+                    the_game->methods->destroy(the_game);
+                    free(the_game);
+                }
+                the_game = NULL;
                 printf("[INFO] game unloaded\n");
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
             } break;
             case EVENT_TYPE_GAME_IMPORT_STATE: {
-                if (!game) {
+                if (!the_game) {
                     printf("[WARN] attempted state import on null game\n");
                     break;
                 }
-                game->import_state(static_cast<char*>(e.raw_data));
+                the_game->methods->import_state(the_game, static_cast<char*>(e.raw_data));
                 printf("[INFO] game state imported: %s\n", static_cast<char*>(e.raw_data));
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                if (!game) {
+                if (!the_game) {
                     printf("[WARN] attempted move on null game\n");
                     break;
                 }
-                game->apply_move(e.move.code);
+                player_id pbuf[253];
+                uint8_t pbuf_cnt = 253;
+                the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf); //FIXME ptm
+                the_game->methods->make_move(the_game, pbuf[0], e.move.code);
+                the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                 printf("[INFO] game move made\n");
-                if (game->player_to_move() == 0) {
-                    printf("[INFO] game done: winner is player %d\n", game->get_result());
+                if (pbuf_cnt == 0) {
+                    the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
+                    if (pbuf_cnt == 0) {
+                        pbuf[0] = PLAYER_NONE;
+                    }
+                    printf("[INFO] game done: winner is player %d\n", pbuf[0]);
                 }
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);

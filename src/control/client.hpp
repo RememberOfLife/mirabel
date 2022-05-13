@@ -6,7 +6,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/event_queue.hpp"
 #include "control/timeout_crash.hpp"
@@ -33,9 +33,8 @@ namespace Control {
 
             event_queue inbox;
 
-            surena::Game* game = NULL;
+            game* the_game = NULL;
             Frontends::Frontend* frontend = NULL;
-            surena::Engine* engine = NULL;
 
             Client();
             ~Client();

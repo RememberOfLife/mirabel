@@ -2,8 +2,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "frontends/frontend_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -136,13 +135,6 @@ namespace Control {
     {
         event e = event(type);
         e.frontend.frontend = frontend;
-        return e;
-    }
-
-    event event::create_engine_event(uint32_t type, surena::Engine *engine)
-    {
-        event e = event(type);
-        e.engine.engine = engine;
         return e;
     }
 

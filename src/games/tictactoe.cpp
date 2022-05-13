@@ -1,8 +1,9 @@
 #include <cstdint>
+#include <cstdlib>
 
 #include "imgui.h"
-#include "surena/games/tictactoe.hpp"
-#include "surena/game.hpp"
+#include "surena/games/tictactoe.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -21,9 +22,18 @@ namespace Games {
             TicTacToe::~TicTacToe()
             {}
 
-            surena::Game* TicTacToe::new_game()
+            game* TicTacToe::new_game()
             {
-                return new surena::TicTacToe();
+                game* new_game = (game*)malloc(sizeof(game));
+                *new_game = game{
+                    .sync_ctr = 0,
+                    .data = NULL,
+                    .options = NULL,
+                    .methods = &tictactoe_gbe,
+                };
+                new_game->methods->create(new_game);
+                new_game->methods->import_state(new_game, NULL);
+                return new_game;
             }
 
             void TicTacToe::draw_options()
@@ -31,12 +41,12 @@ namespace Games {
                 ImGui::TextDisabled("<no options>");
             }
 
-            void TicTacToe::draw_state_editor(surena::Game* abstract_game)
+            void TicTacToe::draw_state_editor(game* abstract_game)
             {
-                surena::TicTacToe* game = dynamic_cast<surena::TicTacToe*>(abstract_game);
-                if (game == nullptr) {
+                if (abstract_game == NULL) {
                     return;
                 }
+                tictactoe_internal_methods* ag_int = (tictactoe_internal_methods*)abstract_game->methods->internal_methods;
                 const char* check_options[3] = {"-", "X", "O"};
                 float check_width = 1.2*ImGui::CalcTextSize("XO").x;
                 int imgui_id = 0;
@@ -47,8 +57,9 @@ namespace Games {
                         if (ix > 0) {
                             ImGui::SameLine();
                         }
-                        int board_state = game->get_cell(ix, iy);
-                        int imgui_check = board_state;
+                        player_id board_state;
+                        ag_int->get_cell(abstract_game, ix, iy, &board_state);
+                        player_id imgui_check = board_state;
                         ImGui::PushID(imgui_id++);
                         ImGui::PushItemWidth(check_width);
                         if (ImGui::BeginCombo("", check_options[imgui_check], ImGuiComboFlags_NoArrowButton)) {
@@ -68,19 +79,29 @@ namespace Games {
                         ImGui::PopID();
                         if (imgui_check != board_state) {
                             // modified state via imgui, clone+edit+load
-                            surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
-                            game_clone->set_cell(ix, iy, imgui_check);
-                            uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                            game* game_clone = (game*)malloc(sizeof(game));
+                            abstract_game->methods->clone(abstract_game, game_clone);
+                            ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_cell(game_clone, ix, iy, imgui_check);
+                            size_t game_state_buffer_len;
+                            game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
                             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
-                            game_clone->export_state(game_state_buffer);
+                            game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                             Control::main_client->inbox.push(
                                 Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                            game_clone->methods->destroy(game_clone);
+                            free(game_clone);
                         }
                     }
                 }
                 // edit: player to move
-                int board_current = game->player_to_move();
-                int imgui_current = board_current;
+                player_id pbuf;
+                uint8_t pbuf_c;
+                abstract_game->methods->players_to_move(abstract_game, &pbuf_c, &pbuf);
+                if (pbuf_c == 0) {
+                    pbuf = PLAYER_NONE;
+                }
+                player_id board_current = pbuf;
+                player_id imgui_current = board_current;
                 ImGui::PushID(imgui_id++);
                 ImGui::PushItemWidth(check_width);
                 if (ImGui::BeginCombo("player to move", check_options[imgui_current], ImGuiComboFlags_NoArrowButton)) {
@@ -100,17 +121,25 @@ namespace Games {
                 ImGui::PopID();
                 if (imgui_current != board_current) {
                     // modified state via imgui, clone+edit+load
-                    surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
-                    game_clone->set_current_player(imgui_current);
-                    uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                    game* game_clone = (game*)malloc(sizeof(game));
+                    abstract_game->methods->clone(abstract_game, game_clone);
+                    ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_current_player(game_clone, imgui_current);
+                    size_t game_state_buffer_len;
+                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
-                    game_clone->export_state(game_state_buffer);
+                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                     Control::main_client->inbox.push(
                         Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                    game_clone->methods->destroy(game_clone);
+                    free(game_clone);
                 }
                 // edit: result
-                int board_result = game->get_result();
-                int imgui_result = board_result;
+                abstract_game->methods->get_results(abstract_game, &pbuf_c, &pbuf);
+                if (pbuf_c == 0) {
+                    pbuf = PLAYER_NONE;
+                }
+                player_id board_result = pbuf;
+                player_id imgui_result = board_result;
                 ImGui::PushID(imgui_id++);
                 ImGui::PushItemWidth(check_width);
                 if (ImGui::BeginCombo("result", check_options[imgui_result], ImGuiComboFlags_NoArrowButton)) {
@@ -130,13 +159,17 @@ namespace Games {
                 ImGui::PopID();
                 if (imgui_result != board_result) {
                     // modified state via imgui, clone+edit+load
-                    surena::TicTacToe* game_clone = dynamic_cast<surena::TicTacToe*>(game->clone());
-                    game_clone->set_result(imgui_result);
-                    uint32_t game_state_buffer_len = game_clone->export_state(NULL);
+                    game* game_clone = (game*)malloc(sizeof(game));
+                    abstract_game->methods->clone(abstract_game, game_clone);
+                    ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_result(game_clone, imgui_result);
+                    size_t game_state_buffer_len;
+                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
-                    game_clone->export_state(game_state_buffer);
+                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                     Control::main_client->inbox.push(
                         Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                    game_clone->methods->destroy(game_clone);
+                    free(game_clone);
                 }
             }
 

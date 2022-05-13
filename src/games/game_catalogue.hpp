@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 namespace Games {
     
@@ -12,9 +12,9 @@ namespace Games {
             const char* name;
             BaseGameVariant(const char* name);
             ~BaseGameVariant() = default;
-            virtual surena::Game* new_game() = 0;
+            virtual game* new_game() = 0;
             virtual void draw_options() = 0; // draw options available to configure the game, locked while running
-            virtual void draw_state_editor(surena::Game* abstract_game) = 0; // draw internal state representation and editing tools
+            virtual void draw_state_editor(game* abstract_game) = 0; // draw internal state representation and editing tools
             virtual const char* description() = 0; // name string augmented with important options
     };
 

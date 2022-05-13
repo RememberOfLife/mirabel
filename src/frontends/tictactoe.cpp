@@ -4,9 +4,8 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/games/tictactoe.hpp"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/games/tictactoe.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -23,8 +22,7 @@ namespace Frontends {
     }
 
     TicTacToe::TicTacToe():
-        game(NULL),
-        engine(NULL)
+        the_game(NULL)
     {
         dc = Control::main_client->nanovg_ctx;
         for (int x = 0; x < 3; x++) {
@@ -41,20 +39,19 @@ namespace Frontends {
     TicTacToe::~TicTacToe()
     {}
 
-    void TicTacToe::set_game(surena::Game* new_game)
+    void TicTacToe::set_game(game* new_game)
     {
-        game = dynamic_cast<surena::TicTacToe*>(new_game);
-    }
-
-    void TicTacToe::set_engine(surena::Engine* new_engine)
-    {
-        engine = new_engine;
+        the_game = new_game;
+        the_game_int = the_game ? (tictactoe_internal_methods*)the_game->methods->internal_methods : NULL;
     }
 
     void TicTacToe::process_event(SDL_Event event)
     {
-        if (!game || game->player_to_move() == 0) {
-            // if no game, or game is done, don't process anything
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         switch (event.type) {
@@ -74,7 +71,9 @@ namespace Frontends {
                         for (int y = 0; y < 3; y++) {
                             board_buttons[y][x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
-                                if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && game->get_cell(x, y) == 0) {
+                                player_id cell_player;
+                                the_game_int->get_cell(the_game, x, y, &cell_player);
+                                if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && cell_player == 0) {
                                     uint64_t move_code = x | (y<<2);
                                     Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
@@ -90,7 +89,11 @@ namespace Frontends {
 
     void TicTacToe::update()
     {
-        if (!game || game->player_to_move() == 0) {
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         // set button hovered
@@ -124,16 +127,17 @@ namespace Frontends {
                 float base_y = (2*button_size+2*padding)-static_cast<float>(y)*(button_size+padding);
                 nvgBeginPath(dc);
                 nvgRect(dc, base_x, base_y, button_size, button_size);
-                if (!game || game->player_to_move() == 0) {
+                if (!the_game || pbuf_c == 0) {
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
                 } else {
                     nvgFillColor(dc, nvgRGB(240, 217, 181));
                 }
                 nvgFill(dc);
-                if (!game) {
+                if (!the_game) {
                     continue;
                 }
-                uint8_t player_in_cell = game->get_cell(x, y);
+                player_id player_in_cell;
+                the_game_int->get_cell(the_game, x, y, &player_in_cell);
                 if (player_in_cell == 1) {
                     // X
                     nvgBeginPath(dc);
@@ -149,18 +153,19 @@ namespace Frontends {
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.3);
                     nvgStroke(dc);
-                } else if (board_buttons[y][x].hovered && game->player_to_move() > surena::TicTacToe::PLAYER_NONE) {
+                } else if (board_buttons[y][x].hovered && pbuf > PLAYER_NONE) {
                     nvgBeginPath(dc);
                     nvgFillColor(dc, nvgRGB(220, 197, 161));
                     nvgRect(dc, board_buttons[y][x].x+button_size*0.05, board_buttons[y][x].y+button_size*0.05, board_buttons[y][x].w-button_size*0.1, board_buttons[y][x].h-button_size*0.1);
                     nvgFill(dc);
                 }
-                if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((y<<2)|x)) {
+                //TODO
+                /*if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((y<<2)|x)) {
                     nvgBeginPath(dc);
                     nvgFillColor(dc, nvgRGB(125, 187, 248));
                     nvgCircle(dc, board_buttons[y][x].x+button_size/2, board_buttons[y][x].y+button_size/2, button_size*0.15);
                     nvgFill(dc);
-                }
+                }*/
             }
         }
         nvgRestore(dc);

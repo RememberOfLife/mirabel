@@ -1,6 +1,7 @@
 #pragma once
 
-#include "surena/game.hpp"
+#include "surena/games/havannah.h"
+#include "surena/game.h"
 
 #include "games/game_catalogue.hpp"
 
@@ -8,15 +9,17 @@ namespace Games {
 
     class Havannah : public BaseGameVariant {
         private:
-            int size = 8;
+            havannah_options opts{
+                .size = 8,
+            };
             
         public:
             Havannah();
             ~Havannah();
 
-            surena::Game* new_game() override;
+            game* new_game() override;
             void draw_options() override;
-            void draw_state_editor(surena::Game* abstract_game) override;
+            void draw_state_editor(game* abstract_game) override;
             const char* description() override;
 
     };

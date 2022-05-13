@@ -62,13 +62,16 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
-    lib/surena/src/engines/randomengine.cpp
-    lib/surena/src/engines/singlethreadedmcts.cpp
+    # lib/surena/src/engines/randomengine.cpp
+    # lib/surena/src/engines/singlethreadedmcts.cpp
     lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/util/fast_prng.cpp
+    lib/surena/src/util/noise.cpp
+    lib/surena/src/util/semver.c
+    lib/surena/src/game.c
 
     src/control/client.cpp
     src/control/event_queue.cpp
@@ -77,8 +80,8 @@ set(SOURCES
     src/control/server.cpp
     src/control/timeout_crash.cpp
 
-    src/engines/builtin_surena.cpp
-    src/engines/engine_catalogue.cpp
+    # src/engines/builtin_surena.cpp
+    # src/engines/engine_catalogue.cpp
 
     src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp

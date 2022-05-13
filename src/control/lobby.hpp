@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
@@ -17,7 +17,7 @@ namespace Control {
             // uint64_t id;
             char* base_game;
             char* game_variant;
-            surena::Game* game;
+            game* the_game;
             // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user 
             uint16_t max_users;
             uint32_t* user_client_ids; //TODO should use some user struct, for now just stores client ids of connected clients

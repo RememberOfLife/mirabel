@@ -5,8 +5,7 @@
 
 #include "SDL_net.h"
 
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/event_base.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -33,8 +32,8 @@ namespace Control {
         // client only events
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,
-        EVENT_TYPE_ENGINE_LOAD,
-        EVENT_TYPE_ENGINE_UNLOAD,
+        //STUB EVENT_TYPE_ENGINE_LOAD,
+        //STUB EVENT_TYPE_ENGINE_UNLOAD,
         // networking events: internal events
         EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE,
         // networking events: adapter events; work with adapter<->main_queue
@@ -81,10 +80,6 @@ namespace Control {
         Frontends::Frontend* frontend;
     };
 
-    struct engine_event {
-        surena::Engine* engine;
-    };
-
     //TODO important: find some proper way to streamline pointer stuffed events across network and creation
     struct user_auth_event {
         bool is_guest;
@@ -119,7 +114,6 @@ namespace Control {
             heartbeat_event heartbeat;
             move_event move;
             frontend_event frontend;
-            engine_event engine;
             user_auth_event user_auth;
             msg_del_event msg_del;
         };
@@ -134,10 +128,9 @@ namespace Control {
         event& operator=(event&& other); // move assign
         ~event();
         static event create_heartbeat_event(uint32_t type, uint32_t id, uint32_t time = 0);
-        static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant);
+        static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant); //TODO opts
         static event create_move_event(uint32_t type, uint64_t code);
         static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
-        static event create_engine_event(uint32_t type, surena::Engine* frontend);
         static event create_user_auth_event(uint32_t type, uint32_t client_id, bool is_guest, const char* username, const char* password);
         static event create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text);
         static event create_chat_del_event(uint32_t type, uint32_t msg_id);

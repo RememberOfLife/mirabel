@@ -99,7 +99,7 @@ void sandbox()
     exit(0);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     //TODO use proper argparsing and offer some more sensible options, e.g. dont use watchdog, etc..
     if (argc == 2 && strcmp(argv[1], "server") == 0) {

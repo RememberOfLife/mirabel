@@ -1,6 +1,9 @@
+#include <cstdint>
+#include <cstdlib>
+
 #include "imgui.h"
-#include "surena/games/havannah.hpp"
-#include "surena/game.hpp"
+#include "surena/games/havannah.h"
+#include "surena/game.h"
 
 #include "games/game_catalogue.hpp"
 
@@ -15,34 +18,53 @@ namespace Games {
             Havannah::~Havannah()
             {}
 
-            surena::Game* Havannah::new_game()
+            game* Havannah::new_game()
             {
-                return new surena::Havannah(size);
+                game* new_game = (game*)malloc(sizeof(game));
+                *new_game = game{
+                    .sync_ctr = 0,
+                    .data = NULL,
+                    .options = NULL,
+                    .methods = &havannah_gbe,
+                };
+                new_game->methods->import_options_bin(new_game, &opts);
+                new_game->methods->create(new_game);
+                new_game->methods->import_state(new_game, NULL);
+                return new_game;
             }
 
             void Havannah::draw_options()
             {
-                ImGui::InputScalar("size", ImGuiDataType_U32, &size);
-                if (size < 4) {
-                    size = 4;
+                ImGui::InputScalar("size", ImGuiDataType_U32, &opts.size);
+                if (opts.size < 4) {
+                    opts.size = 4;
                 }
-                if (size > 10) {
-                    size = 10;
+                if (opts.size > 10) {
+                    opts.size = 10;
                 }
             }
 
-            void Havannah::draw_state_editor(surena::Game* abstract_game)
+            void Havannah::draw_state_editor(game* abstract_game)
             {
-                surena::Havannah* game = dynamic_cast<surena::Havannah*>(abstract_game);
-                if (game == nullptr) {
+                if (abstract_game == NULL) {
                     return;
                 }
                 //TODO proper state editor
                 // white is actually displayed red per default, but because that might be configurable it is kept uniform here
                 const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
                 const char* result_options[4] = {"DRAW", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
-                ImGui::Text("player to move: %s", move_options[game->player_to_move()]);
-                ImGui::Text("result: %s", result_options[game->get_result()]);
+                player_id pbuf;
+                uint8_t pbuf_c;
+                abstract_game->methods->players_to_move(abstract_game, &pbuf_c, &pbuf);
+                if (pbuf_c == 0) {
+                    pbuf = HAVANNAH_PLAYER_NONE;
+                }
+                ImGui::Text("player to move: %s", move_options[pbuf]);
+                abstract_game->methods->get_results(abstract_game, &pbuf_c, &pbuf);
+                if (pbuf_c == 0) {
+                    pbuf = HAVANNAH_PLAYER_INVALID;
+                }
+                ImGui::Text("result: %s", result_options[pbuf]);
                 //TODO expose winningcondition
             }
 

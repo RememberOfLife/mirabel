@@ -1,7 +1,7 @@
 #include <cstdint>
 
 #include "imgui.h"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -25,7 +25,7 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
-        bool game_running = (Control::main_client->game != NULL);
+        bool game_running = (Control::main_client->the_game != NULL);
         // draw game start,stop,restart
         // locks all pre loading input elements if game is running, stop is only available if running
         //HACK options are currently still just buffered by the base_game_variant class that provides the new game, this will not work for network loads, because they do not have options set yet
@@ -99,7 +99,7 @@ namespace MetaGui {
         // draw internal state editor, only if a game is running
         if (game_running) {
             if (ImGui::CollapsingHeader("State Editor", ImGuiTreeNodeFlags_DefaultOpen)) {
-                Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(Control::main_client->game);
+                Games::game_catalogue[base_game_idx].variants[game_variant_idx]->draw_state_editor(Control::main_client->the_game);
             }
         } else {
             ImGui::BeginDisabled();

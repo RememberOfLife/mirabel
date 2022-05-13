@@ -3,8 +3,8 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
-#include "surena/games/havannah.hpp"
-#include "surena/game.hpp"
+#include "surena/games/havannah.h"
+#include "surena/game.h"
 
 #include "games/game_catalogue.hpp"
 
@@ -18,8 +18,11 @@ namespace Frontends {
 
             NVGcontext* dc;
 
-            surena::Havannah* game;
-            surena::Engine* engine;
+            game* the_game;
+            havannah_internal_methods* the_game_int;
+
+            player_id pbuf;
+            uint8_t pbuf_c;
 
             int size;
 
@@ -50,8 +53,7 @@ namespace Frontends {
 
             Havannah();
             ~Havannah();
-            void set_game(surena::Game* new_game) override;
-            void set_engine(surena::Engine* new_engine) override;
+            void set_game(game* new_game) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;

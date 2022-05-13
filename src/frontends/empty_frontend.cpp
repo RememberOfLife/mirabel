@@ -4,8 +4,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "games/game_catalogue.hpp"
@@ -23,10 +22,7 @@ namespace Frontends {
     EmptyFrontend::~EmptyFrontend()
     {}
 
-    void EmptyFrontend::set_game(surena::Game* game)
-    {}
-
-    void EmptyFrontend::set_engine(surena::Engine* new_engine)
+    void EmptyFrontend::set_game(game* new_game)
     {}
 
     void EmptyFrontend::process_event(SDL_Event event)

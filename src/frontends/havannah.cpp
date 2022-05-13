@@ -6,9 +6,8 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/games/havannah.hpp"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/games/havannah.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -35,8 +34,7 @@ namespace Frontends {
     }
 
     Havannah::Havannah():
-        game(NULL),
-        engine(NULL)
+        the_game(NULL)
     {
         dc = Control::main_client->nanovg_ctx;
     }
@@ -44,11 +42,12 @@ namespace Frontends {
     Havannah::~Havannah()
     {}
 
-    void Havannah::set_game(surena::Game* new_game)
+    void Havannah::set_game(game* new_game)
     {
-        game = dynamic_cast<surena::Havannah*>(new_game);
-        if (game != nullptr) {
-            size = game->get_size();
+        the_game = new_game;
+        if (the_game != NULL) {
+            size = ((havannah_options*)the_game->options)->size;
+            the_game_int = (havannah_internal_methods*)the_game->methods->internal_methods;
         } else {
             size = 10;
         }
@@ -78,15 +77,13 @@ namespace Frontends {
         }
     }
 
-    void Havannah::set_engine(surena::Engine* new_engine)
-    {
-        engine = new_engine;
-    }
-
     void Havannah::process_event(SDL_Event event)
     {
-        if (!game || game->player_to_move() == 0) {
-            // if no game, or game is done, don't process anything
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         switch (event.type) {
@@ -116,7 +113,9 @@ namespace Frontends {
                             }
                             board_buttons[y*board_sizer+x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
-                                if (board_buttons[y*board_sizer+x].hovered && board_buttons[y*board_sizer+x].mousedown && game->get_cell(x, y) == 0) {
+                                HAVANNAH_PLAYER cp;
+                                the_game_int->get_cell(the_game, x, y, &cp);
+                                if (board_buttons[y*board_sizer+x].hovered && board_buttons[y*board_sizer+x].mousedown && cp == 0) {
                                     uint64_t move_code = y | (x<<8);
                                     Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
                                 }
@@ -132,7 +131,11 @@ namespace Frontends {
 
     void Havannah::update()
     {
-        if (!game || game->player_to_move() == 0) {
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         // set button hovered
@@ -185,22 +188,29 @@ namespace Frontends {
             nvgRotate(dc, hex_angle/2);
         }
         // colored board border for current/winning player
+        pbuf = HAVANNAH_PLAYER_NONE;
         nvgBeginPath(dc);
-        if (!game) {
+        if (!the_game) {
             nvgStrokeColor(dc, nvgRGB(161, 119, 67));
         } else {
-            uint8_t color_player = (game->player_to_move() == 0 ? game->get_result() : game->player_to_move());
-            switch (color_player) {
-                case surena::Havannah::COLOR_NONE: {
+            the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                the_game->methods->get_results(the_game, &pbuf_c, &pbuf);
+            }
+            switch (pbuf) {
+                default:
+                case HAVANNAH_PLAYER_NONE: {
                     nvgStrokeColor(dc, nvgRGB(128, 128, 128));
                 } break;
-                case surena::Havannah::COLOR_WHITE: {
+                case HAVANNAH_PLAYER_WHITE: {
                     nvgStrokeColor(dc, nvgRGB(141, 35, 35));
                 } break;
-                case surena::Havannah::COLOR_BLACK: {
+                case HAVANNAH_PLAYER_BLACK: {
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                 } break;
             }
+            // actually we just want the ptm in there, so reste it back to that
+            the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
         }
         nvgStrokeWidth(dc, flat_radius*0.5);
         nvgMoveTo(dc, static_cast<float>(size*2)*flat_radius, 0);
@@ -223,7 +233,7 @@ namespace Frontends {
                 }
                 float base_y = y*(fitting_hex_radius*1.5);
                 nvgBeginPath(dc);
-                if (!game || game->player_to_move() == 0) {
+                if (!the_game || pbuf_c == 0) {
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
                 } else {
                     nvgFillColor(dc, nvgRGB(240, 217, 181));
@@ -237,14 +247,15 @@ namespace Frontends {
                     nvgLineTo(dc, button_size, 0);
                 }
                 nvgFill(dc);
-                if (!game) {
+                if (!the_game) {
                     nvgRestore(dc);
                     continue;
                 }
-                surena::Havannah::COLOR cell_color = game->get_cell(x, y);
+                HAVANNAH_PLAYER cell_color;
+                the_game_int->get_cell(the_game, x, y, &cell_color);
                 switch (cell_color) {
-                    case surena::Havannah::COLOR_NONE: {
-                        if (board_buttons[y*board_sizer+x].hovered && game->player_to_move() > surena::Havannah::COLOR_NONE) {
+                    case HAVANNAH_PLAYER_NONE: {
+                        if (board_buttons[y*board_sizer+x].hovered && pbuf > HAVANNAH_PLAYER_NONE) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
                             nvgMoveTo(dc, button_size*0.9, 0);
@@ -255,7 +266,7 @@ namespace Frontends {
                             nvgFill(dc);
                         }
                     } break;
-                    case surena::Havannah::COLOR_WHITE: {
+                    case HAVANNAH_PLAYER_WHITE: {
                         nvgBeginPath(dc);
                         nvgFillColor(dc, nvgRGB(141, 35, 35));
                         if (hex_stones) {
@@ -269,7 +280,7 @@ namespace Frontends {
                         }
                         nvgFill(dc);
                     } break;
-                    case surena::Havannah::COLOR_BLACK: {
+                    case HAVANNAH_PLAYER_BLACK: {
                         nvgBeginPath(dc);
                         nvgFillColor(dc, nvgRGB(25, 25, 25));
                         if (hex_stones) {
@@ -283,22 +294,26 @@ namespace Frontends {
                         }
                         nvgFill(dc);
                     } break;
-                    case surena::Havannah::COLOR_INVALID: {
+                    case HAVANNAH_PLAYER_INVALID: {
                         assert(false);
                     } break;
                 }
                 // draw colored connections to same player pieces
-                if (connections_width > 0 && cell_color != surena::Havannah::COLOR_NONE) {
+                if (connections_width > 0 && cell_color != HAVANNAH_PLAYER_NONE) {
                     float connection_draw_width = button_size * connections_width;
                     // draw for self<->{1(x-1,y),3(x,y-1),2(x-1,y-1)}
                     uint8_t connections_to_draw = 0;
-                    if (cell_color == game->get_cell(x-1, y) && game->get_cell(x-1, y) != surena::Havannah::COLOR_INVALID) {
+                    HAVANNAH_PLAYER cell_other;
+                    the_game_int->get_cell(the_game, x-1, y, &cell_other);
+                    if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b001;
                     }
-                    if (cell_color == game->get_cell(x, y-1) && game->get_cell(x, y-1) != surena::Havannah::COLOR_INVALID) {
+                    the_game_int->get_cell(the_game, x, y-1, &cell_other);
+                    if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b100;
                     }
-                    if (cell_color == game->get_cell(x-1, y-1) && game->get_cell(x-1, y-1) != surena::Havannah::COLOR_INVALID) {
+                    the_game_int->get_cell(the_game, x-1, y-1, &cell_other);
+                    if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b010;
                     }
                     if (connections_to_draw) {
@@ -306,14 +321,14 @@ namespace Frontends {
                         nvgRotate(dc, -M_PI/6);
                         nvgBeginPath(dc);
                         switch (cell_color) {
-                            case surena::Havannah::COLOR_WHITE: {
+                            case HAVANNAH_PLAYER_WHITE: {
                                 nvgStrokeColor(dc, nvgRGB(141, 35, 35));
                             } break;
-                            case surena::Havannah::COLOR_BLACK: {
+                            case HAVANNAH_PLAYER_BLACK: {
                                 nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                             } break;
-                            case surena::Havannah::COLOR_NONE:
-                            case surena::Havannah::COLOR_INVALID: {
+                            case HAVANNAH_PLAYER_NONE:
+                            case HAVANNAH_PLAYER_INVALID: {
                                 assert(false);
                             } break;
                         }
@@ -329,8 +344,8 @@ namespace Frontends {
                         nvgRestore(dc);
                     }
                 }
-                // draw engine best move
-                if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
+                //TODO draw engine best move 
+                /*if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
                     nvgStrokeColor(dc, nvgRGB(125, 187, 248));
                     nvgStrokeWidth(dc, button_size*0.1);
                     nvgMoveTo(dc, button_size*0.95, 0);
@@ -339,7 +354,7 @@ namespace Frontends {
                         nvgLineTo(dc, button_size*0.95, 0);
                     }
                     nvgStroke(dc);
-                }
+                }*/
                 nvgRestore(dc);
             }
         }

@@ -5,7 +5,7 @@
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "engines/engine_catalogue.hpp"
+// #include "engines/engine_catalogue.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -23,6 +23,11 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
+
+        ImGui::TextColored(ImVec4{0.87, 0.17, 0.17, 1}, "<disabled>");
+        ImGui::End();
+
+        /*
         bool engine_running = Control::main_client->engine != NULL;
         // collect all engines compatible with the current base game variant
         std::vector<Engines::Engine*> compatible_engines{};
@@ -91,6 +96,7 @@ namespace MetaGui {
             Engines::engine_catalogue[engine_idx]->draw_state_options(Control::main_client->engine);
         }
         ImGui::End();
+        */
     }
 
 }

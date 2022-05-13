@@ -5,7 +5,7 @@
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
 #include "surena/util/fast_prng.hpp"
-#include "surena/game.hpp"
+#include "surena/game.h"
 
 #include "control/event.hpp"
 #include "network/network_server.hpp"

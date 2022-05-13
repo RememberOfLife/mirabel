@@ -4,9 +4,8 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/games/tictactoe_ultimate.hpp"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/games/tictactoe_ultimate.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
@@ -23,8 +22,7 @@ namespace Frontends {
     }
 
     TicTacToe_Ultimate::TicTacToe_Ultimate():
-        game(NULL),
-        engine(NULL)
+        the_game(NULL)
     {
         dc = Control::main_client->nanovg_ctx;
         for (int gy = 0; gy < 3; gy++) {
@@ -45,20 +43,19 @@ namespace Frontends {
     TicTacToe_Ultimate::~TicTacToe_Ultimate()
     {}
 
-    void TicTacToe_Ultimate::set_game(surena::Game* new_game)
+    void TicTacToe_Ultimate::set_game(game* new_game)
     {
-        game = dynamic_cast<surena::TicTacToe_Ultimate*>(new_game);
-    }
-
-    void TicTacToe_Ultimate::set_engine(surena::Engine* new_engine)
-    {
-        engine = new_engine;
+        the_game = new_game;
+        the_game_int = the_game ? (tictactoe_ultimate_internal_methods*)the_game->methods->internal_methods : NULL;
     }
 
     void TicTacToe_Ultimate::process_event(SDL_Event event)
     {
-        if (!game || game->player_to_move() == 0) {
-            // if no game, or game is done, don't process anything
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         switch (event.type) {
@@ -74,7 +71,8 @@ namespace Frontends {
                     int mY = event.button.y - y_px;
                     mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
                     mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-                    uint8_t global_target = game->get_global_target();
+                    uint8_t global_target;
+                    the_game_int->get_global_target(the_game, &global_target);
                     for (int gy = 0; gy < 3; gy++) {
                         for (int gx = 0; gx < 3; gx++) {
                             if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -86,7 +84,9 @@ namespace Frontends {
                                     int iy = 8-(gy*3+ly);
                                     board_buttons[iy][ix].update(mX, mY);
                                     if (event.type == SDL_MOUSEBUTTONUP) {
-                                        if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && game->get_cell_local(ix, iy) == 0) {
+                                        player_id cell_local;
+                                        the_game_int->get_cell_local(the_game, ix, iy, &cell_local);
+                                        if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && cell_local == 0) {
                                             uint64_t move_code = ix | (iy<<4);
                                             Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
                                         }
@@ -104,7 +104,11 @@ namespace Frontends {
 
     void TicTacToe_Ultimate::update()
     {
-        if (!game || game->player_to_move() == 0) {
+        if (!the_game) {
+            return;
+        }
+        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
+        if (pbuf_c == 0) {
             return;
         }
         // set button hovered
@@ -112,7 +116,8 @@ namespace Frontends {
         int mY = my;
         mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
         mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-        uint8_t global_target = game->get_global_target();
+        uint8_t global_target;
+        the_game_int->get_global_target(the_game, &global_target);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -136,7 +141,10 @@ namespace Frontends {
     void TicTacToe_Ultimate::render()
     {
         float local_baord_size = 3*button_size+2*local_padding;
-        uint8_t global_target = game ? game->get_global_target() : 0;
+        uint8_t global_target = 0;
+        if (the_game) {
+            the_game_int->get_global_target(the_game, &global_target);
+        }
         nvgSave(dc);
         nvgBeginPath(dc);
         nvgRect(dc, -10, -10, w_px+20, h_px+20);
@@ -145,7 +153,8 @@ namespace Frontends {
         nvgTranslate(dc, w_px/2-(3*local_baord_size+2*global_padding)/2, h_px/2-(3*local_baord_size+2*global_padding)/2);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
-                uint8_t local_result = (game ? game->get_cell_global(gx, 2-gy) : 0);
+                uint8_t local_result = 0;
+                the_game_int->get_cell_global(the_game, gx, 2-gy, &local_result);
                 float base_x = gx*(local_baord_size+global_padding);
                 float base_y = gy*(local_baord_size+global_padding);
                 if (local_result > 0) {
@@ -183,18 +192,19 @@ namespace Frontends {
                         nvgStrokeWidth(dc, button_size*0.175);
                         nvgBeginPath(dc);
                         nvgRect(dc, base_x, base_y, button_size, button_size);
-                        if (game && game->player_to_move() != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
+                        if (the_game && pbuf_c != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
                             nvgFillColor(dc, nvgRGB(240, 217, 181));
                         } else {
                             nvgFillColor(dc, nvgRGB(161, 119, 67));
                         }
                         nvgFill(dc);
-                        if (!game) {
+                        if (!the_game) {
                             continue;
                         }
                         int ix = gx*3+lx;
                         int iy = 8-(gy*3+ly);
-                        uint8_t player_in_cell = game->get_cell_local(ix, iy);
+                        uint8_t player_in_cell;
+                        the_game_int->get_cell_local(the_game, ix, iy, &player_in_cell);
                         if (player_in_cell == 1) {
                             // X
                             nvgBeginPath(dc);
@@ -210,18 +220,19 @@ namespace Frontends {
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                             nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.3);
                             nvgStroke(dc);
-                        } else if (board_buttons[iy][ix].hovered && game->player_to_move() > 0) {
+                        } else if (board_buttons[iy][ix].hovered && pbuf_c > 0) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
                             nvgRect(dc, board_buttons[iy][ix].x+button_size*0.05, board_buttons[iy][ix].y+button_size*0.05, board_buttons[iy][ix].w-button_size*0.1, board_buttons[iy][ix].h-button_size*0.1);
                             nvgFill(dc);
                         }
-                        if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((iy<<4)|ix)) {
+                        //TODO
+                        /*if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((iy<<4)|ix)) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(125, 187, 248));
                             nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.15);
                             nvgFill(dc);
-                        }
+                        }*/
                     }
                 }
             }

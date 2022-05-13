@@ -1,14 +1,14 @@
 #pragma once
 
+#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
-#include "surena/games/chess.hpp"
-#include "surena/engine.hpp"
-#include "surena/game.hpp"
+#include "surena/games/chess.h"
+#include "surena/game.h"
 
 #include "games/game_catalogue.hpp"
 
@@ -24,13 +24,19 @@ namespace Frontends {
         //TODO when trying to move another piece, while there already is a pinned piece, re-set the pin to the new target
         //TODO gamebreaking!! some way to select what piece a pawn should promote into, currently pawn promotion is impossible
         //TODO highlist last made mode
+        //TODO make the player border be a double border when the game is done to indicate finished state?
 
         private:
 
             NVGcontext* dc;
 
-            surena::Chess* game;
-            surena::Engine* engine;
+            game* the_game;
+            chess_internal_methods* the_game_int;
+
+            player_id pbuf;
+            uint8_t pbuf_c;
+            move_code moves[CHESS_MAX_MOVES];
+            uint32_t move_cnt;
 
             float square_size = 90;
 
@@ -58,8 +64,7 @@ namespace Frontends {
 
             Chess();
             ~Chess();
-            void set_game(surena::Game* new_game) override;
-            void set_engine(surena::Engine* new_engine) override;
+            void set_game(game* new_game) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;
