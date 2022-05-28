@@ -27,8 +27,8 @@ namespace Games {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{
                     .sync_ctr = 0,
-                    .data = NULL,
                     .options = NULL,
+                    .data = NULL,
                     .methods = &tictactoe_gbe,
                 };
                 new_game->methods->create(new_game);
@@ -82,8 +82,7 @@ namespace Games {
                             game* game_clone = (game*)malloc(sizeof(game));
                             abstract_game->methods->clone(abstract_game, game_clone);
                             ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_cell(game_clone, ix, iy, imgui_check);
-                            size_t game_state_buffer_len;
-                            game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
+                            size_t game_state_buffer_len = game_clone->sizer.state_str;
                             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                             Control::main_client->inbox.push(
@@ -124,8 +123,7 @@ namespace Games {
                     game* game_clone = (game*)malloc(sizeof(game));
                     abstract_game->methods->clone(abstract_game, game_clone);
                     ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_current_player(game_clone, imgui_current);
-                    size_t game_state_buffer_len;
-                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
+                    size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                     Control::main_client->inbox.push(
@@ -162,8 +160,7 @@ namespace Games {
                     game* game_clone = (game*)malloc(sizeof(game));
                     abstract_game->methods->clone(abstract_game, game_clone);
                     ((tictactoe_internal_methods*)game_clone->methods->internal_methods)->set_result(game_clone, imgui_result);
-                    size_t game_state_buffer_len;
-                    game_clone->methods->export_state(game_clone, &game_state_buffer_len, NULL);
+                    size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
                     Control::main_client->inbox.push(

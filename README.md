@@ -71,8 +71,8 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* about window with version etc, also cmd line switch for version
 * add option to use different imgui font
-* integrate new surena game capi
 * finalize event rework by using it everywhere
 * super basic plugin manager
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
@@ -174,6 +174,7 @@ Collect more general resources:
 ### integration workflow
 * ==> server guests can add their own guest password
   * hiddenfeature, add '#' to the username e.g. "guestname#138754"
+    * add this to the string filter etc..
   * or just dont do it at all
 * ==> offline ai play:
   * engine has an option to enable auto search and auto move when certain players are playing

@@ -44,8 +44,7 @@ namespace Control {
                     event e_load = event::create_game_event(EVENT_TYPE_GAME_LOAD, base_game, game_variant);
                     e_load.client_id = client_id;
                     send_queue->push(e_load);
-                    size_t game_state_buffer_len;
-                    the_game->methods->export_state(the_game, &game_state_buffer_len, NULL);
+                    size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
                     send_queue->push(Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, client_id, game_state_buffer_len, game_state_buffer));
