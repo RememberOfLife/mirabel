@@ -54,8 +54,8 @@ namespace Network {
 
     void NetworkClient::close()
     {
-        send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT)); // notify server we're disconnecting
-        send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
+        send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT)); // notify server we're disconnecting
+        send_queue.push(Control::f_event(Control::EVENT_TYPE_EXIT)); // stop send_runner
         // everything closed, join dead runners
         send_runner.join(); // send_runner joins recv_runner for us
         util_ssl_session_free(&conn);
@@ -66,20 +66,20 @@ namespace Network {
         // open the socket
         if (SDLNet_ResolveHost(&conn.peer_addr, server_address, server_port)) {
             MetaGui::log(log_id, "#W could not resolve host address\n");
-            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
         conn.socket = SDLNet_TCP_Open(&conn.peer_addr);
         if (conn.socket == NULL) {
             MetaGui::log(log_id, "#W socket failed to open\n");
-            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
         SDLNet_TCP_AddSocket(socketset, conn.socket); // cant fail, we only have one socket for our size 1 set
 
         if (!util_ssl_session_init(ssl_ctx, &conn, UTIL_SSL_CTX_TYPE_CLIENT)) {
             MetaGui::log(log_id, "#W ssl session init failed\n");
-            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
 
@@ -88,7 +88,7 @@ namespace Network {
         // ONLY the hostname part, this will match directly against whats defined in the cert, no https or anything
         if (!SSL_set1_host(conn.ssl_session, server_address)) {
             MetaGui::log(log_id, "#W ssl session set verify hostname failed\n");
-            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+            recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
             return;
         }
 
@@ -97,7 +97,7 @@ namespace Network {
         }
 
         // everything fine, enter the actual send loop and start recv_runner
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED));
+        recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED));
         recv_runner = std::thread(&NetworkClient::recv_loop, this); // socket open, start recv_runner
 
         size_t base_buffer_size = 8192;
@@ -106,7 +106,7 @@ namespace Network {
         // wait until event available
         bool quit = false;
         while (!quit && conn.socket != NULL) {
-            Control::event e = send_queue.pop(UINT32_MAX);
+            Control::f_any_event e = send_queue.pop(UINT32_MAX);
             switch (e.type) {
                 case Control::EVENT_TYPE_NULL: {
                     MetaGui::log(log_id, "#W received impossible null event\n");
@@ -124,7 +124,7 @@ namespace Network {
                 } break;
                 case Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
                     conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
-                    recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT));
+                    recv_queue->push(Control::f_event_ssl_thumbprint(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT));
                 } break;
                 default: {
                     if (conn.socket == NULL) {
@@ -149,23 +149,14 @@ namespace Network {
                         }
                         break;
                     }
-                    // universal event->packet encoding, for POD events
+                    // universal event->packet encoding
                     uint8_t* data_buffer = data_buffer_base;
                     e.client_id = conn.client_id;
-                    int write_len = sizeof(Control::event);
-                    if (e.raw_data) {
-                        if (e.raw_length > base_buffer_size-write_len) {
-                            // if raw data is too big for our reusable buffer, malloc a fitting one
-                            data_buffer = (uint8_t*)malloc(write_len+e.raw_length);
-                        }
-                        memcpy(data_buffer+write_len, e.raw_data, e.raw_length);
-                        write_len += e.raw_length;
-                    } else {
-                        e.raw_length = 0; // security: don't expose side-channel of an unsanitized value
+                    int write_len = Control::event_size(&e);
+                    if (write_len > base_buffer_size) {
+                        data_buffer = (uint8_t*)malloc(write_len);
                     }
-                    free(e.raw_data);
-                    e.raw_data = NULL; // security: don't expose internal pointer to raw data
-                    memcpy(data_buffer, &e, sizeof(Control::event));
+                    Control::event_serialize(&e, data_buffer);
                     int wrote_len = SSL_write(conn.ssl_session, data_buffer, write_len);
                     if (wrote_len != write_len) {
                         MetaGui::log(log_id, "#W ssl write failed\n");
@@ -231,7 +222,7 @@ namespace Network {
             int recv_len = SDLNet_TCP_Recv(conn.socket, data_buffer_base, buffer_size);
             if (recv_len <= 0) {
                 // connection closed, notify send loop as well, don't unset the socket here or else some sending events might fail
-                send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
+                send_queue.push(Control::f_event(Control::EVENT_TYPE_EXIT)); // stop send_runner
                 switch (conn.state) {
                     case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
                         // pass, everything fine
@@ -260,18 +251,18 @@ namespace Network {
 
             if (conn.state == PROTOCOL_CONNECTION_STATE_NONE) {
                 // we don't know if the server accepted our connection yet, read exactly one event sized packet from the front of the received data
-                if (recv_len < sizeof(Control::event)) {
+                if (recv_len < sizeof(Control::f_event)) {
                     //TODO can this happen?
                     MetaGui::logf(log_id, "#W malformed connection initial, discarding %d bytes\n", recv_len);
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
                 // decode one raw event packet using the universal packet->event decoding
-                Control::event recv_event = Control::event();
-                memcpy(&recv_event, data_buffer, sizeof(Control::event));
+                Control::f_event recv_event = Control::f_event();
+                memcpy(&recv_event, data_buffer, sizeof(Control::f_event));
                 // update size of remaining buffer
-                data_buffer += sizeof(Control::event);
-                recv_len -= sizeof(Control::event);
+                data_buffer += sizeof(Control::f_event);
+                recv_len -= sizeof(Control::f_event);
                 // process the event, can only be of two types
                 if (recv_event.type == Control::EVENT_TYPE_NETWORK_PROTOCOL_NOK) {
                     MetaGui::log(log_id, "#W connection refused\n");
@@ -288,7 +279,7 @@ namespace Network {
                 conn.state = PROTOCOL_CONNECTION_STATE_INITIALIZING;
                 // kick of the handshake from client side and enqueue a want write
                 SSL_do_handshake(conn.ssl_session);
-                send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE));
+                send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE));
                 continue;
             }
 
@@ -300,7 +291,7 @@ namespace Network {
                 if (!SSL_is_init_finished(conn.ssl_session)) {
                     SSL_do_handshake(conn.ssl_session);
                     // queue generic want write, just in case ssl may want to write
-                    send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE));
+                    send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE));
                     if (!SSL_is_init_finished(conn.ssl_session)) {
                         continue;
                     }
@@ -314,7 +305,7 @@ namespace Network {
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     MetaGui::log(log_id, "#W server did not present certificate, closing connection\n");
                     //TODO send the server a notice that we're disconnecting
-                    send_queue.push(Control::event(Control::EVENT_TYPE_EXIT));
+                    send_queue.push(Control::f_event(Control::EVENT_TYPE_EXIT));
                     continue;
                 }
                 // get result of cert verification
@@ -340,15 +331,15 @@ namespace Network {
                     MetaGui::logf(log_id, "server cert thumbprint (%s)\n", str_buf);
                 }
                 // prepare connection state event for client
-                Control::event event_cs = Control::event();
-                event_cs.raw_length = SHA256_LEN; // reserve some space for the thumbprint
+                Control::f_event_ssl_thumbprint event_cs = Control::f_event_ssl_thumbprint(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
+                event_cs.thumbprint_len = SHA256_LEN; // reserve some space for the thumbprint
                 switch (verify_result) {
                     case X509_V_OK: {
                         // no verification errors, promote to accepted
                         conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
                         MetaGui::log(log_id, "server cert verification passed\n");
                         event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT;
-                        event_cs.raw_data = malloc(event_cs.raw_length);
+                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
                     } break;
                     case X509_V_ERR_CERT_HAS_EXPIRED: {
                         BIO* print_bio = BIO_new(BIO_s_mem()); // bio for printing details about the failure
@@ -361,9 +352,9 @@ namespace Network {
                         MetaGui::logf(log_id, "#W server cert verification failed: cert has expired (%s)\n", time_str);
                         const char* err_str = "expired (%s)";
                         event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.raw_length += strlen(err_str) + 1 + time_str_len;
-                        event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, time_str);
+                        event_cs.thumbprint_len += strlen(err_str) + 1 + time_str_len;
+                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
+                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, time_str);
                         free(time_str);
                         BIO_free(print_bio);
                     } break;
@@ -371,9 +362,9 @@ namespace Network {
                         MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert\n");
                         const char* err_str = "depth zero self signed";
                         event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.raw_length += strlen(err_str) + 1;
-                        event_cs.raw_data = malloc(event_cs.raw_length);
-                        strcpy((char*)event_cs.raw_data+SHA256_LEN, err_str);
+                        event_cs.thumbprint_len += strlen(err_str) + 1;
+                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
+                        strcpy((char*)event_cs.thumbprint+SHA256_LEN, err_str);
                     } break;
                     case X509_V_ERR_HOSTNAME_MISMATCH: {
                         char** name_list;
@@ -394,9 +385,9 @@ namespace Network {
                         MetaGui::logf(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
                         const char* err_str = "hostname mismatch (%s)";
                         event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.raw_length += strlen(err_str) + 1 + (str_buf_m - str_buf);
-                        event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, str_buf);
+                        event_cs.thumbprint_len += strlen(err_str) + 1 + (str_buf_m - str_buf);
+                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
+                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, str_buf);
                         free(str_buf);
                         util_cert_free_subjects(name_list, name_count);
                     } break;
@@ -404,14 +395,14 @@ namespace Network {
                         MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
                         const char* err_str = "x509 v err %lu";
                         event_cs.type = Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.raw_length += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
-                        event_cs.raw_data = malloc(event_cs.raw_length);
-                        sprintf((char*)event_cs.raw_data+SHA256_LEN, err_str, verify_result);
+                        event_cs.thumbprint_len += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
+                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
+                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, verify_result);
                     } break;
                 }
                 X509_free(peer_cert);
                 // expiry, dz self signed, hostname mismatch all push an adapter event so the connection window offers a button for the user to accept the connection anyway, if everything is fine we push the connection accept instead
-                memcpy((char*)event_cs.raw_data, hash_buf, SHA256_LEN); // place thumbprint before the reason string
+                memcpy((char*)event_cs.thumbprint, hash_buf, SHA256_LEN); // place thumbprint before the reason string
                 recv_queue->push(event_cs);
             }
 
@@ -437,48 +428,28 @@ namespace Network {
 
             // one call to recv may receive MULTIPLE events at once, process them all
             while (true) {
-                if (recv_len < sizeof(Control::event)) {
+                if (recv_len < sizeof(size_t)) {
+                    MetaGui::logf(log_id, "#W %d invalid packet length bytes received\n", recv_len);
+                    break;
+                }
+                size_t event_length = *(size_t*)data_buffer;
+                if (recv_len < event_length) {
+                    //TODO this might also be the case when the data received is simply larger than the buffer for it
                     MetaGui::logf(log_id, "#W discarding %d unusable bytes of received data\n", recv_len);
                     break;
                 }
+                //TODO handle events longer than one buffer filling
+                //TODO handle event fragmentation
+                
                 // universal packet->event decoding, then place it in the recv_queue
                 // at least one event here, process it from data_buffer
-                Control::event recv_event = Control::event();
-                memcpy(&recv_event, data_buffer, sizeof(Control::event));
+                Control::f_any_event recv_event = Control::f_any_event();
+                Control::event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
+
                 // update size of remaining buffer
-                data_buffer += sizeof(Control::event);
-                recv_len -= sizeof(Control::event);
-                // if there is a raw data payload attached to the event, get that too
-                if (recv_event.raw_length > 0) {
-                    recv_event.raw_data = malloc(recv_event.raw_length);
-                    int raw_overhang = static_cast<int>(recv_event.raw_length) - recv_len; //HACK type horror here
-                    if (raw_overhang <= 0) {
-                        // whole raw data payload is captured in the remaining data buffer
-                        // there might even be more packets behind that
-                        memcpy(recv_event.raw_data, data_buffer, recv_event.raw_length);
-                        data_buffer += recv_event.raw_length;
-                        recv_len -= recv_event.raw_length;
-                    } else {
-                        // the current raw data segment is extending beyond the buffer we received
-                        // we want to read ONLY those bytes of the raw data segment we're missing
-                        // any events that may still be read after that will just fire SDLNet_CheckSockets 
-                        // they will be processed in the next buffer charge
-                        memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
-                        // malloc space for the overhang data, and read exactly that
-                        data_buffer = (uint8_t*)malloc(raw_overhang);
-                        int overhang_recv_len = SSL_read(conn.ssl_session, data_buffer, raw_overhang);
-                        if (overhang_recv_len != raw_overhang) {
-                            // did not receive all the missing bytes, might be disastrous for the event
-                            MetaGui::logf(log_id, "#E received only %d bytes of overhang, expected %d, event dropped\n", overhang_recv_len, raw_overhang);
-                            // drop event to null type, will be discarded later
-                            recv_event.type = Control::EVENT_TYPE_NULL;
-                        } else {
-                            mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
-                        }
-                        free(data_buffer);
-                        recv_len = 0;
-                    }
-                }
+                data_buffer += event_length;
+                recv_len -= event_length;
+
                 // switch on type
                 switch (recv_event.type) {
                     case Control::EVENT_TYPE_NULL: break; // drop null events
@@ -509,7 +480,7 @@ namespace Network {
 
         free(data_buffer_base);
         // if the connection is closed, enqueue a connection closed event to ensure the gui resets its connection
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+        recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
     
 }

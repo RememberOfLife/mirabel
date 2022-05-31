@@ -71,6 +71,7 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* actually use event copy move and destroy, currently likely leaking lots of events everywhere
 * about window with version etc, also cmd line switch for version
 * add option to use different imgui font
 * finalize event rework by using it everywhere

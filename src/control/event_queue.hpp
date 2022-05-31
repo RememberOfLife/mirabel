@@ -13,11 +13,11 @@ namespace Control {
 
     struct event_queue {
         std::mutex m;
-        std::deque<event> q;
+        std::deque<f_any_event> q;
         std::condition_variable cv;
-        void push(event e);
-        event pop(uint32_t timeout_ms = 0); // wait until timeout or event to pop available, non blocking if 0, returns NULL event if none available
-        event peek();
+        void push(f_any_event e);
+        f_any_event pop(uint32_t timeout_ms = 0); // wait until timeout or event to pop available, non blocking if 0, returns NULL event if none available
+        f_any_event peek();
         uint32_t size();
         void clear();
     };

@@ -30,9 +30,9 @@ namespace Control {
             void AddUser(uint32_t client_id);
             void RemoveUser(uint32_t client_id);
 
-            void HandleEvent(event e); // handle events that are specifically assigned to this lobby
+            void HandleEvent(f_any_event e); // handle events that are specifically assigned to this lobby
 
-            void SendToAllButOne(event e, uint32_t excluded_client_id);
+            void SendToAllButOne(f_any_event e, uint32_t excluded_client_id);
     };
 
 }

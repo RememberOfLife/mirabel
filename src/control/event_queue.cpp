@@ -11,15 +11,15 @@
 namespace Control {
 
     
-        void event_queue::push(event e)
+        void event_queue::push(f_any_event e)
         {
             m.lock();
-            q.push_back(event(e));
+            q.push_back(e);
             cv.notify_all();
             m.unlock();
         }
 
-        event event_queue::pop(uint32_t timeout_ms)
+        f_any_event event_queue::pop(uint32_t timeout_ms)
         {
             std::unique_lock<std::mutex> lock(m);
             if (q.size() == 0) {
@@ -28,23 +28,23 @@ namespace Control {
                 }
                 if (q.size() == 0) {
                     // queue has no available events after timeout, return null event
-                    return event();
+                    return f_event();
                 }
                 // go on to output an available event if one has become available
             }
-            event r = event(q.front());
+            f_any_event r = q.front();
             q.pop_front();
             return r;
         }
         
-        event event_queue::peek()
+        f_any_event event_queue::peek()
         {
             m.lock();
             if (q.size() == 0) {
                 m.unlock();
-                return event();
+                return f_event();
             }
-            event r = event(q.front());
+            f_any_event r = q.front();
             m.unlock();
             return r;
         }

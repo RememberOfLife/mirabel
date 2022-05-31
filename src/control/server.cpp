@@ -40,7 +40,7 @@ namespace Control {
         }
         t_network = net_server;
         net_server->recv_queue = &inbox;
-        inbox.push(event(EVENT_TYPE_NETWORK_ADAPTER_LOAD));
+        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_LOAD));
 
         printf("[INFO] networkserver constructed\n");
     }
@@ -67,7 +67,7 @@ namespace Control {
     {
         bool quit = false;
         while (!quit) {
-            event e = inbox.pop(UINT32_MAX);
+            f_any_event e = inbox.pop(UINT32_MAX);
             switch (e.type) {
                 case EVENT_TYPE_NULL: {
                     printf("[WARN] received impossible null event\n");
@@ -93,7 +93,7 @@ namespace Control {
                 } break;
                 case EVENT_TYPE_GAME_LOAD:
                 case EVENT_TYPE_GAME_UNLOAD:
-                case EVENT_TYPE_GAME_IMPORT_STATE:
+                case EVENT_TYPE_GAME_STATE:
                 case EVENT_TYPE_GAME_MOVE:
                 case EVENT_TYPE_LOBBY_CHAT_MSG:
                 case EVENT_TYPE_LOBBY_CHAT_DEL: {
@@ -104,48 +104,48 @@ namespace Control {
                 } break;
                 case EVENT_TYPE_USER_AUTHINFO: {
                     // client wants to have the authinfo, serve it
-                    network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL));
+                    network_send_queue->push(f_event_auth(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL));
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
+                    auto ce = e.cast<f_event_auth>();
                     // client wants to auth with given credentials, send back authn or authfail
                     //TODO save guest names and check for dupes
-                    if (!e.user_auth.is_guest) {
-                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "user logins not accepted", NULL));
+                    if (!ce.is_guest) {
+                        network_send_queue->push(f_event_auth_fail(e.client_id, "user logins not accepted"));
                         break;
                     }
-                    if (e.user_auth.username(e.raw_data) == NULL) {
-                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name NULL", NULL));
+                    if (ce.username == NULL) {
+                        network_send_queue->push(f_event_auth_fail(e.client_id, "name NULL"));
                         break;
                     }
                     // validate that username uses only allowed characters
-                    for (int i = 0; i < e.user_auth.username_size; i++) {
-                        if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", *(char*)e.user_auth.username(e.raw_data)+i)) {
-                            network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name contains illegal characters", NULL));
+                    for (int i = 0; i < strlen(ce.username); i++) {
+                        if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", ce.username[i])) {
+                            network_send_queue->push(f_event_auth_fail(e.client_id, "name contains illegal characters"));
                             break;
                         }
                     }
-                    if (e.user_auth.username_size > 1 && e.user_auth.username_size <= 3) { // <= to account for zero terminator
-                        network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHFAIL, e.client_id, true, "name < 3 characters", NULL));
+                    if (strlen(ce.username) > 1 && strlen(ce.username) <= 3) { // <= to account for zero terminator
+                        network_send_queue->push(f_event_auth_fail(e.client_id, "name < 3 characters"));
                         break;
                     }
-                    if (e.user_auth.username_size <= 1) {
-                        free(e.raw_data);
+                    if (strlen(ce.username) <= 1) {
+                        free(ce.username);
                         static fast_prng rng(123);
                         const int assigned_length = 5;
-                        e.raw_length = 6+assigned_length;
-                        e.raw_data = malloc(6+assigned_length);
-                        e.user_auth.username_size = e.raw_length;
-                        char* str_p = (char*)e.raw_data;
+                        const int guestname_length = 6+assigned_length;
+                        ce.username = (char*)malloc(guestname_length);
+                        char* str_p = ce.username;
                         str_p += sprintf(str_p, "Guest");
                         for (int i = 0; i < assigned_length; i++) {
                             str_p += sprintf(str_p, "%d", rng.rand()%10);
                         }
                     }
-                    network_send_queue->push(event::create_user_auth_event(EVENT_TYPE_USER_AUTHN, e.client_id, true, e.user_auth.username(e.raw_data), NULL));
+                    network_send_queue->push(f_event_auth(EVENT_TYPE_USER_AUTHN, e.client_id, true, ce.username, NULL));
                 } break;
                 case EVENT_TYPE_USER_AUTHFAIL: {
                     // client wants to logout but keep the connection, we tell them we logged them out
-                    network_send_queue->push(event(EVENT_TYPE_USER_AUTHFAIL, e.client_id));
+                    network_send_queue->push(f_event_auth_fail(e.client_id, NULL));
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                     if (t_network != NULL) {
@@ -163,7 +163,7 @@ namespace Control {
                     exit(1);
                 } break;
                 default: {
-                    printf("[WARN] received unexpeted event, type: %d\n", e.type);
+                    printf("[WARN] received unexpected event, type: %d\n", e.type);
                 } break;
             }
         }

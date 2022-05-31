@@ -42,7 +42,7 @@ namespace MetaGui {
         // if a frontend is running, which is not the empty frontend, and not compatible, unload it
         if (running_few_idx > 0 && !selected_few_compatible && selected_few_idx > 0) {
             selected_few_idx = 0;
-            Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+            Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
         }
         // if the selected frontend is no longer compatible, but there are alternatives, select the first one of them instead
         if (compatible_few.size() > 0 && !selected_few_compatible) {
@@ -57,15 +57,15 @@ namespace MetaGui {
         }
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
-                Control::main_client->inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                Control::main_client->inbox.push(Control::f_event_frontend_load(Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+                Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event::create_frontend_event(Control::EVENT_TYPE_FRONTEND_LOAD, Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                Control::main_client->inbox.push(Control::f_event_frontend_load(Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
             }
         }
         if (disable_fronend_loader) {

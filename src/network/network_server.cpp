@@ -73,7 +73,7 @@ namespace Network {
         SDLNet_TCP_DelSocket(server_socketset, server_socket);
         SDLNet_TCP_Close(server_socket);
         server_socket = NULL;
-        send_queue.push(Control::event(Control::EVENT_TYPE_EXIT)); // stop send_runner
+        send_queue.push(Control::f_event(Control::EVENT_TYPE_EXIT)); // stop send_runner
         // stop recv_runner
         for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
             TCPsocket* client_socket = &(client_connections[i].socket);
@@ -123,8 +123,8 @@ namespace Network {
             if (connection_slot == NULL) {
                 // no slot available for new client connection, drop it
                 *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_NOK;
-                int send_len = sizeof(Control::event);
-                int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
+                int send_len = sizeof(Control::f_event);
+                int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::f_event));
                 if (sent_len != send_len) {
                     printf("[WARN] packet sending failed\n");
                 }
@@ -135,8 +135,8 @@ namespace Network {
                 // send protocol client id set, functions as ok if set as initial
                 *db_event_type = Control::EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
                 *(db_event_type+1) = connection_id;
-                int send_len = sizeof(Control::event);
-                int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::event));
+                int send_len = sizeof(Control::f_event);
+                int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(Control::f_event));
                 if (sent_len != send_len) {
                     printf("[WARN] packet sending failed\n");
                 }
@@ -152,7 +152,7 @@ namespace Network {
 
         free(data_buffer);
         // if server_loop closes, notify server so it can handle it
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+        recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
 
     void NetworkServer::send_loop()
@@ -163,7 +163,7 @@ namespace Network {
         // wait until event available
         bool quit = false;
         while (!quit) {
-            Control::event e = send_queue.pop(UINT32_MAX);
+            Control::f_any_event e = send_queue.pop(UINT32_MAX);
             connection* target_client = NULL; // target client to use for processing this event
             switch (e.type) {
                 case Control::EVENT_TYPE_NULL: {
@@ -184,8 +184,7 @@ namespace Network {
                         }
                     }
                     if (target_client == NULL) {
-                        printf("[WARN] failed to find connection for sending event, discarded %lu bytes\n",
-                            sizeof(Control::event) + ((e.raw_data) ? e.raw_length : 0));
+                        printf("[WARN] failed to find connection for sending event, discarded %lu bytes\n", Control::event_size(&e));
                         break;
                     }
                     if (target_client->state != PROTOCOL_CONNECTION_STATE_ACCEPTED) {
@@ -206,20 +205,11 @@ namespace Network {
                     }
                     // universal event->packet encoding, for POD events
                     uint8_t* data_buffer = data_buffer_base;
-                    int write_len = sizeof(Control::event);
-                    if (e.raw_data) {
-                        if (e.raw_length > base_buffer_size-write_len) {
-                            // if raw data is too big for our reusable buffer, malloc a fitting one
-                            data_buffer = (uint8_t*)malloc(write_len+e.raw_length);
-                        }
-                        memcpy(data_buffer+write_len, e.raw_data, e.raw_length);
-                        write_len += e.raw_length;
-                    } else {
-                        e.raw_length = 0; // security: don't expose side-channel of an unsanitized value
+                    int write_len = Control::event_size(&e);
+                    if (write_len > base_buffer_size) {
+                        data_buffer = (uint8_t*)malloc(write_len);
                     }
-                    free(e.raw_data);
-                    e.raw_data = NULL; // security: don't expose internal pointer to raw data
-                    memcpy(data_buffer, &e, sizeof(Control::event));
+                    Control::event_serialize(&e, data_buffer);
                     int wrote_len = SSL_write(target_client->ssl_session, data_buffer, write_len);
                     if (wrote_len != write_len) {
                         printf("[WARN] ssl write failed\n");
@@ -245,8 +235,7 @@ namespace Network {
                             }
                         }
                         if (target_client == NULL) {
-                            printf("[WARN] failed to find connection for sending ssl write, discarded %lu bytes\n",
-                                sizeof(Control::event) + ((e.raw_data) ? e.raw_length : 0));
+                            printf("[WARN] failed to find connection %d for sending ssl write\n", e.client_id);
                             break;
                         }
                     }
@@ -322,7 +311,7 @@ namespace Network {
                             } else {
                                 printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
                             }
-                            recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, ready_client->client_id));
+                            recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, ready_client->client_id));
                         } break;
                     }
                     util_ssl_session_free(ready_client);
@@ -350,7 +339,7 @@ namespace Network {
                     if (!SSL_is_init_finished(ready_client->ssl_session)) {
                         SSL_do_handshake(ready_client->ssl_session);
                         // queue generic want write, just in case ssl may want to write
-                        send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, ready_client->client_id));
+                        send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, ready_client->client_id));
                         if (!SSL_is_init_finished(ready_client->ssl_session)) {
                             continue;
                         }
@@ -361,7 +350,7 @@ namespace Network {
                     printf("[INFO] client %d connection accepted\n", ready_client->client_id);
                     //REWORK this never reaches the client at the right point in time, it is sent before the adapter is installed
                     // somehow make sure we only USE the client when has authenticated, i.e. installed its adapter
-                    recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, ready_client->client_id)); // inform server that client is connected and ready to use
+                    recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, ready_client->client_id)); // inform server that client is connected and ready to use
                 }
 
                 // PROTOCOL_CONNECTION_STATE_WARNHELD, server never uses this
@@ -383,52 +372,34 @@ namespace Network {
 
                 // one call to recv may receive MULTIPLE events at once, process them all
                 while (true) {
-                    if (recv_len < sizeof(Control::event)) {
+
+                    if (recv_len < sizeof(size_t)) {
+                        printf("[WARN] %d invalid packet length bytes received\n", recv_len);
+                        break;
+                    }
+                    size_t event_length = *(size_t*)data_buffer;
+                    if (recv_len < event_length) {
+                        //TODO this might also be the case when the data received is simply larger than the buffer for it
                         printf("[WARN] discarding %d unusable bytes of received data\n", recv_len);
                         break;
                     }
+                    //TODO handle events longer than one buffer filling
+                    //TODO handle event fragmentation
+                    
                     // universal packet->event decoding, then place it in the recv_queue
                     // at least one event here, process it from data_buffer
-                    Control::event recv_event = Control::event();
-                    memcpy(&recv_event, data_buffer, sizeof(Control::event));
+                    Control::f_any_event recv_event = Control::f_any_event();
+                    Control::event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
+
                     if (recv_event.client_id != ready_client->client_id) {
                         printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, recv_event.client_id);
                         recv_event.client_id = ready_client->client_id;
                     }
+
                     // update size of remaining buffer
-                    data_buffer += sizeof(Control::event);
-                    recv_len -= sizeof(Control::event);
-                    // if there is a raw data payload attached to the event, get that too
-                    if (recv_event.raw_length > 0) {
-                        recv_event.raw_data = malloc(recv_event.raw_length);
-                        int raw_overhang = static_cast<int>(recv_event.raw_length) - recv_len; //HACK type horror here
-                        if (raw_overhang <= 0) {
-                            // whole raw data payload is captured in the remaining data buffer
-                            // there might even be more packets behind that
-                            memcpy(recv_event.raw_data, data_buffer, recv_event.raw_length);
-                            data_buffer += recv_event.raw_length;
-                            recv_len -= recv_event.raw_length;
-                        } else {
-                            // the current raw data segment is extending beyond the buffer we received
-                            // we want to read ONLY those bytes of the raw data segment we're missing
-                            // any events that may still be read after that will just fire SDLNet_CheckSockets 
-                            // they will be processed in the next buffer charge
-                            memcpy(recv_event.raw_data, data_buffer, recv_len); // memcpy all bytes left in the current data_buffer into raw data segment
-                            // malloc space for the overhang data, and read exactly that
-                            data_buffer = (uint8_t*)malloc(raw_overhang);
-                            int overhang_recv_len = SSL_read(ready_client->ssl_session, data_buffer, raw_overhang);
-                            if (overhang_recv_len != raw_overhang) {
-                                // did not receive all the missing bytes, might be disastrous for the event
-                                printf("[ERROR] received only %d bytes of overhang, expected %d, event might be corrupted\n", overhang_recv_len, raw_overhang);
-                                // drop event to null type, will be discarded later
-                                recv_event.type = Control::EVENT_TYPE_NULL;
-                            } else {
-                                mempcpy(((uint8_t*)recv_event.raw_data)+recv_len, data_buffer, overhang_recv_len);
-                            }
-                            free(data_buffer);
-                            recv_len = 0;
-                        }
-                    }
+                    data_buffer += event_length;
+                    recv_len -= event_length;
+
                     // switch on type
                     switch (recv_event.type) {
                         case Control::EVENT_TYPE_NULL: break; // drop null events
@@ -438,7 +409,7 @@ namespace Network {
                         } break;
                         case Control::EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                             printf("[INFO] ping from client sending pong\n");
-                            send_queue.push(Control::event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
+                            send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
                         } break;
                         default: {
                             printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, recv_event.type);
@@ -458,7 +429,7 @@ namespace Network {
 
         free(data_buffer_base);
         // if server_loop closes, notify server so it can handle it
-        recv_queue->push(Control::event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
+        recv_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED));
     }
 
 }

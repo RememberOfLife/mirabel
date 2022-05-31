@@ -15,6 +15,7 @@ namespace Control {
 
     struct event_serializer {
         static const bool is_plain = false;
+        //TODO plain size? for move
         virtual size_t size(f_event* e) = 0;
         virtual void serialize(f_event* e, void** buf) = 0;
         virtual int deserialize(f_event* e, void** buf, void* buf_end) = 0;
@@ -285,14 +286,8 @@ namespace Control {
         template<class X, char* EVENT::*FIRST, char* EVENT::*...REST>
         static void copy_impl(EVENT* to, EVENT* from)
         {
-            if (from->*FIRST) {
-                //BUG ? we do not free whatever already was inside the target event before pasting our copy over it
-                size_t str_len = strlen(from->*FIRST) + 1;
-                to->*FIRST = (char*)malloc(str_len);
-                memcpy(to->*FIRST, from->*FIRST, str_len);
-            } else {
-                to->*FIRST = NULL;
-            }
+            //BUG ? we do not free whatever already was inside the target event before pasting our copy over it
+            to->*FIRST = from->*FIRST ? strdup(from->*FIRST) : NULL;
             copy_impl<X, REST...>(to, from);
         }
         template<class X>

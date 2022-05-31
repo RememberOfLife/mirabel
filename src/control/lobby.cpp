@@ -41,19 +41,19 @@ namespace Control {
                 user_client_ids[i] = client_id;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    event e_load = event::create_game_event(EVENT_TYPE_GAME_LOAD, base_game, game_variant);
+                    f_any_event e_load = f_event_game_load(base_game, game_variant);
                     e_load.client_id = client_id;
                     send_queue->push(e_load);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
-                    send_queue->push(Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, client_id, game_state_buffer_len, game_state_buffer));
+                    send_queue->push(f_event_game_state(client_id, game_state_buffer));
                 } else {
-                    send_queue->push(Control::event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
+                    send_queue->push(f_event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
                 }
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
-                SendToAllButOne(event::create_chat_msg_event(EVENT_TYPE_LOBBY_CHAT_MSG, lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
                 free(msg_buf);
                 return;
             }
@@ -68,7 +68,7 @@ namespace Control {
                 user_client_ids[i] = 0;
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
-                SendToAllButOne(event::create_chat_msg_event(EVENT_TYPE_LOBBY_CHAT_MSG, lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
                 free(msg_buf);
                 return;
             }
@@ -76,11 +76,12 @@ namespace Control {
         printf("[ERROR] could not find user to remove from lobby\n");
     }
 
-    void Lobby::HandleEvent(event e)
+    void Lobby::HandleEvent(f_any_event e)
     {
         switch (e.type) {
             //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
             case EVENT_TYPE_GAME_LOAD: {
+                auto ce = e.cast<f_event_game_load>();
                 // reset everything in case we can't find the game later on
                 if (the_game) {
                     the_game->methods->destroy(the_game);
@@ -90,9 +91,9 @@ namespace Control {
                 // find game in games catalogue by provided strings
                 bool game_found = false;
                 uint32_t base_game_idx = 0;
-                const char* base_game_name = static_cast<char*>(e.raw_data);
+                const char* base_game_name = ce.base_name;
                 uint32_t game_variant_idx = 0;
-                const char* game_variant_name = static_cast<char*>(e.raw_data)+strlen(base_game_name)+1;
+                const char* game_variant_name = ce.variant_name;
                 for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
                     if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
                         game_found = true;
@@ -136,17 +137,19 @@ namespace Control {
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
             } break;
-            case EVENT_TYPE_GAME_IMPORT_STATE: {
+            case EVENT_TYPE_GAME_STATE: {
+                auto ce = e.cast<f_event_game_state>();
                 if (!the_game) {
                     printf("[WARN] attempted state import on null game\n");
                     break;
                 }
-                the_game->methods->import_state(the_game, static_cast<char*>(e.raw_data));
-                printf("[INFO] game state imported: %s\n", static_cast<char*>(e.raw_data));
+                the_game->methods->import_state(the_game, ce.state);
+                printf("[INFO] game state imported: %s\n", ce.state);
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
             } break;
             case EVENT_TYPE_GAME_MOVE: {
+                auto ce = e.cast<f_event_game_move>();
                 if (!the_game) {
                     printf("[WARN] attempted move on null game\n");
                     break;
@@ -154,7 +157,7 @@ namespace Control {
                 player_id pbuf[253];
                 uint8_t pbuf_cnt = 253;
                 the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf); //FIXME ptm
-                the_game->methods->make_move(the_game, pbuf[0], e.move.code);
+                the_game->methods->make_move(the_game, pbuf[0], ce.code);
                 the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                 printf("[INFO] game move made\n");
                 if (pbuf_cnt == 0) {
@@ -168,27 +171,24 @@ namespace Control {
                 SendToAllButOne(e, e.client_id);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_MSG: {
-                // get data from msg
-                //TODO this should use the future get event info struct thing
-                //TODO also these casts are hideous
-                uint32_t* m_msg_id = reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data));
-                uint32_t* m_client_id = reinterpret_cast<uint32_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t));
-                uint64_t* m_timestamp = reinterpret_cast<uint64_t*>(static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2);
-                char* m_text = static_cast<char*>(e.raw_data)+sizeof(uint32_t)*2+sizeof(uint64_t);
-                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.client_id, m_text);
-                *m_msg_id = lobby_msg_id_ctr++;
-                *m_client_id = e.client_id;
-                *m_timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
+                auto ce = e.cast<f_event_chat_msg>();
+                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.client_id, ce.text);
+                ce.msg_id = lobby_msg_id_ctr++;
+                ce.author_client_id = e.client_id;
+                ce.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
                 SendToAllButOne(e, 0);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_DEL: {
                 SendToAllButOne(e, 0);
             } break;
+            default: {
+                printf("[WARN] lobby received unexpected event type %d\n", e.type);
+            } break;
         }
     }
 
-    void Lobby::SendToAllButOne(event e, uint32_t excluded_client_id)
+    void Lobby::SendToAllButOne(f_any_event e, uint32_t excluded_client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == 0 || user_client_ids[i] == excluded_client_id) {

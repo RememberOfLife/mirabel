@@ -26,7 +26,7 @@ namespace MetaGui {
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(212, 81, 81, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
             if (ImGui::Button("EXIT")) {
-                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_EXIT));
+                Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_EXIT));
             }
             ImGui::PopStyleColor(3);
             ImGui::SetItemDefaultFocus();

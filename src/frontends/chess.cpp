@@ -113,7 +113,7 @@ namespace Frontends {
                                     the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
                                     for (int i = 0; i < move_cnt; i++) {
                                         if (moves[i] == target_move) {
-                                            Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, target_move));
+                                            Control::main_client->inbox.push(Control::f_event_game_move(target_move));
                                             break;
                                         }
                                     }
@@ -138,7 +138,7 @@ namespace Frontends {
                                         the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
                                         for (int i = 0; i < move_cnt; i++) {
                                             if (moves[i] == target_move) {
-                                                Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, target_move));
+                                                Control::main_client->inbox.push(Control::f_event_game_move(target_move));
                                                 break;
                                             }
                                         }

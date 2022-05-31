@@ -117,7 +117,7 @@ namespace Frontends {
                                 the_game_int->get_cell(the_game, x, y, &cp);
                                 if (board_buttons[y*board_sizer+x].hovered && board_buttons[y*board_sizer+x].mousedown && cp == 0) {
                                     uint64_t move_code = y | (x<<8);
-                                    Control::main_client->inbox.push(Control::event::create_move_event(Control::EVENT_TYPE_GAME_MOVE, move_code));
+                                    Control::main_client->inbox.push(Control::f_event_game_move(move_code));
                                 }
                                 board_buttons[y*board_sizer+x].mousedown = false;
                             }

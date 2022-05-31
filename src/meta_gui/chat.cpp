@@ -95,7 +95,7 @@ namespace MetaGui {
             {
                 if (ImGui::Selectable("Delete")) {
                     if (Control::main_client->network_send_queue) {
-                        Control::main_client->network_send_queue->push(Control::event::create_chat_del_event(Control::EVENT_TYPE_LOBBY_CHAT_DEL, chat_log[i].msg_id));
+                        Control::main_client->network_send_queue->push(Control::f_event_chat_del(chat_log[i].msg_id));
                     } else {
                         chat_msg_del(chat_log[i].msg_id);
                     }
@@ -135,8 +135,7 @@ namespace MetaGui {
             }
             if (strlen(msg_start) > 0) {
                 if (Control::main_client->network_send_queue) {
-                    Control::main_client->network_send_queue->push(Control::event::create_chat_msg_event(
-                        Control::EVENT_TYPE_LOBBY_CHAT_MSG, 0, 0, 0, msg_start));
+                    Control::main_client->network_send_queue->push(Control::f_event_chat_msg(0, 0, 0, msg_start));
                 } else {
                     chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), msg_start);
                 }

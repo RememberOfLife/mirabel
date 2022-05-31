@@ -85,8 +85,7 @@ namespace Games {
                             size_t game_state_buffer_len = game_clone->sizer.state_str;
                             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                            Control::main_client->inbox.push(
-                                Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                            Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
                             game_clone->methods->destroy(game_clone);
                             free(game_clone);
                         }
@@ -126,8 +125,7 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(
-                        Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                    Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
@@ -163,8 +161,7 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(
-                        Control::event(Control::EVENT_TYPE_GAME_IMPORT_STATE, game_state_buffer_len, game_state_buffer));
+                    Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
