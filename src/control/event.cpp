@@ -10,33 +10,25 @@
 
 #include "control/event.hpp"
 
-#include <atomic>//REMOVE
 namespace Control {
 
-    //REMOVE
-    uint32_t get_global_event_id()
-    {
-        static std::atomic_uint32_t global_event_id(0);
-        return global_event_id.fetch_add(1);
-    }
+    f_event::f_event():
+        type(EVENT_TYPE_NULL),
+        client_id(CLIENT_NONE),
+        lobby_id(LOBBY_NONE)
+    {}
 
-    f_event::f_event()
-    {
-        type = EVENT_TYPE_NULL;
-        client_id = 0;
-    }
+    f_event::f_event(EVENT_TYPE _type):
+        type(_type),
+        client_id(CLIENT_NONE),
+        lobby_id(LOBBY_NONE)
+    {}
 
-    f_event::f_event(EVENT_TYPE _type)
-    {
-        type = _type;
-        client_id = 0;
-    }
-
-    f_event::f_event(EVENT_TYPE _type, uint32_t _client_id)
-    {
-        type = _type;
-        client_id = _client_id;
-    }
+    f_event::f_event(EVENT_TYPE _type, uint32_t _client_id):
+        type(_type),
+        client_id(_client_id),
+        lobby_id(LOBBY_NONE)
+    {}
 
     // copy construct
     // deep copy everything from other into self
@@ -51,10 +43,11 @@ namespace Control {
     // take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
     f_event::f_event(f_event&& other)
     {
-        //TODO user proper move operation, for now copy and destroy old
-        //TODO delete self
-        event_copy(this, &other);
-        other.zero();
+        memcpy(this, &other, event_raw_size(&other));
+        #if !NDEBUG
+        memset(&other, 0x00, event_raw_size(&other));
+        #endif
+        other.type = EVENT_TYPE_NULL;
     }
 
     // copy assign
@@ -73,23 +66,58 @@ namespace Control {
     // deep delete self owned resources, then take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
     f_event& f_event::operator=(f_event&& other)
     {
-        //TODO user proper move operation, for now copy and destroy old
-        //TODO delete self
-        event_copy(this, &other);
-        other.zero();
+        memcpy(this, &other, event_raw_size(&other));
+        #if !NDEBUG
+        memset(&other, 0x00, event_raw_size(&other));
+        #endif
+        other.type = EVENT_TYPE_NULL;
         return *this;
     }
     
     f_event::~f_event()
     {
-        //TODO somehow this causes double frees?
-        // event_destroy(this);
+        if (type == EVENT_TYPE_USER_AUTHN) {
+            int i = 0;
+        }
+        event_destroy(this);
     }
 
     void f_event::zero()
     {
-        // event_destroy(this);
+        event_destroy(this);
         type = EVENT_TYPE_NULL;
+    }
+
+    f_any_event::f_any_event():
+        f_event()
+    {}
+
+    f_any_event::f_any_event(EVENT_TYPE _type):
+        f_event(_type)
+    {}
+
+    f_any_event::f_any_event(EVENT_TYPE _type, uint32_t _client_id):
+        f_event(_type, _client_id)
+    {}
+
+    f_any_event::f_any_event(const f_event& other) // copy construct
+    {
+        new(this) f_event(other);
+    }
+
+    f_any_event::f_any_event(f_event&& other) // move construct
+    {
+        new(this) f_event(std::forward<f_event>(other));
+    }
+
+    f_any_event& f_any_event::operator=(const f_event& other) // copy assign
+    {
+        return (f_any_event&)((f_event*)this)->operator=(other);
+    }
+
+    f_any_event& f_any_event::operator=(f_event&& other) // move assign
+    {
+        return (f_any_event&)((f_event*)this)->operator=(std::forward<f_event>(other));
     }
 
     f_event_heartbeat::f_event_heartbeat(EVENT_TYPE _type, uint32_t _id, uint32_t _time):

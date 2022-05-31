@@ -59,7 +59,7 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        t_tc.inbox.push(EVENT_TYPE_EXIT);
+        t_tc.inbox.push(f_event(EVENT_TYPE_EXIT));
         t_tc.join();
     }
 

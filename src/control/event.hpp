@@ -63,6 +63,9 @@ namespace Control {
         EVENT_TYPE_COUNT,
     };
 
+    static const uint32_t CLIENT_NONE = 0; // for local or server messages
+    static const uint32_t LOBBY_NONE = 0;
+
     //TODO pack with
     // #pragma pack(1)
     // typedef struct {
@@ -72,22 +75,12 @@ namespace Control {
     // struct event : public event_netdata { ... }
 
 
-
-        // static event create_heartbeat_event(uint32_t type, uint32_t id, uint32_t time = 0);
-        // static event create_game_event(uint32_t type, const char* base_game, const char* base_game_variant); //TODO opts
-        // static event create_move_event(uint32_t type, uint64_t code);
-        // static event create_frontend_event(uint32_t type, Frontends::Frontend* frontend);
-        // static event create_user_auth_event(uint32_t type, uint32_t client_id, bool is_guest, const char* username, const char* password);
-        // static event create_chat_msg_event(uint32_t type, uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text);
-        // static event create_chat_del_event(uint32_t type, uint32_t msg_id);
-    
-    //TODO set const for client_none i.e. local or server messages
-
     struct f_event {
         
         EVENT_TYPE type;
         uint32_t client_id;
         uint32_t lobby_id;
+        uint32_t _padding;
 
         f_event();
         f_event(EVENT_TYPE _type);
@@ -107,6 +100,16 @@ namespace Control {
 
     };
 
+#define MANAGED_EVENT(f_event_name)                                                  \
+inline f_event_name(const f_event_name& other)                                       \
+{ new(this) f_event(other); }                                                        \
+inline f_event_name(f_event_name&& other)                                            \
+{ new(this) f_event(std::forward<f_event>(other)); }                                 \
+inline f_event_name& operator=(const f_event_name& other)                            \
+{ return (f_event_name&)((f_event*)this)->operator=(other); }                        \
+inline f_event_name& operator=(f_event_name&& other)                                 \
+{ return (f_event_name&)((f_event*)this)->operator=(std::forward<f_event>(other)); } \
+
     struct f_event_heartbeat : public f_event {
         uint32_t id;
         uint32_t time;
@@ -118,6 +121,7 @@ namespace Control {
         char* base_name;
         char* variant_name;
 
+        MANAGED_EVENT(f_event_game_load);
         typedef event_string_serializer<f_event_game_load, 
             &f_event_game_load::base_name,
             &f_event_game_load::variant_name
@@ -129,6 +133,7 @@ namespace Control {
     struct f_event_game_state : public f_event {
         char* state;
 
+        MANAGED_EVENT(f_event_game_state);
         typedef event_string_serializer<f_event_game_state, 
             &f_event_game_state::state
         > serializer;
@@ -162,6 +167,7 @@ namespace Control {
         char* username;
         char* password;
 
+        MANAGED_EVENT(f_event_auth);
         typedef event_string_serializer<f_event_auth, 
             &f_event_auth::username,
             &f_event_auth::password
@@ -173,6 +179,7 @@ namespace Control {
     struct f_event_auth_fail : public f_event {
         char* reason;
 
+        MANAGED_EVENT(f_event_auth_fail);
         typedef event_string_serializer<f_event_auth_fail, 
             &f_event_auth_fail::reason
         > serializer;
@@ -186,6 +193,7 @@ namespace Control {
         uint64_t timestamp;
         char* text;
 
+        MANAGED_EVENT(f_event_chat_msg);
         typedef event_string_serializer<f_event_chat_msg, 
             &f_event_chat_msg::text
         > serializer;
@@ -207,7 +215,7 @@ namespace Control {
         static constexpr EVENT_TYPE event_type = TYPE;
         typedef EVENT event_t;
     };
-    //TODO put all these things (excl. catalgue) into seperrate header
+    //TODO put all these things (excl. catalgue) into separate header
     template<class ...EVENTS>
     struct event_catalogue {
 
@@ -249,6 +257,25 @@ namespace Control {
         static event_serializer* get_event_serializer(EVENT_TYPE type)
         {
             return get_event_serializer_impl<void, EVENTS...>(type);
+        }
+
+        template<class X, class FIRST, class ...REST>
+        static size_t get_event_raw_size_impl(EVENT_TYPE type)
+        {
+            if (FIRST::event_type == type) {
+                return sizeof(typename FIRST::event_t);
+            }
+            return get_event_raw_size_impl<X, REST...>(type);
+        }
+        template<class X>
+        static size_t get_event_raw_size_impl(EVENT_TYPE type)
+        {
+            assert(0 && "not a valid type");
+            return 0;
+        }
+        static size_t get_event_raw_size(EVENT_TYPE type)
+        {
+            return get_event_raw_size_impl<void, EVENTS...>(type);
         }
 
     };
@@ -298,27 +325,30 @@ namespace Control {
     // f_any_event is as large as the largest event
     // use for arbitrary events, event arrays and deserialization where type and size are unknown
     struct f_any_event : public f_event {
+        MANAGED_EVENT(f_any_event);
+
         private:
-            char _padding[100/*EVENT_CATALGOUE::event_max_size() - sizeof(f_event)*/];
+
+            char _padding[64/*EVENT_CATALGOUE::event_max_size() - sizeof(f_event)*/]; //TODO clang has a wrongful error here
+
         public:
-            f_any_event()
-            {}
-            template<class EVENT>
-            f_any_event(EVENT e)
-            {
-                memcpy(this, &e, sizeof(e));
-            }
-            template<class EVENT>
-            void operator=(EVENT e)
-            {
-                memcpy(this, &e, sizeof(e));
-            }
+
+            f_any_event();
+            f_any_event(EVENT_TYPE _type);
+            f_any_event(EVENT_TYPE _type, uint32_t _client_id);
+
+            f_any_event(const f_event& other); // copy construct
+            f_any_event(f_event&& other); // move construct
+            f_any_event& operator=(const f_event& other); // copy assign
+            f_any_event& operator=(f_event&& other); // move assign
+
             template<class EVENT>
             EVENT& cast()
             {
                 return *(EVENT*)this;
             }
             //TODO deserialize here
+
     };
 
     //TODO get event serializer wrapper
@@ -332,6 +362,11 @@ namespace Control {
     static size_t event_size(f_event* e)
     {
         return EVENT_CATALGOUE::get_event_serializer(e->type)->size(e);
+    }
+
+    static size_t event_raw_size(f_event* e)
+    {
+        return EVENT_CATALGOUE::get_event_raw_size(e->type);
     }
 
     static void event_serialize(f_event* e, void* buf)

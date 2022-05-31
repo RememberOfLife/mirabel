@@ -15,7 +15,8 @@ namespace Control {
         std::mutex m;
         std::deque<f_any_event> q;
         std::condition_variable cv;
-        void push(f_any_event e);
+        void push(f_any_event& e);
+        void push(f_any_event&& e);
         f_any_event pop(uint32_t timeout_ms = 0); // wait until timeout or event to pop available, non blocking if 0, returns NULL event if none available
         f_any_event peek();
         uint32_t size();

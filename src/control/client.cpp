@@ -39,7 +39,7 @@ namespace Control {
 
         // start watchdog so it can oversee explicit construction
         t_tc.start();
-        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
+        // tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
@@ -159,7 +159,7 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        t_tc.inbox.push(EVENT_TYPE_EXIT);
+        t_tc.inbox.push(f_event(EVENT_TYPE_EXIT));
         t_tc.join();
     }
 
@@ -383,7 +383,7 @@ namespace Control {
                         strcpy(MetaGui::conn_info.username, ce.username); // set username in authinfo, as received, may be assigned guest name
                         //TODO should probably store it somewhere else too
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_DONE;
-                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED));
                     } break;
                     case EVENT_TYPE_USER_AUTHFAIL: {
                         auto ce = e.cast<f_event_auth_fail>();
@@ -394,7 +394,7 @@ namespace Control {
                             ce.reason = NULL;
                         }
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
-                        inbox.push(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED);
+                        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED));
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);

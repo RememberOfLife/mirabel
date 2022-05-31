@@ -15,7 +15,6 @@ namespace Control {
 
     struct event_serializer {
         static const bool is_plain = false;
-        //TODO plain size? for move
         virtual size_t size(f_event* e) = 0;
         virtual void serialize(f_event* e, void** buf) = 0;
         virtual int deserialize(f_event* e, void** buf, void* buf_end) = 0;

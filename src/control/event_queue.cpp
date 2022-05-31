@@ -11,10 +11,16 @@
 namespace Control {
 
     
-        void event_queue::push(f_any_event e)
+        void event_queue::push(f_any_event& e)
+        {
+            f_any_event the_e = e;
+            push(std::move(the_e));
+        }
+
+        void event_queue::push(f_any_event&& e)
         {
             m.lock();
-            q.push_back(e);
+            q.push_back(std::forward<f_any_event>(e));
             cv.notify_all();
             m.unlock();
         }
@@ -28,11 +34,11 @@ namespace Control {
                 }
                 if (q.size() == 0) {
                     // queue has no available events after timeout, return null event
-                    return f_event();
+                    return f_any_event();
                 }
                 // go on to output an available event if one has become available
             }
-            f_any_event r = q.front();
+            f_any_event r = std::move(q.front());
             q.pop_front();
             return r;
         }
@@ -42,9 +48,9 @@ namespace Control {
             m.lock();
             if (q.size() == 0) {
                 m.unlock();
-                return f_event();
+                return f_any_event();
             }
-            f_any_event r = q.front();
+            f_any_event r = std::move(q.front());
             m.unlock();
             return r;
         }
