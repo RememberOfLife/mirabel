@@ -31,7 +31,7 @@ namespace Network {
             char* server_address;
             uint16_t server_port;
             SDLNet_SocketSet socketset = NULL;
-            connection conn; // client id starts out as 0 before reassignment
+            connection conn; // client id starts out as CLIENT_NONE before reassignment
 
         public:
             Control::event_queue send_queue;

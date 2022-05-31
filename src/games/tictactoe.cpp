@@ -85,7 +85,7 @@ namespace Games {
                             size_t game_state_buffer_len = game_clone->sizer.state_str;
                             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                            Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
+                            Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
                             game_clone->methods->destroy(game_clone);
                             free(game_clone);
                         }
@@ -125,7 +125,7 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
+                    Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
@@ -161,7 +161,7 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(Control::f_event_game_state(0, game_state_buffer));
+                    Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }

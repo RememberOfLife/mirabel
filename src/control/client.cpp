@@ -39,7 +39,7 @@ namespace Control {
 
         // start watchdog so it can oversee explicit construction
         t_tc.start();
-        // tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
+        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
@@ -244,7 +244,7 @@ namespace Control {
                         the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
                         frontend->set_game(the_game);
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == 0) {
+                        if (network_send_queue && e.client_id == CLIENT_NONE) {
                             network_send_queue->push(e);
                         }
                     } break;
@@ -256,7 +256,7 @@ namespace Control {
                         }
                         the_game = NULL;
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == 0) {
+                        if (network_send_queue && e.client_id == CLIENT_NONE) {
                             network_send_queue->push(e);
                         }
                     } break;
@@ -268,7 +268,7 @@ namespace Control {
                         }
                         the_game->methods->import_state(the_game, ce.state);
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == 0) {
+                        if (network_send_queue && e.client_id == CLIENT_NONE) {
                             network_send_queue->push(e);
                         }
                     } break;
@@ -291,7 +291,7 @@ namespace Control {
                             MetaGui::logf("game done: winner is player %d\n", pbuf[0]);
                         }
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == 0) {
+                        if (network_send_queue && e.client_id == CLIENT_NONE) {
                             network_send_queue->push(e);
                         }
                     } break;
@@ -343,7 +343,7 @@ namespace Control {
                         }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
                         // request auth info from server
-                        t_network->send_queue.push(f_event_auth(EVENT_TYPE_USER_AUTHINFO, 0, true, NULL, NULL));
+                        t_network->send_queue.push(f_event_auth(EVENT_TYPE_USER_AUTHINFO, CLIENT_NONE, true, NULL, NULL));
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
                         auto ce = e.cast<f_event_ssl_thumbprint>();

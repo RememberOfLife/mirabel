@@ -71,10 +71,10 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
-* actually use event copy move and destroy, currently likely leaking lots of events everywhere
+* exiting the client segfaults
+* chat colors and delete is broken again
 * about window with version etc, also cmd line switch for version
 * add option to use different imgui font
-* finalize event rework by using it everywhere
 * super basic plugin manager
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
   * closing status line in the connection window

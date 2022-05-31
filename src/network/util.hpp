@@ -5,6 +5,7 @@
 #include "SDL_net.h"
 #include <openssl/ssl.h>
 
+#include "control/event.hpp"
 #include "network/protocol.hpp"
 
 namespace Network {
@@ -25,7 +26,7 @@ namespace Network {
         SSL* ssl_session;
         BIO* send_bio; // ssl writes into this, we read and send out over the socket
         BIO* recv_bio; // we dump socket recv data here and make ssl read from this
-        connection(uint32_t client_id = 0); // construct empty and NULL
+        connection(uint32_t client_id = Control::CLIENT_NONE); // construct empty and NULL
         void reset();
     };
 

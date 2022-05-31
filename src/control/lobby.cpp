@@ -22,7 +22,7 @@ namespace Control {
         user_client_ids(static_cast<uint32_t*>(malloc(max_users*sizeof(uint32_t))))
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            user_client_ids[i] = 0;
+            user_client_ids[i] = CLIENT_NONE;
         }
     }
 
@@ -37,7 +37,7 @@ namespace Control {
     void Lobby::AddUser(uint32_t client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == 0) {
+            if (user_client_ids[i] == CLIENT_NONE) {
                 user_client_ids[i] = client_id;
                 if (the_game) {
                     // send sync info to user, load + state import
@@ -53,7 +53,7 @@ namespace Control {
                 }
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -65,10 +65,10 @@ namespace Control {
     {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == client_id) {
-                user_client_ids[i] = 0;
+                user_client_ids[i] = CLIENT_NONE;
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), 0);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -177,10 +177,10 @@ namespace Control {
                 ce.author_client_id = e.client_id;
                 ce.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
-                SendToAllButOne(e, 0);
+                SendToAllButOne(e, CLIENT_NONE);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                SendToAllButOne(e, 0);
+                SendToAllButOne(e, CLIENT_NONE);
             } break;
             default: {
                 printf("[WARN] lobby received unexpected event type %d\n", e.type);
@@ -191,7 +191,7 @@ namespace Control {
     void Lobby::SendToAllButOne(f_any_event e, uint32_t excluded_client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == 0 || user_client_ids[i] == excluded_client_id) {
+            if (user_client_ids[i] == CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
                 continue;
             }
             e.client_id = user_client_ids[i];

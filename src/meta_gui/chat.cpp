@@ -77,7 +77,7 @@ namespace MetaGui {
         // display chat history
         for (int i = 0; i < chat_log.size(); i++) {
             bool colored = false;
-            if (chat_log[i].client_id == 0 || chat_log[i].msg_id == UINT32_MAX) {
+            if (chat_log[i].client_id == Control::CLIENT_NONE || chat_log[i].msg_id == UINT32_MAX) {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255)); // self/deleted messages are gray
                 colored = true;
             } else if (chat_log[i].client_id == UINT32_MAX) {

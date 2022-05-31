@@ -112,7 +112,7 @@ namespace Network {
             }
             // check if there is still space for a new client connection
             connection* connection_slot = NULL;
-            uint32_t connection_id = 0;
+            uint32_t connection_id = Control::CLIENT_NONE;
             for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                 if (client_connections[i].socket == NULL) {
                     connection_slot = &(client_connections[i]);

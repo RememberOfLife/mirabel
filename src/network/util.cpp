@@ -23,7 +23,7 @@ namespace Network {
     {
         state = PROTOCOL_CONNECTION_STATE_NONE;
         socket = NULL;
-        client_id = 0;
+        client_id = Control::CLIENT_NONE;
         ssl_session = NULL;
         send_bio = NULL;
         recv_bio = NULL;

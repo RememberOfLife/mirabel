@@ -246,7 +246,7 @@ namespace MetaGui {
                     }
                     if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
                         Control::main_client->t_network->send_queue.push(Control::f_event_auth(
-                            Control::EVENT_TYPE_USER_AUTHN, 0, false, conn_info.username, conn_info.password));
+                            Control::EVENT_TYPE_USER_AUTHN, Control::CLIENT_NONE, false, conn_info.username, conn_info.password));
                         conn_info.authentication = RUNNING_STATE_ONGOING;
                         free(conn_info.authfail_reason);
                         conn_info.authfail_reason = NULL;
@@ -261,7 +261,7 @@ namespace MetaGui {
                     }
                     if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
                         Control::main_client->t_network->send_queue.push(Control::f_event_auth(
-                            Control::EVENT_TYPE_USER_AUTHN, 0, true, conn_info.username, conn_info.password));
+                            Control::EVENT_TYPE_USER_AUTHN, Control::CLIENT_NONE, true, conn_info.username, conn_info.password));
                         conn_info.authentication = RUNNING_STATE_ONGOING;
                         free(conn_info.authfail_reason);
                         conn_info.authfail_reason = NULL;
