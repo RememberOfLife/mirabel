@@ -80,11 +80,11 @@ namespace MetaGui {
             if (chat_log[i].client_id == Control::CLIENT_NONE || chat_log[i].msg_id == UINT32_MAX) {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255)); // self/deleted messages are gray
                 colored = true;
-            } else if (chat_log[i].client_id == UINT32_MAX) {
+            } else if (chat_log[i].client_id == Control::CLIENT_SERVER) {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(88, 255, 113, 255)); // server messages are green
                 colored = true;
             }
-            if (chat_log[i].client_id == UINT32_MAX) {
+            if (chat_log[i].client_id == Control::CLIENT_SERVER) {
                 ImGui::TextWrapped("[%09lu] %s", chat_log[i].timestamp, chat_log[i].text);
             } else {
                 ImGui::TextWrapped("[%09lu] %d: %s", chat_log[i].timestamp, chat_log[i].client_id, chat_log[i].text);

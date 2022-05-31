@@ -63,7 +63,8 @@ namespace Control {
         EVENT_TYPE_COUNT,
     };
 
-    static const uint32_t CLIENT_NONE = 0; // for local or server messages
+    static const uint32_t CLIENT_NONE = 0; // none / local
+    static const uint32_t CLIENT_SERVER = UINT32_MAX;
     static const uint32_t LOBBY_NONE = 0;
 
     //TODO pack with

@@ -53,7 +53,7 @@ namespace Control {
                 }
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, CLIENT_SERVER, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -68,7 +68,7 @@ namespace Control {
                 user_client_ids[i] = CLIENT_NONE;
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, UINT32_MAX, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
+                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, CLIENT_SERVER, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -177,7 +177,7 @@ namespace Control {
                 ce.author_client_id = e.client_id;
                 ce.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
-                SendToAllButOne(e, CLIENT_NONE);
+                SendToAllButOne(ce, CLIENT_NONE);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_DEL: {
                 SendToAllButOne(e, CLIENT_NONE);
@@ -195,7 +195,7 @@ namespace Control {
                 continue;
             }
             e.client_id = user_client_ids[i];
-            send_queue->push(e); //TODO make sure this is copied and not moved
+            send_queue->push(e);
         }
     }
 

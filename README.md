@@ -72,7 +72,6 @@ Collect more general resources:
 
 ## todo
 * exiting the client segfaults
-* chat colors and delete is broken again
 * about window with version etc, also cmd line switch for version
 * add option to use different imgui font
 * super basic plugin manager

@@ -209,6 +209,7 @@ namespace Network {
                     if (write_len > base_buffer_size) {
                         data_buffer = (uint8_t*)malloc(write_len);
                     }
+
                     Control::event_serialize(&e, data_buffer);
                     int wrote_len = SSL_write(target_client->ssl_session, data_buffer, write_len);
                     if (wrote_len != write_len) {
