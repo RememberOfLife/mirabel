@@ -76,9 +76,6 @@ namespace Control {
     
     f_event::~f_event()
     {
-        if (type == EVENT_TYPE_USER_AUTHN) {
-            int i = 0;
-        }
         event_destroy(this);
     }
 
@@ -126,11 +123,12 @@ namespace Control {
         time(_time)
     {}
 
-    f_event_game_load::f_event_game_load(const char* _base_name, const char* _variant_name):
+    f_event_game_load::f_event_game_load(const char* _base_name, const char* _variant_name, const char* _options):
         f_event(EVENT_TYPE_GAME_LOAD)
     {
         base_name = _base_name ? strdup(_base_name) : NULL;
         variant_name = _variant_name ? strdup(_variant_name) : NULL;
+        options = _options ? strdup(_options) : NULL;
     }
 
     f_event_game_state::f_event_game_state(uint32_t _client_id, const char* _state):
@@ -153,10 +151,7 @@ namespace Control {
         f_event(_type),
         thumbprint_len(0),
         thumbprint(NULL)
-    {
-        //TODO for with thumbprint
-        //REMOVE
-    }
+    {}
 
     f_event_auth::f_event_auth(EVENT_TYPE _type, uint32_t _client_id, bool _is_guest, const char* _username, const char* _password):
         f_event(_type, _client_id),

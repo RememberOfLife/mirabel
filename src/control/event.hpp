@@ -121,14 +121,16 @@ inline f_event_name& operator=(f_event_name&& other)                            
     struct f_event_game_load : public f_event {
         char* base_name;
         char* variant_name;
+        char* options;
 
         MANAGED_EVENT(f_event_game_load);
         typedef event_string_serializer<f_event_game_load, 
             &f_event_game_load::base_name,
-            &f_event_game_load::variant_name
+            &f_event_game_load::variant_name,
+            &f_event_game_load::options
         > serializer;
 
-        f_event_game_load(const char* _base_name, const char* _name_variant);
+        f_event_game_load(const char* _base_name, const char* _name_variant, const char* _options);
     };
 
     struct f_event_game_state : public f_event {
@@ -144,7 +146,7 @@ inline f_event_name& operator=(f_event_name&& other)                            
 
     struct f_event_game_move : public f_event {
         move_code code;
-        //TODO use move string instead
+        //TODO use move string instead?
 
         f_event_game_move(move_code _code);
     };
@@ -161,6 +163,7 @@ inline f_event_name& operator=(f_event_name&& other)                            
         void* thumbprint;
 
         f_event_ssl_thumbprint(EVENT_TYPE _type);
+        //TODO for with thumbprint
     };
 
     struct f_event_auth : public f_event {

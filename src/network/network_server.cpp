@@ -215,7 +215,7 @@ namespace Network {
                     if (wrote_len != write_len) {
                         printf("[WARN] ssl write failed\n");
                     } else {
-                        printf("[INFO] wrote event, type %d, len %d\n", e.type, write_len);
+                        printf("[----] wrote event, type %d, len %d\n", e.type, write_len);
                     }
                     if (data_buffer != data_buffer_base) {
                         free(data_buffer);
@@ -256,7 +256,7 @@ namespace Network {
                         if (sent_len != send_len) {
                             printf("[WARN] packet sending failed\n");
                         } else {
-                            printf("[INFO] sent %d bytes of data to client id %d\n", sent_len, e.client_id);
+                            printf("[----] sent %d bytes of data to client id %d\n", sent_len, e.client_id);
                         }
                     }
                 } break;
@@ -413,7 +413,7 @@ namespace Network {
                             send_queue.push(Control::f_event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.client_id));
                         } break;
                         default: {
-                            printf("[INFO] received event from client id %d, type: %d\n", ready_client->client_id, recv_event.type);
+                            printf("[----] received event from client id %d, type: %d\n", ready_client->client_id, recv_event.type);
                             recv_queue->push(recv_event);
                         } break;
                     }

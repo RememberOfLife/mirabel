@@ -22,7 +22,7 @@ namespace Games {
             TicTacToe::~TicTacToe()
             {}
 
-            game* TicTacToe::new_game()
+            game* TicTacToe::new_game(const char* options)
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{

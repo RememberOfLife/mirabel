@@ -41,7 +41,7 @@ namespace Control {
                 user_client_ids[i] = client_id;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    f_any_event e_load = f_event_game_load(base_game, game_variant);
+                    f_any_event e_load = f_event_game_load(base_game, game_variant, game_options);
                     e_load.client_id = client_id;
                     send_queue->push(e_load);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
@@ -115,15 +115,17 @@ namespace Control {
                     printf("[WARN] failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
                     break;
                 }
-                the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                game_options = ce.options ? strdup(ce.options) : NULL;
+                the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(game_options);
                 // update game name strings
-                free(base_game);
-                free(game_variant);
-                base_game = (char*)malloc(strlen(base_game_name)+1);
-                game_variant = (char*)malloc(strlen(game_variant_name)+1);
-                strcpy(base_game, base_game_name);
-                strcpy(game_variant, game_variant_name);
-                printf("[INFO] game loaded: %s.%s\n", base_game_name, game_variant_name);
+                base_game = strdup(base_game_name);
+                game_variant = strdup(game_variant_name);
+                printf("[INFO] game loaded: %s.%s", base_game_name, game_variant_name);
+                if (game_options) {
+                    printf(" with options: %s\n", game_options);
+                } else {
+                    printf("\n");
+                }
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);
             } break;
@@ -133,6 +135,12 @@ namespace Control {
                     free(the_game);
                 }
                 the_game = NULL;
+                free(base_game);
+                free(game_variant);
+                free(game_options);
+                base_game = NULL;
+                game_variant = NULL;
+                game_options = NULL;
                 printf("[INFO] game unloaded\n");
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.client_id);

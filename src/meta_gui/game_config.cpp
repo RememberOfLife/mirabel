@@ -31,7 +31,7 @@ namespace MetaGui {
         //HACK options are currently still just buffered by the base_game_variant class that provides the new game, this will not work for network loads, because they do not have options set yet
         if (game_running) {
             if (ImGui::Button("Restart")) {
-                Control::main_client->inbox.push(Control::f_event_game_load(Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name));
+                Control::main_client->inbox.push(Control::f_event_game_load(Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, NULL));
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
@@ -39,7 +39,7 @@ namespace MetaGui {
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::f_event_game_load(Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name));
+                Control::main_client->inbox.push(Control::f_event_game_load(Games::game_catalogue[base_game_idx].name, Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, NULL));
             }
         }
         if (game_running) {

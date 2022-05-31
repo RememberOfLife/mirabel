@@ -18,7 +18,7 @@ namespace Games {
             TicTacToe_Ultimate::~TicTacToe_Ultimate()
             {}
 
-            game* TicTacToe_Ultimate::new_game()
+            game* TicTacToe_Ultimate::new_game(const char* options)
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{

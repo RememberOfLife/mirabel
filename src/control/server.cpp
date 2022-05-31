@@ -125,11 +125,11 @@ namespace Control {
                             break;
                         }
                     }
-                    if (strlen(ce.username) > 1 && strlen(ce.username) <= 3) { // <= to account for zero terminator
+                    if (strlen(ce.username) > 0 && strlen(ce.username) < 3) {
                         network_send_queue->push(f_event_auth_fail(e.client_id, "name < 3 characters"));
                         break;
                     }
-                    if (strlen(ce.username) <= 1) {
+                    if (strlen(ce.username) == 0) {
                         free(ce.username);
                         static fast_prng rng(123);
                         const int assigned_length = 5;

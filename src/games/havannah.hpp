@@ -17,7 +17,7 @@ namespace Games {
             Havannah();
             ~Havannah();
 
-            game* new_game() override;
+            game* new_game(const char* options) override;
             void draw_options() override;
             void draw_state_editor(game* abstract_game) override;
             const char* description() override;

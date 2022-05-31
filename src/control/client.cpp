@@ -22,7 +22,6 @@
 #include "control/timeout_crash.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
-#include "frontends/tictactoe.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "network/protocol.hpp"
@@ -42,13 +41,12 @@ namespace Control {
         tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         // setup SDL
-        if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0)
-        {
+        if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0) {
             fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
             exit(1);
         }
         // setup SDL_net
-        if ( SDLNet_Init() < 0 ) {
+        if (SDLNet_Init() < 0 ) {
             SDL_Quit();
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(1);
@@ -242,10 +240,16 @@ namespace Control {
                         MetaGui::game_variant_idx = game_variant_idx;
                         // actually load the game
                         the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                        if (the_game->methods->export_options_str) {
+                            // options have been set already by the catalogue through the game config, now export options for server
+                            size_t options_len = the_game->sizer.options_str;
+                            ce.options = (char*)malloc(options_len);
+                            the_game->methods->export_options_str(the_game, &options_len, ce.options);
+                        }
                         frontend->set_game(the_game);
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == CLIENT_NONE) {
-                            network_send_queue->push(e);
+                        if (network_send_queue && ce.client_id == CLIENT_NONE) {
+                            network_send_queue->push(ce);
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {

@@ -17,6 +17,7 @@ namespace Control {
             // uint64_t id;
             char* base_game;
             char* game_variant;
+            char* game_options;
             game* the_game;
             // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user 
             uint16_t max_users;

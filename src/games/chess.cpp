@@ -19,7 +19,7 @@ namespace Games {
             Chess::~Chess()
             {}
 
-            game* Chess::new_game()
+            game* Chess::new_game(const char* options)
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{

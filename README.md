@@ -71,7 +71,6 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
-* exiting the client segfaults
 * about window with version etc, also cmd line switch for version
 * add option to use different imgui font
 * super basic plugin manager
@@ -79,14 +78,8 @@ Collect more general resources:
   * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
-* move event (across the network) should use strings for universal compatiblity
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
-* fix EVENT_TYPE_GAME_LOAD to encode options for remote loading
-  * append some game specific options struct behind the game base+variant names, give pointer to this struct to the new_game() function
-* use data structs for events using the event.raw_data, then give them all a constructor from the pointer to the raw data
-  * i.e. the game load struct builds itself from the raw data, and outputs pointers into it for the names and options
-  * !!! streamline pointer stuffed event (specific) structs across network and creation etc..
 * network client should try reconnecting itself on lost connection, cache access params for that
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
 * better ai integration
@@ -102,7 +95,6 @@ Collect more general resources:
   * https://github.com/jakebesworth/Simple-SDL2-Audio
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
-* place stb in deps? also genrally decide if we'd rather link everything static or dynamically?
 
 ## ideas
 * lobbies for hidden info / random move games could provide functionality to make their outcomes and playout provably fair

@@ -18,7 +18,7 @@ namespace Games {
             Havannah::~Havannah()
             {}
 
-            game* Havannah::new_game()
+            game* Havannah::new_game(const char* options)
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{
@@ -27,7 +27,11 @@ namespace Games {
                     .data = NULL,
                     .methods = &havannah_gbe,
                 };
-                new_game->methods->import_options_bin(new_game, &opts);
+                if (options) {
+                    new_game->methods->import_options_str(new_game, options);
+                } else {
+                    new_game->methods->import_options_bin(new_game, &opts);
+                }
                 new_game->methods->create(new_game);
                 new_game->methods->import_state(new_game, NULL);
                 return new_game;
