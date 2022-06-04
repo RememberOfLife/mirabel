@@ -46,8 +46,8 @@ namespace Frontends {
     {
         the_game = new_game;
         if (the_game != NULL) {
-            size = ((havannah_options*)the_game->options)->size;
             the_game_int = (havannah_internal_methods*)the_game->methods->internal_methods;
+            the_game_int->get_size(the_game, &size);
         } else {
             size = 10;
         }

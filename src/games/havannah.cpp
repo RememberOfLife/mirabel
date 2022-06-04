@@ -22,17 +22,16 @@ namespace Games {
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{
-                    .sync_ctr = 0,
-                    .options = NULL,
-                    .data = NULL,
                     .methods = &havannah_gbe,
+                    .sync_ctr = 0,
+                    .data1 = NULL,
+                    .data2 = NULL,
                 };
                 if (options) {
-                    new_game->methods->import_options_str(new_game, options);
+                    new_game->methods->create_with_opts_str(new_game, options);
                 } else {
-                    new_game->methods->import_options_bin(new_game, &opts);
+                    new_game->methods->create_with_opts_bin(new_game, &opts);
                 }
-                new_game->methods->create(new_game);
                 new_game->methods->import_state(new_game, NULL);
                 return new_game;
             }

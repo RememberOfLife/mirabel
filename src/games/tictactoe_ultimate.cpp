@@ -22,12 +22,12 @@ namespace Games {
             {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{
-                    .sync_ctr = 0,
-                    .options = NULL,
-                    .data = NULL,
                     .methods = &tictactoe_ultimate_gbe,
+                    .sync_ctr = 0,
+                    .data1 = NULL,
+                    .data2 = NULL,
                 };
-                new_game->methods->create(new_game);
+                new_game->methods->create_default(new_game);
                 new_game->methods->import_state(new_game, NULL);
                 return new_game;
             }
