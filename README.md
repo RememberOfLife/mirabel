@@ -82,8 +82,6 @@ Collect more general resources:
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * network client should try reconnecting itself on lost connection, cache access params for that
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
-* better ai integration
-  * engine wrapper could read from the engines outgoing queue
 * add fullscreen toggle to main menu bar
 * chess frontend sounds
 * chess frontend animations
@@ -97,6 +95,9 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* maybe replace SDL_net with another cpp raw networking lib (https://github.com/SLikeSoft/SLikeNet) so we dont have to download opengl on a server just for it
+  * for now just try to spoof sdl for sdl net lib with some fake sdl functions it can use
+  * or just copy all the files into this project along with the license
 * lobbies for hidden info / random move games could provide functionality to make their outcomes and playout provably fair
   * https://crypto.stackexchange.com/questions/99927/provably-fair-card-deck-used-by-client-and-server
 * maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
@@ -146,14 +147,10 @@ Collect more general resources:
     * could also send an event to set the displayed state
   * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
 * where to store state info for things like:
-  * engine uci opts
-  * engine best moves and other infor like nps etc..
   * player names and other multiplayer info that comes in from the networkthread
   * generic "extension" struct for more data, e.g. every field gets a rating
     * and a generic one for things that everything must support, i.e. best move and rating for every player
     * then the engine can check back with the frontend what extensions it supports, and writes into them the data it has, if any
-* what to do when engine is loaded but no game?
-  * engine should not crash, just return garbage
 * localization
 * frontend should be able to easily change the cursor
 * file paths should have some sort of file manager menu
@@ -164,10 +161,13 @@ Collect more general resources:
 * how are guithread state variables exposed? e.g. where to store fullscreen and frame_work_time such that it can be read from the outside?
 
 ### integration workflow
-* ==> server guests can add their own guest password
+* ==> tripcodes
   * hiddenfeature, add '#' to the username e.g. "guestname#138754"
     * add this to the string filter etc..
+    * sets password for guest name
+    * can also work as coupon mechanism for account creation
   * or just dont do it at all
+  * authn event is a valid response to auth info, i.e. the server has automatically logged in the client as assigned guest
 * ==> offline ai play:
   * engine has an option to enable auto search and auto move when certain players are playing
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
@@ -191,8 +191,6 @@ Collect more general resources:
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
-* ==> engine compatiblity
-  * e.g. uci-engine is a wrapper for an executable that can be specified via an option
 * ==> animation within frontends?
   * e.g. when loading a game, or making a move, etc..
   * frontend does not necessarily need to be newest state, it just exposes somewhere if it is ready to accept new moves (or not if it still animating)

@@ -62,7 +62,7 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
-    # lib/surena/src/engines/randomengine.cpp
+    lib/surena/src/engines/randomengine.cpp
     # lib/surena/src/engines/singlethreadedmcts.cpp
     lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
@@ -71,6 +71,7 @@ set(SOURCES
     lib/surena/src/util/fast_prng.cpp
     lib/surena/src/util/noise.cpp
     lib/surena/src/util/semver.c
+    lib/surena/src/engine.cpp
     lib/surena/src/game.c
 
     src/control/client.cpp
@@ -82,6 +83,7 @@ set(SOURCES
 
     # src/engines/builtin_surena.cpp
     # src/engines/engine_catalogue.cpp
+    src/engines/engine_manager.cpp
 
     src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp
@@ -117,6 +119,8 @@ set(SOURCES
     
     src/main.cpp
 )
+
+#TODO target for mirabel_server and add a define SERVER for it
 
 add_executable(mirabel ${SOURCES})
 

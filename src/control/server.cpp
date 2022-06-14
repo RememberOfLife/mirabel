@@ -22,12 +22,12 @@ namespace Control {
 
         //TODO no setup and cleanup for sdl+net if running offline
         // setup SDL
-        if ( SDL_Init(0) < 0 ) {
+        if (SDL_Init(0) < 0) {
             fprintf(stderr, "[FATAL] sdl init error: %s\n", SDL_GetError());
             exit(1);
         }
         // setup SDL_net
-        if ( SDLNet_Init() < 0 ) {
+        if (SDLNet_Init() < 0) {
             SDL_Quit();
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(1);

@@ -46,7 +46,7 @@ namespace Control {
             exit(1);
         }
         // setup SDL_net
-        if (SDLNet_Init() < 0 ) {
+        if (SDLNet_Init() < 0) {
             SDL_Quit();
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(1);
@@ -239,7 +239,7 @@ namespace Control {
                         MetaGui::base_game_idx = base_game_idx;
                         MetaGui::game_variant_idx = game_variant_idx;
                         // actually load the game
-                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game();
+                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(ce.options);
                         if (the_game->methods->export_options_str) {
                             // options have been set already by the catalogue through the game config, now export options for server
                             size_t options_len = the_game->sizer.options_str;
