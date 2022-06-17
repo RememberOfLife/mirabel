@@ -101,8 +101,7 @@ Collect more general resources:
 * lobbies for hidden info / random move games could provide functionality to make their outcomes and playout provably fair
   * https://crypto.stackexchange.com/questions/99927/provably-fair-card-deck-used-by-client-and-server
 * maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
-* ??? is the offline server even required? events are mirrored and the client holds all state for itself aswell anyway
-* server supports a single lobby mode, this could also act as the offline server
+* server supports a single lobby mode
 * clientconfig and serverconfig struct to hold things like the palette and configurable settings + their defaults
 * logging wrapper functions for the server so that the offline server logs into the corresponding metagui logger, but the standalone one logs to stdout
   * do debug log statements get a macro? feels like they bloat performance at runtime otherwise
@@ -173,8 +172,6 @@ Collect more general resources:
   * i.e. the engine always runs, but can be configured to only show hints when a certain player is playing
   * or configured to automatically start searching with timeout param, and also to automatically submit its move to the controller
 * ==> server concept
-  * server is a class inside the project, can also be hosted locally or spun up locally for the network
-  * supports guest login, but also user accounts
   * whole history rating
 * ==> manage games with randomness (also works for long term hidden state)
   * DEPENDS ON server architecture (also for offline play)

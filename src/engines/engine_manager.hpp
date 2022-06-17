@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "surena/engine.h"
+#include "surena/game.h"
 
 #include "control/event_queue.hpp"
 
@@ -15,9 +16,42 @@ namespace Engines {
 
         public:
 
+            static const size_t STR_BUF_MAX = 512;
+
+            uint32_t next_engine_id = 1;
+
             struct engine_container {
-                engine e; // contains the engine_id
-                eevent_queue* eq;
+                bool open;
+                bool remove;
+                uint32_t catalogue_idx;
+                void* load_options;
+                char* name; // tab name
+                char* name_swap; // editing tab name
+                bool swap_names;
+                player_id ai_slot; // ai_slot != 0 to make the tab unclosable and mark with dot to show connection to an ai
+                engine e; // contains the engine_id, which uniquely identifies this tab
+                eevent_queue* eq; // also used to easily test if an engine exists here
+                const char* id_name;
+                const char* id_author;
+                std::vector<ee_engine_option> options; // deletion is costly, but sparse
+                std::vector<bool> options_changed;
+                ee_engine_start search_constraints; //TODO update these
+                bool search_constraints_open;
+                bool searching;
+                
+                //TODO correct c info structs from engine api
+
+                //TODO stop struct
+
+                //TODO maybe some search_info update time struct so we can visually highlight new search info as it comes in
+                //TODO error log nums etc and DISPLAY ID IN THE ENGINE METAGUI WINDOW!!!!
+
+                engine_container(char* _name, player_id _ai_slot, uint32_t engine_id); // takes ownership of name
+                engine_container(const engine_container& other); // copy construct
+                engine_container(engine_container&& other); // move construct
+                engine_container& operator=(const engine_container& other); // copy assign
+                engine_container& operator=(engine_container&& other); // move assign
+                ~engine_container();
             };
 
             //TODO figure out what can be private
@@ -29,6 +63,8 @@ namespace Engines {
 
             std::vector<engine_container> engines;
 
+            // methods
+
             EngineManager(Control::event_queue* _client_inbox);
 
             ~EngineManager();
@@ -39,6 +75,12 @@ namespace Engines {
             void game_sync(void* data_start, void* data_end);
 
             void update();
+
+            engine_container* container_by_engine_id(uint32_t engine_id);
+
+            void add_container(player_id ai_slot);
+            void remove_container(uint32_t container_idx); // the container will only be removed next update
+            void rename_container(uint32_t container_idx);
 
     };
 

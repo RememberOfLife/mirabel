@@ -29,6 +29,7 @@ namespace Control {
         EVENT_TYPE_GAME_UNLOAD,
         EVENT_TYPE_GAME_STATE,
         EVENT_TYPE_GAME_MOVE,
+        //TODO EVENT_TYPE_GAME_SYNC,
         // client only events
         EVENT_TYPE_FRONTEND_LOAD,
         EVENT_TYPE_FRONTEND_UNLOAD,

@@ -129,6 +129,9 @@ namespace Control {
 
         // init default context
         frontend = new Frontends::EmptyFrontend();
+
+        // init engine manager with a context queue to our inbox
+        engine_mgr = new Engines::EngineManager(&inbox);
     }
 
     Client::~Client()
@@ -140,8 +143,10 @@ namespace Control {
             delete t_network;
         }
 
+        delete engine_mgr;
+
         delete frontend;
-        delete the_game;
+        free(the_game);
 
         //TODO delete loaded font images
 
@@ -515,6 +520,9 @@ namespace Control {
                 }
                 try_quit = false;
             }
+
+            // update engine containers by their queues
+            engine_mgr->update();
 
             // start the dear imgui frame
             ImGui_ImplOpenGL3_NewFrame();

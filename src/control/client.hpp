@@ -10,6 +10,7 @@
 
 #include "control/event_queue.hpp"
 #include "control/timeout_crash.hpp"
+#include "engines/engine_manager.hpp"
 #include "frontends/frontend_catalogue.hpp"
 #include "network/network_client.hpp"
 
@@ -35,6 +36,7 @@ namespace Control {
 
             game* the_game = NULL;
             Frontends::Frontend* frontend = NULL;
+            Engines::EngineManager* engine_mgr;
 
             Client();
             ~Client();
