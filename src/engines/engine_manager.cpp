@@ -265,6 +265,10 @@ namespace Engines {
                             tec.options.back().value.spind = e.option.value.spind;
                             tec.options.back().mmd = e.option.mmd;
                         } break;
+                        case EE_OPTION_TYPE_U64: {
+                            tec.options.back().value.u64 = e.option.value.u64;
+                            tec.options.back().mm = e.option.mm;
+                        } break;
                         default: {
                             free(tec.options.back().name);
                             tec.options.pop_back();
