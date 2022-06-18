@@ -6,7 +6,7 @@
 #include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-// #include "engines/engine_catalogue.hpp"
+#include "engines/engine_catalogue.hpp"
 #include "engines/engine_manager.hpp"
 
 #include "meta_gui/meta_gui.hpp"
@@ -61,37 +61,51 @@ namespace MetaGui {
                         Control::main_client->engine_mgr->rename_container(te_idx);
                     }
                     
-                    static bool engine_running = (tec.eq != NULL);
+                    bool engine_running = (tec.eq != NULL);
 
+                    bool disable_startstop = tec.stopping;
+                    if (disable_startstop) {
+                        ImGui::BeginDisabled();
+                    }
                     if (engine_running) {
-                        if (ImGui::Button("Restart")) {
-                            MetaGui::log("engine restart\n");
-                        }
-                        ImGui::SameLine();
                         if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                            MetaGui::log("engine stop\n");
+                            Control::main_client->engine_mgr->stop_container(te_idx);
                         }
                     } else {
                         if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                            MetaGui::log("engine start\n");
+                            Control::main_client->engine_mgr->start_container(te_idx);
                         }
                     }
+                    if (disable_startstop) {
+                        ImGui::EndDisabled();
+                    }
 
-                    if (engine_running) {
+                    bool disable_engine_selection = Engines::engine_catalogue.size() < 2;
+                    if (engine_running || disable_engine_selection) {
                         ImGui::BeginDisabled();
                     }
-                    //TODO engine catalogue for starting
-                    static int current_combo = 0;
-                    if (ImGui::Combo("Engine", &current_combo, "Random\0The Best\0")) {
-                        // pass
+                    if (ImGui::BeginCombo("Engine", Engines::engine_catalogue[tec.catalogue_idx]->engine_name, disable_engine_selection ? ImGuiComboFlags_NoArrowButton : ImGuiComboFlags_None)) {
+                        for (int i = 0; i < Engines::engine_catalogue.size(); i++) {
+                            bool is_selected = (tec.catalogue_idx == i);
+                            if (ImGui::Selectable(Engines::engine_catalogue[i]->engine_name, is_selected)) {
+                                tec.catalogue_idx = i;
+                                //TODO destruct old load data, construct new load data with new engine loader
+                            }
+                            // set the initial focus when opening the combo
+                            if (is_selected) {
+                                ImGui::SetItemDefaultFocus();
+                            }
+                        }
+                        ImGui::EndCombo();
                     }
-                    if (engine_running) {
+                    if (engine_running || disable_engine_selection) {
                         ImGui::EndDisabled();
                     }
 
                     ImGui::Separator();
 
-                    if (ImGui::CollapsingHeader(engine_running ? "Load Options [locked]" : "Load Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+                    ImGui::TextDisabled("<options currently disabled>"); //TODO reenable options when wrapper exists
+                    if (false && ImGui::CollapsingHeader(engine_running ? "Load Options [locked]" : "Load Options", ImGuiTreeNodeFlags_DefaultOpen)) {
                         if (engine_running) {
                             ImGui::BeginDisabled();
                         }
@@ -107,7 +121,7 @@ namespace MetaGui {
 
                     if (engine_running) {
 
-                        static ImVec2 cell_padding(8.0f, 0.0f);
+                        const ImVec2 cell_padding(8.0f, 0.0f);
                         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
                         if (ImGui::BeginTable("table1", 2))
                         {
@@ -117,13 +131,21 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("ID Name");
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::TextUnformatted("RandomEngine");
+                            if (tec.id_name != NULL) {
+                                ImGui::TextUnformatted(tec.id_name);
+                            } else {
+                                ImGui::TextDisabled("<unavailable>");
+                            }
 
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("ID Author");
                             ImGui::TableSetColumnIndex(1);
-                            ImGui::TextUnformatted("RNGesus");
+                            if (tec.id_author != NULL) {
+                                ImGui::TextUnformatted(tec.id_author);
+                            } else {
+                                ImGui::TextDisabled("<unavailable>");
+                            }
 
                             ImGui::EndTable();
                         }
@@ -131,40 +153,52 @@ namespace MetaGui {
 
                         ImGui::Separator();
 
-                        static bool engine_searching = false;
+                        bool engine_searching = tec.searching;
 
-                        static bool search_constraints_open = false; //TODO finda better place for the search constraints
-                        if (ImGui::ArrowButton("##search_constraints_btn", search_constraints_open ? ImGuiDir_Down : ImGuiDir_Right)) {
-                            search_constraints_open = !search_constraints_open;
+                        //TODO finda better place for the search constraints
+                        if (ImGui::ArrowButton("##search_constraints_btn", tec.search_constraints_open ? ImGuiDir_Down : ImGuiDir_Right)) {
+                            tec.search_constraints_open = !tec.search_constraints_open;
                         }
                         ImGui::SameLine();
-                        if (ImGui::Button(engine_searching ? "STOP SEARCH" : "START SEARCH", ImVec2(-1.0f, 0.0f))) {
-                            engine_searching = !engine_searching;
-                            //TODO while searching offer a non blocking bestmove button, (iff the engine supports it?)
+                        if (engine_searching) {
+                            if (ImGui::Button("POLL BM")) {
+                                //TODO is this always supported?
+                                //TODO
+                            }
+                            ImGui::SameLine();
+                            if (ImGui::Button("STOP SEARCH", ImVec2(-1.0f, 0.0f))) {
+                                //TODO
+                            }
+                        } else {
+                            if (ImGui::Button("START SEARCH", ImVec2(-1.0f, 0.0f))) {
+                                //TODO
+                            }
                         }
-                        if (search_constraints_open) {
-                            
+                        
+                        if (tec.search_constraints_open) {
                             if (engine_searching) {
                                 ImGui::BeginDisabled();
                             }
-
-                            static uint32_t timeout = 0;
-
+                            //TODO maybe dont use a table for this and instead just push normal imgui inputs
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
                             if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
                             {
+                                //TODO combo box for which player to search? or scalarinput
+
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
-                                ImGui::InputScalar("timeout (ms)", ImGuiDataType_U32, &timeout);
+                                ImGui::InputScalar("timeout (ms)", ImGuiDataType_U32, &tec.search_constraints.timeout);
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Checkbox("ponder", &tec.search_constraints.ponder);
 
                                 ImGui::EndTable();
                             }
                             ImGui::PopStyleVar();
-
                             if (engine_searching) {
                                 ImGui::EndDisabled();
                             }
-
                         }
 
                         ImGui::Separator();
@@ -172,16 +206,10 @@ namespace MetaGui {
                         //TODO display multiple for every player if applicable
                         ImGui::Text("BESTMOVE [%.3f] (p%03hhu): %s", 0.995, (uint8_t)2, "5d3<221*");
 
-                        static ee_engine_searchinfo esinfo = {
-                            .flags = EE_SEARCHINFO_FLAG_TYPE_DEPTH | EE_SEARCHINFO_FLAG_TYPE_NODES,
-                            .depth = 3,
-                            .nodes = 50000,
-                        };
-
                         if (engine_searching) {
                             ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImVec4(0.16, 0.92, 0.53, 1));
                         } //TODO want more colors, ? e.g. maybe show stale info in the table? or just yellow if not running but info still there
-                        static ImGuiTableFlags searchinfo_table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg; // replace Border with ImGuiTableFlags_BordersOuter?
+                        ImGuiTableFlags searchinfo_table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg; // replace Border with ImGuiTableFlags_BordersOuter?
                         if (ImGui::BeginTable("searchinfo_table", 2, searchinfo_table_flags))
                         {
                             // ImGui::TableSetupColumn("One");
@@ -192,8 +220,8 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("time");
                             ImGui::TableSetColumnIndex(1);
-                            if (esinfo.flags & EE_SEARCHINFO_FLAG_TYPE_TIME) {
-                                ImGui::Text("%u", esinfo.time);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_TIME) {
+                                ImGui::Text("%u", tec.searchinfo.time);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -202,8 +230,8 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("depth");
                             ImGui::TableSetColumnIndex(1);
-                            if (esinfo.flags & EE_SEARCHINFO_FLAG_TYPE_DEPTH) {
-                                ImGui::Text("%u", esinfo.depth);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_DEPTH) {
+                                ImGui::Text("%u", tec.searchinfo.depth);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -212,8 +240,8 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("nps");
                             ImGui::TableSetColumnIndex(1);
-                            if (esinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
-                                ImGui::Text("%lu", esinfo.nps);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
+                                ImGui::Text("%lu", tec.searchinfo.nps);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -222,8 +250,8 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("nodes");
                             ImGui::TableSetColumnIndex(1);
-                            if (esinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
-                                ImGui::Text("%lu", esinfo.nodes);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
+                                ImGui::Text("%lu", tec.searchinfo.nodes);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -232,8 +260,8 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("hashfull");
                             ImGui::TableSetColumnIndex(1);
-                            if (esinfo.flags & EE_SEARCHINFO_FLAG_TYPE_HASHFULL) {
-                                ImGui::Text("%f", esinfo.hashfull);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_HASHFULL) {
+                                ImGui::Text("%f", tec.searchinfo.hashfull);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -246,72 +274,17 @@ namespace MetaGui {
 
                         ImGui::Separator();
 
-                        static char combo_val[100] = "abc\0";
-                        static char combo_var[100] = "abc\0def\0\0";
-                        static char str_buf[100] = "str default\0";
-                        static ee_engine_option eopts[5] = {
-                            ee_engine_option{
-                                .name = strdup("option 1"),
-                                .type = EE_OPTION_TYPE_CHECK,
-                                .value = {
-                                    .check = false,
-                                },
-                            },
-                            ee_engine_option{
-                                .name = strdup("mybtn"),
-                                .type = EE_OPTION_TYPE_BUTTON,
-                                .value = {
-                                    .check = false,
-                                },
-                            },
-                            ee_engine_option{
-                                .name = strdup("slider"),
-                                .type = EE_OPTION_TYPE_SPIN,
-                                .value = {
-                                    .spin = 17,
-                                },
-                                .mm = {
-                                    .min = 10,
-                                    .max = 20,
-                                },
-                            },
-                            ee_engine_option{
-                                .name = strdup("mycombo"),
-                                .type = EE_OPTION_TYPE_COMBO,
-                                .value = {
-                                    .combo = combo_val,
-                                },
-                                .v = {
-                                    .var = combo_var,
-                                },
-                            },
-                            ee_engine_option{
-                                .name = strdup("thestr"),
-                                .type = EE_OPTION_TYPE_STRING,
-                                .value = {
-                                    .str = str_buf,
-                                },
-                            },
-                        };
-
-                        //TODO only send slider/text change when the user releases the control, otherwise incurs very many events to the engine
-                        static bool eopts_changed[5] = {
-                            false,
-                            false,
-                            false,
-                            false,
-                            false,
-                        };
+                        // only sends slider/text change when the user releases the control, otherwise incurs very many events to the engine
                         //TODO offer similar button for reset to default value?
-
                         if (ImGui::CollapsingHeader(engine_searching ? "Runtime Options [locked]" : "Runtime Options", ImGuiTreeNodeFlags_DefaultOpen)) {
 
                             if (engine_searching) {
                                 ImGui::BeginDisabled();
                             }
 
-                            for (int opt_idx = 0; opt_idx < 5; opt_idx++) {
-                                ee_engine_option& eopt = eopts[opt_idx];
+                            for (int opt_idx = 0; opt_idx < tec.options.size(); opt_idx++) {
+                                ee_engine_option& eopt = tec.options[opt_idx];
+                                bool eopt_changed = false;
                                 switch (eopt.type) {
                                     case EE_OPTION_TYPE_CHECK: {
                                         if (ImGui::Checkbox(eopt.name, &eopt.value.check)) {
@@ -320,10 +293,11 @@ namespace MetaGui {
                                     } break;
                                     case EE_OPTION_TYPE_SPIN: {
                                         if (ImGui::SliderScalar(eopt.name, ImGuiDataType_U64, &eopt.value.spin, &eopt.mm.min, &eopt.mm.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
-                                            eopts_changed[opt_idx] = true;
+                                            eopt_changed = true;
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_COMBO: {
+                                        //TODO unstatic
                                         static int combo_selected = 0; //TODO use value to set this
                                         if (ImGui::Combo(eopt.name, &combo_selected, eopt.v.var)) {
                                             MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
@@ -336,19 +310,22 @@ namespace MetaGui {
                                     } break;
                                     case EE_OPTION_TYPE_STRING: {
                                         if (ImGui::InputText(eopt.name, eopt.value.str, 200)) {
-                                            eopts_changed[opt_idx] = true;
+                                            eopt_changed = true;
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_SPIND: {
                                         if (ImGui::SliderScalar(eopt.name, ImGuiDataType_Double, &eopt.value.spind, &eopt.mmd.min, &eopt.mmd.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
-                                            eopts_changed[opt_idx] = true;
+                                            eopt_changed = true;
                                         }
                                     } break;
                                     default: {
 
                                     } break;
                                 }
-                                if (eopts_changed[opt_idx]) {
+                                if (eopt_changed) {
+                                    tec.options_changed[opt_idx] = eopt_changed;
+                                }
+                                if (tec.options_changed[opt_idx]) {
                                     ImGui::SameLine();
 
                                     float button_width = ImGui::CalcTextSize("S").x + ImGui::GetStyle().FramePadding.x * 2.f;
@@ -360,11 +337,15 @@ namespace MetaGui {
                                     ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
                                     if (ImGui::Button("S")) {
                                         // SYNCED back to engine
-                                        eopts_changed[opt_idx] = false;
+                                        tec.options_changed[opt_idx] = false;
                                         MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
                                     }
                                     ImGui::PopStyleColor(3);
                                 }
+                            }
+
+                            if (tec.options.size() == 0) {
+                                ImGui::TextDisabled("<no options>");
                             }
 
                             if (engine_searching) {

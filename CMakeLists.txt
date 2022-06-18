@@ -82,7 +82,7 @@ set(SOURCES
     src/control/timeout_crash.cpp
 
     # src/engines/builtin_surena.cpp
-    # src/engines/engine_catalogue.cpp
+    src/engines/engine_catalogue.cpp
     src/engines/engine_manager.cpp
 
     src/frontends/chess.cpp

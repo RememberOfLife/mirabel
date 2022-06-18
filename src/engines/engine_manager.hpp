@@ -31,17 +31,23 @@ namespace Engines {
                 player_id ai_slot; // ai_slot != 0 to make the tab unclosable and mark with dot to show connection to an ai
                 engine e; // contains the engine_id, which uniquely identifies this tab
                 eevent_queue* eq; // also used to easily test if an engine exists here
-                const char* id_name;
-                const char* id_author;
+                bool stopping;
+                uint32_t heartbeat_next_id;
+                uint32_t heartbeat_last_response;
+                uint64_t heartbeat_last_ticks;
+                char* id_name;
+                char* id_author;
                 std::vector<ee_engine_option> options; // deletion is costly, but sparse
                 std::vector<bool> options_changed;
-                ee_engine_start search_constraints; //TODO update these
+                ee_engine_start search_constraints; //TODO integrate player and timectl
                 bool search_constraints_open;
                 bool searching;
-                
-                //TODO correct c info structs from engine api
-
-                //TODO stop struct
+                ee_engine_stop stop_opts;
+                ee_engine_searchinfo searchinfo;
+                //TODO score info
+                //TODO line info
+                //TODO bestmove
+                //TODO movescore
 
                 //TODO maybe some search_info update time struct so we can visually highlight new search info as it comes in
                 //TODO error log nums etc and DISPLAY ID IN THE ENGINE METAGUI WINDOW!!!!
@@ -79,8 +85,10 @@ namespace Engines {
             engine_container* container_by_engine_id(uint32_t engine_id);
 
             void add_container(player_id ai_slot);
-            void remove_container(uint32_t container_idx); // the container will only be removed next update
             void rename_container(uint32_t container_idx);
+            void start_container(uint32_t container_idx);
+            void stop_container(uint32_t container_idx);
+            void remove_container(uint32_t container_idx); // the container will only be removed next update
 
     };
 
