@@ -24,7 +24,6 @@ namespace Games {
                 game* new_game = (game*)malloc(sizeof(game));
                 *new_game = game{
                     .methods = &chess_gbe,
-                    .sync_ctr = 0,
                     .data1 = NULL,
                     .data2 = NULL,
                 };

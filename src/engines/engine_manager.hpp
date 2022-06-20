@@ -40,9 +40,10 @@ namespace Engines {
                 std::vector<ee_engine_option> options; // deletion is costly, but sparse
                 std::vector<bool> options_changed;
                 ee_engine_start search_constraints; //TODO integrate player and timectl
+                bool search_constraints_timectl;
                 bool search_constraints_open;
                 bool searching;
-                ee_engine_stop stop_opts;
+                // no stop opts because we always want all score infos and all move scores if available
                 ee_engine_searchinfo searchinfo;
                 //TODO score info
                 //TODO line info
@@ -53,11 +54,14 @@ namespace Engines {
                 //TODO error log nums etc and DISPLAY ID IN THE ENGINE METAGUI WINDOW!!!!
 
                 engine_container(char* _name, player_id _ai_slot, uint32_t engine_id); // takes ownership of name
-                engine_container(const engine_container& other); // copy construct
-                engine_container(engine_container&& other); // move construct
-                engine_container& operator=(const engine_container& other); // copy assign
-                engine_container& operator=(engine_container&& other); // move assign
+                engine_container(const engine_container& other) = delete; // copy construct
+                engine_container(engine_container&& other) = delete; // move construct
+                engine_container& operator=(const engine_container& other) = delete; // copy assign
+                engine_container& operator=(engine_container&& other) = delete; // move assign
                 ~engine_container();
+
+                void start_search();
+                void stop_search();
             };
 
             //TODO figure out what can be private
@@ -67,7 +71,7 @@ namespace Engines {
 
             eevent_queue engine_outbox; // this is where engines post their results
 
-            std::vector<engine_container> engines;
+            std::vector<engine_container*> engines;
 
             // methods
 

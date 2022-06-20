@@ -43,71 +43,15 @@ namespace Engines {
             .time_ctl_count = 0,
             .time_ctl = NULL,
         }),
+        search_constraints_timectl(false),
         search_constraints_open(false),
         searching(false),
-        stop_opts((ee_engine_stop){
-            .all_score_infos = true,
-            .all_move_scores = false,
-        }),
         searchinfo((ee_engine_searchinfo){
             .flags = 0,
         })
     {
         name_swap = (char*)malloc(STR_BUF_MAX);
         strcpy(name_swap, name);
-    }
-
-    //TODO move bulk of this code into a construct from existing, and remove redundant code here
-    //BUG does this all even work with the two vectors?! likely not due to memcpy
-
-    EngineManager::engine_container::engine_container(const engine_container& other) // copy construct
-    {
-        memcpy(this, &other, sizeof(engine_container));
-        name = (char*)malloc(STR_BUF_MAX);
-        strcpy(name, other.name);
-        name_swap = (char*)malloc(STR_BUF_MAX);
-        strcpy(name_swap, other.name_swap);
-        id_name = other.id_name ? strdup(other.id_name) : NULL;
-        id_author = other.id_author ? strdup(other.id_author) : NULL;
-    }
-
-    EngineManager::engine_container::engine_container(engine_container&& other) // move construct
-    {
-        memcpy(this, &other, sizeof(engine_container));
-        name = other.name;
-        other.name = NULL;
-        name_swap = other.name_swap;
-        other.name_swap = NULL;
-        id_name = other.id_name;
-        other.id_name = NULL;
-        id_author = other.id_author;
-        other.id_author = NULL;
-    }
-    
-    EngineManager::engine_container& EngineManager::engine_container::operator=(const engine_container& other) // copy assign
-    {
-        memcpy(this, &other, sizeof(engine_container));
-        name = (char*)malloc(STR_BUF_MAX);
-        strcpy(name, other.name);
-        name_swap = (char*)malloc(STR_BUF_MAX);
-        strcpy(name_swap, other.name_swap);
-        id_name = other.id_name ? strdup(other.id_name) : NULL;
-        id_author = other.id_author ? strdup(other.id_author) : NULL;
-        return *this;
-    }
-    
-    EngineManager::engine_container& EngineManager::engine_container::operator=(engine_container&& other) // move assign
-    {
-        memcpy(this, &other, sizeof(engine_container));
-        name = other.name;
-        other.name = NULL;
-        name_swap = other.name_swap;
-        other.name_swap = NULL;
-        id_name = other.id_name;
-        other.id_name = NULL;
-        id_author = other.id_author;
-        other.id_author = NULL;
-        return *this;
     }
     
     EngineManager::engine_container::~engine_container()
@@ -120,6 +64,16 @@ namespace Engines {
         id_name = NULL;
         free(id_author);
         id_author = NULL;
+    }
+
+    void EngineManager::engine_container::start_search()
+    {
+        //TODO
+    }
+
+    void EngineManager::engine_container::stop_search()
+    {
+        //TODO
     }
 
     EngineManager::EngineManager(Control::event_queue* _client_inbox)
@@ -168,7 +122,7 @@ namespace Engines {
             }
             engine_container* tec_p = container_by_engine_id(e.engine_id);
             if (tec_p == NULL) {
-                MetaGui::logf("#W E%u container does not exists, eevent discarded\n");
+                MetaGui::logf(log, "#W E%u container does not exists, eevent discarded\n");
                 continue;
             }
             engine_container& tec = *tec_p;
@@ -177,7 +131,7 @@ namespace Engines {
                     // pass
                 } break;
                 case EE_TYPE_EXIT: {
-                    MetaGui::logf(log, "E%u exitted\n");
+                    MetaGui::logf(log, "E%u exitted\n", e.engine_id);
                     tec.e.methods->destroy(&tec.e);
                     tec.eq = NULL;
                     tec.stopping = false;
@@ -197,16 +151,13 @@ namespace Engines {
                         .time_ctl_count = 0,
                         .time_ctl = NULL,
                     };
+                    tec.search_constraints_timectl = false;
                     tec.search_constraints_open = false;
                     tec.searching = false;
-                    tec.stop_opts = (ee_engine_stop){
-                        .all_score_infos = true,
-                        .all_move_scores = false,
-                    };
                     tec.searchinfo = (ee_engine_searchinfo){
                         .flags = 0,
                     };
-                    if (tec.open != true) {
+                    if (tec.open == false) {
                         tec.remove = true;
                     }
                 } break;
@@ -218,8 +169,6 @@ namespace Engines {
                     }
                 } break;
                 case EE_TYPE_HEARTBEAT: {
-                    MetaGui::logf(log, "E%u heartbeat response %u\n", e.engine_id, e.heartbeat.id);
-                    //TODO instead of loggin here, show a marker on the gui how fresh the engine heartbeat is
                     if (e.heartbeat.id > tec.heartbeat_last_response) {
                         tec.heartbeat_last_response = e.heartbeat.id;
                     }
@@ -305,7 +254,7 @@ namespace Engines {
         } while (e.type != EE_TYPE_NULL);
         uint64_t sdl_ticks = SDL_GetTicks64();
         for (int i = 0; i < engines.size(); ) {
-            engine_container& tec = engines[i];
+            engine_container& tec = *engines[i];
             if (tec.eq != NULL && sdl_ticks - tec.heartbeat_last_ticks > 3000) { // 3000ms bewteen forced heartbeats
                 eevent_create_heartbeat(&e, tec.e.engine_id, tec.heartbeat_next_id++);
                 eevent_queue_push(tec.eq, &e);
@@ -323,8 +272,8 @@ namespace Engines {
     EngineManager::engine_container* EngineManager::container_by_engine_id(uint32_t engine_id)
     {
         for (int i = 0; i < engines.size(); i++) {
-            if (engines[i].e.engine_id == engine_id) {
-                return &engines[i];
+            if (engines[i]->e.engine_id == engine_id) {
+                return engines[i];
             }
         }
         return NULL;
@@ -338,15 +287,15 @@ namespace Engines {
         } else {
             sprintf(name, "P%03hhu", ai_slot);
         }
-        engines.emplace_back(name, ai_slot, next_engine_id++);
+        engines.push_back(new engine_container(name, ai_slot, next_engine_id++));
     }
 
     void EngineManager::rename_container(uint32_t container_idx)
     {
         assert(container_idx < engines.size());
-        engine_container& tec = engines[container_idx];
+        engine_container& tec = *engines[container_idx];
         for (int i = 0; i < engines.size(); i++) {
-            if (strcmp(tec.name_swap, engines[i].name) == 0) {
+            if (strcmp(tec.name_swap, engines[i]->name) == 0) {
                 strcpy(tec.name_swap, tec.name);
                 return;
             }
@@ -358,7 +307,7 @@ namespace Engines {
     void EngineManager::start_container(uint32_t container_idx)
     {
         assert(container_idx < engines.size());
-        engine_container& tec = engines[container_idx];
+        engine_container& tec = *engines[container_idx];
         tec.e.methods = engine_catalogue[tec.catalogue_idx];
         //TODO handle engine errors
         if (tec.load_options == NULL) {
@@ -376,7 +325,7 @@ namespace Engines {
     void EngineManager::stop_container(uint32_t container_idx)
     {
         assert(container_idx < engines.size());
-        engine_container& tec = engines[container_idx];
+        engine_container& tec = *engines[container_idx];
         engine_event e;
         eevent_create(&e, tec.e.engine_id, EE_TYPE_EXIT);
         eevent_queue_push(tec.eq, &e);
@@ -384,16 +333,14 @@ namespace Engines {
         tec.stopping = true;
     }
 
+    //BUG closing a tab with an open engine, and sometimes opening a new tab while one is running, causes a bug where the engine metagui window thinks there are more options than are really available
     void EngineManager::remove_container(uint32_t container_idx)
     {
         assert(container_idx < engines.size());
-        engine_container& tec = engines[container_idx];
+        engine_container& tec = *engines[container_idx];
         tec.open = false;
         if (tec.eq != NULL) {
-            engine_event e;
-            eevent_create(&e, tec.e.engine_id, EE_TYPE_EXIT);
-            eevent_queue_push(tec.eq, &e);
-            eevent_destroy(&e);
+            stop_container(container_idx);
         } else {
             tec.remove = true;
         }

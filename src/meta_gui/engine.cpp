@@ -34,18 +34,19 @@ namespace MetaGui {
             }
 
             for (int te_idx = 0; te_idx < Control::main_client->engine_mgr->engines.size(); te_idx++) {
-                bool* p_open = &Control::main_client->engine_mgr->engines[te_idx].open;
+                Engines::EngineManager::engine_container& tec = *Control::main_client->engine_mgr->engines[te_idx]; // the engine container
+
+                bool* p_open = &tec.open;
                 //TODO maybe change tab colors like in the log window to display what engines are currently started/searching etc..
                 ImGuiTabItemFlags item_flags = ImGuiTabItemFlags_None;
-                if (Control::main_client->engine_mgr->engines[te_idx].ai_slot > PLAYER_NONE) {
+                if (tec.ai_slot > PLAYER_NONE) {
                     item_flags |= ImGuiTabItemFlags_UnsavedDocument;
                     p_open = NULL;
                 }
-                if (*p_open == true && ImGui::BeginTabItem(Control::main_client->engine_mgr->engines[te_idx].name, p_open, item_flags))
+                if (((p_open && *p_open == true) || p_open == NULL) && ImGui::BeginTabItem(tec.name, p_open, item_flags))
                 {
                     // everything below here should be from an engine container indexed by the active engine tab, displayed inside the tab bar
 
-                    Engines::EngineManager::engine_container& tec = Control::main_client->engine_mgr->engines[te_idx]; // the engine container
 
                     if (ImGui::BeginPopupContextItem())
                     {
@@ -147,6 +148,12 @@ namespace MetaGui {
                                 ImGui::TextDisabled("<unavailable>");
                             }
 
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted("HB Pending / LR");
+                            ImGui::TableSetColumnIndex(1);
+                            ImGui::Text("%u / %.1fs", tec.heartbeat_next_id - tec.heartbeat_last_response - 1, (float)(SDL_GetTicks64() - tec.heartbeat_last_ticks) / 1000);
+
                             ImGui::EndTable();
                         }
                         ImGui::PopStyleVar();
@@ -155,23 +162,21 @@ namespace MetaGui {
 
                         bool engine_searching = tec.searching;
 
-                        //TODO finda better place for the search constraints
                         if (ImGui::ArrowButton("##search_constraints_btn", tec.search_constraints_open ? ImGuiDir_Down : ImGuiDir_Right)) {
                             tec.search_constraints_open = !tec.search_constraints_open;
                         }
                         ImGui::SameLine();
                         if (engine_searching) {
-                            if (ImGui::Button("POLL BM")) {
-                                //TODO is this always supported?
-                                //TODO
-                            }
-                            ImGui::SameLine();
+                            //TODO + is this always supported?
+                            // if (ImGui::Button("POLL BM")) {
+                            // }
+                            // ImGui::SameLine();
                             if (ImGui::Button("STOP SEARCH", ImVec2(-1.0f, 0.0f))) {
-                                //TODO
+                                tec.stop_search();
                             }
                         } else {
                             if (ImGui::Button("START SEARCH", ImVec2(-1.0f, 0.0f))) {
-                                //TODO
+                                tec.start_search();
                             }
                         }
                         
@@ -179,11 +184,10 @@ namespace MetaGui {
                             if (engine_searching) {
                                 ImGui::BeginDisabled();
                             }
-                            //TODO maybe dont use a table for this and instead just push normal imgui inputs
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
                             if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
                             {
-                                //TODO combo box for which player to search? or scalarinput
+                                //TODO combo box for which player to search? or slider / scalarinput? will this sync to player names?
 
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
@@ -192,6 +196,10 @@ namespace MetaGui {
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::Checkbox("ponder", &tec.search_constraints.ponder);
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Checkbox("use timectl", &tec.search_constraints_timectl);
 
                                 ImGui::EndTable();
                             }
@@ -215,6 +223,8 @@ namespace MetaGui {
                             // ImGui::TableSetupColumn("One");
                             // ImGui::TableSetupColumn("Two");
                             // ImGui::TableHeadersRow();
+
+                            //TODO might be able to use a subtle progressbar to hint relative amounts, e.g. hashfull, time used from timeout, etc..
                             
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
@@ -235,13 +245,13 @@ namespace MetaGui {
                             } else {
                                 ImGui::TextDisabled("---");
                             }
-                        
+
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("nps");
+                            ImGui::TextUnformatted("seldepth");
                             ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
-                                ImGui::Text("%lu", tec.searchinfo.nps);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_SELDEPTH) {
+                                ImGui::Text("%u", tec.searchinfo.seldepth);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -252,6 +262,16 @@ namespace MetaGui {
                             ImGui::TableSetColumnIndex(1);
                             if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
                                 ImGui::Text("%lu", tec.searchinfo.nodes);
+                            } else {
+                                ImGui::TextDisabled("---");
+                            }
+                        
+                            ImGui::TableNextRow();
+                            ImGui::TableSetColumnIndex(0);
+                            ImGui::TextUnformatted("nps");
+                            ImGui::TableSetColumnIndex(1);
+                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
+                                ImGui::Text("%lu", tec.searchinfo.nps);
                             } else {
                                 ImGui::TextDisabled("---");
                             }
@@ -289,6 +309,7 @@ namespace MetaGui {
                                     case EE_OPTION_TYPE_CHECK: {
                                         if (ImGui::Checkbox(eopt.name, &eopt.value.check)) {
                                             MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
+                                            //TODO
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_SPIN: {
@@ -304,11 +325,13 @@ namespace MetaGui {
                                         static int combo_selected = 0; //TODO use value to set this
                                         if (ImGui::Combo(eopt.name, &combo_selected, eopt.v.var)) {
                                             MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
+                                            //TODO
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_BUTTON: {
                                         if (ImGui::Button(eopt.name)) {
                                             MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
+                                            //TODO
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_STRING: {
@@ -358,7 +381,7 @@ namespace MetaGui {
                                     if (ImGui::Button("S")) {
                                         // SYNCED back to engine
                                         tec.options_changed[opt_idx] = false;
-                                        MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
+                                        MetaGui::logf("engine option \"%s\": changed\n", eopt.name); //TODO
                                     }
                                     ImGui::PopStyleColor(3);
                                 }
@@ -393,78 +416,6 @@ namespace MetaGui {
         }
 
         ImGui::End();
-
-        //TODO remove after integration of new capi engine catalogue 
-        /*
-        bool engine_running = Control::main_client->engine != NULL;
-        // collect all engines compatible with the current base game variant
-        std::vector<Engines::Engine*> compatible_engines{};
-        std::vector<uint32_t> compatible_engines_idx{};
-        Games::BaseGameVariant* bgv = Games::game_catalogue[base_game_idx].variants[game_variant_idx];
-        bool selected_engine_compatible = false;
-        for (int i = 0; i < Engines::engine_catalogue.size(); i++) {
-                if (Engines::engine_catalogue[i]->base_game_variant_compatible(bgv)) {
-                    compatible_engines.push_back(Engines::engine_catalogue[i]);
-                    compatible_engines_idx.push_back(i);
-                    if (i == engine_idx) {
-                        selected_engine_compatible = true;
-                    }
-                }
-        }
-        if (!selected_engine_compatible) {
-            engine_idx = 0;
-            Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_ENGINE_UNLOAD));
-        }
-        // draw engine restart/start/stop
-        if (engine_running) {
-            if (ImGui::Button("Restart")) {
-                Control::main_client->inbox.push(Control::event::create_engine_event(Control::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event(Control::EVENT_TYPE_ENGINE_UNLOAD));
-            }
-        } else {
-            if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::event::create_engine_event(Control::EVENT_TYPE_ENGINE_LOAD, Engines::engine_catalogue[engine_idx]->new_engine()));
-            }
-        }
-        // draw engine combo box, show only compatible ones
-        bool disable_engine_selection = (compatible_engines.size() == 1);
-        if (disable_engine_selection) {
-            ImGui::BeginDisabled();
-        }
-        if (ImGui::BeginCombo("Engine", Engines::engine_catalogue[engine_idx]->name, disable_engine_selection ? ImGuiComboFlags_NoArrowButton : ImGuiComboFlags_None)) {
-            for (int i = 0; i < compatible_engines.size(); i++) {
-                uint32_t i_engine_idx = compatible_engines_idx[i];
-                bool is_selected = (engine_idx == i_engine_idx);
-                if (ImGui::Selectable(compatible_engines[i]->name, is_selected)) {
-                    engine_idx = i_engine_idx;
-                }
-                // set the initial focus when opening the combo
-                if (is_selected) {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
-        if (disable_engine_selection) {
-            ImGui::EndDisabled();
-        }
-        ImGui::Separator();
-        if (engine_running) {
-            ImGui::BeginDisabled();
-        }
-        Engines::engine_catalogue[engine_idx]->draw_loader_options();
-        if (engine_running) {
-            ImGui::EndDisabled();
-        }
-        ImGui::Separator();
-        if (engine_running) {
-            Engines::engine_catalogue[engine_idx]->draw_state_options(Control::main_client->engine);
-        }
-        ImGui::End();
-        */
     }
 
 }
