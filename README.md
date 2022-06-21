@@ -71,6 +71,7 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
 * about window with version etc, also cmd line switch for version
 * add option to use different imgui font

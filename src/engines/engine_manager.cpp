@@ -7,6 +7,7 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
+#include "control/client.hpp"
 #include "control/event_queue.hpp"
 #include "engines/engine_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -48,6 +49,12 @@ namespace Engines {
         searching(false),
         searchinfo((ee_engine_searchinfo){
             .flags = 0,
+        }),
+        bestmove((ee_engine_bestmove){
+            .count = 0,
+            .player = NULL,
+            .move = NULL,
+            .confidence = NULL,
         })
     {
         name_swap = (char*)malloc(STR_BUF_MAX);
@@ -64,16 +71,84 @@ namespace Engines {
         id_name = NULL;
         free(id_author);
         id_author = NULL;
+        for (int i = 0; i < options.size(); i++) {
+            destroy_option(&options[i]);
+        }
+        options.clear();
+        free(bestmove.player);
+        free(bestmove.move);
+        free(bestmove.confidence);
+        bestmove = (ee_engine_bestmove){
+            .count = 0,
+            .player = NULL,
+            .move = NULL,
+            .confidence = NULL,
+        };
+        for (int i = 0; i < bestmove_strings.size(); i++) {
+            free(bestmove_strings[i]);
+        }
+        bestmove_strings.clear();
     }
 
     void EngineManager::engine_container::start_search()
     {
-        //TODO
+        searchinfo.flags = 0; // for now reset flags at least before a new search
+        engine_event te;
+        eevent_create_start(&te, e.engine_id, search_constraints.player, search_constraints.timeout, search_constraints.ponder, 0, 0); //TODO timectl
+        eevent_queue_push(eq, &te);
+        eevent_destroy(&te);
     }
 
     void EngineManager::engine_container::stop_search()
     {
-        //TODO
+        engine_event te;
+        eevent_create_stop(&te, e.engine_id, true, true);
+        eevent_queue_push(eq, &te);
+        eevent_destroy(&te);
+    }
+
+    void EngineManager::engine_container::submit_option(ee_engine_option* option)
+    {
+        engine_event te;
+        switch (option->type) {
+            case EE_OPTION_TYPE_CHECK: {
+                eevent_create_option_check(&te, e.engine_id, option->name, option->value.check);
+            } break;
+            case EE_OPTION_TYPE_SPIN: {
+                eevent_create_option_spin(&te, e.engine_id, option->name, option->value.spin);
+            } break;
+            case EE_OPTION_TYPE_COMBO: {
+                eevent_create_option_combo(&te, e.engine_id, option->name, option->value.combo);
+            } break;
+            case EE_OPTION_TYPE_BUTTON: {
+                eevent_create_option_button(&te, e.engine_id, option->name);
+            } break;
+            case EE_OPTION_TYPE_STRING: {
+                eevent_create_option_string(&te, e.engine_id, option->name, option->value.str);
+            } break;
+            case EE_OPTION_TYPE_SPIND: {
+                eevent_create_option_spind(&te, e.engine_id, option->name, option->value.spind);
+            } break;
+            case EE_OPTION_TYPE_U64: {
+                eevent_create_option_u64(&te, e.engine_id, option->name, option->value.u64);
+            } break;
+        }
+        eevent_queue_push(eq, &te);
+        eevent_destroy(&te);
+    }
+
+    void EngineManager::engine_container::destroy_option(ee_engine_option* option)
+    {
+        free(option->name);
+        option->name = NULL;
+        if (option->type == EE_OPTION_TYPE_COMBO) {
+            free(option->value.combo);
+            free(option->v.var);
+        }
+        if (option->type == EE_OPTION_TYPE_STRING) {
+            free(option->value.str);
+        }
+        option->type = EE_OPTION_TYPE_NONE;
     }
 
     EngineManager::EngineManager(Control::event_queue* _client_inbox)
@@ -91,22 +166,54 @@ namespace Engines {
 
     void EngineManager::game_load(game* target_game)
     {
-        //TODO
+        engine_event e;
+        for (int i = 0; i < engines.size(); i++) {
+            if (engines[i]->eq) {
+                if (target_game != NULL) {
+                    eevent_create_load(&e, engines[i]->e.engine_id, target_game);
+                } else {
+                    eevent_create(&e, engines[i]->e.engine_id, EE_TYPE_GAME_UNLOAD);
+                }
+                eevent_queue_push(engines[i]->eq, &e);
+                eevent_destroy(&e);
+            }
+        }
     }
 
     void EngineManager::game_state(const char* state)
     {
-        //TODO
+        engine_event e;
+        for (int i = 0; i < engines.size(); i++) {
+            if (engines[i]->eq) {
+                eevent_create_state(&e, engines[i]->e.engine_id, state);
+                eevent_queue_push(engines[i]->eq, &e);
+                eevent_destroy(&e);
+            }
+        }
     }
     
-    void EngineManager::game_move(player_id player, move_code code)
+    void EngineManager::game_move(player_id player, move_code code, sync_counter sync)
     {
-        //TODO
+        engine_event e;
+        for (int i = 0; i < engines.size(); i++) {
+            if (engines[i]->eq) {
+                eevent_create_move(&e, engines[i]->e.engine_id, player, code, sync);
+                eevent_queue_push(engines[i]->eq, &e);
+                eevent_destroy(&e);
+            }
+        }
     }
     
     void EngineManager::game_sync(void* data_start, void* data_end)
     {
-        //TODO
+        engine_event e;
+        for (int i = 0; i < engines.size(); i++) {
+            if (engines[i]->eq) {
+                eevent_create_sync(&e, engines[i]->e.engine_id, data_start, data_end);
+                eevent_queue_push(engines[i]->eq, &e);
+                eevent_destroy(&e);
+            }
+        }
     }
     
     void EngineManager::update()
@@ -126,7 +233,7 @@ namespace Engines {
                 continue;
             }
             engine_container& tec = *tec_p;
-            switch (e.type) { //TODO
+            switch (e.type) {
                 case EE_TYPE_NULL: {
                     // pass
                 } break;
@@ -142,8 +249,6 @@ namespace Engines {
                     tec.id_name = NULL;
                     free(tec.id_author);
                     tec.id_author = NULL;
-                    tec.options.clear();
-                    tec.options_changed.clear();
                     tec.search_constraints = (ee_engine_start){
                         .player = PLAYER_NONE,
                         .timeout = 0,
@@ -157,15 +262,32 @@ namespace Engines {
                     tec.searchinfo = (ee_engine_searchinfo){
                         .flags = 0,
                     };
+                    for (int i = 0; i < tec.options.size(); i++) {
+                        tec.destroy_option(&tec.options[i]);
+                    }
+                    tec.options.clear();
+                    free(tec.bestmove.player);
+                    free(tec.bestmove.move);
+                    free(tec.bestmove.confidence);
+                    tec.bestmove = (ee_engine_bestmove){
+                        .count = 0,
+                        .player = NULL,
+                        .move = NULL,
+                        .confidence = NULL,
+                    };
+                    for (int i = 0; i < tec.bestmove_strings.size(); i++) {
+                        free(tec.bestmove_strings[i]);
+                    }
+                    tec.bestmove_strings.clear();
                     if (tec.open == false) {
                         tec.remove = true;
                     }
                 } break;
                 case EE_TYPE_LOG: {
                     if (e.log.ec == ERR_OK) {
-                        MetaGui::logf(log, "E%u: ec#%u %s\n", e.engine_id, e.log.ec, e.log.text);
+                        MetaGui::logf(log, "E%u LOG ec#%u %s\n", e.engine_id, e.log.ec, e.log.text);
                     } else {
-                        MetaGui::logf(log, "#W E%u: ec#%u %s\n", e.engine_id, e.log.ec, e.log.text);
+                        MetaGui::logf(log, "#W E%u LOG ec#%u %s\n", e.engine_id, e.log.ec, e.log.text);
                     }
                 } break;
                 case EE_TYPE_HEARTBEAT: {
@@ -191,6 +313,19 @@ namespace Engines {
                     });
                     tec.options_changed.push_back(false);
                     switch (e.option.type) {
+                        case EE_OPTION_TYPE_NONE: {
+                            if (e.option.name == NULL) {
+                                break;
+                            }
+                            for (int i = 0; i < tec.options.size(); i++) {
+                                if (strcmp(tec.options[i].name, e.option.name)) {
+                                    tec.destroy_option(&tec.options[i]);
+                                    tec.options.erase(tec.options.begin() + 1);
+                                    tec.options_changed.erase(tec.options_changed.begin() + 1);
+                                    break;
+                                }
+                            }
+                        } break;
                         case EE_OPTION_TYPE_CHECK: {
                             tec.options.back().value.check = e.option.value.check;
                         } break;
@@ -227,25 +362,74 @@ namespace Engines {
                     }
                 } break;
                 case EE_TYPE_ENGINE_START: {
-                    assert(0);
+                    tec.searching = true;
                 } break;
                 case EE_TYPE_ENGINE_SEARCHINFO: {
-
+                    tec.searchinfo.flags |= e.searchinfo.flags;
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_TIME) {
+                        tec.searchinfo.time = e.searchinfo.time;
+                    }
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_DEPTH) {
+                        tec.searchinfo.depth = e.searchinfo.depth;
+                    }
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_SELDEPTH) {
+                        tec.searchinfo.seldepth = e.searchinfo.seldepth;
+                    }
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
+                        tec.searchinfo.nodes = e.searchinfo.nodes;
+                    }
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
+                        tec.searchinfo.nps = e.searchinfo.nps;
+                    }
+                    if (e.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_HASHFULL) {
+                        tec.searchinfo.hashfull = e.searchinfo.hashfull;
+                    }
                 } break;
                 case EE_TYPE_ENGINE_SCOREINFO: {
-
+                    //TODO
+                    MetaGui::logf(log, "E%u recv scoreinfo\n", e.engine_id);
                 } break;
                 case EE_TYPE_ENGINE_LINEINFO: {
-
+                    //TODO
+                    MetaGui::logf(log, "E%u recv lineinfo\n", e.engine_id);
                 } break;
                 case EE_TYPE_ENGINE_STOP: {
-                    assert(0);
+                    tec.searching = false;
                 } break;
                 case EE_TYPE_ENGINE_BESTMOVE: {
-
+                    if (Control::main_client->the_game == NULL) {
+                        break;
+                    }
+                    free(tec.bestmove.player);
+                    free(tec.bestmove.move);
+                    free(tec.bestmove.confidence);
+                    tec.bestmove = (ee_engine_bestmove){
+                        .count = 0,
+                        .player = NULL,
+                        .move = NULL,
+                        .confidence = NULL,
+                    };
+                    for (int i = 0; i < tec.bestmove_strings.size(); i++) {
+                        free(tec.bestmove_strings[i]);
+                    }
+                    tec.bestmove_strings.clear();
+                    tec.bestmove.count = e.bestmove.count;
+                    tec.bestmove.player = (player_id*)malloc(sizeof(player_id) * tec.bestmove.count);
+                    tec.bestmove.move = (move_code*)malloc(sizeof(move_code) * tec.bestmove.count);
+                    tec.bestmove.confidence = (float*)malloc(sizeof(float) * tec.bestmove.count);
+                    memcpy(tec.bestmove.player, e.bestmove.player, sizeof(player_id) * tec.bestmove.count);
+                    memcpy(tec.bestmove.move, e.bestmove.move, sizeof(move_code) * tec.bestmove.count);
+                    memcpy(tec.bestmove.confidence, e.bestmove.confidence, sizeof(float) * tec.bestmove.count);
+                    for (int i = 0; i < tec.bestmove.count; i++) {
+                        char* move_str = (char*)malloc(Control::main_client->the_game->sizer.move_str);
+                        size_t move_len = 0;
+                        Control::main_client->the_game->methods->get_move_str(Control::main_client->the_game, tec.bestmove.player[i], tec.bestmove.move[i], &move_len, move_str);
+                        tec.bestmove_strings.push_back(move_str);
+                    }
                 } break;
                 case EE_TYPE_ENGINE_MOVESCORE: {
-
+                    //TODO
+                    MetaGui::logf(log, "E%u recv movescore\n", e.engine_id);
                 } break;
                 default: {
                     assert(0);
@@ -262,6 +446,7 @@ namespace Engines {
                 tec.heartbeat_last_ticks = sdl_ticks;
             }
             if (tec.remove) {
+                delete engines[i];
                 engines.erase(engines.begin() + i);
             } else {
                 i++;
@@ -294,6 +479,10 @@ namespace Engines {
     {
         assert(container_idx < engines.size());
         engine_container& tec = *engines[container_idx];
+        if (strlen(tec.name_swap) < 2) {
+            strcpy(tec.name_swap, tec.name);
+            return;
+        }
         for (int i = 0; i < engines.size(); i++) {
             if (strcmp(tec.name_swap, engines[i]->name) == 0) {
                 strcpy(tec.name_swap, tec.name);
@@ -320,6 +509,12 @@ namespace Engines {
         eevent_queue_push(tec.eq, &e);
         eevent_destroy(&e);
         tec.heartbeat_last_ticks = SDL_GetTicks64();
+        // send the engine the currently running game, if any
+        if (Control::main_client->the_game != NULL) {
+            eevent_create_load(&e, tec.e.engine_id, Control::main_client->the_game);
+            eevent_queue_push(tec.eq, &e);
+            eevent_destroy(&e);
+        }
     }
 
     void EngineManager::stop_container(uint32_t container_idx)
@@ -333,7 +528,6 @@ namespace Engines {
         tec.stopping = true;
     }
 
-    //BUG closing a tab with an open engine, and sometimes opening a new tab while one is running, causes a bug where the engine metagui window thinks there are more options than are really available
     void EngineManager::remove_container(uint32_t container_idx)
     {
         assert(container_idx < engines.size());

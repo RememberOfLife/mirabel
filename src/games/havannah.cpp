@@ -37,13 +37,9 @@ namespace Games {
 
             void Havannah::draw_options()
             {
-                ImGui::InputScalar("size", ImGuiDataType_U32, &opts.size);
-                if (opts.size < 4) {
-                    opts.size = 4;
-                }
-                if (opts.size > 10) {
-                    opts.size = 10;
-                }
+                const uint32_t min = 4;
+                const uint32_t max = 10;
+                ImGui::SliderScalar("size", ImGuiDataType_U32, &opts.size, &min, &max, "%u", ImGuiSliderFlags_AlwaysClamp);
             }
 
             void Havannah::draw_state_editor(game* abstract_game)

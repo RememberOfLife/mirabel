@@ -251,6 +251,7 @@ namespace Control {
                             ce.options = (char*)malloc(options_len);
                             the_game->methods->export_options_str(the_game, &options_len, ce.options);
                         }
+                        engine_mgr->game_load(the_game);
                         frontend->set_game(the_game);
                         // everything successful, pass to server
                         if (network_send_queue && ce.client_id == CLIENT_NONE) {
@@ -258,6 +259,7 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
+                        engine_mgr->game_load(NULL);
                         frontend->set_game(NULL);
                         if (the_game) {
                             the_game->methods->destroy(the_game);
@@ -276,6 +278,7 @@ namespace Control {
                             break;
                         }
                         the_game->methods->import_state(the_game, ce.state);
+                        engine_mgr->game_state(ce.state);
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == CLIENT_NONE) {
                             network_send_queue->push(e);
@@ -291,6 +294,7 @@ namespace Control {
                         uint8_t pbuf_cnt = 253;
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         the_game->methods->make_move(the_game, pbuf[0], ce.code); //FIXME ptm
+                        engine_mgr->game_move(pbuf[0], ce.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         if (pbuf_cnt == 0) {
                             the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);

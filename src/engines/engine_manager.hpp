@@ -44,10 +44,11 @@ namespace Engines {
                 bool search_constraints_open;
                 bool searching;
                 // no stop opts because we always want all score infos and all move scores if available
-                ee_engine_searchinfo searchinfo;
+                ee_engine_searchinfo searchinfo; //TODO when to reset this? start/stop?, also on game load/move etc?
                 //TODO score info
                 //TODO line info
-                //TODO bestmove
+                ee_engine_bestmove bestmove;
+                std::vector<char*> bestmove_strings;
                 //TODO movescore
 
                 //TODO maybe some search_info update time struct so we can visually highlight new search info as it comes in
@@ -61,7 +62,11 @@ namespace Engines {
                 ~engine_container();
 
                 void start_search();
+                // void search_poll_bestmove(); //TODO
                 void stop_search();
+
+                void submit_option(ee_engine_option* option);
+                void destroy_option(ee_engine_option* option);
             };
 
             //TODO figure out what can be private
@@ -79,9 +84,9 @@ namespace Engines {
 
             ~EngineManager();
 
-            void game_load(game* target_game); // clones the game
+            void game_load(game* target_game); // clones the game, unload is just game == NULL
             void game_state(const char* state);
-            void game_move(player_id player, move_code code);
+            void game_move(player_id player, move_code code, sync_counter sync);
             void game_sync(void* data_start, void* data_end);
 
             void update();

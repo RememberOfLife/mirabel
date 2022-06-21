@@ -36,6 +36,8 @@ namespace MetaGui {
             for (int te_idx = 0; te_idx < Control::main_client->engine_mgr->engines.size(); te_idx++) {
                 Engines::EngineManager::engine_container& tec = *Control::main_client->engine_mgr->engines[te_idx]; // the engine container
 
+                //TODO change active tab color, hardly distinguishable otherwise
+                //TODO focus new tabs?
                 bool* p_open = &tec.open;
                 //TODO maybe change tab colors like in the log window to display what engines are currently started/searching etc..
                 ImGuiTabItemFlags item_flags = ImGuiTabItemFlags_None;
@@ -124,7 +126,7 @@ namespace MetaGui {
 
                         const ImVec2 cell_padding(8.0f, 0.0f);
                         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
-                        if (ImGui::BeginTable("table1", 2))
+                        if (ImGui::BeginTable("idtable", 2))
                         {
                             ImGui::TableSetupColumn(NULL, ImGuiTableColumnFlags_WidthFixed);
 
@@ -151,6 +153,9 @@ namespace MetaGui {
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("HB Pending / LR");
+                            if (ImGui::IsItemHovered()) {
+                                ImGui::SetTooltip("Heartbeat Pending / Last Response");
+                            }
                             ImGui::TableSetColumnIndex(1);
                             ImGui::Text("%u / %.1fs", tec.heartbeat_next_id - tec.heartbeat_last_response - 1, (float)(SDL_GetTicks64() - tec.heartbeat_last_ticks) / 1000);
 
@@ -187,7 +192,7 @@ namespace MetaGui {
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
                             if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
                             {
-                                //TODO combo box for which player to search? or slider / scalarinput? will this sync to player names?
+                                //TODO combo box for which player to search? (show name in parens)
 
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
@@ -211,8 +216,35 @@ namespace MetaGui {
 
                         ImGui::Separator();
 
-                        //TODO display multiple for every player if applicable
-                        ImGui::Text("BESTMOVE [%.3f] (p%03hhu): %s", 0.995, (uint8_t)2, "5d3<221*");
+                        ImGui::TextUnformatted("Bestmoves:");
+                        if (tec.bestmove.count > 0) {
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
+                            if (ImGui::BeginTable("bestmoves", 3, ImGuiTableFlags_Borders))
+                            {
+                                ImGui::TableSetupColumn("player");
+                                ImGui::TableSetupColumn("move");
+                                ImGui::TableSetupColumn("conf");
+                                ImGui::TableHeadersRow();
+
+                                for (int i = 0; i < tec.bestmove.count; i++) {
+                                    ImGui::TableNextRow();
+                                    ImGui::TableSetColumnIndex(0);
+                                    ImGui::Text("%03hhu", tec.bestmove.player[i]);
+                                    ImGui::TableSetColumnIndex(1);
+                                    ImGui::Text("%s", tec.bestmove_strings[i]);
+                                    ImGui::TableSetColumnIndex(2);
+                                    ImGui::Text("%.3f", tec.bestmove.confidence[i]);
+                                }
+
+                                ImGui::EndTable();
+                            }
+                            ImGui::PopStyleVar();
+                        } else {
+                            ImGui::SameLine();
+                            ImGui::TextDisabled("<unavailable>");
+                        }
+
+                        ImGui::Separator();
 
                         if (engine_searching) {
                             ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImVec4(0.16, 0.92, 0.53, 1));
@@ -226,6 +258,8 @@ namespace MetaGui {
 
                             //TODO might be able to use a subtle progressbar to hint relative amounts, e.g. hashfull, time used from timeout, etc..
                             
+                            //TODO right align these values
+
                             ImGui::TableNextRow();
                             ImGui::TableSetColumnIndex(0);
                             ImGui::TextUnformatted("time");
@@ -308,8 +342,7 @@ namespace MetaGui {
                                 switch (eopt.type) {
                                     case EE_OPTION_TYPE_CHECK: {
                                         if (ImGui::Checkbox(eopt.name, &eopt.value.check)) {
-                                            MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
-                                            //TODO
+                                            tec.submit_option(&eopt);
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_SPIN: {
@@ -330,12 +363,11 @@ namespace MetaGui {
                                     } break;
                                     case EE_OPTION_TYPE_BUTTON: {
                                         if (ImGui::Button(eopt.name)) {
-                                            MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
-                                            //TODO
+                                            tec.submit_option(&eopt);
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_STRING: {
-                                        if (ImGui::InputText(eopt.name, eopt.value.str, 200)) {
+                                        if (ImGui::InputText(eopt.name, eopt.value.str, Engines::EngineManager::STR_BUF_MAX)) {
                                             eopt_changed = true;
                                         }
                                     } break;
@@ -381,7 +413,7 @@ namespace MetaGui {
                                     if (ImGui::Button("S")) {
                                         // SYNCED back to engine
                                         tec.options_changed[opt_idx] = false;
-                                        MetaGui::logf("engine option \"%s\": changed\n", eopt.name); //TODO
+                                        tec.submit_option(&eopt);
                                     }
                                     ImGui::PopStyleColor(3);
                                 }
