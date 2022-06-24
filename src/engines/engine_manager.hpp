@@ -51,6 +51,9 @@ namespace Engines {
                 std::vector<char*> bestmove_strings;
                 //TODO movescore
 
+                //TODO draw line info table all the way at the bottom, use movescores to give evals, if no lines create 1 for every move
+                //TODO display score info in the same table as bestmove, just lut eval there too
+
                 //TODO maybe some search_info update time struct so we can visually highlight new search info as it comes in
                 //TODO error log nums etc and DISPLAY ID IN THE ENGINE METAGUI WINDOW!!!!
 
@@ -62,7 +65,7 @@ namespace Engines {
                 ~engine_container();
 
                 void start_search();
-                // void search_poll_bestmove(); //TODO
+                void search_poll_bestmove();
                 void stop_search();
 
                 void submit_option(ee_engine_option* option);

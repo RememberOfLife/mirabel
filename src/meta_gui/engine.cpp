@@ -163,174 +163,13 @@ namespace MetaGui {
                         }
                         ImGui::PopStyleVar();
 
-                        ImGui::Separator();
-
                         bool engine_searching = tec.searching;
-
-                        if (ImGui::ArrowButton("##search_constraints_btn", tec.search_constraints_open ? ImGuiDir_Down : ImGuiDir_Right)) {
-                            tec.search_constraints_open = !tec.search_constraints_open;
-                        }
-                        ImGui::SameLine();
-                        if (engine_searching) {
-                            //TODO + is this always supported?
-                            // if (ImGui::Button("POLL BM")) {
-                            // }
-                            // ImGui::SameLine();
-                            if (ImGui::Button("STOP SEARCH", ImVec2(-1.0f, 0.0f))) {
-                                tec.stop_search();
-                            }
-                        } else {
-                            if (ImGui::Button("START SEARCH", ImVec2(-1.0f, 0.0f))) {
-                                tec.start_search();
-                            }
-                        }
-                        
-                        if (tec.search_constraints_open) {
-                            if (engine_searching) {
-                                ImGui::BeginDisabled();
-                            }
-                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
-                            if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
-                            {
-                                //TODO combo box for which player to search? (show name in parens)
-
-                                ImGui::TableNextRow();
-                                ImGui::TableSetColumnIndex(0);
-                                ImGui::InputScalar("timeout (ms)", ImGuiDataType_U32, &tec.search_constraints.timeout);
-
-                                ImGui::TableNextRow();
-                                ImGui::TableSetColumnIndex(0);
-                                ImGui::Checkbox("ponder", &tec.search_constraints.ponder);
-
-                                ImGui::TableNextRow();
-                                ImGui::TableSetColumnIndex(0);
-                                ImGui::Checkbox("use timectl", &tec.search_constraints_timectl);
-
-                                ImGui::EndTable();
-                            }
-                            ImGui::PopStyleVar();
-                            if (engine_searching) {
-                                ImGui::EndDisabled();
-                            }
-                        }
-
-                        ImGui::Separator();
-
-                        ImGui::TextUnformatted("Bestmoves:");
-                        if (tec.bestmove.count > 0) {
-                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
-                            if (ImGui::BeginTable("bestmoves", 3, ImGuiTableFlags_Borders))
-                            {
-                                ImGui::TableSetupColumn("player");
-                                ImGui::TableSetupColumn("move");
-                                ImGui::TableSetupColumn("conf");
-                                ImGui::TableHeadersRow();
-
-                                for (int i = 0; i < tec.bestmove.count; i++) {
-                                    ImGui::TableNextRow();
-                                    ImGui::TableSetColumnIndex(0);
-                                    ImGui::Text("%03hhu", tec.bestmove.player[i]);
-                                    ImGui::TableSetColumnIndex(1);
-                                    ImGui::Text("%s", tec.bestmove_strings[i]);
-                                    ImGui::TableSetColumnIndex(2);
-                                    ImGui::Text("%.3f", tec.bestmove.confidence[i]);
-                                }
-
-                                ImGui::EndTable();
-                            }
-                            ImGui::PopStyleVar();
-                        } else {
-                            ImGui::SameLine();
-                            ImGui::TextDisabled("<unavailable>");
-                        }
-
-                        ImGui::Separator();
-
-                        if (engine_searching) {
-                            ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImVec4(0.16, 0.92, 0.53, 1));
-                        } //TODO want more colors, ? e.g. maybe show stale info in the table? or just yellow if not running but info still there
-                        ImGuiTableFlags searchinfo_table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg; // replace Border with ImGuiTableFlags_BordersOuter?
-                        if (ImGui::BeginTable("searchinfo_table", 2, searchinfo_table_flags))
-                        {
-                            // ImGui::TableSetupColumn("One");
-                            // ImGui::TableSetupColumn("Two");
-                            // ImGui::TableHeadersRow();
-
-                            //TODO might be able to use a subtle progressbar to hint relative amounts, e.g. hashfull, time used from timeout, etc..
-                            
-                            //TODO right align these values
-
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("time");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_TIME) {
-                                ImGui::Text("%u", tec.searchinfo.time);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-                        
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("depth");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_DEPTH) {
-                                ImGui::Text("%u", tec.searchinfo.depth);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("seldepth");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_SELDEPTH) {
-                                ImGui::Text("%u", tec.searchinfo.seldepth);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-                        
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("nodes");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
-                                ImGui::Text("%lu", tec.searchinfo.nodes);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-                        
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("nps");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
-                                ImGui::Text("%lu", tec.searchinfo.nps);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-                        
-                            ImGui::TableNextRow();
-                            ImGui::TableSetColumnIndex(0);
-                            ImGui::TextUnformatted("hashfull");
-                            ImGui::TableSetColumnIndex(1);
-                            if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_HASHFULL) {
-                                ImGui::Text("%f", tec.searchinfo.hashfull);
-                            } else {
-                                ImGui::TextDisabled("---");
-                            }
-
-                            ImGui::EndTable();
-                        }
-                        if (engine_searching) {
-                            ImGui::PopStyleColor();
-                        }
 
                         ImGui::Separator();
 
                         // only sends slider/text change when the user releases the control, otherwise incurs very many events to the engine
                         //TODO offer similar button for reset to default value?
-                        if (ImGui::CollapsingHeader(engine_searching ? "Runtime Options [locked]" : "Runtime Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+                        if (ImGui::CollapsingHeader(engine_searching ? "Runtime Options [locked]" : "Runtime Options")) {
 
                             if (engine_searching) {
                                 ImGui::BeginDisabled();
@@ -427,6 +266,173 @@ namespace MetaGui {
                                 ImGui::EndDisabled();
                             }
 
+                        }
+
+                        ImGui::Separator();
+
+                        //TODO some way to visually highlight the start/stop button
+                        if (ImGui::ArrowButton("##search_constraints_btn", tec.search_constraints_open ? ImGuiDir_Down : ImGuiDir_Right)) {
+                            tec.search_constraints_open = !tec.search_constraints_open;
+                        }
+                        ImGui::SameLine();
+                        if (engine_searching) {
+                            if (tec.e.methods->features.running_bestmove) {
+                                if (ImGui::Button("POLL BM")) {
+                                    tec.search_poll_bestmove();
+                                }
+                                ImGui::SameLine();
+                            }
+                            if (ImGui::Button("STOP SEARCH", ImVec2(-1.0f, 0.0f))) {
+                                tec.stop_search();
+                            }
+                        } else {
+                            if (ImGui::Button("START SEARCH", ImVec2(-1.0f, 0.0f))) {
+                                tec.start_search();
+                            }
+                        }
+                        
+                        if (tec.search_constraints_open) {
+                            if (engine_searching) {
+                                ImGui::BeginDisabled();
+                            }
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
+                            if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
+                            {
+                                //TODO combo box for which player to search? (show name in parens)
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::InputScalar("timeout (ms)", ImGuiDataType_U32, &tec.search_constraints.timeout);
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Checkbox("ponder", &tec.search_constraints.ponder);
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Checkbox("use timectl", &tec.search_constraints_timectl);
+
+                                ImGui::EndTable();
+                            }
+                            ImGui::PopStyleVar();
+                            if (engine_searching) {
+                                ImGui::EndDisabled();
+                            }
+                        }
+
+                        ImGui::Separator();
+
+                        if (ImGui::CollapsingHeader("Search Info")) {
+                            if (engine_searching) {
+                                ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImVec4(0.16, 0.92, 0.53, 1));
+                            } //TODO want more colors, ? e.g. maybe show stale info in the table? or just yellow if not running but info still there
+                            ImGuiTableFlags searchinfo_table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg; // replace Border with ImGuiTableFlags_BordersOuter?
+                            if (ImGui::BeginTable("searchinfo_table", 2, searchinfo_table_flags))
+                            {
+                                // ImGui::TableSetupColumn("One");
+                                // ImGui::TableSetupColumn("Two");
+                                // ImGui::TableHeadersRow();
+
+                                //TODO might be able to use a subtle progressbar to hint relative amounts, e.g. hashfull, time used from timeout, etc..
+                                
+                                //TODO right align these values
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("time");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_TIME) {
+                                    ImGui::Text("%u", tec.searchinfo.time);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+                            
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("depth");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_DEPTH) {
+                                    ImGui::Text("%u", tec.searchinfo.depth);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("seldepth");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_SELDEPTH) {
+                                    ImGui::Text("%u", tec.searchinfo.seldepth);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+                            
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("nodes");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NODES) {
+                                    ImGui::Text("%lu", tec.searchinfo.nodes);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+                            
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("nps");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_NPS) {
+                                    ImGui::Text("%lu", tec.searchinfo.nps);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+                            
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::TextUnformatted("hashfull");
+                                ImGui::TableSetColumnIndex(1);
+                                if (tec.searchinfo.flags & EE_SEARCHINFO_FLAG_TYPE_HASHFULL) {
+                                    ImGui::Text("%f", tec.searchinfo.hashfull);
+                                } else {
+                                    ImGui::TextDisabled("---");
+                                }
+
+                                ImGui::EndTable();
+                            }
+                            if (engine_searching) {
+                                ImGui::PopStyleColor();
+                            }
+                        }
+
+                        ImGui::Separator();
+
+                        ImGui::TextUnformatted("Best move per player:");
+                        if (tec.bestmove.count > 0) {
+                            ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
+                            if (ImGui::BeginTable("bestmoves", 3, ImGuiTableFlags_Borders))
+                            {
+                                ImGui::TableSetupColumn("player");
+                                ImGui::TableSetupColumn("move");
+                                ImGui::TableSetupColumn("conf");
+                                ImGui::TableHeadersRow();
+
+                                for (int i = 0; i < tec.bestmove.count; i++) {
+                                    ImGui::TableNextRow();
+                                    ImGui::TableSetColumnIndex(0);
+                                    ImGui::Text("%03hhu", tec.bestmove.player[i]);
+                                    ImGui::TableSetColumnIndex(1);
+                                    ImGui::Text("%s", tec.bestmove_strings[i]);
+                                    ImGui::TableSetColumnIndex(2);
+                                    ImGui::Text("%.3f", tec.bestmove.confidence[i]);
+                                    //TODO eval
+                                }
+
+                                ImGui::EndTable();
+                            }
+                            ImGui::PopStyleVar();
+                        } else {
+                            ImGui::SameLine();
+                            ImGui::TextDisabled("<unavailable>");
                         }
 
                     }

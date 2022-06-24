@@ -97,6 +97,9 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* frontend gets a big data struct to read from and display, containing e.g. engine infos and player name maps etc..
+* draw and resign are events
+  * player offering draw may set timeout, can not be taken back, on timeout it auto expires
 * maybe replace SDL_net with another cpp raw networking lib (https://github.com/SLikeSoft/SLikeNet) so we dont have to download opengl on a server just for it
   * for now just try to spoof sdl for sdl net lib with some fake sdl functions it can use
   * or just copy all the files into this project along with the license

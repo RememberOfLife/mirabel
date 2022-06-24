@@ -99,6 +99,14 @@ namespace Engines {
         eevent_destroy(&te);
     }
 
+    void EngineManager::engine_container::search_poll_bestmove()
+    {
+        engine_event te;
+        eevent_create_bestmove_empty(&te, e.engine_id);
+        eevent_queue_push(eq, &te);
+        eevent_destroy(&te);
+    }
+
     void EngineManager::engine_container::stop_search()
     {
         engine_event te;
@@ -301,6 +309,12 @@ namespace Engines {
                 case EE_TYPE_GAME_MOVE:
                 case EE_TYPE_GAME_SYNC: {
                     assert(0);
+                } break;
+                case EE_TYPE_GAME_DRAW: {
+                    MetaGui::logf("#I E%u offers%s a draw\n", e.engine_id, e.draw.accept ? "/accepts" : "");
+                } break;
+                case EE_TYPE_GAME_RESIGN: {
+                    MetaGui::logf("#I E%u wants to resign\n", e.engine_id);
                 } break;
                 case EE_TYPE_ENGINE_ID: {
                     tec.id_name = e.id.name ? strdup(e.id.name) : NULL;
