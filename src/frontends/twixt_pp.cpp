@@ -19,7 +19,7 @@
 namespace Frontends {
 
     void TwixT_PP::sbtn::update(float mx, float my) {
-        hovered = (sqrt( (x - mx) * (x - mx) + (y - my) * (y - my) ) < r);
+        hovered = (hypot(x - mx, y - my) < r);
     }
 
     TwixT_PP::TwixT_PP():
@@ -114,6 +114,27 @@ namespace Frontends {
 
     void TwixT_PP::update()
     {
+        // set button hovered
+        int mX = mx;
+        int mY = my;
+        mX -= w_px/2-(padding*the_game_opts.wx)/2 + padding/2;
+        mY -= h_px/2-(padding*the_game_opts.wy)/2 + padding/2;
+
+        hover_rank = -1;
+        hover_file = -1;
+        // determine hover rank and file, not button based, but range based
+        //TODO fix some off by one pixel edge cases on the border of the board
+        int mXp = mX + padding/2;
+        int mYp = mY + padding/2;
+        if (mXp >= 0 && mYp >= 0 && mXp <= padding * the_game_opts.wx && mYp <= padding * the_game_opts.wy) {
+            hover_rank = mYp / padding;
+            hover_file = mXp / padding;
+        }
+        if ((hover_file == 0 && hover_rank == 0) || (hover_file == the_game_opts.wx - 1 && hover_rank == 0) || (hover_file == 0 && hover_rank == the_game_opts.wy - 1) || (hover_file == the_game_opts.wx - 1 && hover_rank == the_game_opts.wy - 1)) {
+            hover_rank = -1;
+            hover_file = -1;
+        }
+
         if (!the_game) {
             return;
         }
@@ -121,11 +142,6 @@ namespace Frontends {
         if (pbuf_c == 0) {
             return;
         }
-        // set button hovered
-        int mX = mx;
-        int mY = my;
-        mX -= w_px/2-(padding*the_game_opts.wx)/2 + padding/2;
-        mY -= h_px/2-(padding*the_game_opts.wy)/2 + padding/2;
         for (int y = 0; y < the_game_opts.wy; y++) {
             for (int x = 0; x < the_game_opts.wx; x++) {
                 board_buttons[y * the_game_opts.wx + x].x  = static_cast<float>(x)*(padding);
@@ -142,6 +158,44 @@ namespace Frontends {
         }
     }
 
+    // draw dashed line with width w, color col and gap size g, will never under/over-draw
+    // colorized at both ends
+    //TODO different lengths of dashes vs gaps
+    void draw_dashed_line(NVGcontext* dc, float x1, float y1, float x2, float y2, float w, float g, NVGcolor col)
+    {
+        nvgSave(dc);
+
+        nvgTranslate(dc, x1, y1);
+        x2 -= x1;
+        y2 -= y1;
+        x1 = 0;
+        y1 = 0;
+
+        nvgRotate(dc, atan2(y2, x2));
+        float d = hypot(x2, y2);
+
+        nvgStrokeColor(dc, col);
+        nvgStrokeWidth(dc, w);
+        bool dash_gap = false;
+        float c = g;
+        for (float t = 0; t < d; t += g) {
+            if (t + g >= d) {
+                dash_gap = false;
+                c = d - t;
+            }
+            if (!dash_gap) {
+                nvgBeginPath(dc);
+
+                nvgMoveTo(dc, t, 0);
+                nvgLineTo(dc, t+c, 0);
+
+                nvgStroke(dc);
+            }
+            dash_gap = !dash_gap;
+        }
+        nvgRestore(dc);
+    }
+
     void TwixT_PP::render()
     {
         nvgSave(dc);
@@ -149,8 +203,64 @@ namespace Frontends {
         nvgRect(dc, -10, -10, w_px+20, h_px+20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, w_px/2-(padding*the_game_opts.wx)/2 + padding/2, h_px/2-(padding*the_game_opts.wy)/2 + padding/2);
-        //TODO draw player boarder for current player
+        nvgTranslate(dc, w_px/2-(padding*the_game_opts.wx)/2 + padding/2, h_px/2-(padding*the_game_opts.wy)/2 + padding*0.5);
+        if (display_rankfile) {
+            nvgTranslate(dc, 0, padding * 0.25);
+        }
+
+        //TODO draw player boarder for current player, needed with hover color indicator?
+
+        if (display_rankfile) {
+            // display rank and file descriptions
+            nvgSave(dc);
+            nvgTranslate(dc, -padding, -padding);
+            
+            nvgFontSize(dc, padding * 0.5);
+            nvgFontFace(dc, "ff");
+            char char_buf[4];
+
+            for (uint8_t ix = 0; ix < the_game_opts.wx; ix++) {
+                uint8_t ixw = ix;
+                if (ixw > 25) {
+                    char_buf[0] = 'a' + (ixw / 26) - 1;
+                    ixw = ixw - (26 * (ixw / 26));
+                    char_buf[1] = 'a' + ixw;
+                    char_buf[2] = '\0';
+                } else {
+                    char_buf[0] = 'a' + ixw;
+                    char_buf[1] = '\0';
+                }
+                nvgBeginPath(dc);
+                if (hover_file == ix) {
+                    nvgFillColor(dc, nvgRGB(240, 217, 181));
+                } else {
+                    nvgFillColor(dc, nvgRGB(161, 119, 67));
+                }
+                nvgTextAlign(dc, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+                nvgText(dc, padding * (ix + 1), padding * 0.35, char_buf, NULL);
+            }
+
+            for (uint8_t iy = 0; iy < the_game_opts.wy; iy++) {
+                sprintf(char_buf, "%hhu", iy);
+                nvgBeginPath(dc);
+                if (hover_rank == iy) {
+                    nvgFillColor(dc, nvgRGB(240, 217, 181));
+                } else {
+                    nvgFillColor(dc, nvgRGB(161, 119, 67));
+                }
+                nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_MIDDLE);
+                nvgText(dc, padding * 0.3, padding * (iy + 1), char_buf, NULL);
+            }
+
+            nvgRestore(dc);
+        }
+
+        if (display_analysis_background) {
+            nvgBeginPath(dc);
+            nvgRect(dc, 0, 0, padding * the_game_opts.wx - padding, padding * the_game_opts.wy - padding);
+            nvgFillColor(dc, nvgRGB(230, 255, 204)); // littlegolem green
+            nvgFill(dc);
+        }
 
         // draw player backline background color
         nvgSave(dc);
@@ -164,8 +274,8 @@ namespace Frontends {
             nvgFill(dc);
             nvgBeginPath(dc);
             nvgMoveTo(dc, -padding/2, -padding/2);
-            nvgLineTo(dc, -padding/2, padding * the_game_opts.wx - padding/2);
-            nvgLineTo(dc, padding/2, padding * (the_game_opts.wx - 1) - padding/2);
+            nvgLineTo(dc, -padding/2, padding * the_game_opts.wy - padding/2);
+            nvgLineTo(dc, padding/2, padding * (the_game_opts.wy - 1) - padding/2);
             nvgLineTo(dc, padding/2, padding/2);
             nvgFillColor(dc, nvgRGB(161, 119, 67)); // wood dark
             nvgFill(dc);
@@ -173,6 +283,37 @@ namespace Frontends {
             nvgRotate(dc, M_PI);
         }
         nvgRestore(dc);
+
+        if (display_runoff_lines && the_game_opts.wx == the_game_opts.wy) {
+            // draw centering and run-off lines
+            nvgSave(dc);
+            nvgTranslate(dc, -padding/2, -padding/2);
+            NVGcolor rocol;
+            if (display_analysis_background) {
+                rocol = nvgRGB(211, 222, 200);
+            } else {
+                // rocol = nvgRGB(228, 166, 90); // lighter
+                rocol = nvgRGB(176, 125, 62); // darker
+            }
+            for (int i = 0; i < 4; i++) {
+                //TODO these break non-square boards
+                draw_dashed_line(dc,
+                    (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2 - padding * 2,
+                    (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2,
+                    button_size*0.25, button_size, rocol);
+                draw_dashed_line(dc,
+                    padding * 1.5, padding * 1.5,
+                    padding * (the_game_opts.wx - 2) - padding/2, (padding*the_game_opts.wy)/2 - padding/2,
+                    button_size*0.25, button_size, rocol);
+                draw_dashed_line(dc,
+                    padding * 1.5, padding * 1.5,
+                    (padding*the_game_opts.wx)/2 - padding/2, padding * (the_game_opts.wy - 2) - padding/2,
+                    button_size*0.25, button_size, rocol);
+                nvgTranslate(dc, padding * the_game_opts.wx, 0);
+                nvgRotate(dc, M_PI / 2);
+            }
+            nvgRestore(dc);
+        }
 
         for (int y = 0; y < the_game_opts.wy; y++) {
             for (int x = 0; x < the_game_opts.wx; x++) {
@@ -260,21 +401,45 @@ namespace Frontends {
                     continue;
                 }
                 if (board_buttons[y * the_game_opts.wx + x].hovered == true && np == TWIXT_PP_PLAYER_NONE) {
-                    nvgBeginPath(dc);
-                    nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
-                    nvgStrokeWidth(dc, button_size*0.2);
-                    nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                    nvgStroke(dc);
-
-                    nvgBeginPath(dc);
-                    nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
-                    nvgStrokeWidth(dc, button_size*0.15); // TODO maybe this thinner to increase contrast for white backline hovers
-                    if (pbuf == TWIXT_PP_PLAYER_WHITE) {
-                        nvgStrokeColor(dc, nvgRGB(236, 236, 236));
-                    } else {
+                    if (display_hover_indicator_cross) {
+                        nvgBeginPath(dc);
+                        nvgStrokeWidth(dc, button_size*0.4);
                         nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                        nvgMoveTo(dc, base_x-button_size*0.75, base_y-button_size*0.75);
+                        nvgLineTo(dc, base_x+button_size*0.75, base_y+button_size*0.75);
+                        nvgMoveTo(dc, base_x-button_size*0.75, base_y+button_size*0.75);
+                        nvgLineTo(dc, base_x+button_size*0.75, base_y-button_size*0.75);
+                        nvgStroke(dc);
+
+                        nvgBeginPath(dc);
+                        nvgStrokeWidth(dc, button_size*0.3);
+                        if (pbuf == TWIXT_PP_PLAYER_WHITE) {
+                            nvgStrokeColor(dc, nvgRGB(236, 236, 236));
+                        } else {
+                            nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                        }
+                        nvgMoveTo(dc, base_x-button_size*0.7, base_y-button_size*0.7);
+                        nvgLineTo(dc, base_x+button_size*0.7, base_y+button_size*0.7);
+                        nvgMoveTo(dc, base_x-button_size*0.7, base_y+button_size*0.7);
+                        nvgLineTo(dc, base_x+button_size*0.7, base_y-button_size*0.7);
+                        nvgStroke(dc);
+                    } else {
+                        nvgBeginPath(dc);
+                        nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
+                        nvgStrokeWidth(dc, button_size*0.2);
+                        nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                        nvgStroke(dc);
+
+                        nvgBeginPath(dc);
+                        nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
+                        nvgStrokeWidth(dc, button_size*0.15); // TODO maybe this thinner to increase contrast for white backline hovers
+                        if (pbuf == TWIXT_PP_PLAYER_WHITE) {
+                            nvgStrokeColor(dc, nvgRGB(236, 236, 236));
+                        } else {
+                            nvgStrokeColor(dc, nvgRGB(25, 25, 25));
+                        }
+                        nvgStroke(dc);
                     }
-                    nvgStroke(dc);
                 }
             }
         }
@@ -283,10 +448,21 @@ namespace Frontends {
 
     void TwixT_PP::draw_options()
     {
-        ImGui::SliderFloat("padding", &padding, 10, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::Checkbox("auto-size", &auto_size);
+        if (auto_size) {
+            padding = h_px / (the_game_opts.wy + 1); // only respects display with w>h
+            ImGui::BeginDisabled();
+        }
+        ImGui::SliderFloat("size", &padding, 10, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (auto_size) {
+            ImGui::EndDisabled();
+        }
         button_size = 0.45 * padding;
-        // ImGui::SliderFloat("button size", &button_size, 3, padding * 0.45, "%.3f", ImGuiSliderFlags_AlwaysClamp); //TODO unlock button size
-        //TODO display collision free lines when hovering
+        ImGui::Checkbox("analysis background", &display_analysis_background);
+        ImGui::Checkbox("hover style: cross", &display_hover_indicator_cross);
+        ImGui::Checkbox("hover connections", &display_hover_connections);
+        ImGui::Checkbox("run-off lines", &display_runoff_lines);
+        ImGui::Checkbox("rank & file", &display_rankfile);
     }
 
     TwixT_PP_FEW::TwixT_PP_FEW():

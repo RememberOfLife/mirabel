@@ -28,8 +28,14 @@ namespace Frontends {
             player_id pbuf;
             uint8_t pbuf_c;
 
-            float padding = 40;
+            float padding = 38;
             float button_size = 10;
+            bool auto_size = true;
+            bool display_analysis_background = true;
+            bool display_hover_indicator_cross = false;
+            bool display_hover_connections = true;
+            bool display_runoff_lines = true;
+            bool display_rankfile = true;
 
             struct sbtn {
                 float x;
@@ -44,6 +50,9 @@ namespace Frontends {
             int my;
 
             sbtn* board_buttons; // board_buttons origin is top left, row major
+
+            int hover_rank;
+            int hover_file;
 
         public:
 
