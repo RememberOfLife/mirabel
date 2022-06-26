@@ -50,6 +50,8 @@ namespace Frontends {
             int my;
 
             sbtn* board_buttons; // board_buttons origin is top left, row major
+            bool swap_hover = false;
+            bool swap_down = false;
 
             int hover_rank;
             int hover_file;
@@ -63,6 +65,9 @@ namespace Frontends {
             void update() override;
             void render() override;
             void draw_options() override;
+
+            void draw_dashed_line(float x1, float y1, float x2, float y2, float w, float g, NVGcolor col);
+            void draw_cond_connection(float bx, float by, uint8_t x, uint8_t y, TWIXT_PP_DIR d, NVGcolor ccol);
 
     };
 

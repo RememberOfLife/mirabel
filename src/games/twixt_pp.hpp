@@ -12,7 +12,7 @@ namespace Games {
             twixt_pp_options opts{
                 .wx = 24,
                 .wy = 24,
-                .pie_swap = false,
+                .pie_swap = true,
             };
             bool square = true;
             

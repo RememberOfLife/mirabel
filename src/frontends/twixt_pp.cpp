@@ -92,9 +92,29 @@ namespace Frontends {
                     int mY = event.button.y - y_px;
                     mX -= w_px/2-(padding*the_game_opts.wx)/2 + padding/2;
                     mY -= h_px/2-(padding*the_game_opts.wy)/2 + padding/2;
+                    // detect swap button press
+                    //BUG clickable part of swap button somehow offset by half a button?!
+                    //TODO this is also a problem for regular grid lines in update
+                    int mXp = mX + padding/2;
+                    int mYp = mY + padding/2;
+                    // MetaGui::logf("%d %d\n", mXp, mYp);
+                    if (mXp >= 0 && mYp >= 0 && mXp <= padding && mYp <= padding) {
+                        the_game_int->can_swap(the_game, &swap_hover);
+                        if (swap_hover && swap_down && event.type == SDL_MOUSEBUTTONUP) {
+                            Control::main_client->inbox.push(Control::f_event_game_move(TWIXT_PP_MOVE_SWAP));
+                            swap_down = false;
+                        }
+                        swap_down = (event.type == SDL_MOUSEBUTTONDOWN);
+                    }
                     for (int y = 0; y < the_game_opts.wy; y++) {
                         for (int x = 0; x < the_game_opts.wx; x++) {
                             board_buttons[y * the_game_opts.wx + x].update(mX, mY);
+                            if ((x == 0 && y == 0) || (x == the_game_opts.wx - 1 && y == 0) || (x == 0 && y == the_game_opts.wy - 1) || (x == the_game_opts.wx - 1 && y == the_game_opts.wy - 1)) {
+                                board_buttons[y * the_game_opts.wx + x].hovered = false;
+                            }
+                            if (((x == 0 || x == the_game_opts.wx - 1) && pbuf == TWIXT_PP_PLAYER_WHITE) || (y == 0 || y == the_game_opts.wy - 1) && pbuf == TWIXT_PP_PLAYER_BLACK) {
+                                board_buttons[y * the_game_opts.wx + x].hovered = false;
+                            }
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 TWIXT_PP_PLAYER node_player;
                                 the_game_int->get_node(the_game, x, y, &node_player);
@@ -114,6 +134,11 @@ namespace Frontends {
 
     void TwixT_PP::update()
     {
+        if (auto_size) {
+            padding = h_px / (the_game_opts.wy + 1); // only respects display with w>h
+            button_size = 0.45 * padding;
+        }
+
         // set button hovered
         int mX = mx;
         int mY = my;
@@ -124,11 +149,17 @@ namespace Frontends {
         hover_file = -1;
         // determine hover rank and file, not button based, but range based
         //TODO fix some off by one pixel edge cases on the border of the board
+        //TODO when game runs out rank file display freezes
         int mXp = mX + padding/2;
         int mYp = mY + padding/2;
         if (mXp >= 0 && mYp >= 0 && mXp <= padding * the_game_opts.wx && mYp <= padding * the_game_opts.wy) {
             hover_rank = mYp / padding;
             hover_file = mXp / padding;
+        }
+        if (hover_file == 0 && hover_rank == 0) {
+            the_game_int->can_swap(the_game, &swap_hover);
+        } else {
+            swap_hover = false;
         }
         if ((hover_file == 0 && hover_rank == 0) || (hover_file == the_game_opts.wx - 1 && hover_rank == 0) || (hover_file == 0 && hover_rank == the_game_opts.wy - 1) || (hover_file == the_game_opts.wx - 1 && hover_rank == the_game_opts.wy - 1)) {
             hover_rank = -1;
@@ -156,44 +187,6 @@ namespace Frontends {
                 }
             }
         }
-    }
-
-    // draw dashed line with width w, color col and gap size g, will never under/over-draw
-    // colorized at both ends
-    //TODO different lengths of dashes vs gaps
-    void draw_dashed_line(NVGcontext* dc, float x1, float y1, float x2, float y2, float w, float g, NVGcolor col)
-    {
-        nvgSave(dc);
-
-        nvgTranslate(dc, x1, y1);
-        x2 -= x1;
-        y2 -= y1;
-        x1 = 0;
-        y1 = 0;
-
-        nvgRotate(dc, atan2(y2, x2));
-        float d = hypot(x2, y2);
-
-        nvgStrokeColor(dc, col);
-        nvgStrokeWidth(dc, w);
-        bool dash_gap = false;
-        float c = g;
-        for (float t = 0; t < d; t += g) {
-            if (t + g >= d) {
-                dash_gap = false;
-                c = d - t;
-            }
-            if (!dash_gap) {
-                nvgBeginPath(dc);
-
-                nvgMoveTo(dc, t, 0);
-                nvgLineTo(dc, t+c, 0);
-
-                nvgStroke(dc);
-            }
-            dash_gap = !dash_gap;
-        }
-        nvgRestore(dc);
     }
 
     void TwixT_PP::render()
@@ -241,7 +234,7 @@ namespace Frontends {
             }
 
             for (uint8_t iy = 0; iy < the_game_opts.wy; iy++) {
-                sprintf(char_buf, "%hhu", iy);
+                sprintf(char_buf, "%hhu", (uint8_t)(iy + 1)); // clang does not like this without a cast?
                 nvgBeginPath(dc);
                 if (hover_rank == iy) {
                     nvgFillColor(dc, nvgRGB(240, 217, 181));
@@ -297,15 +290,15 @@ namespace Frontends {
             }
             for (int i = 0; i < 4; i++) {
                 //TODO these break non-square boards
-                draw_dashed_line(dc,
+                draw_dashed_line(
                     (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2 - padding * 2,
                     (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2,
                     button_size*0.25, button_size, rocol);
-                draw_dashed_line(dc,
+                draw_dashed_line(
                     padding * 1.5, padding * 1.5,
                     padding * (the_game_opts.wx - 2) - padding/2, (padding*the_game_opts.wy)/2 - padding/2,
                     button_size*0.25, button_size, rocol);
-                draw_dashed_line(dc,
+                draw_dashed_line(
                     padding * 1.5, padding * 1.5,
                     (padding*the_game_opts.wx)/2 - padding/2, padding * (the_game_opts.wy - 2) - padding/2,
                     button_size*0.25, button_size, rocol);
@@ -322,7 +315,6 @@ namespace Frontends {
                 }
                 float base_x = static_cast<float>(x)*(padding);
                 float base_y = static_cast<float>(y)*(padding);
-                //TODO if drawing lines to be added on hover, display here
                 uint8_t connections;
                 the_game_int->get_node_connections(the_game, x, y, &connections);
                 if (connections & TWIXT_PP_DIR_RT) {
@@ -356,6 +348,29 @@ namespace Frontends {
                     nvgStrokeWidth(dc, button_size*0.2);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgStroke(dc);
+                }
+                TWIXT_PP_PLAYER np = TWIXT_PP_PLAYER_NONE;
+                if (the_game) {
+                    the_game_int->get_node(the_game, x, y, &np);
+                } else {
+                    if ((x == 0 && y == 0) || (x == the_game_opts.wx - 1 && y == 0) || (x == 0 && y == the_game_opts.wy - 1) || (x == the_game_opts.wx - 1 && y == the_game_opts.wy - 1)) {
+                        np = TWIXT_PP_PLAYER_INVALID;
+                    }
+                }
+                if (display_hover_connections && board_buttons[y * the_game_opts.wx + x].hovered == true && np == TWIXT_PP_PLAYER_NONE) {
+                    // draw connections that would be created if the hover was placed
+                    NVGcolor ccol = nvgRGBA(25, 25, 25, 100);
+                    if (display_hover_connections && board_buttons[y * the_game_opts.wx + x].mousedown == true) {
+                        ccol = nvgRGBA(25, 25, 25, 180);
+                    }
+                    draw_cond_connection(base_x, base_y, x, y, TWIXT_PP_DIR_RT, ccol);
+                    draw_cond_connection(base_x, base_y, x, y, TWIXT_PP_DIR_RB, ccol);
+                    draw_cond_connection(base_x, base_y, x, y, TWIXT_PP_DIR_BR, ccol);
+                    draw_cond_connection(base_x, base_y, x, y, TWIXT_PP_DIR_BL, ccol);
+                    draw_cond_connection(base_x - 2 * padding, base_y + padding, x - 2, y + 1, TWIXT_PP_DIR_RT, ccol);
+                    draw_cond_connection(base_x - 2 * padding, base_y - padding, x - 2, y - 1, TWIXT_PP_DIR_RB, ccol);
+                    draw_cond_connection(base_x - padding, base_y - 2 * padding, x - 1, y - 2, TWIXT_PP_DIR_BR, ccol);
+                    draw_cond_connection(base_x + padding, base_y - 2 * padding, x + 1, y - 2, TWIXT_PP_DIR_BL, ccol);
                 }
             }
         }
@@ -395,12 +410,51 @@ namespace Frontends {
                         nvgFillColor(dc, nvgRGB(25, 25, 25));
                         nvgFill(dc);
                     } break;
-                    default: break;
+                    case TWIXT_PP_PLAYER_INVALID: {
+                        bool can_swap = false;
+                        if (the_game) {
+                            the_game_int->can_swap(the_game, &can_swap);
+                        }
+                        if (can_swap) {
+                            if (swap_hover) {
+                                nvgBeginPath(dc);
+                                nvgRect(dc, -padding*0.45, -padding*0.45, padding*0.9, padding*0.9);
+                                if (swap_down) {
+                                    nvgFillColor(dc, nvgRGBA(0, 0, 0, 30));
+                                } else {
+                                    nvgFillColor(dc, nvgRGBA(0, 0, 0, 15));
+                                }
+                                nvgFill(dc);
+                            }
+                            nvgFontSize(dc, padding * 0.5);
+                            nvgFontFace(dc, "ff");
+                            nvgFillColor(dc, nvgRGB(25, 25, 25));
+                            nvgTextAlign(dc, NVG_ALIGN_CENTER | NVG_ALIGN_BASELINE);
+                            nvgText(dc, 0, 0, "SW", NULL);
+                            nvgTextAlign(dc, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
+                            nvgText(dc, 0, 0, "AP", NULL);
+                        }
+                    } break;
                 }
                 if (!the_game) {
                     continue;
                 }
                 if (board_buttons[y * the_game_opts.wx + x].hovered == true && np == TWIXT_PP_PLAYER_NONE) {
+                    if (board_buttons[y * the_game_opts.wx + x].mousedown) {
+                        if (pbuf == TWIXT_PP_PLAYER_WHITE) {
+                            nvgBeginPath(dc);
+                            nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
+                            nvgFillColor(dc, nvgRGBA(236, 236, 236, 150));
+                            nvgFill(dc);
+                            nvgBeginPath(dc);
+                        } else {
+                            nvgBeginPath(dc);
+                            nvgCircle(dc, base_x, base_y, button_size - button_size * 0.1);
+                            nvgFillColor(dc, nvgRGBA(25, 25, 25, 150));
+                            nvgFill(dc);
+                            nvgBeginPath(dc);
+                        }
+                    }
                     if (display_hover_indicator_cross) {
                         nvgBeginPath(dc);
                         nvgStrokeWidth(dc, button_size*0.4);
@@ -450,7 +504,6 @@ namespace Frontends {
     {
         ImGui::Checkbox("auto-size", &auto_size);
         if (auto_size) {
-            padding = h_px / (the_game_opts.wy + 1); // only respects display with w>h
             ImGui::BeginDisabled();
         }
         ImGui::SliderFloat("size", &padding, 10, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
@@ -463,6 +516,100 @@ namespace Frontends {
         ImGui::Checkbox("hover connections", &display_hover_connections);
         ImGui::Checkbox("run-off lines", &display_runoff_lines);
         ImGui::Checkbox("rank & file", &display_rankfile);
+    }
+
+    // draw dashed line with width w, color col and gap size g, will never under/over-draw
+    // colorized at both ends
+    //TODO different lengths of dashes vs gaps
+    void TwixT_PP::draw_dashed_line(float x1, float y1, float x2, float y2, float w, float g, NVGcolor col)
+    {
+        nvgSave(dc);
+
+        nvgTranslate(dc, x1, y1);
+        x2 -= x1;
+        y2 -= y1;
+        x1 = 0;
+        y1 = 0;
+
+        nvgRotate(dc, atan2(y2, x2));
+        float d = hypot(x2, y2);
+
+        nvgStrokeColor(dc, col);
+        nvgStrokeWidth(dc, w);
+        bool dash_gap = false;
+        float c = g;
+        for (float t = 0; t < d; t += g) {
+            if (t + g >= d) {
+                dash_gap = false;
+                c = d - t;
+            }
+            if (!dash_gap) {
+                nvgBeginPath(dc);
+
+                nvgMoveTo(dc, t, 0);
+                nvgLineTo(dc, t+c, 0);
+
+                nvgStroke(dc);
+            }
+            dash_gap = !dash_gap;
+        }
+        nvgRestore(dc);
+    }
+
+    // tries to draw the connection line, if the point exists and collision is unset
+    void TwixT_PP::draw_cond_connection(float bx, float by, uint8_t x, uint8_t y, TWIXT_PP_DIR d, NVGcolor ccol)
+    {
+        TWIXT_PP_PLAYER np;
+        the_game_int->get_node(the_game, x, y, &np);
+        TWIXT_PP_PLAYER tp;
+        switch (d) {
+            case TWIXT_PP_DIR_RT: {
+                the_game_int->get_node(the_game, x + 2, y - 1, &tp);
+            } break;
+            case TWIXT_PP_DIR_RB: {
+                the_game_int->get_node(the_game, x + 2, y + 1, &tp);
+            } break;
+            case TWIXT_PP_DIR_BR: {
+                the_game_int->get_node(the_game, x + 1, y + 2, &tp);
+            } break;
+            case TWIXT_PP_DIR_BL: {
+                the_game_int->get_node(the_game, x - 1, y + 2, &tp);
+            } break;
+        }
+        // put the existing player into np
+        if (tp != TWIXT_PP_PLAYER_NONE && tp != TWIXT_PP_PLAYER_INVALID) {
+            np = tp;
+        }
+        if (np == TWIXT_PP_PLAYER_NONE || np == TWIXT_PP_PLAYER_INVALID || np != pbuf) {
+            return;
+        }
+        uint8_t collisions;
+        the_game_int->get_node_collisions(the_game, x, y, &collisions);
+        if (np == TWIXT_PP_PLAYER_WHITE) {
+            collisions >>= 4;
+        }
+        if (collisions & d) {
+            return;
+        }
+        nvgBeginPath(dc);
+        nvgMoveTo(dc, bx, by);
+        switch (d) {
+            case TWIXT_PP_DIR_RT: {
+                nvgLineTo(dc, bx + 2 * padding, by - padding);
+            } break;
+            case TWIXT_PP_DIR_RB: {
+                nvgLineTo(dc, bx + 2 * padding, by + padding);
+            } break;
+            case TWIXT_PP_DIR_BR: {
+                nvgLineTo(dc, bx + padding, by + 2 * padding);
+            } break;
+            case TWIXT_PP_DIR_BL: {
+                nvgLineTo(dc, bx - padding, by + 2 * padding);
+            } break;
+        }
+        nvgStrokeWidth(dc, button_size*0.2);
+        nvgStrokeColor(dc, ccol);
+        nvgStroke(dc);
     }
 
     TwixT_PP_FEW::TwixT_PP_FEW():
