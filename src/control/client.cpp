@@ -293,6 +293,10 @@ namespace Control {
                         player_id pbuf[253];
                         uint8_t pbuf_cnt = 253;
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
+                        if (the_game->methods->is_legal_move(the_game, pbuf[0], ce.code, SYNC_COUNTER_DEFAULT) != ERR_OK) {
+                            MetaGui::logf("#W illegal move on board\n");
+                            break;
+                        }
                         the_game->methods->make_move(the_game, pbuf[0], ce.code); //FIXME ptm
                         engine_mgr->game_move(pbuf[0], ce.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);

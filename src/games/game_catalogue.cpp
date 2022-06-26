@@ -2,6 +2,7 @@
 #include "games/havannah.hpp"
 #include "games/tictactoe_ultimate.hpp"
 #include "games/tictactoe.hpp"
+#include "games/twixt_pp.hpp"
 
 #include "games/game_catalogue.hpp"
 
@@ -29,6 +30,12 @@ namespace Games {
             std::vector<BaseGameVariant*>{
                 new TicTacToe(),
                 new TicTacToe_Ultimate(),
+            }
+        },
+        BaseGame{
+            "TwixT",
+            std::vector<BaseGameVariant*>{
+                new TwixT_PP(),
             }
         },
     };

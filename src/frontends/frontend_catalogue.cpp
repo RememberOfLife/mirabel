@@ -3,6 +3,7 @@
 #include "frontends/havannah.hpp"
 #include "frontends/tictactoe_ultimate.hpp"
 #include "frontends/tictactoe.hpp"
+#include "frontends/twixt_pp.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
 
@@ -15,9 +16,10 @@ namespace Frontends {
     std::vector<FrontendWrap*> frontend_catalogue = {
         new EmptyFrontend_FEW(), // do not move the empty frontend wrapper
         new Chess_FEW(),
+        new Havannah_FEW(),
         new TicTacToe_Ultimate_FEW(),
         new TicTacToe_FEW(),
-        new Havannah_FEW(),
+        new TwixT_PP_FEW(),
     };
 
 }

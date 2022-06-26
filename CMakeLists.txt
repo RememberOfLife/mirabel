@@ -68,6 +68,7 @@ set(SOURCES
     lib/surena/src/games/havannah.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
+    lib/surena/src/games/twixt_pp.cpp
     lib/surena/src/util/fast_prng.cpp
     lib/surena/src/util/noise.cpp
     lib/surena/src/util/semver.c
@@ -91,12 +92,14 @@ set(SOURCES
     src/frontends/havannah.cpp
     src/frontends/tictactoe_ultimate.cpp
     src/frontends/tictactoe.cpp
+    src/frontends/twixt_pp.cpp
 
     src/games/chess.cpp
     src/games/game_catalogue.cpp
     src/games/havannah.cpp
     src/games/tictactoe_ultimate.cpp
     src/games/tictactoe.cpp
+    src/games/twixt_pp.cpp
 
     src/meta_gui/chat.cpp
     src/meta_gui/confirm_exit.cpp
