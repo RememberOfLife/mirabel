@@ -83,6 +83,9 @@ namespace Frontends {
             case SDL_MOUSEMOTION: {
                 mx = event.motion.x - x_px;
                 my = event.motion.y - y_px;
+                if (display_rankfile) {
+                    my -= padding * 0.25;
+                }
             } break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
@@ -90,11 +93,12 @@ namespace Frontends {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     int mX = event.button.x - x_px;
                     int mY = event.button.y - y_px;
+                    if (display_rankfile) {
+                        mY -= padding * 0.25;
+                    }
                     mX -= w_px/2-(padding*the_game_opts.wx)/2 + padding/2;
                     mY -= h_px/2-(padding*the_game_opts.wy)/2 + padding/2;
                     // detect swap button press
-                    //BUG clickable part of swap button somehow offset by half a button?!
-                    //TODO this is also a problem for regular grid lines in update
                     int mXp = mX + padding/2;
                     int mYp = mY + padding/2;
                     // MetaGui::logf("%d %d\n", mXp, mYp);
@@ -135,7 +139,10 @@ namespace Frontends {
     void TwixT_PP::update()
     {
         if (auto_size) {
-            padding = h_px / (the_game_opts.wy + 1); // only respects display with w>h
+            float h_pad = h_px / (the_game_opts.wy + 1);
+            float w_pad = w_px / (the_game_opts.wx + 2);
+            rankfile_yoffset = h_pad < w_pad;
+            padding = (h_pad < w_pad ? h_pad : w_pad);
             button_size = 0.45 * padding;
         }
 
@@ -199,9 +206,12 @@ namespace Frontends {
         nvgTranslate(dc, w_px/2-(padding*the_game_opts.wx)/2 + padding/2, h_px/2-(padding*the_game_opts.wy)/2 + padding*0.5);
         if (display_rankfile) {
             nvgTranslate(dc, 0, padding * 0.25);
+            if (!rankfile_yoffset) {
+                nvgTranslate(dc, padding * 0.25, 0);
+            }
         }
 
-        //TODO draw player boarder for current player, needed with hover color indicator?
+        //TODO draw player border for current player, needed with hover color indicator?
 
         if (display_rankfile) {
             // display rank and file descriptions
@@ -277,10 +287,10 @@ namespace Frontends {
         }
         nvgRestore(dc);
 
-        if (display_runoff_lines && the_game_opts.wx == the_game_opts.wy) {
+        if (display_runoff_lines) {
             // draw centering and run-off lines
             nvgSave(dc);
-            nvgTranslate(dc, -padding/2, -padding/2);
+            nvgTranslate(dc, padding, padding);
             NVGcolor rocol;
             if (display_analysis_background) {
                 rocol = nvgRGB(211, 222, 200);
@@ -288,21 +298,61 @@ namespace Frontends {
                 // rocol = nvgRGB(228, 166, 90); // lighter
                 rocol = nvgRGB(176, 125, 62); // darker
             }
+            // calculate run-off line for the DIR_RT in x major direction, then for height y major
+            int owx = the_game_opts.wx - 2;
+            int owy = the_game_opts.wy - 2;
+            int swx = 0;
+            int swy = 0;
+            int shx = 0;
+            int shy = 0;
+            while (true) {
+                swx += 2;
+                swy += 1;
+                if (swx + 2 >= owx || swy + 1 >= owy) {
+                    break;
+                }
+            }
+            while (true) {
+                shx += 1;
+                shy += 2;
+                if (shx + 1 >= owx || shy + 2 >= owy) {
+                    break;
+                }
+            }
             for (int i = 0; i < 4; i++) {
-                //TODO these break non-square boards
+                int swx_w;
+                int swy_w;
+                int shx_w;
+                int shy_w;
+                if (i % 2 == 0) {
+                    swx_w = swx;
+                    swy_w = swy;
+                    shx_w = shx;
+                    shy_w = shy;
+                    draw_dashed_line(
+                        (padding*(owx))/2 - padding/2, (padding*(owy))/2 - padding * 2.5,
+                        (padding*(owx))/2 - padding/2, (padding*(owy))/2 - padding/2,
+                        button_size*0.25, button_size, rocol);
+                } else {
+                    swx_w = shy;
+                    swy_w = shx;
+                    shx_w = swy;
+                    shy_w = swx;
+                    draw_dashed_line(
+                        (padding*(owy))/2 - padding/2, (padding*(owx))/2 - padding * 2.5,
+                        (padding*(owy))/2 - padding/2, (padding*(owx))/2 - padding/2,
+                        button_size*0.25, button_size, rocol);
+                }
+                //TODO line width little bit too big on smaller board sizes
                 draw_dashed_line(
-                    (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2 - padding * 2,
-                    (padding*the_game_opts.wx)/2, (padding*the_game_opts.wy)/2,
+                    0, 0,
+                    padding * swx_w, padding * swy_w,
                     button_size*0.25, button_size, rocol);
                 draw_dashed_line(
-                    padding * 1.5, padding * 1.5,
-                    padding * (the_game_opts.wx - 2) - padding/2, (padding*the_game_opts.wy)/2 - padding/2,
+                    0, 0,
+                    padding * shx_w, padding * shy_w,
                     button_size*0.25, button_size, rocol);
-                draw_dashed_line(
-                    padding * 1.5, padding * 1.5,
-                    (padding*the_game_opts.wx)/2 - padding/2, padding * (the_game_opts.wy - 2) - padding/2,
-                    button_size*0.25, button_size, rocol);
-                nvgTranslate(dc, padding * the_game_opts.wx, 0);
+                nvgTranslate(dc, padding * (i % 2 == 0 ? the_game_opts.wx - 3 : the_game_opts.wy - 3), 0);
                 nvgRotate(dc, M_PI / 2);
             }
             nvgRestore(dc);
@@ -510,7 +560,6 @@ namespace Frontends {
         if (auto_size) {
             ImGui::EndDisabled();
         }
-        button_size = 0.45 * padding;
         ImGui::Checkbox("analysis background", &display_analysis_background);
         ImGui::Checkbox("hover style: cross", &display_hover_indicator_cross);
         ImGui::Checkbox("hover connections", &display_hover_connections);
@@ -528,8 +577,6 @@ namespace Frontends {
         nvgTranslate(dc, x1, y1);
         x2 -= x1;
         y2 -= y1;
-        x1 = 0;
-        y1 = 0;
 
         nvgRotate(dc, atan2(y2, x2));
         float d = hypot(x2, y2);

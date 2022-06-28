@@ -94,53 +94,85 @@ namespace Frontends {
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                 if (event.button.button == SDL_BUTTON_LEFT) {
+                    uint64_t target_move = MOVE_NONE;
                     bool new_pickup = false;
                     // is proper left mouse button down event
                     int mX = event.button.x - x_px;
                     int mY = event.button.y - y_px;
                     mX -= w_px/2-(8*square_size)/2;
                     mY -= h_px/2-(8*square_size)/2;
-                    for (int y = 0; y < 8; y++) {
-                        for (int x = 0; x < 8; x++) {
-                            board_buttons[y][x].update(mX, mY);
-                            if (event.type == SDL_MOUSEBUTTONDOWN) { // on down event, pickup piece that is hovered, if any
-                                CHESS_piece sp;
-                                the_game_int->get_cell(the_game, x, y, &sp);
-                                if (passive_pin && board_buttons[y][x].hovered) {
-                                    //TODO when placing a piece back onto itself to reset it, this will try to make that move
-                                    // if a pinned piece is set, instead MOVE it to the mousedown location
-                                    uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
-                                    the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
-                                    for (int i = 0; i < move_cnt; i++) {
-                                        if (moves[i] == target_move) {
-                                            Control::main_client->inbox.push(Control::f_event_game_move(target_move));
-                                            break;
-                                        }
+                    // check if promotion menu is active and interacted with
+                    if (promotion_tx >= 0) {
+                        for (int py = 0; py < 2; py++) {
+                            for (int px = 0; px < 2; px++) {
+                                if (event.type == SDL_MOUSEBUTTONUP)  {
+                                    promotion_buttons[py][px].update(mX, mY);
+                                    if (promotion_buttons[py][px].hovered && promotion_buttons_mdown) {
+                                        int promotion_type = py * 2 + px + 2;
+                                        target_move = (promotion_type<<16)|(promotion_ox<<12)|(promotion_oy<<8)|(promotion_tx<<4)|(promotion_ty);
                                     }
-                                    // do not set new pickup here, so that the pin gets cleared automatically
-                                } else if (board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == pbuf) {
-                                    // new pickup
-                                    new_pickup = true;
-                                    mouse_pindx_x = x;
-                                    mouse_pindx_y = y;
                                 }
                             }
-                            if (event.type == SDL_MOUSEBUTTONUP) {
-                                if (board_buttons[y][x].hovered) {
-                                    // dropped piece onto a square
-                                    if (x == mouse_pindx_x && y == mouse_pindx_y) {
-                                        // dropped back onto the picked up piece
-                                        passive_pin = true;
-                                    } else {
-                                        // dropped onto another square
-                                        //TODO this code is getting hideous
-                                        uint64_t target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
-                                        the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
-                                        for (int i = 0; i < move_cnt; i++) {
-                                            if (moves[i] == target_move) {
-                                                Control::main_client->inbox.push(Control::f_event_game_move(target_move));
-                                                break;
+                        }
+                        board_buttons[promotion_ty][promotion_tx].update(mX, mY);
+                        promotion_buttons_mdown |= (board_buttons[promotion_ty][promotion_tx].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                        if (!passive_pin && (event.type == SDL_MOUSEBUTTONUP && target_move == MOVE_NONE) || (event.type == SDL_MOUSEBUTTONDOWN && !promotion_buttons_mdown)) {
+                            promotion_ox = -1;
+                            promotion_oy = -1;
+                            promotion_tx = -1;
+                            promotion_ty = -1;
+                            promotion_buttons_mdown = false;
+                        }
+                        passive_pin = false;
+                    } 
+                    if (promotion_tx < 0) {
+                        for (int y = 0; y < 8; y++) {
+                            for (int x = 0; x < 8; x++) {
+                                if (target_move != MOVE_NONE) {
+                                    continue;
+                                }
+                                board_buttons[y][x].update(mX, mY);
+                                if (event.type == SDL_MOUSEBUTTONDOWN) {
+                                    // on down event, pickup piece that is hovered, if any
+                                    CHESS_piece sp;
+                                    the_game_int->get_cell(the_game, x, y, &sp);
+                                    if (passive_pin && board_buttons[y][x].hovered) {
+                                        if (sp.player == pbuf) {
+                                            // if this pin was already pinned, then assume we hovered outside, so we can put it down on mouse up again
+                                            hover_outside_of_pin = (mouse_pindx_x == x && mouse_pindx_y == y);
+                                            // new pickup, drop old piece that was passive pinned
+                                            passive_pin = false;
+                                            new_pickup = true;
+                                            mouse_pindx_x = x;
+                                            mouse_pindx_y = y;
+                                        } else {
+                                            // if a pinned piece is set, instead MOVE it to the mousedown location
+                                            target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
+                                            // do not set new pickup here, so that the pin gets cleared automatically
+                                        }
+                                    } else if (board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == pbuf) {
+                                        // new pickup
+                                        hover_outside_of_pin = false;
+                                        new_pickup = true;
+                                        mouse_pindx_x = x;
+                                        mouse_pindx_y = y;
+                                    }
+                                }
+                                if (event.type == SDL_MOUSEBUTTONUP) {
+                                    if (board_buttons[y][x].hovered) {
+                                        // dropped piece onto a square
+                                        if (x == mouse_pindx_x && y == mouse_pindx_y) {
+                                            // dropped back onto the picked up piece
+                                            passive_pin = true;
+                                            // if at least hovered outside of this 
+                                            if (hover_outside_of_pin) {
+                                                passive_pin = false;
+                                                mouse_pindx_x = -1;
+                                                mouse_pindx_y = -1;
                                             }
+                                        } else {
+                                            // dropped onto another square
+                                            target_move = (mouse_pindx_x<<12)|(mouse_pindx_y<<8)|(x<<4)|(y);
                                         }
                                     }
                                 }
@@ -157,6 +189,53 @@ namespace Frontends {
                         mouse_pindx_x = -1;
                         mouse_pindx_y = -1;
                     }
+                    if (target_move != MOVE_NONE) {
+                        // check if this move would be a promotion
+                        int ox = (target_move >> 12) & 0xF;
+                        int oy = (target_move >> 8) & 0xF;
+                        int tx = (target_move >> 4) & 0xF;
+                        int ty = target_move & 0xF;
+                        int pt = (target_move >> 16) & 0xF;
+                        CHESS_piece sp;
+                        the_game_int->get_cell(the_game, ox, oy, &sp);
+                        if (sp.type == CHESS_PIECE_TYPE_PAWN && (ty == 0 || ty == 7)) {
+                            if (pt > CHESS_PIECE_TYPE_NONE) {
+                                // reset promotion menu, this is already a valid promotion move
+                                promotion_ox = -1;
+                                promotion_oy = -1;
+                                promotion_tx = -1;
+                                promotion_ty = -1;
+                                promotion_buttons_mdown = false;
+                            } else if (promotion_auto_queen) {
+                                target_move |= (CHESS_PIECE_TYPE_QUEEN << 16);
+                            } else {
+                                // open promotion menu on the target square, only if the move would be legal
+                                bool open_promotion = false;
+                                the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
+                                for (int i = 0; i < move_cnt; i++) {
+                                    if ((moves[i] & 0xFFFF) == target_move) {
+                                        open_promotion = true;
+                                        break;
+                                    }
+                                }
+                                if (open_promotion) {
+                                    promotion_ox = ox;
+                                    promotion_oy = oy;
+                                    promotion_tx = tx;
+                                    promotion_ty = ty;
+                                    passive_pin = true;
+                                }
+                            }
+                        }
+                        //TODO cache these in the future, when the frontend moves on its own
+                        the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
+                        for (int i = 0; i < move_cnt; i++) {
+                            if (moves[i] == target_move) {
+                                Control::main_client->inbox.push(Control::f_event_game_move(target_move));
+                                break;
+                            }
+                        }
+                    }
                 }
             } break;
         }
@@ -164,6 +243,9 @@ namespace Frontends {
 
     void Chess::update()
     {
+        if (auto_size) {
+            square_size = (h_px < w_px ? h_px : w_px) / 8.75;
+        }
         if (!the_game) {
             return;
         }
@@ -176,12 +258,25 @@ namespace Frontends {
         int mY = my;
         mX -= w_px/2-(8*square_size)/2;
         mY -= h_px/2-(8*square_size)/2;
+        if (promotion_tx >= 0) {
+            for (int y = 0; y < 2; y++) {
+                for (int x = 0; x < 2; x++) {
+                    promotion_buttons[y][x].x = (square_size * promotion_tx) + (x * square_size/2);
+                    promotion_buttons[y][x].y = ((7 * square_size) - (square_size * promotion_ty)) + (y * square_size/2);
+                    promotion_buttons[y][x].s = square_size/2;
+                    promotion_buttons[y][x].update(mX, mY);
+                }
+            }
+        }
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 board_buttons[y][x].x = static_cast<float>(x)*(square_size);
                 board_buttons[y][x].y = (7*square_size)-static_cast<float>(y)*(square_size);
                 board_buttons[y][x].s = square_size;
                 board_buttons[y][x].update(mX, mY);
+                if (board_buttons[y][x].hovered && (mouse_pindx_x != x || mouse_pindx_y != y)) {
+                    hover_outside_of_pin |= true;
+                }
             }
         }
         //TODO should really cache these instead of loading them new every frame
@@ -217,6 +312,7 @@ namespace Frontends {
             the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
             if (pbuf_c == 0) {
                 the_game->methods->get_results(the_game, &pbuf_c, &pbuf);
+                nvgRect(dc, -2.5*border_size, -2.5*border_size, 8*square_size+5*border_size, 8*square_size+5*border_size);
             }
             color_player = (CHESS_PLAYER)pbuf;
             switch (color_player) {
@@ -249,7 +345,7 @@ namespace Frontends {
                 float text_padding = square_size * 0.05;
                 nvgFontSize(dc, square_size * 0.17);
                 nvgFontFace(dc, "ff");
-                nvgFillColor(dc, ((x + y) % 2 == 1) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67)); // flip color from base square
+                nvgFillColor(dc, ((x + y) % 2 != 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67)); // flip color from base square
                 if (x == 7) {
                     char_buf[0] = '1'+iy;
                     nvgBeginPath(dc);
@@ -267,7 +363,37 @@ namespace Frontends {
                 }
                 CHESS_piece piece_in_square;
                 the_game_int->get_cell(the_game, x, iy, &piece_in_square);
+                if (promotion_tx == x && promotion_ty == iy) {
+                    // draw the promotion menu here
+                    float half_sqsize = square_size / 2;
+                    for (int py = 0; py < 2; py++) {
+                        for (int px = 0; px < 2; px++) {
+                            nvgBeginPath(dc);
+                            nvgRect(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize);
+                            int promotion_type = py * 2 + px + 2;
+                            int promotion_sprite_idx = pbuf * 6 - 6 + promotion_type - 1;
+                            NVGpaint promotion_sprite_paint = nvgImagePattern(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize, 0, sprites[promotion_sprite_idx], 0.5);
+                            nvgFillPaint(dc, promotion_sprite_paint);
+                            nvgFill(dc);
+                            if (promotion_buttons[py][px].hovered) {
+                                nvgBeginPath(dc);
+                                nvgRect(dc, base_x + px * square_size/2, base_y + py * square_size/2, half_sqsize, half_sqsize);
+                                nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                                nvgFill(dc);
+                            }
+                        }
+                    }
+                }
+                if (promotion_ox == x && promotion_oy == iy) {
+                    // skip if the pawn here is held up in a promotion menu, draw green background to indicate its involvement
+                    nvgBeginPath(dc);
+                    nvgRect(dc, base_x, base_y, square_size, square_size);
+                    nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                    nvgFill(dc);
+                    continue;
+                }
                 if (piece_in_square.player == CHESS_PLAYER_NONE) {
+                    // skip if empty
                     continue;
                 }
                 float sprite_alpha = 1;
@@ -291,15 +417,26 @@ namespace Frontends {
         // render possible moves, if pinned piece exists
         uint8_t m_from = (mouse_pindx_x<<4)|(mouse_pindx_y);
         if (mouse_pindx_x >= 0 && move_map.find(m_from) != move_map.end()) {
+            uint64_t drawn_bitboard = 0;
             std::vector<uint8_t> moves = move_map.at(m_from);
             for (int i = 0; i < moves.size(); i++) {
                 int ix = (moves[i] >> 4) & 0x0F;
                 int iy = (moves[i] & 0x0F);
+                if (drawn_bitboard & (1<<(iy*8+ix))) {
+                    continue; // prevent promotion moves from being draw on top of each other
+                }
+                drawn_bitboard |= (1<<(iy*8+ix));
                 float base_x = ix * square_size;
                 float base_y = (7-iy) * square_size;
                 CHESS_piece sp;
                 the_game_int->get_cell(the_game, ix, iy, &sp);
-                if (sp.type == CHESS_PIECE_TYPE_NONE) {
+                if (board_buttons[iy][ix].hovered) {
+                    // currently hovering the possible move
+                    nvgBeginPath(dc);
+                    nvgRect(dc, base_x, base_y, square_size, square_size);
+                    nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                    nvgFill(dc);
+                } else if (sp.type == CHESS_PIECE_TYPE_NONE) {
                     // is a move to empty square
                     nvgBeginPath(dc);
                     nvgCircle(dc, base_x+square_size/2, base_y+square_size/2, square_size*0.15);
@@ -331,6 +468,7 @@ namespace Frontends {
             }
         }
         nvgRestore(dc);
+        nvgSave(dc);
         // render pinned piece
         if (mouse_pindx_x >= 0 && !passive_pin) {
             CHESS_piece pinned_piece;
@@ -342,11 +480,20 @@ namespace Frontends {
             nvgFillPaint(dc, sprite_paint);
             nvgFill(dc);
         }
+        nvgRestore(dc);
     }
 
     void Chess::draw_options()
     {
-        ImGui::SliderFloat("square size", &square_size, 40, 175, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::Checkbox("auto-size", &auto_size);
+        if (auto_size) {
+            ImGui::BeginDisabled();
+        }
+        ImGui::SliderFloat("size", &square_size, 40, 175, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        if (auto_size) {
+            ImGui::EndDisabled();
+        }
+        ImGui::Checkbox("promotion auto queen", &promotion_auto_queen);
     }
 
     Chess_FEW::Chess_FEW():

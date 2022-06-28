@@ -18,13 +18,9 @@ namespace Frontends {
 
     class Chess : public Frontend {
 
-        //TODO hovering over possible moves should highlight the targeted move square
         //TODO display when you king is in check
         //TODO draw arrows and markers with right click
-        //TODO when trying to move another piece, while there already is a pinned piece, re-set the pin to the new target
-        //TODO gamebreaking!! some way to select what piece a pawn should promote into, currently pawn promotion is impossible
         //TODO highlist last made mode
-        //TODO make the player border be a double border when the game is done to indicate finished state?
 
         private:
 
@@ -39,6 +35,8 @@ namespace Frontends {
             uint32_t move_cnt;
 
             float square_size = 90;
+            bool auto_size = true;
+            bool promotion_auto_queen = false;
 
             int sprites[12];
 
@@ -57,8 +55,16 @@ namespace Frontends {
 
             std::unordered_map<uint8_t, std::vector<uint8_t>> move_map;
             bool passive_pin = false;
+            bool hover_outside_of_pin = false;
             int mouse_pindx_x = -1;
             int mouse_pindx_y = -1;
+
+            sbtn promotion_buttons[2][2];
+            bool promotion_buttons_mdown = false;
+            int promotion_ox = -1;
+            int promotion_oy = -1;
+            int promotion_tx = -1;
+            int promotion_ty = -1;
 
         public:
 

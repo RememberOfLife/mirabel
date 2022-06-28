@@ -37,6 +37,8 @@ namespace Frontends {
             bool display_runoff_lines = true;
             bool display_rankfile = true;
 
+            bool rankfile_yoffset = true;
+
             struct sbtn {
                 float x;
                 float y;
