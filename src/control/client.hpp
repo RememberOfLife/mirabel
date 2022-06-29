@@ -38,6 +38,8 @@ namespace Control {
             Frontends::Frontend* frontend = NULL;
             Engines::EngineManager* engine_mgr;
 
+            float dpi_scale;
+
             Client();
             ~Client();
             void loop();
