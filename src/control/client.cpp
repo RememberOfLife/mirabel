@@ -89,6 +89,17 @@ namespace Control {
         ImGui::StyleColorsDark();
         //ImGui::StyleColorsClassic();
 
+        // dpi scaling
+        dpi_scale = 1;
+        float dpi;
+        if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdl_window), &dpi, NULL, NULL)) {
+            dpi_scale = dpi / 96; // 96 is the default dpi on windows
+            if (dpi_scale < 0.25 || dpi_scale > 4) { // sanity check
+                dpi_scale = 1;
+            }
+        }
+        imgui_io->FontGlobalScale = dpi_scale;
+
         // setup platform/renderer backends
         ImGui_ImplSDL2_InitForOpenGL(sdl_window, sdl_glcontext);
         ImGui_ImplOpenGL3_Init(glsl_version);
@@ -418,7 +429,7 @@ namespace Control {
                     } break;
                 }
             }
-            
+
             // work through interface events: clicks, key presses, gui commands structs for updating interface elems
             SDL_Event event;
             while (SDL_PollEvent(&event))
