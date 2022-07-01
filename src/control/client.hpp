@@ -6,6 +6,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
+#include "surena/util/semver.h"
 #include "surena/game.h"
 
 #include "control/event_queue.hpp"
@@ -15,6 +16,8 @@
 #include "network/network_client.hpp"
 
 namespace Control {
+
+    extern const semver client_version;
 
     class Client {
 
@@ -35,6 +38,7 @@ namespace Control {
             event_queue inbox;
 
             game* the_game = NULL;
+            uint64_t game_step = 1;
             Frontends::Frontend* frontend = NULL;
             Engines::EngineManager* engine_mgr;
 

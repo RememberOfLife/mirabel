@@ -17,6 +17,7 @@ namespace Frontends {
     EmptyFrontend::EmptyFrontend()
     {
         dc = Control::main_client->nanovg_ctx;
+        sprintf(vstr, "mirabel v%u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
     }
 
     EmptyFrontend::~EmptyFrontend()
@@ -38,6 +39,13 @@ namespace Frontends {
         nvgRect(dc, -10, -10, w_px+20, h_px+20);
         nvgFillColor(dc, nvgRGB(114, 140, 153));
         nvgFill(dc);
+
+        nvgFontSize(dc, 20);
+        nvgFontFace(dc, "ff");
+        nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_BASELINE);
+        nvgFillColor(dc, nvgRGB(210, 210, 210));
+        nvgText(dc, w_px - 15, h_px - 15, vstr, NULL);
+
         nvgRestore(dc);
     }
 

@@ -14,6 +14,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
+#include "surena/util/semver.h"
 #include "surena/game.h"
 
 #include "control/client.hpp"
@@ -29,6 +30,8 @@
 #include "control/client.hpp"
 
 namespace Control {
+
+    const semver client_version = semver{0, 1, 0};
 
     Client* main_client = NULL;
 
@@ -136,6 +139,10 @@ namespace Control {
         int font_id1 = nvgCreateFont(nanovg_ctx, "ff", "../res/fonts/opensans/OpenSans-ExtraBold.ttf");
         if (font_id1 < 0) {
             printf("[ERROR] nvg failed to load font 1\n");
+        }
+        int font_id2 = nvgCreateFont(nanovg_ctx, "mf", "../res/fonts/liberation-mono/LiberationMono-Regular.ttf");
+        if (font_id2 < 0) {
+            printf("[ERROR] nvg failed to load font 2\n");
         }
 
         // init default context
@@ -289,6 +296,7 @@ namespace Control {
                             break;
                         }
                         the_game->methods->import_state(the_game, ce.state);
+                        game_step++;
                         engine_mgr->game_state(ce.state);
                         // everything successful, pass to server
                         if (network_send_queue && e.client_id == CLIENT_NONE) {
@@ -309,6 +317,7 @@ namespace Control {
                             break;
                         }
                         the_game->methods->make_move(the_game, pbuf[0], ce.code); //FIXME ptm
+                        game_step++;
                         engine_mgr->game_move(pbuf[0], ce.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         if (pbuf_cnt == 0) {

@@ -88,6 +88,7 @@ set(SOURCES
 
     src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp
+    src/frontends/fallback_text.cpp
     src/frontends/frontend_catalogue.cpp
     src/frontends/havannah.cpp
     src/frontends/tictactoe_ultimate.cpp

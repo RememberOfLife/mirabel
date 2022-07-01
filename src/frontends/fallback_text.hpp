@@ -11,24 +11,41 @@
 
 namespace Frontends {
 
-    class EmptyFrontend : public Frontend {
+    class FallbackText : public Frontend {
+
         private:
+
             NVGcontext* dc;
-            char vstr[64];
+
+            game* the_game;
+            uint64_t the_game_step = 0;
+
+            player_id* pbuf = NULL;
+            uint8_t pbuf_c = 0;
+            player_id* rbuf = NULL;
+            uint8_t rbuf_c = 0;
+
+            char* opts_str = NULL;
+            char* state_str = NULL;
+            uint64_t the_id;
+            char* print_str = NULL;
+
         public:
-            EmptyFrontend();
-            ~EmptyFrontend();
+
+            FallbackText();
+            ~FallbackText();
             void set_game(game* new_game) override;
             void process_event(SDL_Event event) override;
             void update() override;
             void render() override;
             void draw_options() override;
+
     };
 
-    class EmptyFrontend_FEW : public FrontendWrap {
+    class FallbackText_FEW : public FrontendWrap {
         public:
-            EmptyFrontend_FEW();
-            ~EmptyFrontend_FEW();
+            FallbackText_FEW();
+            ~FallbackText_FEW();
             bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) override;
             Frontend* new_frontend() override;
             void draw_options() override;

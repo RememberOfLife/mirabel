@@ -68,6 +68,8 @@ Collect more general resources:
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
+* bug: can not select among multiple frontends, try with fallback text
+* switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
 * generational index on the board the client has, so other ui utilities can cache its outputs easily
@@ -76,8 +78,6 @@ Collect more general resources:
   * dockspace as optional enable in the menu bar
   * DockSpaceOverViewport(GetMainViewPort, NoDockingInCentralNode | PassthruCentalNode) to not display the center 5 nodes, disable inner padding on docking window
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
-* text only frontend as fallback
-* switching from a frontend that once had a game running to another game crashes the frontend by set_game
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
