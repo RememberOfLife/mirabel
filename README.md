@@ -63,7 +63,6 @@ Collect more general resources:
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
 * usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
-* usability: all graphical scalings (imgui+frontends) are way too small on high resolution displays
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 * security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 * network: if we try to send data on a client connection that just closed, segfault
@@ -71,6 +70,14 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 
 ## todo
+* generational index on the board the client has, so other ui utilities can cache its outputs easily
+* some general purpose possiblity to load and get the postion strings in some metagui window, but where? also display a move list somewhere..
+* use imgui docking branch to enable docking of metagui windows to the side of the frontend
+  * dockspace as optional enable in the menu bar
+  * DockSpaceOverViewport(GetMainViewPort, NoDockingInCentralNode | PassthruCentalNode) to not display the center 5 nodes, disable inner padding on docking window
+* when starting a game, start the default frontend for it automatically, i.e. last used if multiple
+* text only frontend as fallback
+* switching from a frontend that once had a game running to another game crashes the frontend by set_game
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter

@@ -94,7 +94,7 @@ namespace Control {
         float dpi;
         if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdl_window), &dpi, NULL, NULL)) {
             dpi_scale = dpi / 96; // 96 is the default dpi on windows
-            if (dpi_scale < 0.25 || dpi_scale > 4) { // sanity check
+            if (dpi_scale < 1 || dpi_scale > 4) { // sanity check, would underscale < 1 on normal display (looks blurry)
                 dpi_scale = 1;
             }
         }
@@ -263,7 +263,7 @@ namespace Control {
                             the_game->methods->export_options_str(the_game, &options_len, ce.options);
                         }
                         engine_mgr->game_load(the_game);
-                        frontend->set_game(the_game);
+                        frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
                         // everything successful, pass to server
                         if (network_send_queue && ce.client_id == CLIENT_NONE) {
                             network_send_queue->push(ce);

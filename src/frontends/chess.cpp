@@ -340,6 +340,28 @@ namespace Frontends {
                 nvgRect(dc, base_x, base_y, square_size, square_size);
                 nvgFillColor(dc, ((x + y) % 2 == 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67));
                 nvgFill(dc);
+                if (promotion_tx == x && promotion_ty == iy) {
+                    // draw the promotion menu here
+                    float half_sqsize = square_size / 2;
+                    for (int py = 0; py < 2; py++) {
+                        for (int px = 0; px < 2; px++) {
+                            nvgBeginPath(dc);
+                            nvgRect(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize);
+                            int promotion_type = py * 2 + px + 2;
+                            int promotion_sprite_idx = pbuf * 6 - 6 + promotion_type - 1;
+                            NVGpaint promotion_sprite_paint = nvgImagePattern(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize, 0, sprites[promotion_sprite_idx], 0.5);
+                            nvgFillPaint(dc, promotion_sprite_paint);
+                            nvgFill(dc);
+                            if (promotion_buttons[py][px].hovered) {
+                                //TODO gets rendered UNDER the rank-file notation
+                                nvgBeginPath(dc);
+                                nvgRect(dc, base_x + px * square_size/2, base_y + py * square_size/2, half_sqsize, half_sqsize);
+                                nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
+                                nvgFill(dc);
+                            }
+                        }
+                    }
+                }
                 // draw rank and file
                 static char char_buf[2] = "-";
                 float text_padding = square_size * 0.05;
@@ -361,29 +383,6 @@ namespace Frontends {
                 if (!the_game) {
                     continue;
                 }
-                CHESS_piece piece_in_square;
-                the_game_int->get_cell(the_game, x, iy, &piece_in_square);
-                if (promotion_tx == x && promotion_ty == iy) {
-                    // draw the promotion menu here
-                    float half_sqsize = square_size / 2;
-                    for (int py = 0; py < 2; py++) {
-                        for (int px = 0; px < 2; px++) {
-                            nvgBeginPath(dc);
-                            nvgRect(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize);
-                            int promotion_type = py * 2 + px + 2;
-                            int promotion_sprite_idx = pbuf * 6 - 6 + promotion_type - 1;
-                            NVGpaint promotion_sprite_paint = nvgImagePattern(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize, 0, sprites[promotion_sprite_idx], 0.5);
-                            nvgFillPaint(dc, promotion_sprite_paint);
-                            nvgFill(dc);
-                            if (promotion_buttons[py][px].hovered) {
-                                nvgBeginPath(dc);
-                                nvgRect(dc, base_x + px * square_size/2, base_y + py * square_size/2, half_sqsize, half_sqsize);
-                                nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
-                                nvgFill(dc);
-                            }
-                        }
-                    }
-                }
                 if (promotion_ox == x && promotion_oy == iy) {
                     // skip if the pawn here is held up in a promotion menu, draw green background to indicate its involvement
                     nvgBeginPath(dc);
@@ -392,6 +391,11 @@ namespace Frontends {
                     nvgFill(dc);
                     continue;
                 }
+                if (promotion_tx == x && promotion_ty == iy) {
+                    continue;
+                }
+                CHESS_piece piece_in_square;
+                the_game_int->get_cell(the_game, x, iy, &piece_in_square);
                 if (piece_in_square.player == CHESS_PLAYER_NONE) {
                     // skip if empty
                     continue;
@@ -422,10 +426,14 @@ namespace Frontends {
             for (int i = 0; i < moves.size(); i++) {
                 int ix = (moves[i] >> 4) & 0x0F;
                 int iy = (moves[i] & 0x0F);
-                if (drawn_bitboard & (1<<(iy*8+ix))) {
+                
+                uint64_t bitboard_mask = 1;
+                bitboard_mask <<= iy * 8 + ix;
+                if (drawn_bitboard & bitboard_mask) {
                     continue; // prevent promotion moves from being draw on top of each other
                 }
-                drawn_bitboard |= (1<<(iy*8+ix));
+                drawn_bitboard |= bitboard_mask;
+
                 float base_x = ix * square_size;
                 float base_y = (7-iy) * square_size;
                 CHESS_piece sp;

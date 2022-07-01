@@ -151,7 +151,7 @@ namespace Engines {
         option->name = NULL;
         if (option->type == EE_OPTION_TYPE_COMBO) {
             free(option->value.combo);
-            free(option->v.var);
+            free(option->l.v.var);
         }
         if (option->type == EE_OPTION_TYPE_STRING) {
             free(option->value.str);
@@ -345,12 +345,12 @@ namespace Engines {
                         } break;
                         case EE_OPTION_TYPE_SPIN: {
                             tec.options.back().value.spin = e.option.value.spin;
-                            tec.options.back().mm = e.option.mm;
+                            tec.options.back().l.mm = e.option.l.mm;
                         } break;
                         case EE_OPTION_TYPE_COMBO: {
                             tec.options.back().value.str = (char*)malloc(STR_BUF_MAX);
                             strcpy(tec.options.back().value.str, e.option.value.str);
-                            tec.options.back().v.var = strdup(e.option.v.var);
+                            tec.options.back().l.v.var = strdup(e.option.l.v.var);
                         } break;
                         case EE_OPTION_TYPE_BUTTON: {
                             // pass
@@ -361,11 +361,11 @@ namespace Engines {
                         } break;
                         case EE_OPTION_TYPE_SPIND: {
                             tec.options.back().value.spind = e.option.value.spind;
-                            tec.options.back().mmd = e.option.mmd;
+                            tec.options.back().l.mmd = e.option.l.mmd;
                         } break;
                         case EE_OPTION_TYPE_U64: {
                             tec.options.back().value.u64 = e.option.value.u64;
-                            tec.options.back().mm = e.option.mm;
+                            tec.options.back().l.mm = e.option.l.mm;
                         } break;
                         default: {
                             free(tec.options.back().name);

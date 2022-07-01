@@ -154,7 +154,9 @@ namespace Frontends {
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 uint8_t local_result = 0;
-                the_game_int->get_cell_global(the_game, gx, 2-gy, &local_result);
+                if (the_game) {
+                    the_game_int->get_cell_global(the_game, gx, 2-gy, &local_result);
+                }
                 float base_x = gx*(local_baord_size+global_padding);
                 float base_y = gy*(local_baord_size+global_padding);
                 if (local_result > 0) {

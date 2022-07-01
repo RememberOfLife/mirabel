@@ -185,17 +185,17 @@ namespace MetaGui {
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_SPIN: {
-                                        if (ImGui::SliderScalar(eopt.name, ImGuiDataType_U64, &eopt.value.spin, &eopt.mm.min, &eopt.mm.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
+                                        if (ImGui::SliderScalar(eopt.name, ImGuiDataType_U64, &eopt.value.spin, &eopt.l.mm.min, &eopt.l.mm.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
                                             eopt_changed = true;
                                         }
                                         if (ImGui::IsItemHovered()) {
-                                            ImGui::SetTooltip("min: %lu\nmax: %lu", eopt.mm.min, eopt.mm.max);
+                                            ImGui::SetTooltip("min: %lu\nmax: %lu", eopt.l.mm.min, eopt.l.mm.max);
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_COMBO: {
                                         //TODO unstatic
                                         static int combo_selected = 0; //TODO use value to set this
-                                        if (ImGui::Combo(eopt.name, &combo_selected, eopt.v.var)) {
+                                        if (ImGui::Combo(eopt.name, &combo_selected, eopt.l.v.var)) {
                                             MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
                                             //TODO
                                         }
@@ -211,25 +211,25 @@ namespace MetaGui {
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_SPIND: {
-                                        if (ImGui::SliderScalar(eopt.name, ImGuiDataType_Double, &eopt.value.spind, &eopt.mmd.min, &eopt.mmd.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
+                                        if (ImGui::SliderScalar(eopt.name, ImGuiDataType_Double, &eopt.value.spind, &eopt.l.mmd.min, &eopt.l.mmd.max, NULL, ImGuiSliderFlags_AlwaysClamp)) {
                                             eopt_changed = true;
                                         }
                                         if (ImGui::IsItemHovered()) {
-                                            ImGui::SetTooltip("min: %f\nmax: %f", eopt.mmd.min, eopt.mmd.max);
+                                            ImGui::SetTooltip("min: %f\nmax: %f", eopt.l.mmd.min, eopt.l.mmd.max);
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_U64: {
                                         if (ImGui::InputScalar(eopt.name, ImGuiDataType_U64, &eopt.value.u64)) {
-                                            if (eopt.value.u64 > eopt.mm.max) {
-                                                eopt.value.u64 = eopt.mm.max;
+                                            if (eopt.value.u64 > eopt.l.mm.max) {
+                                                eopt.value.u64 = eopt.l.mm.max;
                                             }
-                                            if (eopt.value.u64 < eopt.mm.min) {
-                                                eopt.value.u64 = eopt.mm.min;
+                                            if (eopt.value.u64 < eopt.l.mm.min) {
+                                                eopt.value.u64 = eopt.l.mm.min;
                                             }
                                             eopt_changed = true;
                                         }
                                         if (ImGui::IsItemHovered()) {
-                                            ImGui::SetTooltip("min: %lu\nmax: %lu", eopt.mm.min, eopt.mm.max);
+                                            ImGui::SetTooltip("min: %lu\nmax: %lu", eopt.l.mm.min, eopt.l.mm.max);
                                         }
                                     } break;
                                     default: {
