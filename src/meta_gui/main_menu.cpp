@@ -35,6 +35,15 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Chat", "CTRL + T", show_chat_window)) {
                     show_chat_window = !show_chat_window;
                 }
+                if (ImGui::MenuItem("Time Control", "CTRL + U", show_timectl_window)) {
+                    show_timectl_window = !show_timectl_window;
+                }
+                if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
+                    show_history_window = !show_history_window;
+                }
+                if (ImGui::MenuItem("Plugins", "CTRL + P", show_plugins_window)) {
+                    show_plugins_window = !show_plugins_window;
+                }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
                     Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_EXIT));

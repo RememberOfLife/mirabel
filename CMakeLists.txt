@@ -111,10 +111,13 @@ set(SOURCES
     src/meta_gui/engine.cpp
     src/meta_gui/frontend_config.cpp
     src/meta_gui/game_config.cpp
+    src/meta_gui/history.cpp
     src/meta_gui/logs.cpp
     src/meta_gui/main_menu.cpp
     src/meta_gui/meta_gui.cpp
+    src/meta_gui/plugins.cpp
     src/meta_gui/stats.cpp
+    src/meta_gui/timectl.cpp
 
     src/network/network_client.cpp
     src/network/network_server.cpp

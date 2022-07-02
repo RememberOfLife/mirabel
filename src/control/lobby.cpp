@@ -8,8 +8,9 @@
 
 #include "control/event_queue.hpp"
 #include "control/event.hpp"
-#include "control/lobby.hpp"
 #include "games/game_catalogue.hpp"
+
+#include "control/lobby.hpp"
 
 namespace Control {
 

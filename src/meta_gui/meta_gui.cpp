@@ -43,4 +43,10 @@ namespace MetaGui {
 
     bool show_chat_window = false;
 
+    bool show_timectl_window = false;
+
+    bool show_history_window = false;
+
+    bool show_plugins_window = false;
+
 }

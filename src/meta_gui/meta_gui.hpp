@@ -78,6 +78,15 @@ namespace MetaGui {
     void chat_msg_del(uint32_t msg_id);
     void chat_clear();
 
+    extern bool show_timectl_window;
+    void timectl_window(bool* p_open);
+
+    extern bool show_history_window;
+    void history_window(bool* p_open);
+
+    extern bool show_plugins_window;
+    void plugins_window(bool* p_open);
+
     //##############################
     // format for windows is:
     // extern bool show_NAME_windowtype;

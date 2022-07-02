@@ -511,6 +511,15 @@ namespace Control {
                     if (MetaGui::show_chat_window && event.key.keysym.sym == SDLK_RETURN) {
                         MetaGui::focus_chat_input = true;
                     }
+                    if (event.key.keysym.sym == SDLK_u && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_timectl_window = !MetaGui::show_timectl_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_h && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_history_window = !MetaGui::show_history_window;
+                    }
+                    if (event.key.keysym.sym == SDLK_p && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_plugins_window = !MetaGui::show_plugins_window;
+                    }
                     if (event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
                         try_quit = true;
                         break;
@@ -570,6 +579,9 @@ namespace Control {
                 if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
                 if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
                 if (MetaGui::show_chat_window) MetaGui::chat_window(&MetaGui::show_chat_window);
+                if (MetaGui::show_timectl_window) MetaGui::timectl_window(&MetaGui::show_timectl_window);
+                if (MetaGui::show_history_window) MetaGui::history_window(&MetaGui::show_history_window);
+                if (MetaGui::show_plugins_window) MetaGui::plugins_window(&MetaGui::show_plugins_window);
             }
 
 
