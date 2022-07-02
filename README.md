@@ -72,8 +72,8 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
-* generational index on the board the client has, so other ui utilities can cache its outputs easily
-* some general purpose possiblity to load and get the postion strings in some metagui window, but where? also display a move list somewhere..
+* rework events to be at least creationwise c compatible, hide serializers in c impl by typedefs
+* game config window should offer to get and set the state strings, store where? also display a move list somewhere..
 * use imgui docking branch to enable docking of metagui windows to the side of the frontend
   * dockspace as optional enable in the menu bar
   * DockSpaceOverViewport(GetMainViewPort, NoDockingInCentralNode | PassthruCentalNode) to not display the center 5 nodes, disable inner padding on docking window
@@ -81,7 +81,6 @@ Collect more general resources:
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
-* about window with version etc, also cmd line switch for version
 * add option to use different imgui font
 * super basic plugin manager
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
@@ -105,7 +104,7 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
-* frontend gets a big data struct to read from and display, containing e.g. engine infos and player name maps etc..
+* general purpose job queue for background processes
 * draw and resign are events
   * player offering draw may set timeout, can not be taken back, on timeout it auto expires
 * maybe replace SDL_net with another cpp raw networking lib (https://github.com/SLikeSoft/SLikeNet) so we dont have to download opengl on a server just for it
@@ -144,27 +143,12 @@ Collect more general resources:
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components
 * ability to play a plugin game without the server loading it, by just forwarding everything to the trusted host player
+* frontend should be able to easily change the cursor, offer some util at least locally
 
 ## problems
-* change how the frontends receive the nanovg context, they need it in the constructor already
-  * also, how to design some system that supports failed construction? i.e. if options were malformed, like a passed resourcepath that doesnt contain resources
-  * also loading should be parallel to the guithread, can be integrated into the isready/stateok flag that frontends may expose to tell the guithread if they failed their construction?
-* make games,frontends,engines dynamically loadable as plugins
-  * needs an extra window
 * local docs / game rule window, per variant? images/graphic representations?
   * load rules from res?
-* how to handle game notation window and past game states keeping? (definitely want to skip around in past states)
-  * history manager is owned by the notation/history metagui window, which also offers loading+saving of notation files
-  * is the history manager actually kept there? or in another place
-    * could also send an event to set the displayed state
-  * ==> history manager only sets guithread state, engine still calcs on the newest one, guithread events for new game moves get applied to the newest state (not shown), history manager has option to distribute viewing state to engine and network
-* where to store state info for things like:
-  * player names and other multiplayer info that comes in from the networkthread
-  * generic "extension" struct for more data, e.g. every field gets a rating
-    * and a generic one for things that everything must support, i.e. best move and rating for every player
-    * then the engine can check back with the frontend what extensions it supports, and writes into them the data it has, if any
 * localization
-* frontend should be able to easily change the cursor
 * file paths should have some sort of file manager menu
   * https://codereview.stackexchange.com/questions/194553/c-dear-imgui-file-browser
 * how to notify players if the other party has made a move in a correspondence game?
@@ -192,20 +176,12 @@ Collect more general resources:
     * or if the game is just mirroring another actual game then any lobby mod can input the random moves
   * every user in the lobby can also be set to be an unknown (e.g. mirroring a real person we don't know state about), i.e. their state will not be decided by the system
     * all real users input their info (e.g. dealt cards) and then can use play and ai
-* ==> manage player specific views for games with simultaneous moves or hidden information
-  * frontend requires info on what view it should render, i.e. render only hidden info or move placer for the player of that view
-  * auto switch view to player_to_move / next player if setting for that is given
-  * can start with views for e.g. chess
 * ==> resources like textures
   * can be generated on first launch into some local cache directory
   * not available for sounds?
 * ==> lobby logic
   * can always change gamestate when user has perms for this in the current lobby (all perms given to everybody in local server play "offline")
 * ==> animation within frontends?
-  * e.g. when loading a game, or making a move, etc..
-  * frontend does not necessarily need to be newest state, it just exposes somewhere if it is ready to accept new moves (or not if it still animating)
-    * if the frontend is passed a move even though it said it doesnt want to, then it should cancel the current animation and process the move (may animate that)
-    * possibly requires an extra buffer for stored moves so we don't pollute the guithread eventqueue
   * how to smooth the animation for self played moves, i.e. when the user drops a drag-and-drop piece onto its target square
     * normally the move_event is pushed AFTER the inbox event_queue is processed (in the sdl event queue for inputs)
     * that way the piece will be reset for one frame until it is processed in the next one

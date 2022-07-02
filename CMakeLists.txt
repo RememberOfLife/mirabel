@@ -45,6 +45,7 @@ set(INCLUDES
 
     lib/surena/includes
 
+    includes
     src
 )
 
@@ -79,6 +80,8 @@ set(SOURCES
     src/control/event_queue.cpp
     src/control/event.cpp
     src/control/lobby.cpp
+    src/control/move_history.cpp
+    src/control/plugins.cpp
     src/control/server.cpp
     src/control/timeout_crash.cpp
 
