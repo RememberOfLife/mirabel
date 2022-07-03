@@ -4,8 +4,8 @@
 #include "surena/engine.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "engines/engine_catalogue.hpp"
 #include "engines/engine_manager.hpp"
 

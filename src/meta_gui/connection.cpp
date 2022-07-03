@@ -4,8 +4,8 @@
 #include "imgui.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "control/timeout_crash.hpp"
 #include "network/network_client.hpp"
 #include "network/protocol.hpp"
@@ -64,7 +64,9 @@ namespace MetaGui {
             } break;
             case RUNNING_STATE_DONE: {
                 if (ImGui::Button("Disconnect", ImVec2(-1.0f, 0.0f))) {
-                    Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_NETWORK_ADAPTER_UNLOAD));
+                    f_event_any es;
+                    f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_UNLOAD);
+                    f_event_queue_push(&Control::main_client->inbox, &es);
                 }
             } break;
         }
@@ -125,7 +127,9 @@ namespace MetaGui {
         if (Control::main_client->network_send_queue) {
             ImGui::SameLine();
             if (ImGui::SmallButton("PING")) {
-                Control::main_client->network_send_queue->push(Control::f_event(Control::EVENT_TYPE_NETWORK_PROTOCOL_PING));
+                f_event_any es;
+                f_event_create_type(&es, EVENT_TYPE_NETWORK_PROTOCOL_PING);
+                f_event_queue_push(Control::main_client->network_send_queue, &es);
             }
         }
 
@@ -194,7 +198,9 @@ namespace MetaGui {
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
                 if (ImGui::Button("Accept Insecure Connection", ImVec2(-1.0f, 0.0f))) {
                     // accept connection
-                    Control::main_client->t_network->send_queue.push(Control::f_event_ssl_thumbprint(Control::EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT));
+                    f_event_any es;
+                    f_event_create_ssl_thumbprint(&es, EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT);
+                    f_event_queue_push(&Control::main_client->t_network->send_queue, &es);
                 }
                 ImGui::PopStyleColor(3);
             }
@@ -245,8 +251,9 @@ namespace MetaGui {
                         ImGui::BeginDisabled();
                     }
                     if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
-                        Control::main_client->t_network->send_queue.push(Control::f_event_auth(
-                            Control::EVENT_TYPE_USER_AUTHN, Control::CLIENT_NONE, false, conn_info.username, conn_info.password));
+                        f_event_any es;
+                        f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, F_EVENT_CLIENT_NONE, false, conn_info.username, conn_info.password);
+                        f_event_queue_push(&Control::main_client->t_network->send_queue, &es);
                         conn_info.authentication = RUNNING_STATE_ONGOING;
                         free(conn_info.authfail_reason);
                         conn_info.authfail_reason = NULL;
@@ -260,8 +267,9 @@ namespace MetaGui {
                         ImGui::BeginDisabled();
                     }
                     if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
-                        Control::main_client->t_network->send_queue.push(Control::f_event_auth(
-                            Control::EVENT_TYPE_USER_AUTHN, Control::CLIENT_NONE, true, conn_info.username, conn_info.password));
+                        f_event_any es;
+                        f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, F_EVENT_CLIENT_NONE, true, conn_info.username, conn_info.password);
+                        f_event_queue_push(&Control::main_client->t_network->send_queue, &es);
                         conn_info.authentication = RUNNING_STATE_ONGOING;
                         free(conn_info.authfail_reason);
                         conn_info.authfail_reason = NULL;
@@ -277,7 +285,9 @@ namespace MetaGui {
                 } break;
                 case RUNNING_STATE_DONE: {
                     if (ImGui::Button("Logout", ImVec2(-1.0f, 0.0f))) {
-                        Control::main_client->t_network->send_queue.push(Control::f_event_auth_fail(Control::EVENT_TYPE_USER_AUTHFAIL, NULL));
+                        f_event_any es;
+                        f_event_create_auth_fail(&es, EVENT_TYPE_USER_AUTHFAIL, NULL);
+                        f_event_queue_push(&Control::main_client->t_network->send_queue, &es);
                     }
                 } break;
             }

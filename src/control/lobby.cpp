@@ -6,15 +6,15 @@
 
 #include "surena/game.h"
 
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 
 #include "control/lobby.hpp"
 
 namespace Control {
 
-    Lobby::Lobby(event_queue* send_queue, uint16_t max_users):
+    Lobby::Lobby(f_event_queue* send_queue, uint16_t max_users):
         send_queue(send_queue),
         the_game(NULL),
         base_game(NULL),
@@ -23,7 +23,7 @@ namespace Control {
         user_client_ids(static_cast<uint32_t*>(malloc(max_users*sizeof(uint32_t))))
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            user_client_ids[i] = CLIENT_NONE;
+            user_client_ids[i] = F_EVENT_CLIENT_NONE;
         }
     }
 
@@ -38,23 +38,27 @@ namespace Control {
     void Lobby::AddUser(uint32_t client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == CLIENT_NONE) {
+            if (user_client_ids[i] == F_EVENT_CLIENT_NONE) {
                 user_client_ids[i] = client_id;
+                f_event_any es;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    f_any_event e_load = f_event_game_load(base_game, game_variant, game_options);
-                    e_load.client_id = client_id;
-                    send_queue->push(e_load);
+                    f_event_create_game_load(&es, base_game, game_variant, game_options);
+                    es.base.client_id = client_id;
+                    f_event_queue_push(send_queue, &es);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
-                    send_queue->push(f_event_game_state(client_id, game_state_buffer));
+                    f_event_create_game_state(&es, client_id, game_state_buffer);
+                    f_event_queue_push(send_queue, &es);
                 } else {
-                    send_queue->push(f_event(Control::EVENT_TYPE_GAME_UNLOAD, client_id));
+                    f_event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
+                    f_event_queue_push(send_queue, &es);
                 }
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, CLIENT_SERVER, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
+                f_event_create_chat_msg(&es, lobby_msg_id_ctr++, F_EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
+                SendToAllButOne(es, F_EVENT_CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -66,10 +70,12 @@ namespace Control {
     {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == client_id) {
-                user_client_ids[i] = CLIENT_NONE;
+                user_client_ids[i] = F_EVENT_CLIENT_NONE;
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
-                SendToAllButOne(f_event_chat_msg(lobby_msg_id_ctr++, CLIENT_SERVER, SDL_GetTicks64(), msg_buf), CLIENT_NONE);
+                f_event_any es;
+                f_event_create_chat_msg(&es, lobby_msg_id_ctr++, F_EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
+                SendToAllButOne(es, F_EVENT_CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -77,12 +83,12 @@ namespace Control {
         printf("[ERROR] could not find user to remove from lobby\n");
     }
 
-    void Lobby::HandleEvent(f_any_event e)
+    void Lobby::HandleEvent(f_event_any e)
     {
-        switch (e.type) {
+        switch (e.base.type) {
             //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
             case EVENT_TYPE_GAME_LOAD: {
-                auto ce = e.cast<f_event_game_load>();
+                auto ce = event_cast<f_event_game_load>(e);
                 // reset everything in case we can't find the game later on
                 if (the_game) {
                     the_game->methods->destroy(the_game);
@@ -128,7 +134,7 @@ namespace Control {
                     printf("\n");
                 }
                 // pass event to other clients in lobby
-                SendToAllButOne(e, e.client_id);
+                SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (the_game) {
@@ -144,10 +150,10 @@ namespace Control {
                 game_options = NULL;
                 printf("[INFO] game unloaded\n");
                 // pass event to other clients in lobby
-                SendToAllButOne(e, e.client_id);
+                SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                auto ce = e.cast<f_event_game_state>();
+                auto ce = event_cast<f_event_game_state>(e);
                 if (!the_game) {
                     printf("[WARN] attempted state import on null game\n");
                     break;
@@ -155,10 +161,10 @@ namespace Control {
                 the_game->methods->import_state(the_game, ce.state);
                 printf("[INFO] game state imported: %s\n", ce.state);
                 // pass event to other clients in lobby
-                SendToAllButOne(e, e.client_id);
+                SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                auto ce = e.cast<f_event_game_move>();
+                auto ce = event_cast<f_event_game_move>(e);
                 if (!the_game) {
                     printf("[WARN] attempted move on null game\n");
                     break;
@@ -177,34 +183,36 @@ namespace Control {
                     printf("[INFO] game done: winner is player %d\n", pbuf[0]);
                 }
                 // pass event to other clients in lobby
-                SendToAllButOne(e, e.client_id);
+                SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_MSG: {
-                auto ce = e.cast<f_event_chat_msg>();
-                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.client_id, ce.text);
+                auto ce = event_cast<f_event_chat_msg>(e);
+                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.base.client_id, ce.text);
                 ce.msg_id = lobby_msg_id_ctr++;
-                ce.author_client_id = e.client_id;
+                ce.author_client_id = e.base.client_id;
                 ce.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
-                SendToAllButOne(ce, CLIENT_NONE);
+                SendToAllButOne(e, F_EVENT_CLIENT_NONE);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                SendToAllButOne(e, CLIENT_NONE);
+                SendToAllButOne(e, F_EVENT_CLIENT_NONE);
             } break;
             default: {
-                printf("[WARN] lobby received unexpected event type %d\n", e.type);
+                printf("[WARN] lobby received unexpected event type %d\n", e.base.type);
             } break;
         }
     }
 
-    void Lobby::SendToAllButOne(f_any_event e, uint32_t excluded_client_id)
+    void Lobby::SendToAllButOne(f_event_any e, uint32_t excluded_client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
+            if (user_client_ids[i] == F_EVENT_CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
                 continue;
             }
-            e.client_id = user_client_ids[i];
-            send_queue->push(e);
+            e.base.client_id = user_client_ids[i];
+            f_event_any es;
+            f_event_copy(&es, &e);
+            f_event_queue_push(send_queue, &es);
         }
     }
 

@@ -6,7 +6,7 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 
 #include "surena/engine.h"
 
@@ -75,7 +75,7 @@ namespace Engines {
             //TODO figure out what can be private
             uint32_t log;
 
-            Control::event_queue* client_inbox;
+            f_event_queue* client_inbox;
 
             eevent_queue engine_outbox; // this is where engines post their results
 
@@ -83,7 +83,7 @@ namespace Engines {
 
             // methods
 
-            EngineManager(Control::event_queue* _client_inbox);
+            EngineManager(f_event_queue* _client_inbox);
 
             ~EngineManager();
 

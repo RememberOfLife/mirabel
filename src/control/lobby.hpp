@@ -5,14 +5,14 @@
 
 #include "surena/game.h"
 
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 
 namespace Control {
 
     class Lobby {
         public:
-            event_queue* send_queue;
+            f_event_queue* send_queue;
 
             // uint64_t id;
             char* base_game;
@@ -25,15 +25,15 @@ namespace Control {
 
             uint32_t lobby_msg_id_ctr = 1;
 
-            Lobby(event_queue* send_queue, uint16_t max_users);
+            Lobby(f_event_queue* send_queue, uint16_t max_users);
             ~Lobby();
 
             void AddUser(uint32_t client_id);
             void RemoveUser(uint32_t client_id);
 
-            void HandleEvent(f_any_event e); // handle events that are specifically assigned to this lobby
+            void HandleEvent(f_event_any e); // handle events that are specifically assigned to this lobby
 
-            void SendToAllButOne(f_any_event e, uint32_t excluded_client_id);
+            void SendToAllButOne(f_event_any e, uint32_t excluded_client_id);
     };
 
 }

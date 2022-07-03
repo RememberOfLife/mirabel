@@ -17,9 +17,8 @@
 #include "surena/util/semver.h"
 #include "surena/game.h"
 
-#include "control/client.hpp"
-#include "control/event.hpp"
-#include "control/event_queue.hpp"
+#include "control/event.h"
+#include "control/event_queue.h"
 #include "control/timeout_crash.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -38,6 +37,7 @@ namespace Control {
     Client::Client()
     {
         main_client = this;
+        f_event_queue_create(&inbox);
 
         // start watchdog so it can oversee explicit construction
         t_tc.start();
@@ -180,8 +180,12 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        t_tc.inbox.push(f_event(EVENT_TYPE_EXIT));
+        f_event_any e;
+        f_event_create_type(&e, EVENT_TYPE_EXIT);
+        f_event_queue_push(&t_tc.inbox, &e);
         t_tc.join();
+
+        f_event_queue_destroy(&inbox);
     }
 
     void Client::loop()
@@ -210,10 +214,12 @@ namespace Control {
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
 
-            for (f_any_event e = inbox.pop(); e.type != Control::EVENT_TYPE_NULL; e = inbox.pop()) {
+            f_event_any e;
+            f_event_queue_pop(&inbox, &e, 0);
+            while (e.base.type != EVENT_TYPE_NULL) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
-                switch (e.type) {
+                switch (e.base.type) {
                     case EVENT_TYPE_EXIT: {
                         try_quit = true;
                         break;
@@ -222,7 +228,7 @@ namespace Control {
                         tc_info.send_heartbeat();
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
-                        auto ce = e.cast<f_event_game_load>();
+                        auto ce = event_cast<f_event_game_load>(e);
                         // reset everything in case we can't find the game later on
                         frontend->set_game(NULL);
                         if (the_game) {
@@ -272,8 +278,8 @@ namespace Control {
                         engine_mgr->game_load(the_game);
                         frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
                         // everything successful, pass to server
-                        if (network_send_queue && ce.client_id == CLIENT_NONE) {
-                            network_send_queue->push(ce);
+                        if (network_send_queue && ce.base.client_id == F_EVENT_CLIENT_NONE) {
+                            f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
@@ -285,12 +291,12 @@ namespace Control {
                         }
                         the_game = NULL;
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == CLIENT_NONE) {
-                            network_send_queue->push(e);
+                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
+                            f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_STATE: {
-                        auto ce = e.cast<f_event_game_state>();
+                        auto ce = event_cast<f_event_game_state>(e);
                         if (!the_game) {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;
@@ -299,12 +305,12 @@ namespace Control {
                         game_step++;
                         engine_mgr->game_state(ce.state);
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == CLIENT_NONE) {
-                            network_send_queue->push(e);
+                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
+                            f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
-                        auto ce = e.cast<f_event_game_move>();
+                        auto ce = event_cast<f_event_game_move>(e);
                         if (!the_game) {
                             MetaGui::log("#W attempted move on null game\n");
                             break;
@@ -328,14 +334,14 @@ namespace Control {
                             MetaGui::logf("game done: winner is player %d\n", pbuf[0]);
                         }
                         // everything successful, pass to server
-                        if (network_send_queue && e.client_id == CLIENT_NONE) {
-                            network_send_queue->push(e);
+                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
+                            f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
-                        auto ce = e.cast<f_event_frontend_load>();
+                        auto ce = event_cast<f_event_frontend_load>(e);
                         delete frontend;
-                        frontend = ce.frontend;
+                        frontend = (Frontends::Frontend*)ce.frontend;
                         frontend->set_game(the_game);
                         MetaGui::running_few_idx = MetaGui::selected_few_idx;
                     } break;
@@ -345,11 +351,11 @@ namespace Control {
                         MetaGui::running_few_idx = 0;
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_MSG: {
-                        auto ce = e.cast<f_event_chat_msg>();
+                        auto ce = event_cast<f_event_chat_msg>(e);
                         MetaGui::chat_msg_add(ce.msg_id, ce.author_client_id, ce.timestamp, ce.text);
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                        auto ce = e.cast<f_event_chat_del>();
+                        auto ce = event_cast<f_event_chat_del>(e);
                         MetaGui::chat_msg_del(ce.msg_id);
                     } break;
                     /* skip EVENT_TYPE_NETWORK_ADAPTER_LOAD, t_network gets filled by the metagui connection window*/
@@ -372,7 +378,7 @@ namespace Control {
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_ONGOING;
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
-                        auto ce = e.cast<f_event_ssl_thumbprint>();
+                        auto ce = event_cast<f_event_ssl_thumbprint>(e);
                         if (ce.thumbprint) {
                             free(MetaGui::conn_info.server_cert_thumbprint);
                             MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
@@ -380,10 +386,12 @@ namespace Control {
                         }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
                         // request auth info from server
-                        t_network->send_queue.push(f_event_auth(EVENT_TYPE_USER_AUTHINFO, CLIENT_NONE, true, NULL, NULL));
+                        f_event_any es;
+                        f_event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, F_EVENT_CLIENT_NONE, true, NULL, NULL);
+                        f_event_queue_push(&t_network->send_queue, &es);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
-                        auto ce = e.cast<f_event_ssl_thumbprint>();
+                        auto ce = event_cast<f_event_ssl_thumbprint>(e);
                         free(MetaGui::conn_info.server_cert_thumbprint);
                         MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
                         memcpy(MetaGui::conn_info.server_cert_thumbprint, ce.thumbprint, Network::SHA256_LEN);
@@ -403,7 +411,7 @@ namespace Control {
                         MetaGui::chat_clear();
                     } break;
                     case EVENT_TYPE_USER_AUTHINFO: {
-                        auto ce = e.cast<f_event_auth>();
+                        auto ce = event_cast<f_event_auth>(e);
                         // we got the auth info from the server, set it up for display in the metagui conn info, also advance state
                         // if is_guest is true the server accepts guest logins, otherwise not
                         MetaGui::conn_info.auth_allow_guest = ce.is_guest;
@@ -415,15 +423,17 @@ namespace Control {
                         MetaGui::conn_info.auth_info = true;
                     } break;
                     case EVENT_TYPE_USER_AUTHN: {
-                        auto ce = e.cast<f_event_auth>();
+                        auto ce = event_cast<f_event_auth>(e);
                         // we received our authn credentials from the server
                         strcpy(MetaGui::conn_info.username, ce.username); // set username in authinfo, as received, may be assigned guest name
                         //TODO should probably store it somewhere else too
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_DONE;
-                        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED));
+                        f_event_any es;
+                        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                        f_event_queue_push(&inbox, &es);
                     } break;
                     case EVENT_TYPE_USER_AUTHFAIL: {
-                        auto ce = e.cast<f_event_auth_fail>();
+                        auto ce = event_cast<f_event_auth_fail>(e);
                         // server told us our authn failed / it signed us out after we requested logout
                         if (ce.reason) {
                             free(MetaGui::conn_info.authfail_reason);
@@ -431,12 +441,16 @@ namespace Control {
                             ce.reason = NULL;
                         }
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
-                        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED));
+                        f_event_any es;
+                        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED);
+                        f_event_queue_push(&inbox, &es);
                     } break;
                     default: {
-                        MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.type);
+                        MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.base.type);
                     } break;
                 }
+                f_event_destroy(&e);
+                f_event_queue_pop(&inbox, &e, 0);
             }
 
             // work through interface events: clicks, key presses, gui commands structs for updating interface elems

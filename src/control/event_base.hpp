@@ -6,12 +6,22 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct f_event; // forward declare from event.h with c linkage
+
+#ifdef __cplusplus
+}
+#endif
+
 namespace Control {
+
+    //BUG MAJOR-ERROR: recheck if the f_event casts here are sane or destroy the event type meaning and rather the static methods should take EVENT types
 
     //TODO managed strings, or use std::string
     //TODO blob manager struct
-
-    struct f_event; // forward declare from event.hpp
 
     struct event_serializer {
         static const bool is_plain = false;
@@ -56,7 +66,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static constexpr size_t size_impl(EVENT* e, size_t s)
         {
-            return size_impl<X, REST...>(e, s + FIRST::static_size(e));
+            return size_impl<X, REST...>(e, s + FIRST::static_size((f_event*)e));
         }
         template<class X>
         static constexpr size_t size_impl(EVENT* e, size_t s)
@@ -79,13 +89,13 @@ namespace Control {
         }
         size_t size(f_event* e) override
         {
-            return plain_size((EVENT*)e) + size_impl<void, EVENT_SERIALIZERS...>((EVENT*)e, (size_t)0);
+            return plain_size(e) + size_impl<void, EVENT_SERIALIZERS...>((EVENT*)e, (size_t)0);
         }
 
         template<class X, class FIRST, class ...REST>
         static void serialize_impl(EVENT* e, void** buf)
         {
-            FIRST::static_serialize(e, buf);
+            FIRST::static_serialize((f_event*)e, buf);
             serialize_impl<X, REST...>(e, buf);
         }
         template<class X>
@@ -105,7 +115,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static int deserialize_impl(EVENT* e, void** buf, void* buf_end)
         {
-            if (FIRST::static_deserialize(e, buf, buf_end)) {
+            if (FIRST::static_deserialize((f_event*)e, buf, buf_end)) {
                 return 1;
             }
             return deserialize_impl<X, REST...>(e, buf, buf_end);
@@ -131,7 +141,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static void copy_impl(EVENT* to, EVENT* from)
         {
-            FIRST::static_copy(to, from);
+            FIRST::static_copy((f_event*)to, (f_event*)from);
             copy_impl<X, REST...>(to, from);
         }
         template<class X>
@@ -146,7 +156,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static void destroy_impl(EVENT* e)
         {
-            FIRST::static_destroy(e);
+            FIRST::static_destroy((f_event*)e);
             destroy_impl<X, REST...>(e);
         }
         template<class X>

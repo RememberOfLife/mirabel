@@ -1,73 +1,68 @@
 #include <chrono>
 #include <condition_variable>
+#include <cstdint>
 #include <deque>
 #include <mutex>
-#include <cstdint>
 
-#include "meta_gui/meta_gui.hpp"
+#include "control/event.h"
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 
-namespace Control {
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-    
-        void event_queue::push(f_any_event& e)
-        {
-            f_any_event the_e = e;
-            push(std::move(the_e));
-        }
+//TODO this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
+// make sure to move pushed and popped elements, make this a proper producer-consumer semaphore
+struct f_event_queue_impl {
+    std::mutex m;
+    std::deque<f_event_any> q;
+    std::condition_variable cv;
+};
 
-        void event_queue::push(f_any_event&& e)
-        {
-            m.lock();
-            q.push_back(std::forward<f_any_event>(e));
-            cv.notify_all();
-            m.unlock();
-        }
+static_assert(sizeof(f_event_queue) >= sizeof(f_event_queue_impl), "f_event_queue impl size missmatch");
 
-        f_any_event event_queue::pop(uint32_t timeout_ms)
-        {
-            std::unique_lock<std::mutex> lock(m);
-            if (q.size() == 0) {
-                if (timeout_ms > 0) {
-                    cv.wait_for(lock, std::chrono::milliseconds(timeout_ms));
-                }
-                if (q.size() == 0) {
-                    // queue has no available events after timeout, return null event
-                    return f_any_event();
-                }
-                // go on to output an available event if one has become available
-            }
-            f_any_event r = std::move(q.front());
-            q.pop_front();
-            return r;
-        }
-        
-        f_any_event event_queue::peek()
-        {
-            m.lock();
-            if (q.size() == 0) {
-                m.unlock();
-                return f_any_event();
-            }
-            f_any_event r = std::move(q.front());
-            m.unlock();
-            return r;
-        }
-        
-        uint32_t event_queue::size()
-        {
-            m.lock();
-            uint32_t r = q.size();
-            m.unlock();
-            return r;
-        }
-        
-        void event_queue::clear()
-        {
-            m.lock();
-            q.clear();
-            m.unlock();
-        }
-
+void f_event_queue_create(f_event_queue* eq)
+{
+    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    new(eqi) f_event_queue_impl();
 }
+
+void f_event_queue_destroy(f_event_queue* eq)
+{
+    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    eqi->~f_event_queue_impl();
+}
+
+void f_event_queue_push(f_event_queue* eq, f_event_any* e)
+{
+    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    eqi->m.lock();
+    eqi->q.emplace_back(*e);
+    eqi->cv.notify_all();
+    eqi->m.unlock();
+    e->base.type = EVENT_TYPE_NULL;
+}
+
+void f_event_queue_pop(f_event_queue* eq, f_event_any* e, uint32_t t)
+{
+    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    std::unique_lock<std::mutex> lock(eqi->m);
+    if (eqi->q.size() == 0) {
+        if (t > 0) {
+            eqi->cv.wait_for(lock, std::chrono::milliseconds(t));
+        }
+        if (eqi->q.size() == 0) {
+            // queue has no available events after timeout, return null event
+            e->base.type = EVENT_TYPE_NULL;
+            return;
+        }
+        // go on to output an available event if one has become available
+    }
+    *e = eqi->q.front();
+    eqi->q.pop_front();
+}
+
+#ifdef __cplusplus
+}
+#endif

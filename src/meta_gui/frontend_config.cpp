@@ -3,8 +3,8 @@
 #include "imgui.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
 
@@ -42,7 +42,9 @@ namespace MetaGui {
         // if a frontend is running, which is not the empty frontend, and not compatible, unload it
         if (running_few_idx > 0 && !selected_few_compatible && selected_few_idx > 0) {
             selected_few_idx = 0;
-            Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+            f_event_any es;
+            f_event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
+            f_event_queue_push(&Control::main_client->inbox, &es);
         }
         // if the selected frontend is no longer compatible, but there are alternatives, select the first one of them instead
         if (compatible_few.size() > 0 && !selected_few_compatible) {
@@ -57,15 +59,21 @@ namespace MetaGui {
         }
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
-                Control::main_client->inbox.push(Control::f_event_frontend_load(Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                f_event_any es;
+                f_event_create_frontend_load(&es, Frontends::frontend_catalogue[selected_few_idx]->new_frontend());
+                f_event_queue_push(&Control::main_client->inbox, &es);
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_FRONTEND_UNLOAD));
+                f_event_any es;
+                f_event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
+                f_event_queue_push(&Control::main_client->inbox, &es);
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                Control::main_client->inbox.push(Control::f_event_frontend_load(Frontends::frontend_catalogue[selected_few_idx]->new_frontend()));
+                f_event_any es;
+                f_event_create_frontend_load(&es, Frontends::frontend_catalogue[selected_few_idx]->new_frontend());
+                f_event_queue_push(&Control::main_client->inbox, &es);
             }
         }
         if (disable_fronend_loader) {

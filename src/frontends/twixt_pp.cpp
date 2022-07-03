@@ -9,8 +9,8 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 #include "games/twixt_pp.hpp"
 
@@ -105,7 +105,9 @@ namespace Frontends {
                     if (mXp >= 0 && mYp >= 0 && mXp <= padding && mYp <= padding) {
                         the_game_int->can_swap(the_game, &swap_hover);
                         if (swap_hover && swap_down && event.type == SDL_MOUSEBUTTONUP) {
-                            Control::main_client->inbox.push(Control::f_event_game_move(TWIXT_PP_MOVE_SWAP));
+                            f_event_any es;
+                            f_event_create_game_move(&es, TWIXT_PP_MOVE_SWAP);
+                            f_event_queue_push(&Control::main_client->inbox, &es);
                             swap_down = false;
                         }
                         swap_down = (event.type == SDL_MOUSEBUTTONDOWN);
@@ -124,7 +126,9 @@ namespace Frontends {
                                 the_game_int->get_node(the_game, x, y, &node_player);
                                 if (board_buttons[y * the_game_opts.wx + x].hovered && board_buttons[y * the_game_opts.wx + x].mousedown && node_player == TWIXT_PP_PLAYER_NONE) {
                                     uint64_t move_code = (x << 8) | y;
-                                    Control::main_client->inbox.push(Control::f_event_game_move(move_code));
+                                    f_event_any es;
+                                    f_event_create_game_move(&es, move_code);
+                                    f_event_queue_push(&Control::main_client->inbox, &es);
                                 }
                                 board_buttons[y * the_game_opts.wx + x].mousedown = false;
                             }

@@ -9,7 +9,7 @@
 #include "surena/util/semver.h"
 #include "surena/game.h"
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 #include "control/timeout_crash.hpp"
 #include "engines/engine_manager.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -27,7 +27,7 @@ namespace Control {
             TimeoutCrash::timeout_info tc_info;
 
             Network::NetworkClient* t_network = NULL;
-            event_queue* network_send_queue = NULL;
+            f_event_queue* network_send_queue = NULL;
             // offline server likely somewhere here
 
             SDL_Window* sdl_window;
@@ -35,7 +35,7 @@ namespace Control {
             ImGuiIO* imgui_io;
             NVGcontext* nanovg_ctx;
 
-            event_queue inbox;
+            f_event_queue inbox;
 
             game* the_game = NULL;
             uint64_t game_step = 1;

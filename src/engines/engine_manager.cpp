@@ -8,7 +8,7 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 #include "engines/engine_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 
@@ -159,7 +159,8 @@ namespace Engines {
         option->type = EE_OPTION_TYPE_NONE;
     }
 
-    EngineManager::EngineManager(Control::event_queue* _client_inbox)
+    EngineManager::EngineManager(f_event_queue* _client_inbox):
+        client_inbox(_client_inbox)
     {
         log = MetaGui::log_register("engines");
         eevent_queue_create(&engine_outbox);

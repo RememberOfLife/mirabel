@@ -5,180 +5,223 @@
 
 #include "surena/game.h"
 
-#include "frontends/frontend_catalogue.hpp"
-#include "meta_gui/meta_gui.hpp"
+#include "control/event_base.hpp"
+#define F_EVENT_INTERNAL
+#include "control/event.h"
 
-#include "control/event.hpp"
+// event catalogue backend
 
 namespace Control {
 
-    f_event::f_event():
-        type(EVENT_TYPE_NULL),
-        client_id(CLIENT_NONE),
-        lobby_id(LOBBY_NONE)
-    {}
+    template<EVENT_TYPE TYPE, class EVENT>
+    struct event_serializer_pair {
+        static constexpr EVENT_TYPE event_type = TYPE;
+        typedef EVENT event_t;
+    };
 
-    f_event::f_event(EVENT_TYPE _type):
-        type(_type),
-        client_id(CLIENT_NONE),
-        lobby_id(LOBBY_NONE)
-    {}
+    template<class ...EVENTS>
+    struct event_catalogue {
 
-    f_event::f_event(EVENT_TYPE _type, uint32_t _client_id):
-        type(_type),
-        client_id(_client_id),
-        lobby_id(LOBBY_NONE)
-    {}
+        static_assert(sizeof...(EVENTS) == EVENT_TYPE_COUNT, "event catalogue count mismatch");
 
-    // copy construct
-    // deep copy everything from other into self
-    f_event::f_event(const f_event& other)
-    {
-        //TODO delete self
-        f_event* raw_other = (f_event*)&other;
-        event_copy(this, raw_other);
-    }
-
-    // move construct
-    // take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
-    f_event::f_event(f_event&& other)
-    {
-        memcpy(this, &other, event_raw_size(&other));
-        #if !NDEBUG
-        memset(&other, 0x00, event_raw_size(&other));
-        #endif
-        other.type = EVENT_TYPE_NULL;
-    }
-
-    // copy assign
-    // deep delete self owned resources, then deep copy from other into self
-    f_event& f_event::operator=(const f_event& other)
-    {
-        //TODO delete self
-        f_event* raw_other = (f_event*)&other;
-        if (raw_other != this) {
-            event_copy(this, raw_other);
+        template<class X, class FIRST, class ...REST>
+        static constexpr size_t event_max_size_impl()
+        {
+            return (sizeof(typename FIRST::event_t) > event_max_size_impl<X, REST...>())
+                ? sizeof(typename FIRST::event_t) : event_max_size_impl<X, REST...>();
         }
-        return *this;
-    }
+        template<class X>
+        static constexpr size_t event_max_size_impl()
+        {
+            return 0;
+        }
+        static constexpr size_t event_max_size()
+        {
+            return event_max_size_impl<void, EVENTS...>();
+        }
 
-    // move assign
-    // deep delete self owned resources, then take ownership of e.g. pointers from other, set them NULL so their destructor wont get them
-    f_event& f_event::operator=(f_event&& other)
-    {
-        memcpy(this, &other, event_raw_size(&other));
-        #if !NDEBUG
-        memset(&other, 0x00, event_raw_size(&other));
-        #endif
-        other.type = EVENT_TYPE_NULL;
-        return *this;
-    }
-    
-    f_event::~f_event()
-    {
-        event_destroy(this);
-    }
+        template<class X, class FIRST, class ...REST>
+        static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
+        {
+            if (FIRST::event_type == type) {
+                if (FIRST::event_t::serializer::is_plain) {
+                    return event_plain_serializer<typename FIRST::event_t>::instance();
+                }
+                return FIRST::event_t::serializer::instance();
+            }
+            return get_event_serializer_impl<X, REST...>(type);
+        }
+        template<class X>
+        static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
+        {
+            assert(0 && "not a valid type");
+            return NULL;
+        }
+        static event_serializer* get_event_serializer(EVENT_TYPE type)
+        {
+            return get_event_serializer_impl<void, EVENTS...>(type);
+        }
 
-    void f_event::zero()
-    {
-        event_destroy(this);
-        type = EVENT_TYPE_NULL;
-    }
+        template<class X, class FIRST, class ...REST>
+        static size_t get_event_raw_size_impl(EVENT_TYPE type)
+        {
+            if (FIRST::event_type == type) {
+                return sizeof(typename FIRST::event_t);
+            }
+            return get_event_raw_size_impl<X, REST...>(type);
+        }
+        template<class X>
+        static size_t get_event_raw_size_impl(EVENT_TYPE type)
+        {
+            assert(0 && "not a valid type");
+            return 0;
+        }
+        static size_t get_event_raw_size(EVENT_TYPE type)
+        {
+            return get_event_raw_size_impl<void, EVENTS...>(type);
+        }
 
-    f_any_event::f_any_event():
-        f_event()
-    {}
-
-    f_any_event::f_any_event(EVENT_TYPE _type):
-        f_event(_type)
-    {}
-
-    f_any_event::f_any_event(EVENT_TYPE _type, uint32_t _client_id):
-        f_event(_type, _client_id)
-    {}
-
-    f_any_event::f_any_event(const f_event& other) // copy construct
-    {
-        new(this) f_event(other);
-    }
-
-    f_any_event::f_any_event(f_event&& other) // move construct
-    {
-        new(this) f_event(std::forward<f_event>(other));
-    }
-
-    f_any_event& f_any_event::operator=(const f_event& other) // copy assign
-    {
-        return (f_any_event&)((f_event*)this)->operator=(other);
-    }
-
-    f_any_event& f_any_event::operator=(f_event&& other) // move assign
-    {
-        return (f_any_event&)((f_event*)this)->operator=(std::forward<f_event>(other));
-    }
-
-    f_event_heartbeat::f_event_heartbeat(EVENT_TYPE _type, uint32_t _id, uint32_t _time):
-        f_event(_type),
-        id(_id),
-        time(_time)
-    {}
-
-    f_event_game_load::f_event_game_load(const char* _base_name, const char* _variant_name, const char* _options):
-        f_event(EVENT_TYPE_GAME_LOAD)
-    {
-        base_name = _base_name ? strdup(_base_name) : NULL;
-        variant_name = _variant_name ? strdup(_variant_name) : NULL;
-        options = _options ? strdup(_options) : NULL;
-    }
-
-    f_event_game_state::f_event_game_state(uint32_t _client_id, const char* _state):
-        f_event(EVENT_TYPE_GAME_STATE, _client_id)
-    {
-        state = _state ? strdup(_state) : NULL;
-    }
-
-    f_event_game_move::f_event_game_move(move_code _code):
-        f_event(EVENT_TYPE_GAME_MOVE),
-        code(_code)
-    {}
-
-    f_event_frontend_load::f_event_frontend_load(Frontends::Frontend* _frontend):
-        f_event(EVENT_TYPE_FRONTEND_LOAD),
-        frontend(_frontend)
-    {}
-
-    f_event_ssl_thumbprint::f_event_ssl_thumbprint(EVENT_TYPE _type):
-        f_event(_type),
-        thumbprint_len(0),
-        thumbprint(NULL)
-    {}
-
-    f_event_auth::f_event_auth(EVENT_TYPE _type, uint32_t _client_id, bool _is_guest, const char* _username, const char* _password):
-        f_event(_type, _client_id),
-        is_guest(_is_guest)
-    {
-        username = _username ? strdup(_username) : NULL;
-        password = _password ? strdup(_password) : NULL;
-    }
-
-    f_event_auth_fail::f_event_auth_fail(uint32_t _client_id, const char* _reason):
-        f_event(EVENT_TYPE_USER_AUTHFAIL, _client_id)
-    {
-        reason = _reason ? strdup(_reason) : NULL;
-    }
-
-    f_event_chat_msg::f_event_chat_msg(uint32_t _msg_id, uint32_t _author_client_id, uint64_t _timestamp, const char* _text):
-        f_event(EVENT_TYPE_LOBBY_CHAT_MSG),
-        msg_id(_msg_id),
-        author_client_id(_author_client_id),
-        timestamp(_timestamp)
-    {
-        text = _text ? strdup(_text) : NULL;
-    }
-
-    f_event_chat_del::f_event_chat_del(uint32_t _msg_id):
-        f_event(EVENT_TYPE_LOBBY_CHAT_DEL),
-        msg_id(_msg_id)
-    {}
+    };
 
 }
+
+// exposed event api
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
+// general purpose event utils
+
+void f_event_create_zero(f_event_any* e)
+{
+    e->base.type = EVENT_TYPE_NULL;
+    e->base.client_id = F_EVENT_CLIENT_NONE;
+    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+}
+
+void f_event_create_type(f_event_any* e, EVENT_TYPE type)
+{
+    e->base.type = type;
+    e->base.client_id = F_EVENT_CLIENT_NONE;
+    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+}
+
+void f_event_create_type_client(f_event_any* e, EVENT_TYPE type, uint32_t client_id)
+{
+    e->base.type = type;
+    e->base.client_id = client_id;
+    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+}
+
+void f_event_zero(f_event_any* e)
+{
+    f_event_destroy(e);
+    e->base.type = EVENT_TYPE_NULL;
+}
+
+size_t f_event_size(f_event_any* e)
+{
+    return Control::EVENT_CATALOGUE::get_event_serializer(e->base.type)->size((f_event*)e);
+}
+
+size_t f_event_raw_size(f_event_any* e)
+{
+    return Control::EVENT_CATALOGUE::get_event_raw_size(e->base.type);
+}
+
+void f_event_serialize(f_event_any* e, void* buf)
+{
+    Control::EVENT_CATALOGUE::get_event_serializer(e->base.type)->serialize((f_event*)e, &buf);
+}
+
+void f_event_deserialize(f_event_any* e, void* buf, void* buf_end)
+{
+    EVENT_TYPE et = *(EVENT_TYPE*)((char*)buf + sizeof(size_t));
+    Control::EVENT_CATALOGUE::get_event_serializer(et)->deserialize((f_event*)e, &buf, buf_end);
+}
+
+void f_event_copy(f_event_any* to, f_event_any* from)
+{
+    Control::EVENT_CATALOGUE::get_event_serializer(from->base.type)->copy((f_event*)to, (f_event*)from);
+}
+
+void f_event_destroy(f_event_any* e)
+{
+    Control::EVENT_CATALOGUE::get_event_serializer(e->base.type)->destroy((f_event*)e);
+}
+
+// event specifics
+
+void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time)
+{
+    f_event_create_type(e, type);
+    e->heartbeat.id = id;
+    e->heartbeat.time = time;
+}
+
+void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* options)
+{
+    f_event_create_type(e, EVENT_TYPE_GAME_LOAD);
+    e->game_load.base_name = base_name ? strdup(base_name) : NULL;
+    e->game_load.variant_name = variant_name ? strdup(variant_name) : NULL;
+    e->game_load.options = options ? strdup(options) : NULL;
+}
+
+void f_event_create_game_state(f_event_any* e, uint32_t client_id, const char* state)
+{
+    f_event_create_type_client(e, EVENT_TYPE_GAME_STATE, client_id);
+    e->game_state.state = state ? strdup(state) : NULL;
+}
+
+void f_event_create_game_move(f_event_any* e, move_code code)
+{
+    f_event_create_type(e, EVENT_TYPE_GAME_MOVE);
+    e->game_move.code = code;
+}
+
+void f_event_create_frontend_load(f_event_any* e, void* frontend)
+{
+    f_event_create_type(e, EVENT_TYPE_FRONTEND_LOAD);
+    e->frontend_load.frontend = frontend;
+}
+
+void f_event_create_ssl_thumbprint(f_event_any* e, EVENT_TYPE type)
+{
+    f_event_create_type(e, type);
+    e->ssl_thumbprint.thumbprint_len = 0;
+    e->ssl_thumbprint.thumbprint = NULL;
+}
+
+void f_event_create_auth(f_event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password)
+{
+    f_event_create_type_client(e, type, client_id);
+    e->auth.is_guest = is_guest;
+    e->auth.username = username ? strdup(username) : NULL;
+    e->auth.password = password ? strdup(password) : NULL;
+}
+
+void f_event_create_auth_fail(f_event_any* e, uint32_t client_id, const char* reason)
+{
+    f_event_create_type_client(e, EVENT_TYPE_USER_AUTHFAIL, client_id);
+    e->auth_fail.reason = reason ? strdup(reason) : NULL;
+}
+
+void f_event_create_chat_msg(f_event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text)
+{
+    f_event_create_type(e, EVENT_TYPE_LOBBY_CHAT_MSG);
+    e->chat_msg.msg_id = msg_id;
+    e->chat_msg.author_client_id = author_client_id;
+    e->chat_msg.timestamp = timestamp;
+    e->chat_msg.text = text ? strdup(text) : NULL;
+}
+
+void f_event_create_chat_del(f_event_any* e, uint32_t msg_id)
+{
+    f_event_create_type(e, EVENT_TYPE_LOBBY_CHAT_DEL);
+    e->chat_del.msg_id = msg_id;
+}
+
+#ifdef __cplusplus
+}
+#endif

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 #include "control/lobby.hpp"
 #include "control/timeout_crash.hpp"
 #include "network/network_server.hpp"
@@ -17,9 +17,9 @@ namespace Control {
             TimeoutCrash::timeout_info tc_info;
 
             Network::NetworkServer* t_network = NULL;
-            event_queue* network_send_queue = NULL;
+            f_event_queue* network_send_queue = NULL;
 
-            event_queue inbox;
+            f_event_queue inbox;
 
             Lobby* lobby = NULL;
 

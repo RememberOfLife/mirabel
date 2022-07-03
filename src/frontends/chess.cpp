@@ -11,8 +11,8 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 #include "games/chess.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -231,7 +231,9 @@ namespace Frontends {
                         the_game->methods->get_concrete_moves(the_game, pbuf, &move_cnt, moves);
                         for (int i = 0; i < move_cnt; i++) {
                             if (moves[i] == target_move) {
-                                Control::main_client->inbox.push(Control::f_event_game_move(target_move));
+                                f_event_any es;
+                                f_event_create_game_move(&es, target_move);
+                                f_event_queue_push(&Control::main_client->inbox, &es);
                                 break;
                             }
                         }

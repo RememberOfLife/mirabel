@@ -8,8 +8,8 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 
 #include "frontends/fallback_text.hpp"

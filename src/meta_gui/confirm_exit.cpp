@@ -3,8 +3,8 @@
 #include "imgui.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -26,7 +26,9 @@ namespace MetaGui {
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(212, 81, 81, 255));
             ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
             if (ImGui::Button("EXIT")) {
-                Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_EXIT));
+                f_event_any es;
+                f_event_create_type(&es, EVENT_TYPE_EXIT);
+                f_event_queue_push(&Control::main_client->inbox, &es);
             }
             ImGui::PopStyleColor(3);
             ImGui::SetItemDefaultFocus();

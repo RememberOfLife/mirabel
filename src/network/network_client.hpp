@@ -6,7 +6,7 @@
 #include "SDL_net.h"
 #include <openssl/ssl.h>
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 #include "control/timeout_crash.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "network/protocol.hpp"
@@ -31,11 +31,11 @@ namespace Network {
             char* server_address;
             uint16_t server_port;
             SDLNet_SocketSet socketset = NULL;
-            connection conn; // client id starts out as CLIENT_NONE before reassignment
+            connection conn; // client id starts out as F_EVENT_CLIENT_NONE before reassignment
 
         public:
-            Control::event_queue send_queue;
-            Control::event_queue* recv_queue;
+            f_event_queue send_queue;
+            f_event_queue* recv_queue;
 
             //TODO atomic ping and heartbeat times (hb might go into event)
 

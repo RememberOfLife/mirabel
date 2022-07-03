@@ -6,7 +6,7 @@
 #include "SDL_net.h"
 #include <openssl/ssl.h>
 
-#include "control/event_queue.hpp"
+#include "control/event_queue.h"
 #include "network/util.hpp"
 
 namespace Network {
@@ -39,8 +39,8 @@ namespace Network {
             //TODO doubly linked list for client activity + client counter per bucket
 
         public:
-            Control::event_queue send_queue;
-            Control::event_queue* recv_queue;
+            f_event_queue send_queue;
+            f_event_queue* recv_queue;
 
             NetworkServer();
             ~NetworkServer();

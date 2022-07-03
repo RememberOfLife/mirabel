@@ -8,8 +8,8 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 #include "games/tictactoe.hpp"
 
@@ -75,7 +75,9 @@ namespace Frontends {
                                 the_game_int->get_cell(the_game, x, y, &cell_player);
                                 if (board_buttons[y][x].hovered && board_buttons[y][x].mousedown && cell_player == 0) {
                                     uint64_t move_code = x | (y<<2);
-                                    Control::main_client->inbox.push(Control::f_event_game_move(move_code));
+                                    f_event_any es;
+                                    f_event_create_game_move(&es, move_code);
+                                    f_event_queue_push(&Control::main_client->inbox, &es);
                                 }
                                 board_buttons[y][x].mousedown = false;
                             }

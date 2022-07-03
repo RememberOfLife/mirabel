@@ -7,7 +7,7 @@
 #include "surena/util/fast_prng.hpp"
 #include "surena/game.h"
 
-#include "control/event.hpp"
+#include "control/event.h"
 #include "network/network_server.hpp"
 
 #include "control/server.hpp"
@@ -16,6 +16,8 @@ namespace Control {
 
     Server::Server()
     {
+        f_event_queue_create(&inbox);
+
         // start watchdog so it can oversee explicit construction
         t_tc.start();
         tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
@@ -40,7 +42,9 @@ namespace Control {
         }
         t_network = net_server;
         net_server->recv_queue = &inbox;
-        inbox.push(f_event(EVENT_TYPE_NETWORK_ADAPTER_LOAD));
+        f_event_any es;
+        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_LOAD);
+        f_event_queue_push(&inbox, &es);
 
         printf("[INFO] networkserver constructed\n");
     }
@@ -59,16 +63,21 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        t_tc.inbox.push(f_event(EVENT_TYPE_EXIT));
+        f_event_any es;
+        f_event_create_type(&es, EVENT_TYPE_EXIT);
+        f_event_queue_push(&t_tc.inbox, &es);
         t_tc.join();
+
+        f_event_queue_destroy(&inbox);
     }
 
     void Server::loop()
     {
+        f_event_any e;
         bool quit = false;
         while (!quit) {
-            f_any_event e = inbox.pop(UINT32_MAX);
-            switch (e.type) {
+            f_event_queue_pop(&inbox, &e, UINT32_MAX);
+            switch (e.base.type) {
                 case EVENT_TYPE_NULL: {
                     printf("[WARN] received impossible null event\n");
                 } break;
@@ -82,13 +91,13 @@ namespace Control {
                 case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                     // we only have one lobby for now
                     if (lobby) {
-                        lobby->AddUser(e.client_id);
+                        lobby->AddUser(e.base.client_id);
                     }
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
                     // we only have one lobby for now
                     if (lobby) {
-                        lobby->RemoveUser(e.client_id);
+                        lobby->RemoveUser(e.base.client_id);
                     }
                 } break;
                 case EVENT_TYPE_GAME_LOAD:
@@ -104,29 +113,36 @@ namespace Control {
                 } break;
                 case EVENT_TYPE_USER_AUTHINFO: {
                     // client wants to have the authinfo, serve it
-                    network_send_queue->push(f_event_auth(EVENT_TYPE_USER_AUTHINFO, e.client_id, true, NULL, NULL));
+                    f_event_any es;
+                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, e.base.client_id, true, NULL, NULL);
+                    f_event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
-                    auto ce = e.cast<f_event_auth>();
+                    auto ce = event_cast<f_event_auth>(e);
+                    f_event_any es;
                     // client wants to auth with given credentials, send back authn or authfail
                     //TODO save guest names and check for dupes
                     if (!ce.is_guest) {
-                        network_send_queue->push(f_event_auth_fail(e.client_id, "user logins not accepted"));
+                        f_event_create_auth_fail(&es, e.base.client_id, "user logins not accepted");
+                        f_event_queue_push(network_send_queue, &es);
                         break;
                     }
                     if (ce.username == NULL) {
-                        network_send_queue->push(f_event_auth_fail(e.client_id, "name NULL"));
+                        f_event_create_auth_fail(&es, e.base.client_id, "name NULL");
+                        f_event_queue_push(network_send_queue, &es);
                         break;
                     }
                     // validate that username uses only allowed characters
                     for (int i = 0; i < strlen(ce.username); i++) {
                         if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", ce.username[i])) {
-                            network_send_queue->push(f_event_auth_fail(e.client_id, "name contains illegal characters"));
+                            f_event_create_auth_fail(&es, e.base.client_id, "name contains illegal characters");
+                            f_event_queue_push(network_send_queue, &es);
                             break;
                         }
                     }
                     if (strlen(ce.username) > 0 && strlen(ce.username) < 3) {
-                        network_send_queue->push(f_event_auth_fail(e.client_id, "name < 3 characters"));
+                        f_event_create_auth_fail(&es, e.base.client_id, "name < 3 characters");
+                        f_event_queue_push(network_send_queue, &es);
                         break;
                     }
                     if (strlen(ce.username) == 0) {
@@ -141,11 +157,14 @@ namespace Control {
                             str_p += sprintf(str_p, "%d", rng.rand()%10);
                         }
                     }
-                    network_send_queue->push(f_event_auth(EVENT_TYPE_USER_AUTHN, e.client_id, true, ce.username, NULL));
+                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, ce.username, NULL);
+                    f_event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_USER_AUTHFAIL: {
                     // client wants to logout but keep the connection, we tell them we logged them out
-                    network_send_queue->push(f_event_auth_fail(e.client_id, NULL));
+                    f_event_any es;
+                    f_event_create_auth_fail(&es, e.base.client_id, NULL);
+                    f_event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                     if (t_network != NULL) {
@@ -163,9 +182,10 @@ namespace Control {
                     exit(1);
                 } break;
                 default: {
-                    printf("[WARN] received unexpected event, type: %d\n", e.type);
+                    printf("[WARN] received unexpected event, type: %d\n", e.base.type);
                 } break;
             }
+            f_event_destroy(&e);
         }
         printf("[INFO] server exiting main loop\n");
     }

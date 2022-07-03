@@ -3,8 +3,8 @@
 #include "imgui.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -46,7 +46,9 @@ namespace MetaGui {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
-                    Control::main_client->inbox.push(Control::f_event(Control::EVENT_TYPE_EXIT));
+                    f_event_any es;
+                    f_event_create_type(&es, EVENT_TYPE_EXIT);
+                    f_event_queue_push(&Control::main_client->inbox, &es);
                 }
                 ImGui::EndMenu();
             }

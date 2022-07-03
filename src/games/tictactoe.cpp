@@ -6,8 +6,8 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.hpp"
-#include "control/event.hpp"
+#include "control/event_queue.h"
+#include "control/event.h"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 
@@ -84,7 +84,9 @@ namespace Games {
                             size_t game_state_buffer_len = game_clone->sizer.state_str;
                             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                            Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
+                            f_event_any es;
+                            f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
+                            f_event_queue_push(&Control::main_client->inbox, &es);
                             game_clone->methods->destroy(game_clone);
                             free(game_clone);
                         }
@@ -124,7 +126,9 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
+                    f_event_any es;
+                    f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
+                    f_event_queue_push(&Control::main_client->inbox, &es);
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
@@ -160,7 +164,9 @@ namespace Games {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    Control::main_client->inbox.push(Control::f_event_game_state(Control::CLIENT_NONE, game_state_buffer));
+                    f_event_any es;
+                    f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
+                    f_event_queue_push(&Control::main_client->inbox, &es);
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
