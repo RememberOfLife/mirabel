@@ -281,23 +281,23 @@ namespace Network {
                     continue;
                 }
                 // decode one raw event packet using the universal packet->event decoding
-                f_event recv_event = f_event();
+                f_event_any recv_event;
                 memcpy(&recv_event, data_buffer, sizeof(f_event));
                 // update size of remaining buffer
                 data_buffer += sizeof(f_event);
                 recv_len -= sizeof(f_event);
                 // process the event, can only be of two types
-                if (recv_event.type == EVENT_TYPE_NETWORK_PROTOCOL_NOK) {
+                if (recv_event.base.type == EVENT_TYPE_NETWORK_PROTOCOL_NOK) {
                     MetaGui::log(log_id, "#W connection refused\n");
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
-                if (recv_event.type != EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET) {
+                if (recv_event.base.type != EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET) {
                     MetaGui::log(log_id, "#W malformed connection initial\n");
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
-                conn.client_id = recv_event.client_id;
+                conn.client_id = recv_event.base.client_id;
                 MetaGui::logf(log_id, "assigned client id %d\n", conn.client_id);
                 conn.state = PROTOCOL_CONNECTION_STATE_INITIALIZING;
                 // kick of the handshake from client side and enqueue a want write
@@ -362,15 +362,14 @@ namespace Network {
                 // prepare connection state event for client
                 f_event_any es;
                 f_event_create_ssl_thumbprint(&es, EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL);
-                auto event_cs = event_cast<f_event_ssl_thumbprint>(es);
-                event_cs.thumbprint_len = SHA256_LEN; // reserve some space for the thumbprint
+                es.ssl_thumbprint.thumbprint_len = SHA256_LEN; // reserve some space for the thumbprint
                 switch (verify_result) {
                     case X509_V_OK: {
                         // no verification errors, promote to accepted
                         conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
                         MetaGui::log(log_id, "server cert verification passed\n");
-                        event_cs.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT;
-                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
+                        es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT;
+                        es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
                     } break;
                     case X509_V_ERR_CERT_HAS_EXPIRED: {
                         BIO* print_bio = BIO_new(BIO_s_mem()); // bio for printing details about the failure
@@ -382,20 +381,20 @@ namespace Network {
                         BIO_read(print_bio, time_str, time_str_len);
                         MetaGui::logf(log_id, "#W server cert verification failed: cert has expired (%s)\n", time_str);
                         const char* err_str = "expired (%s)";
-                        event_cs.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.thumbprint_len += strlen(err_str) + 1 + time_str_len;
-                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
-                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, time_str);
+                        es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + time_str_len;
+                        es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, time_str);
                         free(time_str);
                         BIO_free(print_bio);
                     } break;
                     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: {
                         MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert\n");
                         const char* err_str = "depth zero self signed";
-                        event_cs.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.thumbprint_len += strlen(err_str) + 1;
-                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
-                        strcpy((char*)event_cs.thumbprint+SHA256_LEN, err_str);
+                        es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1;
+                        es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
+                        strcpy((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str);
                     } break;
                     case X509_V_ERR_HOSTNAME_MISMATCH: {
                         char** name_list;
@@ -415,25 +414,25 @@ namespace Network {
                         *str_buf_m = '\0';
                         MetaGui::logf(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
                         const char* err_str = "hostname mismatch (%s)";
-                        event_cs.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.thumbprint_len += strlen(err_str) + 1 + (str_buf_m - str_buf);
-                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
-                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, str_buf);
+                        es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + (str_buf_m - str_buf);
+                        es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, str_buf);
                         free(str_buf);
                         util_cert_free_subjects(name_list, name_count);
                     } break;
                     default: {
                         MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
                         const char* err_str = "x509 v err %lu";
-                        event_cs.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
-                        event_cs.thumbprint_len += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
-                        event_cs.thumbprint = malloc(event_cs.thumbprint_len);
-                        sprintf((char*)event_cs.thumbprint+SHA256_LEN, err_str, verify_result);
+                        es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
+                        es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
+                        es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, verify_result);
                     } break;
                 }
                 X509_free(peer_cert);
                 // expiry, dz self signed, hostname mismatch all push an adapter event so the connection window offers a button for the user to accept the connection anyway, if everything is fine we push the connection accept instead
-                memcpy((char*)event_cs.thumbprint, hash_buf, SHA256_LEN); // place thumbprint before the reason string
+                memcpy((char*)es.ssl_thumbprint.thumbprint, hash_buf, SHA256_LEN); // place thumbprint before the reason string
                 f_event_queue_push(recv_queue, &es);
             }
 
@@ -474,7 +473,7 @@ namespace Network {
                 
                 // universal packet->event decoding, then place it in the recv_queue
                 // at least one event here, process it from data_buffer
-                f_event_any recv_event = f_event_any();
+                f_event_any recv_event;
                 f_event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
 
                 // update size of remaining buffer

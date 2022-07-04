@@ -94,28 +94,26 @@ namespace Control {
                         break;
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
-                        auto ce = event_cast<f_event_heartbeat>(e);
-                        if (timeout_item_exists(ce.id)) {
-                            if (!timeout_items[ce.id].quit) {
-                                timeout_items[ce.id].heartbeat_answered = true;
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            if (!timeout_items[e.heartbeat.id].quit) {
+                                timeout_items[e.heartbeat.id].heartbeat_answered = true;
                             } else {
-                                MetaGui::logf("#W timeout_crash: received heartbeat for prequit timeout item #%d\n", ce.id);
+                                MetaGui::logf("#W timeout_crash: received heartbeat for prequit timeout item #%d\n", e.heartbeat.id);
                             }
                         } else {
-                            MetaGui::logf("#E timeout_crash: received heartbeat for unknown timeout item #%d\n", ce.id);
+                            MetaGui::logf("#E timeout_crash: received heartbeat for unknown timeout item #%d\n", e.heartbeat.id);
                         }
                     } break;
                     case EVENT_TYPE_HEARTBEAT_PREQUIT: {
-                        auto ce = event_cast<f_event_heartbeat>(e);
-                        if (timeout_item_exists(ce.id)) {
-                            if (!timeout_items[ce.id].quit) {
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            if (!timeout_items[e.heartbeat.id].quit) {
                                 // set item to timeout in e.heartbeat.time ms if it isnt unregistered until then
-                                timeout_items[ce.id].heartbeat_answered = false;
-                                timeout_items[ce.id].last_heartbeat_age = -real_sleep_time;
-                                timeout_items[ce.id].timeout_ms = ce.time;
-                                timeout_items[ce.id].quit = true;
+                                timeout_items[e.heartbeat.id].heartbeat_answered = false;
+                                timeout_items[e.heartbeat.id].last_heartbeat_age = -real_sleep_time;
+                                timeout_items[e.heartbeat.id].timeout_ms = e.heartbeat.time;
+                                timeout_items[e.heartbeat.id].quit = true;
                             } else {
-                                MetaGui::logf("#W timeout_crash: received prequit for prequit timeout item #%d\n", ce.id);
+                                MetaGui::logf("#W timeout_crash: received prequit for prequit timeout item #%d\n", e.heartbeat.id);
                             }
                         } else {
                             //HACK just ignore this, is not an issue because some queues might unregister before the prequit has been acknowledged
@@ -123,15 +121,14 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_HEARTBEAT_RESET: {
-                        auto ce = event_cast<f_event_heartbeat>(e);
-                        if (timeout_item_exists(ce.id)) {
-                            if (!timeout_items[ce.id].quit) {
-                                timeout_items[ce.id].last_heartbeat_age -= real_sleep_time;
+                        if (timeout_item_exists(e.heartbeat.id)) {
+                            if (!timeout_items[e.heartbeat.id].quit) {
+                                timeout_items[e.heartbeat.id].last_heartbeat_age -= real_sleep_time;
                             } else {
-                                MetaGui::logf("#W timeout_crash: received reset for prequit timeout item #%d\n", ce.id);
+                                MetaGui::logf("#W timeout_crash: received reset for prequit timeout item #%d\n", e.heartbeat.id);
                             }
                         } else {
-                            MetaGui::logf("#E timeout_crash: received reset for unknown timeout item #%d\n", ce.id);
+                            MetaGui::logf("#E timeout_crash: received reset for unknown timeout item #%d\n", e.heartbeat.id);
                         }
                     } break;
                     default: {

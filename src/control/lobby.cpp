@@ -88,7 +88,6 @@ namespace Control {
         switch (e.base.type) {
             //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
             case EVENT_TYPE_GAME_LOAD: {
-                auto ce = event_cast<f_event_game_load>(e);
                 // reset everything in case we can't find the game later on
                 if (the_game) {
                     the_game->methods->destroy(the_game);
@@ -98,9 +97,9 @@ namespace Control {
                 // find game in games catalogue by provided strings
                 bool game_found = false;
                 uint32_t base_game_idx = 0;
-                const char* base_game_name = ce.base_name;
+                const char* base_game_name = e.game_load.base_name;
                 uint32_t game_variant_idx = 0;
-                const char* game_variant_name = ce.variant_name;
+                const char* game_variant_name = e.game_load.variant_name;
                 for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
                     if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
                         game_found = true;
@@ -122,7 +121,7 @@ namespace Control {
                     printf("[WARN] failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
                     break;
                 }
-                game_options = ce.options ? strdup(ce.options) : NULL;
+                game_options = e.game_load.options ? strdup(e.game_load.options) : NULL;
                 the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(game_options);
                 // update game name strings
                 base_game = strdup(base_game_name);
@@ -153,18 +152,16 @@ namespace Control {
                 SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                auto ce = event_cast<f_event_game_state>(e);
                 if (!the_game) {
                     printf("[WARN] attempted state import on null game\n");
                     break;
                 }
-                the_game->methods->import_state(the_game, ce.state);
-                printf("[INFO] game state imported: %s\n", ce.state);
+                the_game->methods->import_state(the_game, e.game_state.state);
+                printf("[INFO] game state imported: %s\n", e.game_state.state);
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                auto ce = event_cast<f_event_game_move>(e);
                 if (!the_game) {
                     printf("[WARN] attempted move on null game\n");
                     break;
@@ -172,7 +169,7 @@ namespace Control {
                 player_id pbuf[253];
                 uint8_t pbuf_cnt = 253;
                 the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf); //FIXME ptm
-                the_game->methods->make_move(the_game, pbuf[0], ce.code);
+                the_game->methods->make_move(the_game, pbuf[0], e.game_move.code);
                 the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                 printf("[INFO] game move made\n");
                 if (pbuf_cnt == 0) {
@@ -186,11 +183,10 @@ namespace Control {
                 SendToAllButOne(e, e.base.client_id);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_MSG: {
-                auto ce = event_cast<f_event_chat_msg>(e);
-                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.base.client_id, ce.text);
-                ce.msg_id = lobby_msg_id_ctr++;
-                ce.author_client_id = e.base.client_id;
-                ce.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
+                printf("[INFO] chat message received from %d, broadcasting: %s\n", e.base.client_id, e.chat_msg.text);
+                e.chat_msg.msg_id = lobby_msg_id_ctr++;
+                e.chat_msg.author_client_id = e.base.client_id;
+                e.chat_msg.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
                 SendToAllButOne(e, F_EVENT_CLIENT_NONE);
             } break;

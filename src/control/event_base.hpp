@@ -18,8 +18,6 @@ struct f_event; // forward declare from event.h with c linkage
 
 namespace Control {
 
-    //BUG MAJOR-ERROR: recheck if the f_event casts here are sane or destroy the event type meaning and rather the static methods should take EVENT types
-
     //TODO managed strings, or use std::string
     //TODO blob manager struct
 
@@ -66,7 +64,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static constexpr size_t size_impl(EVENT* e, size_t s)
         {
-            return size_impl<X, REST...>(e, s + FIRST::static_size((f_event*)e));
+            return size_impl<X, REST...>(e, s + FIRST::static_size(e));
         }
         template<class X>
         static constexpr size_t size_impl(EVENT* e, size_t s)
@@ -83,19 +81,19 @@ namespace Control {
         {
             return sizeof(EVENT);
         }
-        static constexpr size_t plain_size(f_event* e)
+        static constexpr size_t plain_size(EVENT* e)
         {
-            return sizeof(size_t) + plain_size_impl<void, EVENT_SERIALIZERS...>((EVENT*)e);
+            return sizeof(size_t) + plain_size_impl<void, EVENT_SERIALIZERS...>(e);
         }
         size_t size(f_event* e) override
         {
-            return plain_size(e) + size_impl<void, EVENT_SERIALIZERS...>((EVENT*)e, (size_t)0);
+            return plain_size((EVENT*)e) + size_impl<void, EVENT_SERIALIZERS...>((EVENT*)e, (size_t)0);
         }
 
         template<class X, class FIRST, class ...REST>
         static void serialize_impl(EVENT* e, void** buf)
         {
-            FIRST::static_serialize((f_event*)e, buf);
+            FIRST::static_serialize(e, buf);
             serialize_impl<X, REST...>(e, buf);
         }
         template<class X>
@@ -103,7 +101,7 @@ namespace Control {
         {}
         void serialize(f_event* e, void** buf) override
         {
-            size_t ps = plain_size(e) - sizeof(size_t);
+            size_t ps = plain_size((EVENT*)e) - sizeof(size_t);
             size_t rs = size(e);
             *(size_t*)*buf = rs; // the total event size written at the very front INCLUDES itself
             *buf = (char*)*buf + sizeof(size_t);
@@ -115,7 +113,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static int deserialize_impl(EVENT* e, void** buf, void* buf_end)
         {
-            if (FIRST::static_deserialize((f_event*)e, buf, buf_end)) {
+            if (FIRST::static_deserialize(e, buf, buf_end)) {
                 return 1;
             }
             return deserialize_impl<X, REST...>(e, buf, buf_end);
@@ -128,7 +126,7 @@ namespace Control {
         int deserialize(f_event* e, void** buf, void* buf_end) override
         {
             assert(*(size_t*)*buf == (char*)buf_end - (char*)*buf);
-            size_t ps = plain_size(e) - sizeof(size_t);
+            size_t ps = plain_size((EVENT*)e) - sizeof(size_t);
             if ((char*)buf_end - (char*)*buf < ps) {
                 return 1;
             }
@@ -141,7 +139,7 @@ namespace Control {
         template<class X, class FIRST, class ...REST>
         static void copy_impl(EVENT* to, EVENT* from)
         {
-            FIRST::static_copy((f_event*)to, (f_event*)from);
+            FIRST::static_copy(to, from);
             copy_impl<X, REST...>(to, from);
         }
         template<class X>
@@ -149,14 +147,14 @@ namespace Control {
         {}
         void copy(f_event* to, f_event* from) override
         {
-            memcpy(to, from, plain_size(from) - sizeof(size_t));
+            memcpy(to, from, plain_size((EVENT*)from) - sizeof(size_t));
             copy_impl<void, EVENT_SERIALIZERS...>((EVENT*)to, (EVENT*)from);
         }
 
         template<class X, class FIRST, class ...REST>
         static void destroy_impl(EVENT* e)
         {
-            FIRST::static_destroy((f_event*)e);
+            FIRST::static_destroy(e);
             destroy_impl<X, REST...>(e);
         }
         template<class X>
@@ -213,9 +211,9 @@ namespace Control {
         {
             return s;
         }
-        static constexpr size_t static_size(f_event* e)
+        static constexpr size_t static_size(EVENT* e)
         {
-            return size_impl<void, STRINGS...>((EVENT*)e, 0);
+            return size_impl<void, STRINGS...>(e, 0);
         }
         size_t size(f_event* e) override
         {
@@ -247,9 +245,9 @@ namespace Control {
         template<class X>
         static void serialize_impl(EVENT* e, void** buf)
         {}
-        static void static_serialize(f_event* e, void** buf)
+        static void static_serialize(EVENT* e, void** buf)
         {
-            serialize_impl<void, STRINGS...>((EVENT*)e, buf);
+            serialize_impl<void, STRINGS...>(e, buf);
         }
         void serialize(f_event* e, void** buf) override
         {
@@ -283,9 +281,9 @@ namespace Control {
         {
             return 0;
         }
-        static int static_deserialize(f_event* e, void** buf, void* buf_end)
+        static int static_deserialize(EVENT* e, void** buf, void* buf_end)
         {
-            return deserialize_impl<void, STRINGS...>((EVENT*)e, buf, buf_end);
+            return deserialize_impl<void, STRINGS...>(e, buf, buf_end);
         }
         int deserialize(f_event* e, void** buf, void* buf_end) override
         {
@@ -302,9 +300,9 @@ namespace Control {
         template<class X>
         static void copy_impl(EVENT* to, EVENT* from)
         {}
-        static void static_copy(f_event* to, f_event* from)
+        static void static_copy(EVENT* to, EVENT* from)
         {
-            copy_impl<void, STRINGS...>((EVENT*)to, (EVENT*)from);
+            copy_impl<void, STRINGS...>(to, from);
         }
         void copy(f_event* to, f_event* from) override
         {
@@ -321,9 +319,9 @@ namespace Control {
         template<class X>
         static void destroy_impl(EVENT* e)
         {}
-        static void static_destroy(f_event* e)
+        static void static_destroy(EVENT* e)
         {
-            destroy_impl<void, STRINGS...>((EVENT*)e);
+            destroy_impl<void, STRINGS...>(e);
         }
         void destroy(f_event* e) override
         {

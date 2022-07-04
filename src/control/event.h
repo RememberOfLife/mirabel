@@ -259,16 +259,6 @@ typedef union f_event_any_u {
 }
 #endif
 
-#ifdef __cplusplus
-
-template<class EVENT>
-EVENT& event_cast(f_event_any& e)
-{
-    return *(EVENT*)&e;
-}
-
-#endif
-
 #ifdef F_EVENT_INTERNAL
 
 namespace Control {

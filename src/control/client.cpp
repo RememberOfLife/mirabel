@@ -228,7 +228,6 @@ namespace Control {
                         tc_info.send_heartbeat();
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
-                        auto ce = event_cast<f_event_game_load>(e);
                         // reset everything in case we can't find the game later on
                         frontend->set_game(NULL);
                         if (the_game) {
@@ -241,8 +240,8 @@ namespace Control {
                         bool game_found = false;
                         uint32_t base_game_idx = 0;
                         uint32_t game_variant_idx = 0;
-                        const char* base_game_name = ce.base_name;
-                        const char* game_variant_name = ce.variant_name;
+                        const char* base_game_name = e.game_load.base_name;
+                        const char* game_variant_name = e.game_load.variant_name;
                         for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
                             if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
                                 game_found = true;
@@ -268,17 +267,17 @@ namespace Control {
                         MetaGui::base_game_idx = base_game_idx;
                         MetaGui::game_variant_idx = game_variant_idx;
                         // actually load the game
-                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(ce.options);
+                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(e.game_load.options);
                         if (the_game->methods->export_options_str) {
                             // options have been set already by the catalogue through the game config, now export options for server
                             size_t options_len = the_game->sizer.options_str;
-                            ce.options = (char*)malloc(options_len);
-                            the_game->methods->export_options_str(the_game, &options_len, ce.options);
+                            e.game_load.options = (char*)malloc(options_len);
+                            the_game->methods->export_options_str(the_game, &options_len, e.game_load.options);
                         }
                         engine_mgr->game_load(the_game);
                         frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
                         // everything successful, pass to server
-                        if (network_send_queue && ce.base.client_id == F_EVENT_CLIENT_NONE) {
+                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
                             f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
@@ -296,21 +295,19 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_GAME_STATE: {
-                        auto ce = event_cast<f_event_game_state>(e);
                         if (!the_game) {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;
                         }
-                        the_game->methods->import_state(the_game, ce.state);
+                        the_game->methods->import_state(the_game, e.game_state.state);
                         game_step++;
-                        engine_mgr->game_state(ce.state);
+                        engine_mgr->game_state(e.game_state.state);
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
                             f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
-                        auto ce = event_cast<f_event_game_move>(e);
                         if (!the_game) {
                             MetaGui::log("#W attempted move on null game\n");
                             break;
@@ -318,13 +315,13 @@ namespace Control {
                         player_id pbuf[253];
                         uint8_t pbuf_cnt = 253;
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
-                        if (the_game->methods->is_legal_move(the_game, pbuf[0], ce.code, SYNC_COUNTER_DEFAULT) != ERR_OK) {
+                        if (the_game->methods->is_legal_move(the_game, pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT) != ERR_OK) {
                             MetaGui::logf("#W illegal move on board\n");
                             break;
                         }
-                        the_game->methods->make_move(the_game, pbuf[0], ce.code); //FIXME ptm
+                        the_game->methods->make_move(the_game, pbuf[0], e.game_move.code); //FIXME ptm
                         game_step++;
-                        engine_mgr->game_move(pbuf[0], ce.code, SYNC_COUNTER_DEFAULT);
+                        engine_mgr->game_move(pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         if (pbuf_cnt == 0) {
                             the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
@@ -339,9 +336,8 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
-                        auto ce = event_cast<f_event_frontend_load>(e);
                         delete frontend;
-                        frontend = (Frontends::Frontend*)ce.frontend;
+                        frontend = (Frontends::Frontend*)e.frontend_load.frontend;
                         frontend->set_game(the_game);
                         MetaGui::running_few_idx = MetaGui::selected_few_idx;
                     } break;
@@ -351,12 +347,10 @@ namespace Control {
                         MetaGui::running_few_idx = 0;
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_MSG: {
-                        auto ce = event_cast<f_event_chat_msg>(e);
-                        MetaGui::chat_msg_add(ce.msg_id, ce.author_client_id, ce.timestamp, ce.text);
+                        MetaGui::chat_msg_add(e.chat_msg.msg_id, e.chat_msg.author_client_id, e.chat_msg.timestamp, e.chat_msg.text);
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                        auto ce = event_cast<f_event_chat_del>(e);
-                        MetaGui::chat_msg_del(ce.msg_id);
+                        MetaGui::chat_msg_del(e.chat_del.msg_id);
                     } break;
                     /* skip EVENT_TYPE_NETWORK_ADAPTER_LOAD, t_network gets filled by the metagui connection window*/
                     case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: // died while trying to connect
@@ -378,11 +372,10 @@ namespace Control {
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_ONGOING;
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT: {
-                        auto ce = event_cast<f_event_ssl_thumbprint>(e);
-                        if (ce.thumbprint) {
+                        if (e.ssl_thumbprint.thumbprint) {
                             free(MetaGui::conn_info.server_cert_thumbprint);
                             MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
-                            memcpy(MetaGui::conn_info.server_cert_thumbprint, ce.thumbprint, Network::SHA256_LEN);
+                            memcpy(MetaGui::conn_info.server_cert_thumbprint, e.ssl_thumbprint.thumbprint, Network::SHA256_LEN);
                         }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
                         // request auth info from server
@@ -391,13 +384,12 @@ namespace Control {
                         f_event_queue_push(&t_network->send_queue, &es);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
-                        auto ce = event_cast<f_event_ssl_thumbprint>(e);
                         free(MetaGui::conn_info.server_cert_thumbprint);
                         MetaGui::conn_info.server_cert_thumbprint = (uint8_t*)malloc(Network::SHA256_LEN);
-                        memcpy(MetaGui::conn_info.server_cert_thumbprint, ce.thumbprint, Network::SHA256_LEN);
+                        memcpy(MetaGui::conn_info.server_cert_thumbprint, e.ssl_thumbprint.thumbprint, Network::SHA256_LEN);
                         free(MetaGui::conn_info.verifail_reason);
-                        MetaGui::conn_info.verifail_reason = (char*)malloc(strlen((char*)ce.thumbprint) + 1);
-                        strcpy(MetaGui::conn_info.verifail_reason, (char*)ce.thumbprint+Network::SHA256_LEN);
+                        MetaGui::conn_info.verifail_reason = (char*)malloc(strlen((char*)e.ssl_thumbprint.thumbprint) + 1);
+                        strcpy(MetaGui::conn_info.verifail_reason, (char*)e.ssl_thumbprint.thumbprint+Network::SHA256_LEN);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                         // finalize connection by setting the sending queue, this transitions from initialization into usage
@@ -411,21 +403,19 @@ namespace Control {
                         MetaGui::chat_clear();
                     } break;
                     case EVENT_TYPE_USER_AUTHINFO: {
-                        auto ce = event_cast<f_event_auth>(e);
                         // we got the auth info from the server, set it up for display in the metagui conn info, also advance state
                         // if is_guest is true the server accepts guest logins, otherwise not
-                        MetaGui::conn_info.auth_allow_guest = ce.is_guest;
+                        MetaGui::conn_info.auth_allow_guest = e.auth.is_guest;
                         // if username is NULL the server does NOT accept user logins
-                        MetaGui::conn_info.auth_allow_login = (ce.username != NULL);
+                        MetaGui::conn_info.auth_allow_login = (e.auth.username != NULL);
                         // if password is NULL the server does NOT require a server password for guests
-                        MetaGui::conn_info.auth_want_guest_pw = (ce.password != NULL);
+                        MetaGui::conn_info.auth_want_guest_pw = (e.auth.password != NULL);
                         // if the server does not accept user AND guest logins wait for user to press guest login, enable pw input if wanted
                         MetaGui::conn_info.auth_info = true;
                     } break;
                     case EVENT_TYPE_USER_AUTHN: {
-                        auto ce = event_cast<f_event_auth>(e);
                         // we received our authn credentials from the server
-                        strcpy(MetaGui::conn_info.username, ce.username); // set username in authinfo, as received, may be assigned guest name
+                        strcpy(MetaGui::conn_info.username, e.auth.username); // set username in authinfo, as received, may be assigned guest name
                         //TODO should probably store it somewhere else too
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_DONE;
                         f_event_any es;
@@ -433,12 +423,11 @@ namespace Control {
                         f_event_queue_push(&inbox, &es);
                     } break;
                     case EVENT_TYPE_USER_AUTHFAIL: {
-                        auto ce = event_cast<f_event_auth_fail>(e);
                         // server told us our authn failed / it signed us out after we requested logout
-                        if (ce.reason) {
+                        if (e.auth_fail.reason) {
                             free(MetaGui::conn_info.authfail_reason);
-                            MetaGui::conn_info.authfail_reason = ce.reason;
-                            ce.reason = NULL;
+                            MetaGui::conn_info.authfail_reason = e.auth_fail.reason;
+                            e.auth_fail.reason = NULL;
                         }
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
                         f_event_any es;

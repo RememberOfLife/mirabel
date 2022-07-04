@@ -118,46 +118,45 @@ namespace Control {
                     f_event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
-                    auto ce = event_cast<f_event_auth>(e);
                     f_event_any es;
                     // client wants to auth with given credentials, send back authn or authfail
                     //TODO save guest names and check for dupes
-                    if (!ce.is_guest) {
+                    if (!e.auth.is_guest) {
                         f_event_create_auth_fail(&es, e.base.client_id, "user logins not accepted");
                         f_event_queue_push(network_send_queue, &es);
                         break;
                     }
-                    if (ce.username == NULL) {
+                    if (e.auth.username == NULL) {
                         f_event_create_auth_fail(&es, e.base.client_id, "name NULL");
                         f_event_queue_push(network_send_queue, &es);
                         break;
                     }
                     // validate that username uses only allowed characters
-                    for (int i = 0; i < strlen(ce.username); i++) {
-                        if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", ce.username[i])) {
+                    for (int i = 0; i < strlen(e.auth.username); i++) {
+                        if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", e.auth.username[i])) {
                             f_event_create_auth_fail(&es, e.base.client_id, "name contains illegal characters");
                             f_event_queue_push(network_send_queue, &es);
                             break;
                         }
                     }
-                    if (strlen(ce.username) > 0 && strlen(ce.username) < 3) {
+                    if (strlen(e.auth.username) > 0 && strlen(e.auth.username) < 3) {
                         f_event_create_auth_fail(&es, e.base.client_id, "name < 3 characters");
                         f_event_queue_push(network_send_queue, &es);
                         break;
                     }
-                    if (strlen(ce.username) == 0) {
-                        free(ce.username);
+                    if (strlen(e.auth.username) == 0) {
+                        free(e.auth.username);
                         static fast_prng rng(123);
                         const int assigned_length = 5;
                         const int guestname_length = 6+assigned_length;
-                        ce.username = (char*)malloc(guestname_length);
-                        char* str_p = ce.username;
+                        e.auth.username = (char*)malloc(guestname_length);
+                        char* str_p = e.auth.username;
                         str_p += sprintf(str_p, "Guest");
                         for (int i = 0; i < assigned_length; i++) {
                             str_p += sprintf(str_p, "%d", rng.rand()%10);
                         }
                     }
-                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, ce.username, NULL);
+                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, e.auth.username, NULL);
                     f_event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_USER_AUTHFAIL: {
