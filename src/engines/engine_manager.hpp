@@ -6,7 +6,7 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 
 #include "surena/engine.h"
 

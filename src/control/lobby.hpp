@@ -5,8 +5,8 @@
 
 #include "surena/game.h"
 
-#include "control/event_queue.h"
-#include "control/event.h"
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 
 namespace Control {
 

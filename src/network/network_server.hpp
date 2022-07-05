@@ -6,7 +6,7 @@
 #include "SDL_net.h"
 #include <openssl/ssl.h>
 
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 #include "network/util.hpp"
 
 namespace Network {

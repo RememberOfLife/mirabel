@@ -9,6 +9,8 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 #include "mirabel/move_history.h"
 
 #ifdef __cplusplus
@@ -19,21 +21,11 @@ static const uint64_t MIRABEL_FRONTEND_API_VERSION = 1;
 
 
 
-//WARNING this is a temporary api, it will be removed in the future, when it is superceded by f_Event c api support
-typedef struct f_event_outwrap_s {
-    void (*game_move)(player_id player, move_code move);
-    //TODO more wraps for game and history
-} f_event_outwrap;
-
-
-
 //TODO this mirrors a lot of the info that will be stored in the client lobby
 typedef struct /*grand_unified_*/frontend_display_data_s {
-    //TODO f_event_queue outbox; // the frontend can place all outgoing interactions of the user here
-    f_event_outwrap outbox; // the frontend can use these wrapper function pointers to create and push outbound events
+    f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
 
-    game* a; // the frontend will display the state of this game
-    //WARNING for now this is a readonly board NOT owned by the frontend, will change!
+    game* a; // the frontend OWN this board and will display the state of this game
 
     // all readonly:
 
@@ -62,6 +54,7 @@ typedef struct frontend_feature_flags_s {
 typedef struct frontend_s frontend; // forward declare the frontend for the frontend methods
 
 typedef struct frontend_methods_s {
+
     // minimum length of 1 character, with allowed character set:
     // "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" additionally '-' and '_' but not at the start or end
     const char* frontend_name;
@@ -99,13 +92,14 @@ typedef struct frontend_methods_s {
 
     error_code (*runtime_opts_display)(frontend* self);
 
-    error_code (*process_event)(frontend* self /*c compatible f_event*/);
+    error_code (*process_event)(frontend* self, f_event_any event); //TODO how does the frontend ever get the game? since it doesnt have access to the catalogue; EVENT_TYPE_GAME_LOAD_P as special frontend op?
 
     error_code (*process_input)(frontend* self, SDL_Event event);
 
     error_code (*update)(frontend* self, player_id view);
 
     // FEATURE: global_background
+    // if the user also enables this, the frontend can draw a global background, even behind the metagui windows docked on top of it
     error_code (*background)(frontend* self, float x, float y, float w, float h);
 
     error_code (*render)(frontend* self, player_id view, float x, float y, float w, float h);

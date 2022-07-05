@@ -4,7 +4,7 @@
 #include <thread>
 #include <unordered_map>
 
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 
 namespace Control {
 

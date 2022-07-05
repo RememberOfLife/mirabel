@@ -6,8 +6,8 @@
 #include "SDL_net.h"
 #include <openssl/ssl.h>
 
-#include "control/event_queue.h"
-#include "control/event.h"
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 #include "meta_gui/meta_gui.hpp"
 #include "network/protocol.hpp"
 #include "network/util.hpp"

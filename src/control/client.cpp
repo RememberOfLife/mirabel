@@ -17,8 +17,8 @@
 #include "surena/util/semver.h"
 #include "surena/game.h"
 
-#include "control/event.h"
-#include "control/event_queue.h"
+#include "mirabel/event.h"
+#include "mirabel/event_queue.h"
 #include "control/timeout_crash.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"

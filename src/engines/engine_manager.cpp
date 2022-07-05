@@ -8,7 +8,7 @@
 #include "surena/game.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 #include "engines/engine_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 

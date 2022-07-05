@@ -7,7 +7,7 @@
 #include "surena/util/fast_prng.hpp"
 #include "surena/game.h"
 
-#include "control/event.h"
+#include "mirabel/event.h"
 #include "network/network_server.hpp"
 
 #include "control/server.hpp"

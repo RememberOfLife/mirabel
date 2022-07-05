@@ -4,8 +4,8 @@
 #include "imgui.h"
 
 #include "control/client.hpp"
-#include "control/event_queue.h"
-#include "control/event.h"
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 #include "control/timeout_crash.hpp"
 #include "network/network_client.hpp"
 #include "network/protocol.hpp"

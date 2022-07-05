@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include "control/event.h"
+#include "mirabel/event.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -7,7 +7,7 @@
 
 #include "control/event_base.hpp"
 #define F_EVENT_INTERNAL
-#include "control/event.h"
+#include "mirabel/event.h"
 
 // event catalogue backend
 

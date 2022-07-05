@@ -4,9 +4,9 @@
 #include <deque>
 #include <mutex>
 
-#include "control/event.h"
+#include "mirabel/event.h"
 
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 
 #ifdef __cplusplus
 extern "C" {

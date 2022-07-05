@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "control/event_queue.h"
+#include "mirabel/event_queue.h"
 #include "control/lobby.hpp"
 #include "control/timeout_crash.hpp"
 #include "network/network_server.hpp"
