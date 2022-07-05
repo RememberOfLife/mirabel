@@ -85,6 +85,7 @@ namespace Control {
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         imgui_io = &ImGui::GetIO(); (void)imgui_io;
+        imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // enable keyboard controls
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // enable gamepad controls
 
@@ -195,10 +196,14 @@ namespace Control {
         bool fullscreen = false;
         bool show_demo_window = false;
         ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
-        float w_px = imgui_viewport->WorkSize.x;
-        float h_px = imgui_viewport->WorkSize.y;
         float x_px = imgui_viewport->WorkPos.x;
         float y_px = imgui_viewport->WorkPos.y;
+        float w_px = imgui_viewport->WorkSize.x;
+        float h_px = imgui_viewport->WorkSize.y;
+        float fx_px = x_px;
+        float fy_px = y_px;
+        float fw_px = w_px;
+        float fh_px = h_px;
 
         bool ctrl_left = false;
         bool ctrl_right = false;
@@ -569,6 +574,8 @@ namespace Control {
             ImGui_ImplSDL2_NewFrame();
             ImGui::NewFrame();
 
+            MetaGui::global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
+
             // show imgui windows
             //TODO since all of these only show when the bool is set, it doesnt really need to be an argument, they can just check themselves
             if (show_hud) {
@@ -589,14 +596,16 @@ namespace Control {
 
 
             //TODO put this in the sdl resize event, make a resize function on the context app
-            w_px = imgui_viewport->WorkSize.x;
-            h_px = imgui_viewport->WorkSize.y;
+            // whole workspace under the menubar, use this for frontend background if wanted
             x_px = imgui_viewport->WorkPos.x;
             y_px = imgui_viewport->WorkPos.y;
-            frontend->w_px = w_px;
-            frontend->h_px = h_px;
-            frontend->x_px = x_px;
-            frontend->y_px = y_px;
+            w_px = imgui_viewport->WorkSize.x;
+            h_px = imgui_viewport->WorkSize.y;
+            // frontend only gets the frontend metagui dockspace
+            frontend->x_px = fx_px;
+            frontend->y_px = fy_px;
+            frontend->w_px = fw_px;
+            frontend->h_px = fh_px;
             // rendering
             glViewport(0, 0, (int)w_px, (int)h_px);
             glMatrixMode(GL_PROJECTION);

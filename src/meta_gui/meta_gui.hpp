@@ -7,6 +7,8 @@
 
 namespace MetaGui {
 
+    void global_dockspace(float* x, float* y, float* w, float* h);
+
     extern bool show_confirm_exit_modal;
     void confirm_exit_modal(bool* p_open);
 

@@ -72,11 +72,7 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
-* rework events to be at least creationwise c compatible, hide serializers in c impl by typedefs
 * game config window should offer to get and set the state strings, store where? also display a move list somewhere..
-* use imgui docking branch to enable docking of metagui windows to the side of the frontend
-  * dockspace as optional enable in the menu bar
-  * DockSpaceOverViewport(GetMainViewPort, NoDockingInCentralNode | PassthruCentalNode) to not display the center 5 nodes, disable inner padding on docking window
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows

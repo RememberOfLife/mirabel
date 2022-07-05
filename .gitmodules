@@ -1,6 +1,7 @@
 [submodule "lib/imgui"]
 	path = lib/imgui
 	url = https://github.com/ocornut/imgui
+    branch = docking
 [submodule "lib/nanovg"]
 	path = lib/nanovg
 	url = https://github.com/inniyah/nanovg

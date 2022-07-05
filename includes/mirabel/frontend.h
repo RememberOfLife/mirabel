@@ -74,7 +74,7 @@ typedef struct frontend_methods_s {
 
     error_code (*opts_create)(void* options_struct);
 
-    error_code (*opts_display)(void* options_struct, void* imgui_ctx);
+    error_code (*opts_display)(void* options_struct);
 
     error_code (*opts_destroy)(void* options_struct);
 
@@ -97,7 +97,7 @@ typedef struct frontend_methods_s {
 
     //TODO somehow separate the loading of textures etc parallel to the main guithread?
 
-    error_code (*runtime_opts_display)(frontend* self, void* imgui_ctx);
+    error_code (*runtime_opts_display)(frontend* self);
 
     error_code (*process_event)(frontend* self /*c compatible f_event*/);
 
