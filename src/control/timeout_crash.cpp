@@ -200,7 +200,7 @@ namespace Control {
     {
         m.lock();
         if (!timeout_item_exists(id)) {
-            MetaGui::logf("#W attempted un-register of unknown timeout item #%d\n", next_id);
+            MetaGui::logf("#W attempted un-register of unknown timeout item #%d\n", id);
             m.unlock();
             return;
         }

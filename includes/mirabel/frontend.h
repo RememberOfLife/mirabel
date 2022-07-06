@@ -17,7 +17,8 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 1;
+//NOTE: updates to {event, event_queue, move_history} will incur a version increase here
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 2;
 
 
 
@@ -25,7 +26,7 @@ static const uint64_t MIRABEL_FRONTEND_API_VERSION = 1;
 typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
 
-    game* a; // the frontend OWN this board and will display the state of this game
+    game g; // the frontend OWN this board and will display the state of this game
 
     // all readonly:
 
@@ -65,10 +66,9 @@ typedef struct frontend_methods_s {
     // use the frontend_name to make sure you know what this will be
     const void* internal_methods;
 
-    error_code (*opts_create)(void* options_struct);
-
+    // load opts
+    error_code (*opts_create)(void** options_struct);
     error_code (*opts_display)(void* options_struct);
-
     error_code (*opts_destroy)(void* options_struct);
 
     // returns the error string complementing the most recent occured error
@@ -92,7 +92,10 @@ typedef struct frontend_methods_s {
 
     error_code (*runtime_opts_display)(frontend* self);
 
-    error_code (*process_event)(frontend* self, f_event_any event); //TODO how does the frontend ever get the game? since it doesnt have access to the catalogue; EVENT_TYPE_GAME_LOAD_P as special frontend op?
+    // in general, passthrough all EVENT_TYPE_HEARTBEAT events untouched
+    // a heartbeat id=0 can be used to assert that the frontend is up to date with all the queued input events (if it is buffering)  //TODO fine?
+    // games will be passed to the frontend using EVENT_TYPE_GAME_LOAD_METHODS containing a pointer to the methods to be used
+    error_code (*process_event)(frontend* self, f_event_any event);
 
     error_code (*process_input)(frontend* self, SDL_Event event);
 

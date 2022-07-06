@@ -72,6 +72,9 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
+* specify config api with string namespaces and reference caching
+  * do users need to return their refs?
+* decide plugin file placement, all in one plugin folder, or separated out into topical folders
 * game config window should offer to get and set the state strings, store where? also display a move list somewhere..
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
 * probably drop description etc from frontend and games?

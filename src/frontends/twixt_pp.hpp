@@ -1,8 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
-#include "nanovg_gl.h"
+#include "nanovg.h"
 #include "surena/games/twixt_pp.h"
 #include "surena/game.h"
 

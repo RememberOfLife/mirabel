@@ -45,9 +45,9 @@ void move_history_promote(move_history* h, bool to_main);
 
 void move_history_demote(move_history* h);
 
-// void move_history_serialize(); //TODO
+// void move_history_serialize(move_history* h); //TODO into human readable?
 
-// void move_history_deserialize(); //TODO
+// move_history* void move_history_deserialize(); //TODO
 
 // recursively free this and all its child histories
 // if a parent exists, this will remove the destroyed history sub tree from the parents child list

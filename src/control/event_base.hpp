@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-struct f_event; // forward declare from event.h with c linkage
+typedef struct f_event_s f_event; // forward declare from event.h with c linkage
 
 #ifdef __cplusplus
 }

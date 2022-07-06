@@ -19,7 +19,7 @@ extern "C" {
 // protocol ping just pings the connected network adapter, do not place in recv_queue
 // adapter ping pings into the recv_queue of the connected adapter, i.e. gets to the server main loop where protocol ping gets swallowed by the adapter
 
-enum EVENT_TYPE : uint32_t {
+typedef enum EVENT_TYPE_E : uint32_t {
     // special events
     EVENT_TYPE_NULL = 0, // ignored event
     EVENT_TYPE_HEARTBEAT, // purely local event between queueholder and timeoutcrash, networking uses protocol_ping events
@@ -28,6 +28,7 @@ enum EVENT_TYPE : uint32_t {
     EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
     // normal events
     EVENT_TYPE_GAME_LOAD,
+    EVENT_TYPE_GAME_LOAD_METHODS,
     EVENT_TYPE_GAME_UNLOAD,
     EVENT_TYPE_GAME_STATE,
     EVENT_TYPE_GAME_MOVE,
@@ -64,7 +65,7 @@ enum EVENT_TYPE : uint32_t {
     EVENT_TYPE_LOBBY_CHAT_DEL,
 
     EVENT_TYPE_COUNT,
-};
+} EVENT_TYPE;
 
 static const uint32_t F_EVENT_CLIENT_NONE = 0; // none / local
 static const uint32_t F_EVENT_CLIENT_SERVER = UINT32_MAX;
@@ -87,7 +88,7 @@ typedef Control::event_plain_serializer<f_event> serializer;
 // then use:
 // struct event : public event_netdata { ... }
 
-struct f_event {
+typedef struct f_event_s {
     
     EVENT_TYPE type;
     uint32_t client_id;
@@ -97,7 +98,7 @@ struct f_event {
     //WARNING don't use this directly, it will probably be the wrong one, use event_catalogue::get_event_serializer instead
     MANAGED_INTERNAL_DEFAULT;
 
-};
+} f_event;
 
 typedef union f_event_any_u f_event_any;
 
@@ -151,6 +152,13 @@ typedef struct f_event_game_load_s {
     );
 } f_event_game_load;
 void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* options);
+
+typedef struct f_event_game_load_methods_s {
+    f_event base;
+    game_methods* methods;
+    MANAGED_INTERNAL_DEFAULT;
+} f_event_game_load_methods;
+void f_event_create_game_load_methods(f_event_any* e, game_methods* methods);
 
 typedef struct f_event_game_state_s {
     f_event base;
@@ -245,6 +253,7 @@ typedef union f_event_any_u {
     f_event base;
     f_event_heartbeat heartbeat;
     f_event_game_load game_load;
+    f_event_game_load_methods game_load_methods;
     f_event_game_state game_state;
     f_event_game_move game_move;
     f_event_frontend_load frontend_load;
@@ -278,6 +287,7 @@ namespace Control {
         event_serializer_pair<EVENT_TYPE_EXIT, f_event>,
         
         event_serializer_pair<EVENT_TYPE_GAME_LOAD, f_event_game_load>,
+        event_serializer_pair<EVENT_TYPE_GAME_LOAD_METHODS, f_event_game_load_methods>,
         event_serializer_pair<EVENT_TYPE_GAME_UNLOAD, f_event>,
         event_serializer_pair<EVENT_TYPE_GAME_STATE, f_event_game_state>,
         event_serializer_pair<EVENT_TYPE_GAME_MOVE, f_event_game_move>,
