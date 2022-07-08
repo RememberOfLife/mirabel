@@ -34,6 +34,9 @@ namespace MetaGui {
     void log_unregister(uint32_t log_id);
     void log_clear(uint32_t log_id);
 
+    extern bool show_config_registry_window;
+    void config_registry_window(bool* p_open);
+
     extern bool show_connection_window;
     void connection_window(bool* p_open);
     enum RUNNING_STATE {

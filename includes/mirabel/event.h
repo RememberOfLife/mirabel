@@ -22,10 +22,11 @@ extern "C" {
 typedef enum EVENT_TYPE_E : uint32_t {
     // special events
     EVENT_TYPE_NULL = 0, // ignored event
+    EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
+    EVENT_TYPE_LOG,
     EVENT_TYPE_HEARTBEAT, // purely local event between queueholder and timeoutcrash, networking uses protocol_ping events
     EVENT_TYPE_HEARTBEAT_PREQUIT, // theoretically functions as a HEARTBEAT + HEARTBEAT_SET_TIMEOUT would
     EVENT_TYPE_HEARTBEAT_RESET,
-    EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join
     // normal events
     EVENT_TYPE_GAME_LOAD,
     EVENT_TYPE_GAME_LOAD_METHODS,
@@ -129,6 +130,18 @@ void f_event_destroy(f_event_any* e);
 
 
 // specific event types
+
+typedef struct f_event_log_s {
+    f_event base;
+    char* str;
+    MANAGED_INTERNAL(
+        typedef Control::event_string_serializer<f_event_log_s, 
+            &f_event_log_s::str
+        > serializer;
+    );
+} f_event_log;
+void f_event_create_log(f_event_any* e, const char* str);
+//TODO logf
 
 typedef struct f_event_heartbeat_s {
     f_event base;
@@ -251,6 +264,7 @@ void f_event_create_chat_del(f_event_any* e, uint32_t msg_id);
 typedef union f_event_any_u {
     // list all event types here
     f_event base;
+    f_event_log log;
     f_event_heartbeat heartbeat;
     f_event_game_load game_load;
     f_event_game_load_methods game_load_methods;
@@ -281,6 +295,7 @@ namespace Control {
     typedef event_catalogue<
 
         event_serializer_pair<EVENT_TYPE_NULL, f_event>,
+        event_serializer_pair<EVENT_TYPE_LOG, f_event_log>,
         event_serializer_pair<EVENT_TYPE_HEARTBEAT, f_event_heartbeat>,
         event_serializer_pair<EVENT_TYPE_HEARTBEAT_PREQUIT, f_event_heartbeat>,
         event_serializer_pair<EVENT_TYPE_HEARTBEAT_RESET, f_event_heartbeat>,

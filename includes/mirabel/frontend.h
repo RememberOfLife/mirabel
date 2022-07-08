@@ -9,6 +9,7 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
+#include "mirabel/config.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/move_history.h"
@@ -17,8 +18,8 @@
 extern "C" {
 #endif
 
-//NOTE: updates to {event, event_queue, move_history} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 2;
+//NOTE: updates to {config, event, event_queue, move_history} will incur a version increase here
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 3;
 
 
 
@@ -27,6 +28,8 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
 
     game g; // the frontend OWN this board and will display the state of this game
+
+    // config_registry* global_cr; //TODO
 
     // all readonly:
 

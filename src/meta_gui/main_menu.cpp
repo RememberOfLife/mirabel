@@ -20,6 +20,9 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Logs", "F4", show_logs_window)) {
                     show_logs_window = !show_logs_window;
                 }
+                if (ImGui::MenuItem("Config Registry", "CTRL + K", show_config_registry_window)) {
+                    show_config_registry_window = !show_config_registry_window;
+                }
                 if (ImGui::MenuItem("Connection", "CTRL + C", show_connection_window)) {
                     show_connection_window = !show_connection_window;
                 }

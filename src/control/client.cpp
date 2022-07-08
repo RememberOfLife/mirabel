@@ -229,6 +229,9 @@ namespace Control {
                         try_quit = true;
                         break;
                     } break;
+                    case EVENT_TYPE_LOG: {
+                        MetaGui::log(e.log.str);
+                    } break;
                     case EVENT_TYPE_HEARTBEAT: {
                         tc_info.send_heartbeat();
                     } break;
@@ -501,6 +504,9 @@ namespace Control {
                         // borderless fullscreen
                         SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                     }
+                    if (event.key.keysym.sym == SDLK_k && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_config_registry_window = !MetaGui::show_config_registry_window;
+                    }
                     if (event.key.keysym.sym == SDLK_c && (ctrl_left || ctrl_right)) {
                         MetaGui::show_connection_window = !MetaGui::show_connection_window;
                     }
@@ -584,6 +590,7 @@ namespace Control {
                 if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
                 if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
                 if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
+                if (MetaGui::show_config_registry_window) MetaGui::config_registry_window(&MetaGui::show_config_registry_window);
                 if (MetaGui::show_connection_window) MetaGui::connection_window(&MetaGui::show_connection_window);
                 if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
                 if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);

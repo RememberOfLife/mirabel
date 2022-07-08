@@ -153,6 +153,12 @@ void f_event_destroy(f_event_any* e)
 
 // event specifics
 
+void f_event_create_log(f_event_any* e, const char* log)
+{
+    f_event_create_type(e, EVENT_TYPE_LOG);
+    e->log.str = log ? strdup(log) : NULL;
+}
+
 void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time)
 {
     f_event_create_type(e, type);

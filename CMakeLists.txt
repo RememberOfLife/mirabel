@@ -77,6 +77,7 @@ set(SOURCES
     lib/surena/src/game.c
 
     src/control/client.cpp
+    src/control/config.cpp
     src/control/event_queue.cpp
     src/control/event.cpp
     src/control/lobby.cpp
@@ -106,6 +107,7 @@ set(SOURCES
     src/games/twixt_pp.cpp
 
     src/meta_gui/chat.cpp
+    src/meta_gui/config.cpp
     src/meta_gui/confirm_exit.cpp
     src/meta_gui/connection.cpp
     src/meta_gui/engine.cpp

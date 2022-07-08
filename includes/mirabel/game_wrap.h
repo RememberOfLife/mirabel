@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 1;
+static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 2;
 
 typedef struct game_wrap_s {
     const uint64_t game_api_version;

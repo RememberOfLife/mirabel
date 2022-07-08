@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_ENGINE_WRAP_API_VERSION = 1;
+static const uint64_t MIRABEL_ENGINE_WRAP_API_VERSION = 2;
 
 typedef struct engine_wrap_s {
     const uint64_t engine_api_version;

@@ -16,6 +16,8 @@ namespace MetaGui {
     const uint32_t LOG_DEFAULT_BUFFER_SIZE = 8192;
     const std::chrono::steady_clock::time_point LOG_START_TIME = std::chrono::steady_clock::now();
 
+    bool show_config_registry_window = false;
+
     bool show_connection_window = false;
     //BUG gcc bug makes this ugly for now https://stackoverflow.com/questions/70172941/c99-designator-member-outside-of-aggregate-initializer
     connection_info conn_info = connection_info{

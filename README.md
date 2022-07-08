@@ -31,6 +31,8 @@ Some frontends may require loading resources, e.g. textures and sounds. These re
 * Game specific resources go into `res/games/{gamename}/`. Multiple frontends may share these game specific resources.
 * Frontend specific resources go into `res/frontends/{frontendname}/`.
 
+All plugins are folder contained.
+
 ### todos
 Collect more general resources:
 * sounds
@@ -72,10 +74,7 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
-* specify config api with string namespaces and reference caching
-  * do users need to return their refs?
-* decide plugin file placement, all in one plugin folder, or separated out into topical folders
-* game config window should offer to get and set the state strings, store where? also display a move list somewhere..
+* game config window display a move list somewhere?
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
@@ -103,12 +102,15 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* need some unit tests for things like move_history, config_registry etc?
 * general purpose job queue for background processes
 * draw and resign are events
   * player offering draw may set timeout, can not be taken back, on timeout it auto expires
 * maybe replace SDL_net with another cpp raw networking lib (https://github.com/SLikeSoft/SLikeNet) so we dont have to download opengl on a server just for it
   * for now just try to spoof sdl for sdl net lib with some fake sdl functions it can use
   * or just copy all the files into this project along with the license
+  * required features:
+    * ipv6, timeout on hostname resolution, checksockets works on errored out sockets with infinite timeout
 * lobbies for hidden info / random move games could provide functionality to make their outcomes and playout provably fair
   * https://crypto.stackexchange.com/questions/99927/provably-fair-card-deck-used-by-client-and-server
 * maybe put default metagui shortcuts somewhere else, this way frontends arent blocked as much from using ctrl
