@@ -47,6 +47,7 @@ Collect more general resources:
   * game start beep
   * game end jingle
   * low on time beep
+  * coins (multiple sounds)
 * textures / icons
 * usual gameboard colors (these will actually be placed in the config for the global palette in the future):
   * rgb(201, 144, 73) "wood" normal

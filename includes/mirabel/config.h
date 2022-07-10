@@ -10,18 +10,14 @@ extern "C" {
 
 //WARNING this api has no usable backend yet, DO NOT USE
 
-
-
-//TODO what happens if refs to an object exists and it gets overwritten as another type?
-
-//TODO how does this all even work with multi threading
-
-//TODO get list of child objs?
-
-//TODO get and get ref just check if type tag matches for the configuration path obj
+// this is essentially a json api, but provides data paths for getting / setting info, and ref counted cached subtree clones for multithreading support
+/* two very nice c json implementations:
+https://github.com/DaveGamble/cJSON
+https://github.com/json-parser/json-parser + builder
+*/
 
 typedef enum CFG_TYPE_E : uint8_t {
-    CFG_TYPE_NULL = 0,
+    CFG_TYPE_NONE = 0,
     CFG_TYPE_OBJECT,
     CFG_TYPE_ARRAY,
     CFG_TYPE_VNULL, // this is json null, read value-null
@@ -33,8 +29,6 @@ typedef enum CFG_TYPE_E : uint8_t {
     CFG_TYPE_COL4F,
     CFG_TYPE_COUNT,
 } CFG_TYPE;
-
-// config datatypes
 
 // static buffer string with capacity
 typedef struct cgf_sb_string_s {
@@ -65,6 +59,8 @@ typedef union cfg_value_u {
     cfg_color4f col4f;
 } cfg_value;
 
+typedef struct cfg_reference_s cfg_reference;
+
 // config object/value/array-container
 typedef struct cfg_ovac_s cfg_ovac;
 struct cfg_ovac_s {
@@ -73,13 +69,15 @@ struct cfg_ovac_s {
     cfg_ovac* lc;
     cfg_ovac* rs;
 
+    // cfg_reference* ref_cache_tail; // the oldest still held reference to this ovac //TODO this fine?
+
     uint8_t type;
 
     uint8_t _reserved;
 
     //TODO want this?
-    // if this is an array type then cache the number of children here
-    uint16_t a_child_count;
+    // if this is an object/array type then cache the number of children here
+    uint16_t oa_child_count;
 
     // if this is a child of an object, its key is o_label_str and o_label_hash=strhash(o_label_str)
     uint32_t o_label_hash;
@@ -88,46 +86,90 @@ struct cfg_ovac_s {
     cfg_value v;
 };
 
-typedef struct config_registry_s config_registry;
+////////////////////////////////
+////////////////////////////////
+////////////////////////////////
 
-void config_registry_create(config_registry* cr);
-void config_registry_destroy(config_registry* cr);
+//TODO actually want color types?
 
-void config_registry_load(config_registry* cr, const char* file_path);
-void config_registry_save(config_registry* cr, const char* file_path);
+/////
+// general json wrap util
 
-//TODO some way to merge change refs into the main tree? or immeditately do it?
+cfg_ovac* cj_create_object();
+void cj_object_add(cfg_ovac* obj, const char* key, cfg_ovac* ovac);
+void cj_object_replace(cfg_ovac* obj, const char* key, cfg_ovac* new_ovac);
+cfg_ovac* cj_object_detach(cfg_ovac* obj, const char* key);
+void cj_object_remove(cfg_ovac* obj, const char* key);
 
-//TODO add/get/get_ref/set need functionality for objects and lists, or just use ovac?
+cfg_ovac* cj_create_vnull();
+cfg_ovac* cj_create_u64(uint64_t value);
+cfg_ovac* cj_create_f32(float value);
+cfg_ovac* cj_create_bool(bool value);
+cfg_ovac* cj_create_str(size_t cap, const char* str);
+// cfg_ovac* cj_create_col4u(cfg_color4u value);
+// cfg_ovac* cj_create_col4f(cfg_color4f value);
 
-//TODO how to do defaults?, do we even support a reset to defaults button?
-// add the ovac under this path, only if no ovac exists under this path yet
-void config_registry_add(config_registry* cr, const char* data_path, cfg_ovac ovac);
-void config_registry_add_u64(config_registry* cr, const char* data_path, uint64_t u64);
-void config_registry_delete(config_registry* cr, const char* data_path);
+cfg_ovac* cj_create_array();
+void cj_array_add(cfg_ovac* arr, cfg_ovac* ovac);
+void cj_array_insert(cfg_ovac* arr, uint16_t idx, cfg_ovac* ovac); // insert such that child is reachable at idx in the array
+void cj_array_replace(cfg_ovac* arr, uint16_t idx, cfg_ovac* new_ovac);
+cfg_ovac* cj_array_detach(cfg_ovac* arr, uint16_t idx);
+void cj_array_remove(cfg_ovac* arr, uint16_t idx);
 
-// if a ref is newly created on an object or a list, it is deep copied, the non ref versions do NOT provide a deep copy
+void cj_ovac_duplicate(cfg_ovac* ovac);
 
-// use the type specified functions instead of the ovac generalization
-cfg_ovac config_registry_get(config_registry* cr, const char* data_path);
-uint64_t config_registry_get_u64(config_registry* cr, const char* data_path);
+// replace the type and value of entry_ovac with that of data_ovac, but keeps entry_ovac stable as viewed from its parent
+void cj_ovac_replace(cfg_ovac* entry_ovac, cfg_ovac* data_ovac);
 
-// use the type specified functions instead of the ovac generalization
-cfg_ovac* config_registry_get_ref(config_registry* cr, const char* data_path);
-uint64_t* config_registry_get_ref_u64(config_registry* cr, const char* data_path);
+void cj_ovac_destroy();
 
-// if a more recent version of the data exists fetch will release the current ref and effectively get the newer one
-// use this if you want this behaviour but faster/cheaper than doing it separately
-void config_registry_fetch_ref(config_registry* cr, void* ovac_ref);
+size_t cj_measure(cfg_ovac* ovac, bool packed);
+void cj_serialize(char* buf, cfg_ovac* ovac, bool packed);
+cfg_ovac* cj_deserialize(const char* buf, size_t len);
 
-// decrement the ref counter of the ref cache entry, if zero it will be freed
-void config_registry_release_ref(config_registry* cr, void* ovac_ref);
+// cj_find uses a data path api to find the specified entry in the ovac (json) tree
+// examples:
+// "client.global.palette.wood_dark" returns a color4u ovac
+//WARNING array indices not currently supported, future feature only
+// "client.plugins.loadlist[0]" returns the sb_str ovac which is the first element of the loadlist array
+// for arrays one can also use [-1] to get the last element
+// when using set, array indices also have more utilizations:
+// [0] replaces element at idx 0, [+] appends to the list, [+0] makes available at idx 0 but preserves all other elements
+// for delete the is also [*] to delete all elements, equivalent to setting parent to an empty list
+cfg_ovac* cj_find(cfg_ovac* root, const char* data_path);
+cfg_ovac* cj_get(cfg_ovac* root, const char* data_path); // behaves like cj_find + cj_ovac_duplicate
+cfg_ovac* cj_set(cfg_ovac* root, const char* data_path, cfg_ovac* ovac, bool overwrite); // behaves like cj_find + cj_ovac_replace
+cfg_ovac* cj_remove(cfg_ovac* root, const char* data_path);
+//TODO general detach, dupe ?
 
-// set the 
-void config_registry_set(config_registry* cr, const char* data_path, cfg_ovac ovac);
-void config_registry_set_u64(config_registry* cr, const char* data_path, uint64_t ovac);
+// same as find but only return a shallow value copy, return true if successful
+bool cj_get_u64(cfg_ovac* root, const char* data_path, uint64_t* rv);
+bool cj_get_f32(cfg_ovac* root, const char* data_path, float* rv);
+bool cj_get_bool(cfg_ovac* root, const char* data_path, bool* rv);
+bool cj_get_str(cfg_ovac* root, const char* data_path, cgf_sb_string* rv);
+// bool cj_get_col4u(cfg_ovac* ovac, const char* data_path, cfg_color4u* rv);
+// bool cj_get_col4f(cfg_ovac* ovac, const char* data_path, cfg_color4f* rv);
 
-//TODO reflection functions required?
+/////
+// thread-safe ref working functions
+//TODO everything breaks when using refs with multi threading, how to fix?
+
+// all refs are of cfg_ovac type use .v to access the primitive values therein
+cfg_ovac* cj_get_ref(cfg_ovac* root, const char* data_path);
+// does not require set because cj_set already makes sure all old refs get the newest
+
+// updates the ref pointer with the newest data, returns false if the type changed / value does not exist anymore
+// same as cj_release_ref + cj_get_ref, but only the updater pays for the searching overhead
+bool cj_fetch_ref(cfg_ovac** ref_ovac);
+
+// decrement the ref counter of the ref cache entry, if zero and no older refs still held it will be freed
+void cj_release_ref(cfg_ovac* ref_ovac);
+
+////////////////////////////////
+////////////////////////////////
+////////////////////////////////
+
+//TODO some way to merge change refs into the main tree? need to immeditately do it so other thread gets will get the newest data, also if someone gets a ref to an ovac that already has a valid cache entry then need to provide that instead of a new one, keep a pointer to the cache head in the main tree?
 
 #ifdef __cplusplus
 }

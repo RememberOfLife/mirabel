@@ -282,6 +282,7 @@ namespace Control {
                             e.game_load.options = (char*)malloc(options_len);
                             the_game->methods->export_options_str(the_game, &options_len, e.game_load.options);
                         }
+                        game_step++;
                         engine_mgr->game_load(the_game);
                         frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
                         // everything successful, pass to server
@@ -297,12 +298,14 @@ namespace Control {
                             free(the_game);
                         }
                         the_game = NULL;
+                        game_step++;
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
                             f_event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_STATE: {
+                        MetaGui::log("state str impot\n");
                         if (!the_game) {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;

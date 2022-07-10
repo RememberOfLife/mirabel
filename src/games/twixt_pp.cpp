@@ -5,6 +5,9 @@
 #include "surena/games/twixt_pp.h"
 #include "surena/game.h"
 
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
+#include "control/client.hpp"
 #include "games/game_catalogue.hpp"
 
 #include "games/twixt_pp.hpp"
@@ -57,6 +60,43 @@ namespace Games {
                     return;
                 }
                 //TODO proper state editor
+
+                // temporary state str display
+                static char* state_str = NULL;
+                static uint64_t state_step = 0;
+                static bool changed = false;
+                if (state_step != Control::main_client->game_step) {
+                    free(state_str);
+                    state_str = (char*)malloc(abstract_game->sizer.state_str);
+                    size_t _len;
+                    abstract_game->methods->export_state(abstract_game, &_len, state_str);
+                    state_step = Control::main_client->game_step;
+                    changed = false;
+                }
+                if (state_str) {
+                    if (ImGui::InputText("state", state_str, abstract_game->sizer.state_str)) {
+                        changed |= true;
+                    }
+                    if (changed) {
+                        ImGui::SameLine();
+                        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(154, 58, 58, 255));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(212, 81, 81, 255));
+                        ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
+                        if (ImGui::Button("S")) {
+                            changed = false;
+                            f_event_any es;
+                            f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, state_str);
+                            f_event_queue_push(&Control::main_client->inbox, &es);
+                        }
+                        ImGui::PopStyleColor(3);
+                    }
+                }
+                if (ImGui::Button("reload")) {
+                    f_event_any es;
+                    f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, state_str);
+                    f_event_queue_push(&Control::main_client->inbox, &es);
+                }
+
                 const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
                 const char* result_options[4] = {"DRAW", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
                 player_id pbuf;
