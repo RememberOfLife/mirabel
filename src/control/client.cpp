@@ -19,6 +19,7 @@
 
 #include "mirabel/event.h"
 #include "mirabel/event_queue.h"
+#include "mirabel/move_history.h"
 #include "control/timeout_crash.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -30,7 +31,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 1, 0};
+    const semver client_version = semver{0, 1, 1};
 
     Client* main_client = NULL;
 
@@ -305,7 +306,6 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_GAME_STATE: {
-                        MetaGui::log("state str impot\n");
                         if (!the_game) {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;
@@ -589,6 +589,7 @@ namespace Control {
             //TODO since all of these only show when the bool is set, it doesnt really need to be an argument, they can just check themselves
             if (show_hud) {
                 if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+                //TODO window visiblity needs to be persistent
                 if (MetaGui::show_confirm_exit_modal) MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
                 if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
                 if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);

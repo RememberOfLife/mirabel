@@ -132,6 +132,7 @@ Collect more general resources:
   * "hav+10" should set the size option to 10 for the havannah that matched
     * how to make sure non kwargs get into the right place?
   * "ttt.u/3d" matches tictactoe.ultimate/TicTacToe3D
+  * does this also just serve as a general command menu?
 * reassignable keyboardshortcuts
 * offer some global color palette from the mirabel settings (can be edited there), every frontend may use this if it wants / if the user sets an option to do so
   * global dark theme toggle
