@@ -93,11 +93,19 @@ void move_history_promote(move_history* h, bool to_main)
     while (promo->parent) {
 
         if (promo->idx_in_parent == 0) {
+            if (!to_main) {
+                return;
+            }
+            promo = promo->parent;
             continue;
         }
         move_history* double_left_sibling = NULL;
         move_history* left_sibling = promo->parent->left_child;
         if (left_sibling == promo) {
+            if (!to_main) {
+                return;
+            }
+            promo = promo->parent;
             continue;
         }
         // search for the preceeding node in in the list

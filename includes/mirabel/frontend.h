@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-//NOTE: updates to {config, event, event_queue, move_history} will incur a version increase here
+//NOTE: updates to {config, event, event_queue, frontend, move_history} will incur a version increase here
 static const uint64_t MIRABEL_FRONTEND_API_VERSION = 4;
 
 

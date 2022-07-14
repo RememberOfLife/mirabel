@@ -187,7 +187,7 @@ namespace MetaGui {
 
     void history_window(bool* p_open)
     {
-
+        //TODO
     }
 
 }

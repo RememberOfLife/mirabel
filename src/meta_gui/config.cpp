@@ -11,7 +11,7 @@ namespace MetaGui {
 
     void config_registry_window(bool* p_open)
     {
-
+        //TODO
     }
 
 }

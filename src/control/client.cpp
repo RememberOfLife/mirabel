@@ -31,7 +31,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 1, 1};
+    const semver client_version = semver{0, 1, 2};
 
     Client* main_client = NULL;
 
@@ -604,7 +604,6 @@ namespace Control {
                 if (MetaGui::show_history_window) MetaGui::history_window(&MetaGui::show_history_window);
                 if (MetaGui::show_plugins_window) MetaGui::plugins_window(&MetaGui::show_plugins_window);
             }
-
 
             //TODO put this in the sdl resize event, make a resize function on the context app
             // whole workspace under the menubar, use this for frontend background if wanted

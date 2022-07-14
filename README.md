@@ -75,6 +75,7 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
+* docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
 * probably drop description etc from frontend and games?
@@ -149,6 +150,9 @@ Collect more general resources:
 * frontend should be able to easily change the cursor, offer some util at least locally
 
 ## problems
+* history manager should only set the guithread state, client will still use newest one for networking, except if user distributed to network?
+  * on which state should the engine search, main line or selected state
+  * in general what is the network interaction for the history manager
 * local docs / game rule window, per variant? images/graphic representations?
   * load rules from res?
 * localization

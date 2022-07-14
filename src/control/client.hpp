@@ -10,6 +10,7 @@
 #include "surena/game.h"
 
 #include "mirabel/event_queue.h"
+#include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "engines/engine_manager.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -41,6 +42,8 @@ namespace Control {
             uint64_t game_step = 1;
             //TODO game_timectl
             //TODO game_history
+
+            PluginManager plugin_mgr;
 
             Frontends::Frontend* frontend = NULL;
             Engines::EngineManager* engine_mgr;

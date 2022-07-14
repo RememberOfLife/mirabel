@@ -150,9 +150,17 @@ bool cj_get_str(cfg_ovac* root, const char* data_path, cgf_sb_string* rv);
 // bool cj_get_col4u(cfg_ovac* ovac, const char* data_path, cfg_color4u* rv);
 // bool cj_get_col4f(cfg_ovac* ovac, const char* data_path, cfg_color4f* rv);
 
+// shallow value set, return true if the data path existed and was of the correct type, false otherwise
+bool cj_set_u64(cfg_ovac* root, const char* data_path, uint64_t v);
+//...
+
+// no helpers for get/set on lists/objects, you have to use the proper ovac / ref api
+
 /////
 // thread-safe ref working functions
 //TODO everything breaks when using refs with multi threading, how to fix?
+
+//TODO just ref count the tree, updating is cheap and reading is flat or fails, use a global tree mutex to lock during updating?
 
 // all refs are of cfg_ovac type use .v to access the primitive values therein
 cfg_ovac* cj_get_ref(cfg_ovac* root, const char* data_path);
