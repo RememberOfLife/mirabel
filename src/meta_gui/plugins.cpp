@@ -7,6 +7,7 @@
 #include "mirabel/event.h"
 #include "control/client.hpp"
 #include "control/plugins.hpp"
+#include "frontends/empty_frontend.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -51,6 +52,10 @@ namespace MetaGui {
                     }
                     ImGui::PopStyleColor(3);
                 } else {
+                    bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || dynamic_cast<Frontends::EmptyFrontend*>(Control::main_client->frontend) == nullptr);
+                    if (unload_disabled) {
+                        ImGui::BeginDisabled();
+                    }
                     ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
                     ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
@@ -58,6 +63,9 @@ namespace MetaGui {
                         Control::main_client->plugin_mgr.unload_plugin(i);
                     }
                     ImGui::PopStyleColor(3);
+                    if (unload_disabled) {
+                        ImGui::EndDisabled();
+                    }
                 }
                 ImGui::TableSetColumnIndex(1);
                 //TODO setup right click for whole name line to see a detailed view of what a plugin provides
