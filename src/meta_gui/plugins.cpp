@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <set>
 #include <vector>
 
 #include "imgui.h"
@@ -15,7 +16,7 @@ namespace MetaGui {
 
     void plugins_window(bool* p_open)
     {
-        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Plugins", p_open);
         if (!window_contents_visible)
         {
@@ -23,57 +24,129 @@ namespace MetaGui {
             return;
         }
 
-        std::vector<Control::PluginManager::plugin_file>& plugins_ref = Control::main_client->plugin_mgr.plugins;
+        Control::PluginManager& plugin_mgr = Control::main_client->plugin_mgr;
 
-        if (ImGui::Button("refresh files")) {
-            Control::main_client->plugin_mgr.detect_plugins();
-        }
-        ImGui::SameLine();
-        ImGui::Text("%lu files detected", plugins_ref.size());
-
-        const ImGuiTableFlags flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-        if (ImGui::BeginTable("plugins_table", 2, flags))
+        if (ImGui::BeginTabBar("plugins and components"))
         {
-            ImGui::TableSetupColumn("  ", ImGuiTableColumnFlags_WidthFixed);
-            ImGui::TableSetupColumn("Pluginpath");
-            ImGui::TableHeadersRow();
+            if (ImGui::BeginTabItem("Plugins")) {
 
-            for (int i = 0; i < plugins_ref.size(); i++)
-            {
-                ImGui::TableNextRow();
-                ImGui::PushID(i);
-                ImGui::TableSetColumnIndex(0);
-                if (!plugins_ref[i].loaded) {
-                    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.5f, 0.6f, 0.6f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.5f, 0.7f, 0.7f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.5f, 0.8f, 0.8f));
-                    if (ImGui::Button("+")) {
-                        Control::main_client->plugin_mgr.load_plugin(i);
-                    }
-                    ImGui::PopStyleColor(3);
-                } else {
-                    bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || dynamic_cast<Frontends::EmptyFrontend*>(Control::main_client->frontend) == nullptr);
-                    if (unload_disabled) {
-                        ImGui::BeginDisabled();
-                    }
-                    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
-                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
-                    if (ImGui::Button("-")) {
-                        Control::main_client->plugin_mgr.unload_plugin(i);
-                    }
-                    ImGui::PopStyleColor(3);
-                    if (unload_disabled) {
-                        ImGui::EndDisabled();
-                    }
+                std::vector<Control::PluginManager::plugin_file>& plugins_ref = plugin_mgr.plugins;
+
+                if (ImGui::Button("refresh files")) {
+                    plugin_mgr.detect_plugins();
                 }
-                ImGui::TableSetColumnIndex(1);
-                //TODO setup right click for whole name line to see a detailed view of what a plugin provides
-                ImGui::Text("%s", plugins_ref[i].filename.c_str());
-                ImGui::PopID();
-            }
+                ImGui::SameLine();
+                ImGui::Text("%lu files detected", plugins_ref.size());
 
-            ImGui::EndTable();
+                const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+                if (ImGui::BeginTable("plugins_table", 2, table_flags))
+                {
+                    ImGui::TableSetupColumn("  ", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("Pluginpath");
+                    ImGui::TableHeadersRow();
+
+                    for (int i = 0; i < plugins_ref.size(); i++)
+                    {
+                        ImGui::TableNextRow();
+                        ImGui::PushID(i);
+                        ImGui::TableSetColumnIndex(0);
+                        if (!plugins_ref[i].loaded) {
+                            ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.5f, 0.6f, 0.6f));
+                            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.5f, 0.7f, 0.7f));
+                            ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.5f, 0.8f, 0.8f));
+                            if (ImGui::Button("+")) {
+                                plugin_mgr.load_plugin(i);
+                            }
+                            ImGui::PopStyleColor(3);
+                        } else {
+                            bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || dynamic_cast<Frontends::EmptyFrontend*>(Control::main_client->frontend) == nullptr);
+                            if (unload_disabled) {
+                                ImGui::BeginDisabled();
+                            }
+                            ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 0.6f, 0.6f));
+                            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, (ImVec4)ImColor::HSV(0.0f, 0.7f, 0.7f));
+                            ImGui::PushStyleColor(ImGuiCol_ButtonActive, (ImVec4)ImColor::HSV(0.0f, 0.8f, 0.8f));
+                            if (ImGui::Button("-")) {
+                                plugin_mgr.unload_plugin(i);
+                            }
+                            ImGui::PopStyleColor(3);
+                            if (unload_disabled) {
+                                ImGui::EndDisabled();
+                            }
+                        }
+                        ImGui::TableSetColumnIndex(1);
+                        //TODO setup right click for whole name line to see a detailed view of what a plugin provides
+                        ImGui::Text("%s", plugins_ref[i].filename.c_str());
+                        ImGui::PopID();
+                    }
+
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndTabItem();
+            }
+            if (ImGui::BeginTabItem("Catalogues")) {
+
+                const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+
+                if (ImGui::BeginTable("game_catalogue_table", 4, table_flags))
+                {
+                    ImGui::TableSetupColumn("Game");
+                    ImGui::TableSetupColumn("Variant");
+                    ImGui::TableSetupColumn("Impl");
+                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableHeadersRow();
+                    for (Control::BaseGame itrG : plugin_mgr.game_catalogue) {
+                        for (Control::BaseGameVariant itrV : itrG.variants) {
+                            for (Control::BaseGameVariantImpl itrI : itrV.impls) {
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                ImGui::Text("%s", itrG.name.c_str());
+                                ImGui::TableSetColumnIndex(1);
+                                ImGui::Text("%s", itrV.name.c_str());
+                                ImGui::TableSetColumnIndex(2);
+                                ImGui::Text("%s", itrI.get_name());
+                                ImGui::TableSetColumnIndex(3);
+                                ImGui::Text("%u.%u.%u", itrI.get_methods()->version.major, itrI.get_methods()->version.minor, itrI.get_methods()->version.patch);
+                            }
+                        }
+                    }
+                    ImGui::EndTable();
+                }
+
+                if (ImGui::BeginTable("frontend_catalogue_table", 2, table_flags))
+                {
+                    ImGui::TableSetupColumn("Frontend");
+                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableHeadersRow();
+                    for (Control::FrontendImpl itrF : plugin_mgr.frontend_catalogue) {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("%s", itrF.get_name());
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u.%u.%u", itrF.methods->version.major, itrF.methods->version.minor, itrF.methods->version.patch);
+                    }
+                    ImGui::EndTable();
+                }
+
+                if (ImGui::BeginTable("engine_catalogue_table", 2, table_flags))
+                {
+                    ImGui::TableSetupColumn("Engine");
+                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableHeadersRow();
+                    for (Control::EngineImpl itrE : plugin_mgr.engine_catalogue) {
+                        ImGui::TableNextRow();
+                        ImGui::TableSetColumnIndex(0);
+                        ImGui::Text("%s", itrE.get_name());
+                        ImGui::TableSetColumnIndex(1);
+                        ImGui::Text("%u.%u.%u", itrE.get_methods()->version.major, itrE.get_methods()->version.minor, itrE.get_methods()->version.patch);
+                    }
+                    ImGui::EndTable();
+                }
+
+                ImGui::EndTabItem();
+            }
+            ImGui::EndTabBar();
         }
 
         ImGui::End();

@@ -228,7 +228,7 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
-        if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_FittingPolicyScroll))
+        if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_TabListPopupButton))
         {
             //TODO fix for closed elsewhere glitch
             // submit Tabs

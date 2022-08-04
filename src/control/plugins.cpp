@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "imgui.h"
+#include "surena/engines/randomengine.h"
 #include "surena/engine_plugin.h"
 #include "surena/engine.h"
 #include "surena/game_plugin.h"
@@ -38,6 +39,11 @@ namespace Control {
 
     BaseGameVariantImpl::~BaseGameVariantImpl()
     {}
+
+    const game_methods* BaseGameVariantImpl::get_methods()
+    {
+        return (wrapped ? u.wrap->backend : u.methods);
+    }
 
     const char* BaseGameVariantImpl::get_name() const
     {
@@ -155,9 +161,14 @@ namespace Control {
     EngineImpl::~EngineImpl()
     {}
 
+    const engine_methods* EngineImpl::get_methods()
+    {
+        return (wrapped ? u.wrap->backend : u.methods);
+    }
+
     const char* EngineImpl::get_name() const
     {
-        return (wrapped ? u.wrap->backend.engine_name : u.methods->engine_name);
+        return (wrapped ? u.wrap->backend->engine_name : u.methods->engine_name);
     }
 
     void EngineImpl::create_opts(void** opts)
@@ -197,6 +208,7 @@ namespace Control {
     {
         if (defaults) {
             //TODO load inbuilt games, frontends, engines
+            add_engine_methods(&randomengine_ebe);
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist

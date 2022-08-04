@@ -8,11 +8,11 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_ENGINE_WRAP_API_VERSION = 2;
+static const uint64_t MIRABEL_ENGINE_WRAP_API_VERSION = 3;
 
 typedef struct engine_wrap_s {
     const uint64_t engine_api_version;
-    engine_methods backend;
+    const engine_methods* backend;
     // load opts
     error_code (*opts_create)(void** options_struct);
     error_code (*opts_display)(void* options_struct);

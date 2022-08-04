@@ -31,6 +31,7 @@ namespace Control {
             BaseGameVariantImpl(const game_wrap* wrap);
             ~BaseGameVariantImpl();
 
+            const game_methods* get_methods();
             const char* get_name() const;
 
             // wrap the wrapper opts or a general purpose string api for methods
@@ -105,6 +106,7 @@ namespace Control {
             EngineImpl(const engine_wrap* wrap);
             ~EngineImpl();
 
+            const engine_methods* get_methods();
             const char* get_name() const;
 
             // wrap the wrapper opts or a general purpose string api for methods

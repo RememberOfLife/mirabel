@@ -84,7 +84,6 @@ Collect more general resources:
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
 * add option to use different imgui font
-* super basic plugin manager
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
   * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
