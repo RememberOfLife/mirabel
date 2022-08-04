@@ -7,9 +7,9 @@
 #include "surena/engine.h"
 #include "surena/game.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
-#include "engines/engine_catalogue.hpp"
+#include "control/client.hpp"
+#include "control/plugins.hpp"
 #include "meta_gui/meta_gui.hpp"
 
 #include "engines/engine_manager.hpp"
@@ -512,7 +512,7 @@ namespace Engines {
     {
         assert(container_idx < engines.size());
         engine_container& tec = *engines[container_idx];
-        tec.e.methods = engine_catalogue[tec.catalogue_idx];
+        tec.e.methods = Control::main_client->plugin_mgr.engine_lookup[tec.catalogue_idx]->get_methods();
         //TODO handle engine errors
         if (tec.load_options == NULL) {
             tec.e.methods->create_default(&tec.e, tec.e.engine_id, &engine_outbox, &tec.eq);

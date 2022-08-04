@@ -3,9 +3,12 @@
 #include <vector>
 
 #include "imgui.h"
+#include "surena/engine.h"
+#include "surena/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/frontend.h"
 #include "control/client.hpp"
 #include "control/plugins.hpp"
 #include "frontends/empty_frontend.hpp"
@@ -18,8 +21,7 @@ namespace MetaGui {
     {
         ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Plugins", p_open);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             return;
         }
@@ -39,14 +41,12 @@ namespace MetaGui {
                 ImGui::Text("%lu files detected", plugins_ref.size());
 
                 const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
-                if (ImGui::BeginTable("plugins_table", 2, table_flags))
-                {
+                if (ImGui::BeginTable("plugins_table", 2, table_flags)) {
                     ImGui::TableSetupColumn("  ", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableSetupColumn("Pluginpath");
                     ImGui::TableHeadersRow();
 
-                    for (int i = 0; i < plugins_ref.size(); i++)
-                    {
+                    for (int i = 0; i < plugins_ref.size(); i++) {
                         ImGui::TableNextRow();
                         ImGui::PushID(i);
                         ImGui::TableSetColumnIndex(0);
@@ -75,8 +75,8 @@ namespace MetaGui {
                             }
                         }
                         ImGui::TableSetColumnIndex(1);
-                        //TODO setup right click for whole name line to see a detailed view of what a plugin provides
                         ImGui::Text("%s", plugins_ref[i].filename.c_str());
+                        //TODO setup right click for whole name line to see a detailed view of what a plugin provides
                         ImGui::PopID();
                     }
 
@@ -89,8 +89,7 @@ namespace MetaGui {
 
                 const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
 
-                if (ImGui::BeginTable("game_catalogue_table", 4, table_flags))
-                {
+                if (ImGui::BeginTable("game_catalogue_table", 4, table_flags)) {
                     ImGui::TableSetupColumn("Game");
                     ImGui::TableSetupColumn("Variant");
                     ImGui::TableSetupColumn("Impl");
@@ -114,8 +113,7 @@ namespace MetaGui {
                     ImGui::EndTable();
                 }
 
-                if (ImGui::BeginTable("frontend_catalogue_table", 2, table_flags))
-                {
+                if (ImGui::BeginTable("frontend_catalogue_table", 2, table_flags)) {
                     ImGui::TableSetupColumn("Frontend");
                     ImGui::TableSetupColumn("Version");
                     ImGui::TableHeadersRow();
@@ -129,8 +127,7 @@ namespace MetaGui {
                     ImGui::EndTable();
                 }
 
-                if (ImGui::BeginTable("engine_catalogue_table", 2, table_flags))
-                {
+                if (ImGui::BeginTable("engine_catalogue_table", 2, table_flags)) {
                     ImGui::TableSetupColumn("Engine");
                     ImGui::TableSetupColumn("Version");
                     ImGui::TableHeadersRow();

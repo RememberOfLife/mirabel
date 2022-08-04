@@ -21,7 +21,7 @@ Future features will include:
 import blocks style:
 * all standard libs
 * imports from dependencies in order as listed above
-* imports from own src tree in source tree order
+* imports from own src tree in source tree order (mirabel includes before src headers)
 * import header for things implemented in this source file
 
 ## resources

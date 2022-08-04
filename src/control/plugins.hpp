@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "surena/engine.h"
@@ -21,6 +22,8 @@ namespace Control {
 
         public:
 
+            mutable uint32_t map_idx; //TODO maybe put this in the constructor instead of a mutable member
+
             bool wrapped;
             union {
                 const game_methods* methods;
@@ -31,13 +34,13 @@ namespace Control {
             BaseGameVariantImpl(const game_wrap* wrap);
             ~BaseGameVariantImpl();
 
-            const game_methods* get_methods();
+            const game_methods* get_methods() const;
             const char* get_name() const;
 
             // wrap the wrapper opts or a general purpose string api for methods
-            void create_opts(void** opts);
-            void display_opts(void* opts);
-            void destroy_opts(void* opts);
+            void create_opts(void** opts) const;
+            void display_opts(void* opts) const;
+            void destroy_opts(void* opts) const;
 
             //TODO runtime display
 
@@ -48,6 +51,8 @@ namespace Control {
     class BaseGameVariant {
 
         public:
+
+            mutable uint32_t map_idx; //TODO maybe put this in the constructor instead of a mutable member
 
             std::string name;
             mutable std::set<BaseGameVariantImpl> impls;
@@ -63,6 +68,8 @@ namespace Control {
 
         public:
 
+            mutable uint32_t map_idx; //TODO maybe put this in the constructor instead of a mutable member
+
             std::string name;
             mutable std::set<BaseGameVariant> variants;
 
@@ -77,6 +84,8 @@ namespace Control {
 
         public:
 
+            mutable uint32_t map_idx; //TODO maybe put this in the constructor instead of a mutable member
+
             const frontend_methods* methods;
 
             FrontendImpl(const frontend_methods* methods);
@@ -84,9 +93,9 @@ namespace Control {
 
             const char* get_name() const;
 
-            void create_opts(void** opts);
-            void display_opts(void* opts);
-            void destroy_opts(void* opts);
+            void create_opts(void** opts) const;
+            void display_opts(void* opts) const;
+            void destroy_opts(void* opts) const;
 
             friend bool operator<(const FrontendImpl& lhs, const FrontendImpl& rhs);
 
@@ -95,6 +104,8 @@ namespace Control {
     class EngineImpl {
 
         public:
+
+            mutable uint32_t map_idx; //TODO maybe put this in the constructor instead of a mutable member
         
             bool wrapped;
             union {
@@ -106,13 +117,13 @@ namespace Control {
             EngineImpl(const engine_wrap* wrap);
             ~EngineImpl();
 
-            const engine_methods* get_methods();
+            const engine_methods* get_methods() const;
             const char* get_name() const;
 
             // wrap the wrapper opts or a general purpose string api for methods
-            void create_opts(void** opts);
-            void display_opts(void* opts);
-            void destroy_opts(void* opts);
+            void create_opts(void** opts) const;
+            void display_opts(void* opts) const;
+            void destroy_opts(void* opts) const;
 
             friend bool operator<(const EngineImpl& lhs, const EngineImpl& rhs);
 
@@ -133,6 +144,15 @@ namespace Control {
             std::set<BaseGame> game_catalogue;
             std::set<FrontendImpl> frontend_catalogue;
             std::set<EngineImpl> engine_catalogue;
+
+            // metagui display comboboxes use this for random access to the set objects
+            uint32_t lookup_idx = 1; // start at 1, 0 is invalid/none
+            //TODO why need iterators here?
+            std::unordered_map<uint32_t, std::set<BaseGame>::iterator> game_lookup;
+            std::unordered_map<uint32_t, std::set<BaseGameVariant>::iterator> variant_lookup;
+            std::unordered_map<uint32_t, std::set<BaseGameVariantImpl>::iterator> impl_lookup;
+            std::unordered_map<uint32_t, std::set<FrontendImpl>::iterator> frontend_lookup;
+            std::unordered_map<uint32_t, std::set<EngineImpl>::iterator> engine_lookup;
 
             struct plugin_file {
                 std::string filename;

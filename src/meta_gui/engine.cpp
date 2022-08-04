@@ -3,10 +3,10 @@
 #include "imgui.h"
 #include "surena/engine.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "engines/engine_catalogue.hpp"
+#include "control/client.hpp"
+#include "control/plugins.hpp"
 #include "engines/engine_manager.hpp"
 
 #include "meta_gui/meta_gui.hpp"
@@ -25,6 +25,8 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
+
+        Control::PluginManager& plugin_mgr = Control::main_client->plugin_mgr;
 
         static ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton;
         if (ImGui::BeginTabBar("engines", tab_bar_flags))
@@ -49,6 +51,15 @@ namespace MetaGui {
                 {
                     // everything below here should be from an engine container indexed by the active engine tab, displayed inside the tab bar
 
+                    const char* selected_name = "<NONE>";
+                    if (tec.catalogue_idx > 0) {
+                        if (plugin_mgr.engine_lookup.find(tec.catalogue_idx) == plugin_mgr.engine_lookup.end()) {
+                            // catalogue idx has been invalidated
+                            tec.catalogue_idx = 0;
+                        } else {
+                            selected_name = plugin_mgr.engine_lookup[tec.catalogue_idx]->get_name();
+                        }
+                    }
 
                     if (ImGui::BeginPopupContextItem())
                     {
@@ -66,7 +77,7 @@ namespace MetaGui {
                     
                     bool engine_running = (tec.eq != NULL);
 
-                    bool disable_startstop = tec.stopping;
+                    bool disable_startstop = tec.stopping || (tec.catalogue_idx == 0);
                     if (disable_startstop) {
                         ImGui::BeginDisabled();
                     }
@@ -83,16 +94,39 @@ namespace MetaGui {
                         ImGui::EndDisabled();
                     }
 
-                    bool disable_engine_selection = Engines::engine_catalogue.size() < 2;
+                    //BUG if a method is removed while its options were still on display there is a memory leak because no one can clean it up ==> NEED used refc in plugin impls
+                    bool disable_engine_selection = plugin_mgr.engine_catalogue.size() == 0;
+                    // catalogue idx should already be 0 if no engines exists in the catalogue
                     if (engine_running || disable_engine_selection) {
                         ImGui::BeginDisabled();
                     }
-                    if (ImGui::BeginCombo("Engine", Engines::engine_catalogue[tec.catalogue_idx]->engine_name, disable_engine_selection ? ImGuiComboFlags_NoArrowButton : ImGuiComboFlags_None)) {
-                        for (int i = 0; i < Engines::engine_catalogue.size(); i++) {
-                            bool is_selected = (tec.catalogue_idx == i);
-                            if (ImGui::Selectable(Engines::engine_catalogue[i]->engine_name, is_selected)) {
-                                tec.catalogue_idx = i;
-                                //TODO destruct old load data, construct new load data with new engine loader
+                    if (ImGui::BeginCombo("Engine", selected_name, disable_engine_selection ? ImGuiComboFlags_NoArrowButton : ImGuiComboFlags_None)) {
+                        // offer idx 0 element, so selection can be reset, and the last engine can be unloaded from plugins
+                        bool is_selected = (tec.catalogue_idx == 0);
+                        if (ImGui::Selectable("<NONE>", is_selected)) {
+                            // destruct old load data
+                            if (tec.catalogue_idx > 0) {
+                                plugin_mgr.engine_lookup[tec.catalogue_idx]->destroy_opts(tec.load_options);
+                                tec.load_options = NULL;
+                            }
+                            tec.catalogue_idx = 0;
+                        }
+                        // set the initial focus when opening the combo
+                        if (is_selected) {
+                            ImGui::SetItemDefaultFocus();
+                        }
+                        for (Control::EngineImpl it : plugin_mgr.engine_catalogue) {
+                            is_selected = (tec.catalogue_idx == it.map_idx);
+                            if (ImGui::Selectable(it.get_name(), is_selected)) {
+                                // destruct old load data, construct new load data with new engine loader
+                                if (tec.catalogue_idx > 0) {
+                                    plugin_mgr.engine_lookup[tec.catalogue_idx]->destroy_opts(tec.load_options);
+                                    tec.load_options = NULL;
+                                }
+                                tec.catalogue_idx = it.map_idx;
+                                if (tec.catalogue_idx > 0) {
+                                    plugin_mgr.engine_lookup[tec.catalogue_idx]->create_opts(&tec.load_options);
+                                }
                             }
                             // set the initial focus when opening the combo
                             if (is_selected) {
@@ -105,16 +139,16 @@ namespace MetaGui {
                         ImGui::EndDisabled();
                     }
 
-                    ImGui::Separator();
+                    if (tec.catalogue_idx > 0 && ImGui::CollapsingHeader(engine_running ? "Load Options [locked]" : "Load Options", ImGuiTreeNodeFlags_DefaultOpen)) {
 
-                    ImGui::TextDisabled("<options currently disabled>"); //TODO reenable options when wrapper exists
-                    if (false && ImGui::CollapsingHeader(engine_running ? "Load Options [locked]" : "Load Options", ImGuiTreeNodeFlags_DefaultOpen)) {
+                        ImGui::Separator();
+
                         if (engine_running) {
                             ImGui::BeginDisabled();
                         }
-                        
-                        ImGui::TextDisabled("<no options>"); //TODO from engine wrapper in engine catalogue
 
+                        plugin_mgr.engine_lookup[tec.catalogue_idx]->display_opts(tec.load_options);
+                        
                         if (engine_running) {
                             ImGui::EndDisabled();
                         }

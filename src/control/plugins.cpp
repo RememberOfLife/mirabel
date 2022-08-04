@@ -40,7 +40,7 @@ namespace Control {
     BaseGameVariantImpl::~BaseGameVariantImpl()
     {}
 
-    const game_methods* BaseGameVariantImpl::get_methods()
+    const game_methods* BaseGameVariantImpl::get_methods() const
     {
         return (wrapped ? u.wrap->backend : u.methods);
     }
@@ -50,29 +50,34 @@ namespace Control {
         return (wrapped ? u.wrap->backend->impl_name : u.methods->impl_name);
     }
 
-    void BaseGameVariantImpl::create_opts(void** opts)
+    void BaseGameVariantImpl::create_opts(void** opts) const
     {
         if (wrapped) {
             u.wrap->opts_create(opts);
-        } else {
+        } else if (u.methods->features.options) {
             *opts = malloc(OPTS_WRAP_STR_SIZE);
+            (*(char**)opts)[0] = '\0';
         }
     }
 
-    void BaseGameVariantImpl::display_opts(void* opts)
+    void BaseGameVariantImpl::display_opts(void* opts) const
     {
         if (wrapped) {
             u.wrap->opts_display(opts);
         } else {
-            ImGui::InputText("opts", (char*)opts, OPTS_WRAP_STR_SIZE);
+            if (u.methods->features.options) {
+                ImGui::InputText("opts", (char*)opts, OPTS_WRAP_STR_SIZE);
+            } else {
+                ImGui::TextDisabled("<no options>");
+            }
         }
     }
 
-    void BaseGameVariantImpl::destroy_opts(void* opts)
+    void BaseGameVariantImpl::destroy_opts(void* opts) const
     {
         if (wrapped) {
             u.wrap->opts_destroy(opts);
-        } else {
+        } else if (u.methods->features.options) {
             free(opts);
         }
     }
@@ -118,14 +123,14 @@ namespace Control {
         return methods->frontend_name;
     }
 
-    void FrontendImpl::create_opts(void** opts)
+    void FrontendImpl::create_opts(void** opts) const
     {
         if (methods->features.options) {
             methods->opts_create(opts);
         }
     }
 
-    void FrontendImpl::display_opts(void* opts)
+    void FrontendImpl::display_opts(void* opts) const
     {
         if (methods->features.options) {
             methods->opts_display(opts);
@@ -134,7 +139,7 @@ namespace Control {
         }
     }
 
-    void FrontendImpl::destroy_opts(void* opts)
+    void FrontendImpl::destroy_opts(void* opts) const
     {
         if (methods->features.options) {
             methods->opts_destroy(opts);
@@ -161,7 +166,7 @@ namespace Control {
     EngineImpl::~EngineImpl()
     {}
 
-    const engine_methods* EngineImpl::get_methods()
+    const engine_methods* EngineImpl::get_methods() const
     {
         return (wrapped ? u.wrap->backend : u.methods);
     }
@@ -171,29 +176,34 @@ namespace Control {
         return (wrapped ? u.wrap->backend->engine_name : u.methods->engine_name);
     }
 
-    void EngineImpl::create_opts(void** opts)
+    void EngineImpl::create_opts(void** opts) const
     {
         if (wrapped) {
             u.wrap->opts_create(opts);
-        } else {
+        } else if (u.methods->features.options) {
             *opts = malloc(OPTS_WRAP_STR_SIZE);
+            (*(char**)opts)[0] = '\0';
         }
     }
 
-    void EngineImpl::display_opts(void* opts)
+    void EngineImpl::display_opts(void* opts) const
     {
         if (wrapped) {
             u.wrap->opts_display(opts);
         } else {
-            ImGui::InputText("opts", (char*)opts, OPTS_WRAP_STR_SIZE);
+            if (u.methods->features.options) {
+                ImGui::InputText("opts", (char*)opts, OPTS_WRAP_STR_SIZE);
+            } else {
+                ImGui::TextDisabled("<no options>");
+            }
         }
     }
     
-    void EngineImpl::destroy_opts(void* opts)
+    void EngineImpl::destroy_opts(void* opts) const
     {
         if (wrapped) {
             u.wrap->opts_destroy(opts);
-        } else {
+        } else if (u.methods->features.options) {
             free(opts);
         }
     }
@@ -207,6 +217,7 @@ namespace Control {
         persist_plugins(persist_plugins)
     {
         if (defaults) {
+            //TODO server doesnt load default wrappers, instead only loads default methods
             //TODO load inbuilt games, frontends, engines
             add_engine_methods(&randomengine_ebe);
         }
@@ -531,9 +542,24 @@ namespace Control {
 
     bool PluginManager::add_game_impl(const char* game_name, const char* variant_name, BaseGameVariantImpl impl)
     {
-        std::pair<std::set<BaseGame>::iterator, bool> itrG = game_catalogue.emplace(game_name);
-        std::pair<std::set<BaseGameVariant>::iterator, bool> itrV = itrG.first->variants.emplace(variant_name);
-        return itrV.first->impls.insert(impl).second;
+        // insert and record add pairs for game,variant,impl
+        std::pair<std::set<BaseGame>::iterator, bool> ap_g = game_catalogue.emplace(game_name);
+        std::pair<std::set<BaseGameVariant>::iterator, bool> ap_v = ap_g.first->variants.emplace(variant_name);
+        std::pair<std::set<BaseGameVariantImpl>::iterator, bool> ap_i = ap_v.first->impls.insert(impl);
+        if (ap_i.second) {
+            //BUG ? can it ever be that a base game and or variant are created, but we do not insert the final impl?
+            if (ap_g.second) {
+                ap_g.first->map_idx = lookup_idx;
+                game_lookup[lookup_idx++] = ap_g.first;
+            }
+            if (ap_v.second) {
+                ap_v.first->map_idx = lookup_idx;
+                variant_lookup[lookup_idx++] = ap_v.first;
+            }
+            ap_i.first->map_idx = lookup_idx;
+            impl_lookup[lookup_idx++] = ap_i.first;
+        }
+        return ap_i.second;
     }
 
     bool PluginManager::add_game_methods(const game_methods* methods)
@@ -548,17 +574,32 @@ namespace Control {
 
     bool PluginManager::add_frontend(const frontend_methods* methods)
     {
-        return frontend_catalogue.emplace(methods).second;
+        std::pair<std::set<FrontendImpl>::iterator, bool> it = frontend_catalogue.emplace(methods);
+        if (it.second) {
+            it.first->map_idx = lookup_idx;
+            frontend_lookup[lookup_idx++] = it.first;
+        }
+        return it.second;
     }
 
     bool PluginManager::add_engine_methods(const engine_methods* methods)
     {
-        return engine_catalogue.emplace(methods).second;
+        std::pair<std::set<EngineImpl>::iterator, bool> it = engine_catalogue.emplace(methods);
+        if (it.second) {
+            it.first->map_idx = lookup_idx;
+            engine_lookup[lookup_idx++] = it.first;
+        }
+        return it.second;
     }
 
     bool PluginManager::add_engine_wrap(const engine_wrap* wrap)
     {
-        return engine_catalogue.emplace(wrap).second;
+        std::pair<std::set<EngineImpl>::iterator, bool> it = engine_catalogue.emplace(wrap);
+        if (it.second) {
+            it.first->map_idx = lookup_idx;
+            engine_lookup[lookup_idx++] = it.first;
+        }
+        return it.second;
     }
 
     void PluginManager::remove_game_impl(const char* game_name, const char* variant_name, BaseGameVariantImpl impl)
@@ -571,13 +612,19 @@ namespace Control {
         if (itrV == itrG->variants.end()) {
             return;
         }
-        if (itrV->impls.erase(impl) == 0) {
+        std::set<BaseGameVariantImpl>::iterator itrI = itrV->impls.find(impl);
+        if (itrI == itrV->impls.end()) {
             return;
         }
+        // erase from lookup then from parent container, chain up to base game, remove implicit basegame/variant if empty
+        impl_lookup.erase(itrI->map_idx);
+        itrV->impls.erase(impl);
         if (itrV->impls.size() == 0) {
+            variant_lookup.erase(itrV->map_idx);
             itrG->variants.erase(itrV);
         }
         if (itrG->variants.size() == 0) {
+            game_lookup.erase(itrG->map_idx);
             game_catalogue.erase(itrG);
         }
     }
@@ -594,17 +641,29 @@ namespace Control {
 
     void PluginManager::remove_frontend(const frontend_methods* methods)
     {
-        frontend_catalogue.erase(methods);
+        std::set<FrontendImpl>::iterator it = frontend_catalogue.find(methods);
+        if (it != frontend_catalogue.end()) {
+            frontend_lookup.erase(it->map_idx);
+            frontend_catalogue.erase(it);
+        }
     }
 
     void PluginManager::remove_engine_methods(const engine_methods* methods)
     {
-        engine_catalogue.erase(methods);
+        std::set<EngineImpl>::iterator it = engine_catalogue.find(methods);
+        if (it != engine_catalogue.end()) {
+            engine_lookup.erase(it->map_idx);
+            engine_catalogue.erase(it);
+        }
     }
 
     void PluginManager::remove_engine_wrap(const engine_wrap* wrap)
     {
-        engine_catalogue.erase(wrap);
+        std::set<EngineImpl>::iterator it = engine_catalogue.find(wrap);
+        if (it != engine_catalogue.end()) {
+            engine_lookup.erase(it->map_idx);
+            engine_catalogue.erase(it);
+        }
     }
 
 }
