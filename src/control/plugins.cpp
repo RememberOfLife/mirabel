@@ -18,6 +18,7 @@
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap_plugin.h"
 #include "mirabel/game_wrap.h"
+#include "games/game_catalogue.hpp"
 
 #include "control/plugins.hpp"
 
@@ -217,9 +218,19 @@ namespace Control {
         persist_plugins(persist_plugins)
     {
         if (defaults) {
-            //TODO server doesnt load default wrappers, instead only loads default methods
-            //TODO load inbuilt games, frontends, engines
+
+            //TODO server doesnt load default wrappers, instead only loads default methods, what kind of switch for that?
+
+            add_game_wrap(&chess_gw);
+            add_game_wrap(&havannah_gw);
+            add_game_wrap(&tictactoe_ultimate_gw);
+            add_game_wrap(&tictactoe_gw);
+            add_game_wrap(&twixt_pp_gw);
+
+            //TODO load feault frontends
+
             add_engine_methods(&randomengine_ebe);
+
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist

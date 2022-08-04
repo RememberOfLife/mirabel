@@ -10,7 +10,6 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "games/game_catalogue.hpp"
-#include "games/tictactoe_ultimate.hpp"
 
 #include "frontends/tictactoe_ultimate.hpp"
 
@@ -257,9 +256,9 @@ namespace Frontends {
     TicTacToe_Ultimate_FEW::~TicTacToe_Ultimate_FEW()
     {}
     
-    bool TicTacToe_Ultimate_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool TicTacToe_Ultimate_FEW::game_methods_compatible(const game_methods* methods)
     {
-        return (dynamic_cast<Games::TicTacToe_Ultimate*>(base_game_variant) != nullptr);
+        return (strcmp(methods->game_name, "TicTacToe") == 0 && strcmp(methods->variant_name, "Ultimate") == 0 && strcmp(methods->impl_name, "surena_default") == 0);
     }
     
     Frontend* TicTacToe_Ultimate_FEW::new_frontend()

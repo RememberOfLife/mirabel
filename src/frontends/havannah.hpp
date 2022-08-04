@@ -66,7 +66,7 @@ namespace Frontends {
         public:
             Havannah_FEW();
             ~Havannah_FEW();
-            bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) override;
+            bool game_methods_compatible(const game_methods* methods) override;
             Frontend* new_frontend() override;
             void draw_options() override;
     };

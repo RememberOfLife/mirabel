@@ -61,7 +61,7 @@ namespace Frontends {
     EmptyFrontend_FEW::~EmptyFrontend_FEW()
     {}
     
-    bool EmptyFrontend_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool EmptyFrontend_FEW::game_methods_compatible(const game_methods* methods)
     {
         return false; // empty frontend will never be listed explicitly, but can always be used as universal unloader by loading it instead
     }

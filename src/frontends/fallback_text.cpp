@@ -162,7 +162,7 @@ namespace Frontends {
     FallbackText_FEW::~FallbackText_FEW()
     {}
     
-    bool FallbackText_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool FallbackText_FEW::game_methods_compatible(const game_methods* methods)
     {
         return true;
     }

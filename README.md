@@ -76,6 +76,9 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
+* problem with plugins
+  * prob with game/engine wraps: how to handle options if no bin support and how to handle str opts e.g. for server get new game?
+  * do opts create/display/destroy have to exist for game/engine wraps with backend that do not support options? (or only if opts bin?)
 * unify resource storage, likely resource repo
 * docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?

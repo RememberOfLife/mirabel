@@ -44,7 +44,7 @@ namespace Frontends {
             const char* name;
             FrontendWrap(const char* name);
             virtual ~FrontendWrap() = default;
-            virtual bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) = 0;
+            virtual bool game_methods_compatible(const game_methods* methods) = 0;
             virtual Frontend* new_frontend() = 0;
             virtual void draw_options() = 0; // draw options that need to be set pre frontend creation
     };

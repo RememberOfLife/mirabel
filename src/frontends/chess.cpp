@@ -13,7 +13,6 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "games/game_catalogue.hpp"
-#include "games/chess.hpp"
 #include "meta_gui/meta_gui.hpp"
 
 #include "frontends/chess.hpp"
@@ -512,9 +511,9 @@ namespace Frontends {
     Chess_FEW::~Chess_FEW()
     {}
     
-    bool Chess_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool Chess_FEW::game_methods_compatible(const game_methods* methods)
     {
-        return (dynamic_cast<Games::Chess*>(base_game_variant) != nullptr);
+        return (strcmp(methods->game_name, "Chess") == 0 && strcmp(methods->variant_name, "Standard") == 0 && strcmp(methods->impl_name, "surena_default") == 0);
     }
     
     Frontend* Chess_FEW::new_frontend()

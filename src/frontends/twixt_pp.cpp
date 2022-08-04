@@ -11,7 +11,6 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "games/game_catalogue.hpp"
-#include "games/twixt_pp.hpp"
 
 #include "frontends/twixt_pp.hpp"
 
@@ -669,9 +668,9 @@ namespace Frontends {
     TwixT_PP_FEW::~TwixT_PP_FEW()
     {}
     
-    bool TwixT_PP_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool TwixT_PP_FEW::game_methods_compatible(const game_methods* methods)
     {
-        return (dynamic_cast<Games::TwixT_PP*>(base_game_variant) != nullptr);
+        return (strcmp(methods->game_name, "Twixt") == 0 && strcmp(methods->variant_name, "PP") == 0 && strcmp(methods->impl_name, "surena_default") == 0);
     }
     
     Frontend* TwixT_PP_FEW::new_frontend()

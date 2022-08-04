@@ -12,7 +12,6 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "games/game_catalogue.hpp"
-#include "games/havannah.hpp"
 #include "meta_gui/meta_gui.hpp"
 
 #include "frontends/havannah.hpp"
@@ -388,9 +387,9 @@ namespace Frontends {
     Havannah_FEW::~Havannah_FEW()
     {}
     
-    bool Havannah_FEW::base_game_variant_compatible(Games::BaseGameVariant* base_game_variant)
+    bool Havannah_FEW::game_methods_compatible(const game_methods* methods)
     {
-        return (dynamic_cast<Games::Havannah*>(base_game_variant) != nullptr);
+        return (strcmp(methods->game_name, "Havannah") == 0 && strcmp(methods->variant_name, "Standard") == 0 && strcmp(methods->impl_name, "surena_default") == 0);
     }
     
     Frontend* Havannah_FEW::new_frontend()

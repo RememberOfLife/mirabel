@@ -34,6 +34,7 @@ namespace Control {
             BaseGameVariantImpl(const game_wrap* wrap);
             ~BaseGameVariantImpl();
 
+            // game* new_game_str(const char* opts_str); and or use bin options or none?, same for engine..
             const game_methods* get_methods() const;
             const char* get_name() const;
 

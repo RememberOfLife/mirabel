@@ -14,7 +14,7 @@ namespace Engines {
             uint64_t constraints_timeout;
         public:
             Builtin_Surena();
-            bool base_game_variant_compatible(Games::BaseGameVariant* base_game_variant) override;
+            bool game_methods_compatible(const game_methods* methods) override;
             surena::Engine* new_engine() override;
             void draw_loader_options() override;
             void draw_state_options(surena::Engine* engine) override;
