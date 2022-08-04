@@ -49,6 +49,7 @@ Collect more general resources:
   * low on time beep
   * coins (multiple sounds)
 * textures / icons
+  * general purpose icon set, coin(s) and other money representations and magic icons and secrets (e.g. oath) etc..? (icons via go?)
 * usual gameboard colors (these will actually be placed in the config for the global palette in the future):
   * rgb(201, 144, 73) "wood" normal
   * rgb(240, 217, 181) "wood" light
@@ -75,6 +76,7 @@ Collect more general resources:
 * switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
+* unify resource storage, likely resource repo
 * docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
@@ -104,6 +106,8 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* global overlay notifications, (top-right, centered (e.g. mc title), sticky, progress..)
+  * want notifications IN mirabel, or should mirabel issue to the environment notification service?
 * need some unit tests for things like move_history, config_registry etc?
 * general purpose job queue for background processes
 * draw and resign are events
@@ -142,7 +146,8 @@ Collect more general resources:
   * after enqueuing the gui gets back a struct where it can see if e.g. the object has finished constructing yet
   * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
   * also frontendwrappers could cache constructe frontends and just return the cached one, this would keep settings per runtime and reduce loading times after first loading
-* button for screenshots? unsure if this is a useful feature though
+* button for screenshots
+  * definitely need a feature to export focused graphics from games so commentators/analysts can compose game "diagrams"
 * create icon, show it on the empty (default) frontend
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components

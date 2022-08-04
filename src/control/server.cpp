@@ -14,7 +14,8 @@
 
 namespace Control {
 
-    Server::Server()
+    Server::Server():
+        plugin_mgr(true, false)
     {
         f_event_queue_create(&inbox);
 
@@ -47,6 +48,12 @@ namespace Control {
         f_event_queue_push(&inbox, &es);
 
         printf("[INFO] networkserver constructed\n");
+
+        // detect plugins in plugin_mgr and load all
+        plugin_mgr.detect_plugins();
+        for (int i = 0; i < plugin_mgr.plugins.size(); i++) {
+            plugin_mgr.load_plugin(i);
+        }
     }
 
     Server::~Server()

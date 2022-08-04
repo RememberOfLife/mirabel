@@ -10,11 +10,11 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 2;
+static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 3;
 
 typedef struct game_wrap_s {
     const uint64_t game_api_version;
-    game_methods backend;
+    game_methods* backend;
     //TODO could also make this a struct owning its methods and options+runtime data structs, worth for this size?
     // load opts
     error_code (*opts_create)(void** options_struct);

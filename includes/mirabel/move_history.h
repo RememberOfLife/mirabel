@@ -16,6 +16,7 @@ struct move_history_s {
     player_id player;
     move_code move;
     char* move_str;
+    //TODO can stil cache game duplicates in intervals / busy split points, while waiting for true state export
 
     // binary tree to represent that a node can have many children
     //TODO this can not serve transposition merging into the same subtree (in that case, reachable sub graph) again, but its currently not required anyway

@@ -4,6 +4,7 @@
 
 #include "mirabel/event_queue.h"
 #include "control/lobby.hpp"
+#include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "network/network_server.hpp"
 
@@ -22,6 +23,8 @@ namespace Control {
             f_event_queue inbox;
 
             Lobby* lobby = NULL;
+
+            PluginManager plugin_mgr;
 
             Server(); //TODO this should probably take the argument if offline, i.e. no db, auto create single lobby and give all perms
             ~Server();

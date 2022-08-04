@@ -35,7 +35,8 @@ namespace Control {
 
     Client* main_client = NULL;
 
-    Client::Client()
+    Client::Client():
+        plugin_mgr(true, true)
     {
         main_client = this;
         f_event_queue_create(&inbox);

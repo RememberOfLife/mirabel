@@ -69,6 +69,8 @@ typedef struct frontend_methods_s {
     // use the frontend_name to make sure you know what this will be
     const void* internal_methods;
 
+    //TODO should load opts_create for frontends and game/engine wraps get a pointer ref, or return its own pointer?
+    // FEATURE: options
     // load opts
     error_code (*opts_create)(void** options_struct);
     error_code (*opts_display)(void* options_struct);

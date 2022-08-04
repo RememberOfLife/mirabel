@@ -69,7 +69,7 @@ namespace MetaGui {
                 }
                 ImGui::TableSetColumnIndex(1);
                 //TODO setup right click for whole name line to see a detailed view of what a plugin provides
-                ImGui::Text("%s", plugins_ref[i].filename);
+                ImGui::Text("%s", plugins_ref[i].filename.c_str());
                 ImGui::PopID();
             }
 
