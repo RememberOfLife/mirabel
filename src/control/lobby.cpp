@@ -8,17 +8,20 @@
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "control/plugins.hpp"
 #include "games/game_catalogue.hpp"
 
 #include "control/lobby.hpp"
 
 namespace Control {
 
-    Lobby::Lobby(f_event_queue* send_queue, uint16_t max_users):
+    Lobby::Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users):
+        plugin_mgr(plugin_mgr),
         send_queue(send_queue),
         the_game(NULL),
-        base_game(NULL),
+        game_base(NULL),
         game_variant(NULL),
+        game_impl(NULL),
         max_users(max_users),
         user_client_ids(static_cast<uint32_t*>(malloc(max_users*sizeof(uint32_t))))
     {
@@ -30,8 +33,9 @@ namespace Control {
     Lobby::~Lobby()
     {
         free(user_client_ids);
+        free(game_impl);
         free(game_variant);
-        free(base_game);
+        free(game_base);
         delete the_game;
     }
 
@@ -43,7 +47,7 @@ namespace Control {
                 f_event_any es;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    f_event_create_game_load(&es, base_game, game_variant, game_options);
+                    f_event_create_game_load(&es, game_base, game_variant, game_impl, game_options);
                     es.base.client_id = client_id;
                     f_event_queue_push(send_queue, &es);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
@@ -95,38 +99,21 @@ namespace Control {
                 }
                 the_game = NULL;
                 // find game in games catalogue by provided strings
-                bool game_found = false;
-                uint32_t base_game_idx = 0;
-                const char* base_game_name = e.game_load.base_name;
-                uint32_t game_variant_idx = 0;
-                const char* game_variant_name = e.game_load.variant_name;
-                for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
-                    if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
-                        game_found = true;
-                        break;
-                    }
-                }
-                if (!game_found) {
-                    printf("[WARN] failed to find base game: %s\n", base_game_name);
-                    break;
-                }
-                game_found = false;
-                for (; game_variant_idx < Games::game_catalogue[base_game_idx].variants.size(); game_variant_idx++) {
-                    if (strcmp(Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, game_variant_name) == 0) {
-                        game_found = true;
-                        break;
-                    }
-                }
-                if (!game_found) {
-                    printf("[WARN] failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
+                const char* base_name = e.game_load.base_name;
+                const char* variant_name = e.game_load.variant_name;
+                const char* impl_name = e.game_load.impl_name;
+                uint32_t impl_idx = plugin_mgr->get_game_impl_idx(base_name, variant_name, impl_name);
+                if (impl_idx == 0) {
+                    printf("[WARN] failed to find game: %s.%s.%s\n", base_name, variant_name, impl_name);
                     break;
                 }
                 game_options = e.game_load.options ? strdup(e.game_load.options) : NULL;
-                the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(game_options);
+                the_game = plugin_mgr->impl_lookup[impl_idx]->new_game(NULL, game_options); //BUG make sure this actually works as inteded if game options is NULL on a game that support options
                 // update game name strings
-                base_game = strdup(base_game_name);
-                game_variant = strdup(game_variant_name);
-                printf("[INFO] game loaded: %s.%s", base_game_name, game_variant_name);
+                game_base = strdup(base_name);
+                game_variant = strdup(variant_name);
+                game_impl = strdup(impl_name);
+                printf("[INFO] game loaded: %s.%s.%s", base_name, variant_name, impl_name);
                 if (game_options) {
                     printf(" with options: %s\n", game_options);
                 } else {
@@ -141,10 +128,10 @@ namespace Control {
                     free(the_game);
                 }
                 the_game = NULL;
-                free(base_game);
+                free(game_base);
                 free(game_variant);
                 free(game_options);
-                base_game = NULL;
+                game_base = NULL;
                 game_variant = NULL;
                 game_options = NULL;
                 printf("[INFO] game unloaded\n");

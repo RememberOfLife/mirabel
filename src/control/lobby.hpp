@@ -7,16 +7,19 @@
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "control/plugins.hpp"
 
 namespace Control {
 
     class Lobby {
         public:
+            PluginManager* plugin_mgr;
             f_event_queue* send_queue;
 
             // uint64_t id;
-            char* base_game;
+            char* game_base;
             char* game_variant;
+            char* game_impl;
             char* game_options;
             game* the_game;
             // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user 
@@ -25,7 +28,7 @@ namespace Control {
 
             uint32_t lobby_msg_id_ctr = 1;
 
-            Lobby(f_event_queue* send_queue, uint16_t max_users);
+            Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users);
             ~Lobby();
 
             void AddUser(uint32_t client_id);

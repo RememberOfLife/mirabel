@@ -20,6 +20,7 @@
 #include "mirabel/event.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/move_history.h"
+#include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -31,7 +32,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 1, 4};
+    const semver client_version = semver{0, 1, 5};
 
     Client* main_client = NULL;
 
@@ -246,44 +247,24 @@ namespace Control {
                         }
                         the_game = NULL;
                         // find game in games catalogue by provided strings
-                        //TODO should probably use an ordered map for the catalogue instead of a vector at this point
-                        bool game_found = false;
-                        uint32_t base_game_idx = 0;
-                        uint32_t game_variant_idx = 0;
-                        const char* base_game_name = e.game_load.base_name;
-                        const char* game_variant_name = e.game_load.variant_name;
-                        for (; base_game_idx < Games::game_catalogue.size(); base_game_idx++) {
-                            if (strcmp(Games::game_catalogue[base_game_idx].name, base_game_name) == 0) {
-                                game_found = true;
-                                break;
-                            }
-                        }
-                        if (!game_found) {
-                            MetaGui::logf("#W guithread: failed to find base game: %s\n", base_game_name);
+                        const char* base_name = e.game_load.base_name;
+                        const char* variant_name = e.game_load.variant_name;
+                        const char* impl_name = e.game_load.impl_name;
+                        uint32_t impl_idx = plugin_mgr.get_game_impl_idx(base_name, variant_name, impl_name);
+                        if (impl_idx == 0) {
+                            MetaGui::logf("#W guithread: failed to find game: %s.%s.%s\n", base_name, variant_name, impl_name);
                             break;
                         }
-                        game_found = false;
-                        for (; game_variant_idx < Games::game_catalogue[base_game_idx].variants.size(); game_variant_idx++) {
-                            if (strcmp(Games::game_catalogue[base_game_idx].variants[game_variant_idx]->name, game_variant_name) == 0) {
-                                game_found = true;
-                                break;
-                            }
-                        }
-                        if (!game_found) {
-                            MetaGui::logf("#W guithread: failed to find game variant: %s.%s\n", base_game_name, game_variant_name);
-                            break;
-                        }
-                        // update metagui combobox selection
-                        MetaGui::base_game_idx = base_game_idx;
-                        MetaGui::game_variant_idx = game_variant_idx;
                         // actually load the game
-                        the_game = Games::game_catalogue[base_game_idx].variants[game_variant_idx]->new_game(e.game_load.options);
-                        if (the_game->methods->export_options_str) {
+                        the_game = plugin_mgr.impl_lookup[impl_idx]->new_game(MetaGui::game_load_options, e.game_load.options);
+                        if (the_game->methods->features.options) {
                             // options have been set already by the catalogue through the game config, now export options for server
                             size_t options_len = the_game->sizer.options_str;
                             e.game_load.options = (char*)malloc(options_len);
                             the_game->methods->export_options_str(the_game, &options_len, e.game_load.options);
                         }
+                        // create runtime opts for metagui
+                        plugin_mgr.impl_lookup[impl_idx]->create_runtime(the_game, &MetaGui::game_runtime_options);
                         game_step++;
                         engine_mgr->game_load(the_game);
                         frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
@@ -293,6 +274,9 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
+                        // create runtime opts for metagui
+                        plugin_mgr.impl_lookup[MetaGui::game_impl_idx]->destroy_runtime(MetaGui::game_runtime_options); //HACK dont use metagui game impl idx here for game unloading
+                        MetaGui::game_runtime_options = NULL;
                         engine_mgr->game_load(NULL);
                         frontend->set_game(NULL);
                         if (the_game) {

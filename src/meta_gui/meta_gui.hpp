@@ -65,8 +65,11 @@ namespace MetaGui {
 
     extern bool show_game_config_window;
     void game_config_window(bool* p_open); // select game, parameter config (e.g. board size), game state editing
-    extern uint32_t base_game_idx;
+    extern uint32_t game_base_idx;
     extern uint32_t game_variant_idx;
+    extern uint32_t game_impl_idx;
+    extern void* game_load_options;
+    extern void* game_runtime_options;
 
     extern bool show_frontend_config_window;
     void frontend_config_window(bool* p_open); // select frontend to use (compatible with the game), visual config (colors)

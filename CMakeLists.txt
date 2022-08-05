@@ -99,7 +99,6 @@ set(SOURCES
     src/frontends/twixt_pp.cpp
 
     src/games/chess.cpp
-    src/games/game_catalogue.cpp
     src/games/havannah.cpp
     src/games/tictactoe_ultimate.cpp
     src/games/tictactoe.cpp

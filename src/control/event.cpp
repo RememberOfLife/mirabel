@@ -166,11 +166,12 @@ void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint
     e->heartbeat.time = time;
 }
 
-void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* options)
+void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options)
 {
     f_event_create_type(e, EVENT_TYPE_GAME_LOAD);
     e->game_load.base_name = base_name ? strdup(base_name) : NULL;
     e->game_load.variant_name = variant_name ? strdup(variant_name) : NULL;
+    e->game_load.impl_name = impl_name ? strdup(impl_name) : NULL;
     e->game_load.options = options ? strdup(options) : NULL;
 }
 

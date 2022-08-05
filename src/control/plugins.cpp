@@ -41,6 +41,44 @@ namespace Control {
     BaseGameVariantImpl::~BaseGameVariantImpl()
     {}
 
+    game* BaseGameVariantImpl::new_game(void* load_opts, const char* opts_str) const
+    {
+        game* new_game = (game*)malloc(sizeof(game));
+        *new_game = game{
+            .methods = get_methods(),
+            .data1 = NULL,
+            .data2 = NULL,
+        };
+        if (new_game->methods->features.options) {
+            char* effective_opts_string = (char*)opts_str;
+            if (effective_opts_string == NULL) {
+                if (wrapped && u.wrap->features.options) {
+                    if (new_game->methods->features.options_bin == false) {
+                        // for games with options but without features.options_bin, use wrapper opts_bin_to_str
+                        size_t opts_str_len;
+                        u.wrap->opts_bin_to_str(load_opts, NULL, &opts_str_len);
+                        effective_opts_string = (char*)malloc(opts_str_len);
+                        u.wrap->opts_bin_to_str(load_opts, effective_opts_string, &opts_str_len);
+                    }
+                } else {
+                    effective_opts_string = (char*)load_opts; // use fallback string options
+                }
+            }
+            if (effective_opts_string) {
+                new_game->methods->create_with_opts_str(new_game, effective_opts_string);
+            } else {
+                new_game->methods->create_with_opts_bin(new_game, load_opts);
+            }
+            if (effective_opts_string != opts_str) {
+                free(effective_opts_string);
+            }
+        } else {
+            new_game->methods->create_default(new_game);
+        }
+        new_game->methods->import_state(new_game, NULL); //TODO any facility to load another state right away required? here? or as immediate extra event
+        return new_game;
+    }
+
     const game_methods* BaseGameVariantImpl::get_methods() const
     {
         return (wrapped ? u.wrap->backend : u.methods);
@@ -53,7 +91,7 @@ namespace Control {
 
     void BaseGameVariantImpl::create_opts(void** opts) const
     {
-        if (wrapped) {
+        if (wrapped && u.wrap->features.options) {
             u.wrap->opts_create(opts);
         } else if (u.methods->features.options) {
             *opts = malloc(OPTS_WRAP_STR_SIZE);
@@ -63,7 +101,7 @@ namespace Control {
 
     void BaseGameVariantImpl::display_opts(void* opts) const
     {
-        if (wrapped) {
+        if (wrapped && u.wrap->features.options) {
             u.wrap->opts_display(opts);
         } else {
             if (u.methods->features.options) {
@@ -76,10 +114,38 @@ namespace Control {
 
     void BaseGameVariantImpl::destroy_opts(void* opts) const
     {
-        if (wrapped) {
+        if (wrapped && u.wrap->features.options) {
             u.wrap->opts_destroy(opts);
         } else if (u.methods->features.options) {
             free(opts);
+        }
+    }
+
+    void BaseGameVariantImpl::create_runtime(game* rgame, void** opts) const
+    {
+        if (wrapped && u.wrap->features.runtime) {
+            u.wrap->runtime_create(rgame, opts);
+        } else {
+            //TODO general purpose runtime state
+        }
+    }
+
+    void BaseGameVariantImpl::display_runtime(game* rgame, void* opts) const
+    {
+        if (wrapped && u.wrap->features.runtime) {
+            u.wrap->runtime_display(rgame, opts);
+        } else {
+            //TODO general purpose runtime state
+            ImGui::TextDisabled("<no runtime>");
+        }
+    }
+
+    void BaseGameVariantImpl::destroy_runtime(void* opts) const
+    {
+        if (wrapped && u.wrap->features.runtime) {
+            u.wrap->runtime_destroy(opts);
+        } else {
+            //TODO general purpose runtime state
         }
     }
 
@@ -227,7 +293,7 @@ namespace Control {
             add_game_wrap(&tictactoe_gw);
             add_game_wrap(&twixt_pp_gw);
 
-            //TODO load feault frontends
+            //TODO load default frontends
 
             add_engine_methods(&randomengine_ebe);
 
@@ -529,26 +595,22 @@ namespace Control {
         the_plugin.loaded = false;
     }
 
-    const game_methods* PluginManager::get_game_methods(const char* base_name, const char* variant_name, const char* impl_name)
+    uint32_t PluginManager::get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name)
     {
         std::set<BaseGame>::iterator itrG = game_catalogue.find(base_name);
         if (itrG == game_catalogue.end()) {
-            return NULL;
+            return 0;
         }
         std::set<BaseGameVariant>::iterator itrV = itrG->variants.find(variant_name);
         if (itrV == itrG->variants.end()) {
-            return NULL;
+            return 0;
         }
         for (BaseGameVariantImpl itrI : itrV->impls) {
             if (strcmp(itrI.get_name(), impl_name) == 0) {
-                if (itrI.wrapped) {
-                    return itrI.u.wrap->backend;
-                } else {
-                    return itrI.u.methods;
-                }
+                return itrI.map_idx;
             }
         }
-        return NULL;
+        return 0;
     }
 
     bool PluginManager::add_game_impl(const char* game_name, const char* variant_name, BaseGameVariantImpl impl)

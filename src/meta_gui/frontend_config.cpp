@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <set>
 
 #include "imgui.h"
 
@@ -25,19 +26,25 @@ namespace MetaGui {
             ImGui::End();
             return;
         }
+
+        Control::PluginManager& plugin_mgr = Control::main_client->plugin_mgr;
+
         // collect all frontend_wraps compatible with the current base game variant
         std::vector<Frontends::FrontendWrap*> compatible_few{};
         std::vector<uint32_t> compatible_few_idx{};
-        Games::BaseGameVariant* bgv = Games::game_catalogue[base_game_idx].variants[game_variant_idx];
+        const game_methods* running_methods = NULL;
+        if (plugin_mgr.impl_lookup.find(game_impl_idx) != plugin_mgr.impl_lookup.end()) {
+            running_methods = plugin_mgr.impl_lookup[game_impl_idx]->get_methods();
+        }
         bool selected_few_compatible = false;
         for (int i = 0; i < Frontends::frontend_catalogue.size(); i++) {
-                if (Frontends::frontend_catalogue[i]->base_game_variant_compatible(bgv)) {
-                    compatible_few.push_back(Frontends::frontend_catalogue[i]);
-                    compatible_few_idx.push_back(i);
-                    if (i == running_few_idx) {
-                        selected_few_compatible = true;
-                    }
+            if (running_methods && Frontends::frontend_catalogue[i]->game_methods_compatible(running_methods)) {
+                compatible_few.push_back(Frontends::frontend_catalogue[i]);
+                compatible_few_idx.push_back(i);
+                if (i == running_few_idx) {
+                    selected_few_compatible = true;
                 }
+            }
         }
         // if a frontend is running, which is not the empty frontend, and not compatible, unload it
         if (running_few_idx > 0 && !selected_few_compatible && selected_few_idx > 0) {

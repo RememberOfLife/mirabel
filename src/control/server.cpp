@@ -8,6 +8,7 @@
 #include "surena/game.h"
 
 #include "mirabel/event.h"
+#include "control/plugins.hpp"
 #include "network/network_server.hpp"
 
 #include "control/server.hpp"
@@ -177,7 +178,7 @@ namespace Control {
                         network_send_queue = &(t_network->send_queue);
                         printf("[INFO] networkserver adapter loaded\n");
                         //TODO creating the lobby here is very ugly
-                        lobby = new Lobby(network_send_queue, 2);
+                        lobby = new Lobby(&plugin_mgr, network_send_queue, 8);
                         printf("[INFO] lobby created\n");
                     }
                 } break;

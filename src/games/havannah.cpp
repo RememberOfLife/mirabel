@@ -63,23 +63,31 @@ namespace {
         return ERR_OK;
     }
 
-    error_code runtime_destroy(game* rgame, void* runtime_struct)
+    error_code runtime_destroy(void* runtime_struct)
     {
         //TODO
         return ERR_OK;
     }
 
-    const game_wrap havannah_gw{
-        .game_api_version = SURENA_GAME_API_VERSION,
-        .backend = &havannah_gbe,
-
-        .opts_create = opts_create,
-        .opts_display = opts_display,
-        .opts_destroy = opts_destroy,
-
-        .runtime_create = runtime_create,
-        .runtime_display = runtime_display,
-        .runtime_destroy = runtime_destroy,
-    };
-
 }
+
+const game_wrap havannah_gw{
+    .game_api_version = SURENA_GAME_API_VERSION,
+    .backend = &havannah_gbe,
+    .features = (game_wrap_feature_flags){
+        .options = true,
+        .initial_state = false,
+        .runtime = true,
+    },
+
+    .opts_create = opts_create,
+    .opts_display = opts_display,
+    .opts_destroy = opts_destroy,
+
+    .opts_bin_to_str = NULL,
+    .opts_initial_state = NULL,
+
+    .runtime_create = runtime_create,
+    .runtime_display = runtime_display,
+    .runtime_destroy = runtime_destroy,
+};

@@ -34,7 +34,10 @@ namespace Control {
             BaseGameVariantImpl(const game_wrap* wrap);
             ~BaseGameVariantImpl();
 
-            // game* new_game_str(const char* opts_str); and or use bin options or none?, same for engine..
+            // new opts describe the load opts of the wrapper, or general purpose, if any
+            // if opts_str is supplied, it is instead used for loading options
+            game* new_game(void* load_opts, const char* opts_str) const; //TODO same for engine..???
+
             const game_methods* get_methods() const;
             const char* get_name() const;
 
@@ -43,7 +46,10 @@ namespace Control {
             void display_opts(void* opts) const;
             void destroy_opts(void* opts) const;
 
-            //TODO runtime display
+            // wrap runtime create/display/destroy
+            void create_runtime(game* rgame, void** opts) const;
+            void display_runtime(game* rgame, void* opts) const;
+            void destroy_runtime(void* opts) const;
 
             friend bool operator<(const BaseGameVariantImpl& lhs, const BaseGameVariantImpl& rhs);
 
@@ -176,7 +182,7 @@ namespace Control {
             void load_plugin(int idx);
             void unload_plugin(int idx);
 
-            const game_methods* get_game_methods(const char* base_name, const char* variant_name, const char* impl_name);
+            uint32_t get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name);
             //TODO get compatible for frontends and engines?
 
             // return true if the impl was added, false if dupe

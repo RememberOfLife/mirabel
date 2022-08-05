@@ -87,13 +87,23 @@ namespace MetaGui {
             }
             if (ImGui::BeginTabItem("Catalogues")) {
 
-                const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg;
+                ImGui::TextDisabled("(?)");
+                if (ImGui::IsItemHovered()) {
+                    ImGui::BeginTooltip();
+                    ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f); // push slightly to the right
+                    ImGui::TextUnformatted("W = Wrapped, can be True/False");
+                    ImGui::PopTextWrapPos();
+                    ImGui::EndTooltip();
+                }
 
-                if (ImGui::BeginTable("game_catalogue_table", 4, table_flags)) {
+                const ImGuiTableFlags table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable;
+
+                if (ImGui::BeginTable("game_catalogue_table", 5, table_flags)) {
                     ImGui::TableSetupColumn("Game");
                     ImGui::TableSetupColumn("Variant");
                     ImGui::TableSetupColumn("Impl");
-                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableSetupColumn("Version", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("W", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableHeadersRow();
                     for (Control::BaseGame itrG : plugin_mgr.game_catalogue) {
                         for (Control::BaseGameVariant itrV : itrG.variants) {
@@ -107,6 +117,12 @@ namespace MetaGui {
                                 ImGui::Text("%s", itrI.get_name());
                                 ImGui::TableSetColumnIndex(3);
                                 ImGui::Text("%u.%u.%u", itrI.get_methods()->version.major, itrI.get_methods()->version.minor, itrI.get_methods()->version.patch);
+                                ImGui::TableSetColumnIndex(4);
+                                if (itrI.wrapped) {
+                                    ImGui::Text("T");
+                                } else {
+                                    ImGui::TextDisabled("F");
+                                }
                             }
                         }
                     }
@@ -115,7 +131,7 @@ namespace MetaGui {
 
                 if (ImGui::BeginTable("frontend_catalogue_table", 2, table_flags)) {
                     ImGui::TableSetupColumn("Frontend");
-                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableSetupColumn("Version", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableHeadersRow();
                     for (Control::FrontendImpl itrF : plugin_mgr.frontend_catalogue) {
                         ImGui::TableNextRow();
@@ -127,9 +143,10 @@ namespace MetaGui {
                     ImGui::EndTable();
                 }
 
-                if (ImGui::BeginTable("engine_catalogue_table", 2, table_flags)) {
+                if (ImGui::BeginTable("engine_catalogue_table", 3, table_flags)) {
                     ImGui::TableSetupColumn("Engine");
-                    ImGui::TableSetupColumn("Version");
+                    ImGui::TableSetupColumn("Version", ImGuiTableColumnFlags_WidthFixed);
+                    ImGui::TableSetupColumn("W", ImGuiTableColumnFlags_WidthFixed);
                     ImGui::TableHeadersRow();
                     for (Control::EngineImpl itrE : plugin_mgr.engine_catalogue) {
                         ImGui::TableNextRow();
@@ -137,6 +154,12 @@ namespace MetaGui {
                         ImGui::Text("%s", itrE.get_name());
                         ImGui::TableSetColumnIndex(1);
                         ImGui::Text("%u.%u.%u", itrE.get_methods()->version.major, itrE.get_methods()->version.minor, itrE.get_methods()->version.patch);
+                        ImGui::TableSetColumnIndex(2);
+                        if (itrE.wrapped) {
+                            ImGui::Text("T");
+                        } else {
+                            ImGui::TextDisabled("F");
+                        }
                     }
                     ImGui::EndTable();
                 }

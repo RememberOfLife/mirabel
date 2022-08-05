@@ -77,8 +77,8 @@ Collect more general resources:
 
 ## todo
 * problem with plugins
-  * prob with game/engine wraps: how to handle options if no bin support and how to handle str opts e.g. for server get new game?
-  * do opts create/display/destroy have to exist for game/engine wraps with backend that do not support options? (or only if opts bin?)
+  * if method gets unloaded while opts are created -> memory leak
+  * new game on server probably does wrong things if game has opts but is given str opts NULL
 * unify resource storage, likely resource repo
 * docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?

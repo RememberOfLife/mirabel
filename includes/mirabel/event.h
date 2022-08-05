@@ -155,16 +155,18 @@ typedef struct f_event_game_load_s {
     f_event base;
     char* base_name;
     char* variant_name;
+    char* impl_name;
     char* options;
     MANAGED_INTERNAL(
         typedef Control::event_string_serializer<f_event_game_load_s, 
             &f_event_game_load_s::base_name,
             &f_event_game_load_s::variant_name,
+            &f_event_game_load_s::impl_name,
             &f_event_game_load_s::options
         > serializer;
     );
 } f_event_game_load;
-void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* options);
+void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options);
 
 typedef struct f_event_game_load_methods_s {
     f_event base;

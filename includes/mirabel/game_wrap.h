@@ -10,20 +10,40 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 4;
+static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 5;
+
+typedef struct game_wrap_feature_flags_s {
+    bool options : 1;
+    bool initial_state : 1;
+    bool runtime : 1;
+} game_wrap_feature_flags;
 
 typedef struct game_wrap_s {
     const uint64_t game_api_version;
     const game_methods* backend;
+    const game_wrap_feature_flags features;
+
     //TODO could also make this a struct owning its methods and options+runtime data structs, worth for this size?
-    // load opts
+
+    // FEATURE: options
+    // load opts, will also be used if the backend does not support options and wrapper supports initial state
     error_code (*opts_create)(void** options_struct);
     error_code (*opts_display)(void* options_struct);
     error_code (*opts_destroy)(void* options_struct);
-    // runtime state
+
+    // for both: if str_buf is NULL, set ret_size to required size, otherwise it is ignored!
+    // FEATURE: !backend.options_bin
+    error_code (*opts_bin_to_str)(void* options_struct, char* str_buf, size_t* ret_size); 
+    // FEATURE: options && initial_state
+    error_code (*opts_initial_state)(void* options_struct, char* str_buf, size_t* ret_size); //TODO use this in the client
+
+    // FEATURE: runtime
+    // runtime state, created when the game is created, destroyed when the game is destroyed
+    //TODO need game step to notice updates
     error_code (*runtime_create)(game* rgame, void** runtime_struct);
     error_code (*runtime_display)(game* rgame, void* runtime_struct);
-    error_code (*runtime_destroy)(game* rgame, void* runtime_struct);
+    error_code (*runtime_destroy)(void* runtime_struct);
+
 } game_wrap;
 
 #ifdef __cplusplus
