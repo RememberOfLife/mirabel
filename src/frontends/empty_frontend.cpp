@@ -8,94 +8,10 @@
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
 #include "control/client.hpp"
-#include "games/game_catalogue.hpp"
 
-#include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
 
-namespace Frontends {
-
-    EmptyFrontend::EmptyFrontend()
-    {
-        dc = Control::main_client->nanovg_ctx;
-        sprintf(vstr, "mirabel v%u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
-    }
-
-    EmptyFrontend::~EmptyFrontend()
-    {}
-
-    void EmptyFrontend::set_game(game* new_game)
-    {}
-
-    void EmptyFrontend::process_event(SDL_Event event)
-    {}
-
-    void EmptyFrontend::update()
-    {}
-
-    void EmptyFrontend::render()
-    {
-        nvgSave(dc);
-        nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, w_px+20, h_px+20);
-        nvgFillColor(dc, nvgRGB(114, 140, 153));
-        nvgFill(dc);
-
-        nvgFontSize(dc, 20);
-        nvgFontFace(dc, "ff");
-        nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_BASELINE);
-        nvgFillColor(dc, nvgRGB(210, 210, 210));
-        nvgText(dc, w_px - 15, h_px - 15, vstr, NULL);
-
-        nvgRestore(dc);
-    }
-
-    void EmptyFrontend::draw_options()
-    {
-        //TODO make an option for the background color
-        ImGui::TextDisabled("<no options>");
-    }
-
-    EmptyFrontend_FEW::EmptyFrontend_FEW():
-        FrontendWrap("<empty>")
-    {}
-
-    EmptyFrontend_FEW::~EmptyFrontend_FEW()
-    {}
-    
-    bool EmptyFrontend_FEW::game_methods_compatible(const game_methods* methods)
-    {
-        return false; // empty frontend will never be listed explicitly, but can always be used as universal unloader by loading it instead
-    }
-    
-    Frontend* EmptyFrontend_FEW::new_frontend()
-    {
-        return new EmptyFrontend();
-    }
-
-    void EmptyFrontend_FEW::draw_options()
-    {
-        ImGui::TextDisabled("<no options>");
-    }
-
-}
-
 namespace {
-
-    error_code opts_create(void** options_struct)
-    {
-        return ERR_OK;
-    }
-
-    error_code opts_display(void* options_struct)
-    {
-        return ERR_OK;
-    }
-
-    error_code opts_destroy(void* options_struct)
-    {
-        return ERR_OK;
-    }
 
     const char* get_last_error(frontend* self)
     {
@@ -123,6 +39,7 @@ namespace {
 
     error_code process_event(frontend* self, f_event_any event)
     {
+        f_event_destroy(&event);
         return ERR_OK;
     }
 
@@ -178,7 +95,7 @@ namespace {
         return ERR_OK;
     }
 
-    error_code is_game_compatible(game* compat_game)
+    error_code is_game_compatible(const game_methods* methods)
     {
         return ERR_INVALID_INPUT;
     }
@@ -187,7 +104,7 @@ namespace {
 
 const frontend_methods empty_fem{
     .frontend_name = "<empty>", // violates naming convention, but this one is special
-    .version = semver{0, 1, 0},
+    .version = semver{0, 1, 1},
     .features = frontend_feature_flags{
         .options = false,
         .global_background = true,
@@ -195,9 +112,9 @@ const frontend_methods empty_fem{
 
     .internal_methods = NULL,
 
-    .opts_create = opts_create,
-    .opts_display = opts_display,
-    .opts_destroy = opts_destroy,
+    .opts_create = NULL,
+    .opts_display = NULL,
+    .opts_destroy = NULL,
 
     .get_last_error = get_last_error,
 

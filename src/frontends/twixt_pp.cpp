@@ -743,10 +743,12 @@ namespace {
         return ERR_OK;
     }
 
-    error_code is_game_compatible(game* compat_game)
+    error_code is_game_compatible(const game_methods* methods)
     {
-        //TODO
-        return ERR_OK;
+        if (strcmp(methods->game_name, "TwixT") == 0 && strcmp(methods->variant_name, "PP") == 0 && strcmp(methods->impl_name, "surena_default") == 0) {
+            return ERR_OK;
+        }
+        return ERR_INVALID_INPUT;
     }
 
 }

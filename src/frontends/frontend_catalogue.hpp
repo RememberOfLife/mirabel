@@ -44,7 +44,7 @@ namespace Frontends {
     class FrontendWrap {
         public:
             const char* name;
-            FrontendWrap(const char* name);
+            FrontendWrap(const char* name): name(name) {};
             virtual ~FrontendWrap() = default;
             virtual bool game_methods_compatible(const game_methods* methods) = 0;
             virtual Frontend* new_frontend() = 0;

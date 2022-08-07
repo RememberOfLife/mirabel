@@ -10,36 +10,12 @@
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
 #include "control/client.hpp"
-#include "games/game_catalogue.hpp"
 
-#include "frontends/fallback_text.hpp"
 #include "frontends/frontend_catalogue.hpp"
-
+/*
 namespace Frontends {
 
     //TODO using this frontend has lots of double frees and other memory corruptions, and also crashed the sdl poll event somehow
-
-    FallbackText::FallbackText():
-        the_game(NULL)
-    {
-        dc = Control::main_client->nanovg_ctx;
-    }
-
-    FallbackText::~FallbackText()
-    {
-        free(pbuf);
-        pbuf = NULL;
-        pbuf_c = 0;
-        free(rbuf);
-        rbuf = NULL;
-        rbuf_c = 0;
-        free(opts_str);
-        opts_str = NULL;
-        free(state_str);
-        state_str = NULL;
-        free(print_str);
-        print_str = NULL;
-    }
 
     void FallbackText::set_game(game* new_game)
     {
@@ -152,36 +128,33 @@ namespace Frontends {
         nvgRestore(dc);
     }
 
-    void FallbackText::draw_options()
-    {
-        //TODO font size options
-    }
-
-    FallbackText_FEW::FallbackText_FEW():
-        FrontendWrap("FallbackText")
-    {}
-
-    FallbackText_FEW::~FallbackText_FEW()
-    {}
-    
-    bool FallbackText_FEW::game_methods_compatible(const game_methods* methods)
-    {
-        return true;
-    }
-    
-    Frontend* FallbackText_FEW::new_frontend()
-    {
-        return new FallbackText();
-    }
-
-    void FallbackText_FEW::draw_options()
-    {
-        ImGui::TextDisabled("<no options>");
-    }
 
 }
-
+*/
 namespace {
+
+    struct data_repr {
+        NVGcontext* dc;
+        frontend_display_data* display;
+        game g;
+        char* g_opts;
+        char* g_state;
+        char* g_print;
+        uint64_t g_id;
+        float* g_eval_f;
+        player_id* g_eval_p;
+        player_id* g_ptm;
+        uint8_t g_ptm_c;
+        player_id* g_res;
+        uint8_t g_res_c;
+        move_code* g_moves;
+        uint32_t g_moves_c;
+    };
+
+    data_repr& _get_repr(frontend* self)
+    {
+        return *((data_repr*)(self->data1));
+    }
 
     const char* get_last_error(frontend* self)
     {
@@ -191,13 +164,15 @@ namespace {
 
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
-        //TODO
+        self->data1 = malloc(sizeof(data_repr));
+        data_repr& data = _get_repr(self);
+        data.dc = Control::main_client->nanovg_ctx;
         return ERR_OK;
     }
 
     error_code destroy(frontend* self)
     {
-        //TODO
+        free(self->data1);
         return ERR_OK;
     }
 
@@ -237,9 +212,8 @@ namespace {
         return ERR_OK;
     }
 
-    error_code is_game_compatible(game* compat_game)
+    error_code is_game_compatible(const game_methods* methods)
     {
-        //TODO
         return ERR_OK;
     }
 

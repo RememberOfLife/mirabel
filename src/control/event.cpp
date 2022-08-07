@@ -175,10 +175,11 @@ void f_event_create_game_load(f_event_any* e, const char* base_name, const char*
     e->game_load.options = options ? strdup(options) : NULL;
 }
 
-void f_event_create_game_load_methods(f_event_any* e, game_methods* methods)
+void f_event_create_game_load_methods(f_event_any* e, const game_methods* methods, const char* options)
 {
     f_event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
     e->game_load_methods.methods = methods;
+    e->game_load_methods.options = options ? strdup(options) : NULL;
 }
 
 void f_event_create_game_state(f_event_any* e, uint32_t client_id, const char* state)

@@ -22,7 +22,6 @@
 #include "mirabel/move_history.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
-#include "frontends/empty_frontend.hpp"
 #include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
@@ -32,7 +31,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 1, 6};
+    const semver client_version = semver{0, 2, 0};
 
     Client* main_client = NULL;
 
@@ -150,7 +149,14 @@ namespace Control {
         }
 
         // init default context
-        frontend = new Frontends::EmptyFrontend();
+        empty_fe = (frontend*)malloc(sizeof(frontend));
+        *empty_fe = (frontend){
+            .methods = &empty_fem,
+            .data1 = NULL,
+            .data2 = NULL,
+        };
+        empty_fe->methods->create(empty_fe, NULL, NULL); //TODO //BUG? supply some display data?
+        the_frontend = empty_fe;
 
         // init engine manager with a context queue to our inbox
         engine_mgr = new Engines::EngineManager(&inbox);
@@ -167,7 +173,13 @@ namespace Control {
 
         delete engine_mgr;
 
-        delete frontend;
+        if (the_frontend && the_frontend != empty_fe) {
+            the_frontend->methods->destroy(the_frontend);
+            free(the_frontend);
+        }
+        empty_fe->methods->destroy(empty_fe);
+        free(empty_fe);
+
         free(the_game);
 
         //TODO delete loaded font images
@@ -240,7 +252,9 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         // reset everything in case we can't find the game later on
-                        frontend->set_game(NULL);
+                        f_event_any se;
+                        f_event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
+                        the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
                             the_game->methods->destroy(the_game);
                             free(the_game);
@@ -267,7 +281,16 @@ namespace Control {
                         plugin_mgr.impl_lookup[impl_idx]->create_runtime(the_game, &MetaGui::game_runtime_options);
                         game_step++;
                         engine_mgr->game_load(the_game);
-                        frontend->set_game(the_game); //TODO unload frontend if it isnt compatible anymore
+                        if (the_frontend->methods->is_game_compatible(the_game->methods) != ERR_OK) {
+                            // unload frontend if it isnt compatible anymore
+                            f_event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
+                            f_event_queue_push(&inbox, &se);
+                        } else {
+                            f_event_create_game_load_methods(&se, the_game->methods, e.game_load.options);
+                            the_frontend->methods->process_event(the_frontend, se);
+                            f_event_create_game_state(&se, F_EVENT_CLIENT_NONE, NULL);
+                            the_frontend->methods->process_event(the_frontend, se);
+                        }
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
                             f_event_queue_push(network_send_queue, &e);
@@ -278,7 +301,9 @@ namespace Control {
                         plugin_mgr.impl_lookup[MetaGui::game_impl_idx]->destroy_runtime(MetaGui::game_runtime_options); //HACK dont use metagui game impl idx here for game unloading
                         MetaGui::game_runtime_options = NULL;
                         engine_mgr->game_load(NULL);
-                        frontend->set_game(NULL);
+                        f_event_any se;
+                        f_event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
+                        the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
                             the_game->methods->destroy(the_game);
                             free(the_game);
@@ -332,15 +357,35 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
-                        delete frontend;
-                        frontend = (Frontends::Frontend*)e.frontend_load.frontend;
-                        frontend->set_game(the_game);
-                        MetaGui::running_few_idx = MetaGui::selected_few_idx;
+                        if (the_frontend != empty_fe) {
+                            the_frontend->methods->destroy(the_frontend);
+                            free(the_frontend);
+                        }
+                        the_frontend = (frontend*)e.frontend_load.frontend;
+                        if (the_game) {
+                            // send frontend game load copy of running game
+                            size_t size_fill;
+                            char* tg_opts = (char*)malloc(the_game->sizer.options_str);
+                            char* tg_state = (char*)malloc(the_game->sizer.state_str);
+                            the_game->methods->export_options_str(the_game, &size_fill, tg_opts);
+                            the_game->methods->export_state(the_game, &size_fill, tg_opts);
+                            f_event_any se;
+                            f_event_create_game_load_methods(&se, the_game->methods, tg_opts);
+                            the_frontend->methods->process_event(the_frontend, se);
+                            f_event_create_game_state(&se, F_EVENT_CLIENT_NONE, tg_state);
+                            the_frontend->methods->process_event(the_frontend, se);
+                            free(tg_opts);
+                            free(tg_state);
+                        }
+                        MetaGui::running_fem_idx = MetaGui::selected_fem_idx;
                     } break;
                     case EVENT_TYPE_FRONTEND_UNLOAD: {
-                        delete frontend;
-                        frontend = new Frontends::EmptyFrontend();
-                        MetaGui::running_few_idx = 0;
+                        if (the_frontend != empty_fe) {
+                            the_frontend->methods->destroy(the_frontend);
+                            free(the_frontend);
+                        }
+                        the_frontend = empty_fe;
+                        MetaGui::running_fem_idx = 0;
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_MSG: {
                         MetaGui::chat_msg_add(e.chat_msg.msg_id, e.chat_msg.author_client_id, e.chat_msg.timestamp, e.chat_msg.text);
@@ -541,7 +586,7 @@ namespace Control {
                         ctrl_right = false;
                     }
                 }
-                frontend->process_event(event);
+                the_frontend->methods->process_input(the_frontend, event);
             }
             // user is trying to quit
             if (try_quit) {
@@ -596,20 +641,16 @@ namespace Control {
             y_px = imgui_viewport->WorkPos.y;
             w_px = imgui_viewport->WorkSize.x;
             h_px = imgui_viewport->WorkSize.y;
-            // frontend only gets the frontend metagui dockspace
-            frontend->x_px = fx_px;
-            frontend->y_px = fy_px;
-            frontend->w_px = fw_px;
-            frontend->h_px = fh_px;
             // rendering
             glViewport(0, 0, (int)w_px, (int)h_px);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             glOrtho(0.0, (GLdouble)w_px, (GLdouble)h_px, 0.0, -1, 1);
 
-            frontend->update();
+            the_frontend->methods->update(the_frontend, PLAYER_NONE); //TODO use privacy view player id
             nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
-            frontend->render(); // todo render should take the player perspective (information view) from which to draw
+            // frontend only gets the frontend metagui dockspace
+            the_frontend->methods->render(the_frontend, PLAYER_NONE, fx_px, fy_px, fw_px, fh_px); //TODO use privacy view player id
             nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();

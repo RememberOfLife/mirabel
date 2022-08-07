@@ -19,7 +19,7 @@ extern "C" {
 #endif
 
 //NOTE: updates to {config, event, event_queue, frontend, move_history} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 4;
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 5;
 
 
 
@@ -27,7 +27,7 @@ static const uint64_t MIRABEL_FRONTEND_API_VERSION = 4;
 typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
 
-    game g; // the frontend OWN this board and will display the state of this game
+    // game g; //TODO what is the purpose of this game?!
 
     // config_registry* global_cr; //TODO
 
@@ -100,9 +100,11 @@ typedef struct frontend_methods_s {
     // in general, passthrough all EVENT_TYPE_HEARTBEAT events untouched
     // a heartbeat id=0 can be used to assert that the frontend is up to date with all the queued input events (if it is buffering)  //TODO fine?
     // games will be passed to the frontend using EVENT_TYPE_GAME_LOAD_METHODS containing a pointer to the methods to be used
+    // the frontend has to destroy the passed event
     error_code (*process_event)(frontend* self, f_event_any event);
 
     error_code (*process_input)(frontend* self, SDL_Event event);
+    //TODO how does the frontend know in which area it is allowed to process inputs?, move render xywh to display struct..
 
     error_code (*update)(frontend* self, player_id view);
 
@@ -112,7 +114,7 @@ typedef struct frontend_methods_s {
 
     error_code (*render)(frontend* self, player_id view, float x, float y, float w, float h);
 
-    error_code (*is_game_compatible)(game* compat_game);
+    error_code (*is_game_compatible)(const game_methods* methods);
 
 } frontend_methods;
 

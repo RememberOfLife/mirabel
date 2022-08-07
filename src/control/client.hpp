@@ -10,10 +10,10 @@
 #include "surena/game.h"
 
 #include "mirabel/event_queue.h"
+#include "mirabel/frontend.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "engines/engine_manager.hpp"
-#include "frontends/frontend_catalogue.hpp"
 #include "network/network_client.hpp"
 
 namespace Control {
@@ -45,7 +45,8 @@ namespace Control {
 
             PluginManager plugin_mgr;
 
-            Frontends::Frontend* frontend = NULL;
+            frontend* the_frontend;
+            frontend* empty_fe;
             Engines::EngineManager* engine_mgr;
 
             float dpi_scale;

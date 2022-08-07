@@ -170,10 +170,11 @@ void f_event_create_game_load(f_event_any* e, const char* base_name, const char*
 
 typedef struct f_event_game_load_methods_s {
     f_event base;
-    game_methods* methods;
+    const game_methods* methods;
+    char* options;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_game_load_methods;
-void f_event_create_game_load_methods(f_event_any* e, game_methods* methods);
+void f_event_create_game_load_methods(f_event_any* e, const game_methods* methods, const char* options);
 
 typedef struct f_event_game_state_s {
     f_event base;

@@ -11,7 +11,6 @@
 #include "mirabel/frontend.h"
 #include "control/client.hpp"
 #include "control/plugins.hpp"
-#include "frontends/empty_frontend.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -59,7 +58,7 @@ namespace MetaGui {
                             }
                             ImGui::PopStyleColor(3);
                         } else {
-                            bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || dynamic_cast<Frontends::EmptyFrontend*>(Control::main_client->frontend) == nullptr);
+                            bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || Control::main_client->the_frontend != Control::main_client->empty_fe);
                             if (unload_disabled) {
                                 ImGui::BeginDisabled();
                             }

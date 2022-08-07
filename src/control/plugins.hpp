@@ -36,7 +36,7 @@ namespace Control {
 
             // new opts describe the load opts of the wrapper, or general purpose, if any
             // if opts_str is supplied, it is instead used for loading options
-            game* new_game(void* load_opts, const char* opts_str) const; //TODO same for engine..???
+            game* new_game(void* load_opts, const char* opts_str) const;
 
             const game_methods* get_methods() const;
             const char* get_name() const;
@@ -97,6 +97,8 @@ namespace Control {
 
             FrontendImpl(const frontend_methods* methods);
             ~FrontendImpl();
+
+            frontend* new_frontend(void* load_opts) const;
 
             const char* get_name() const;
 
