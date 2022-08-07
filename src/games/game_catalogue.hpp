@@ -1,7 +1,5 @@
 #pragma once
 
-#include "surena/game.h"
-
 #include "mirabel/game_wrap.h"
 
 extern const game_wrap chess_gw;

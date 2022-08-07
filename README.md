@@ -79,10 +79,13 @@ Collect more general resources:
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
   * new game on server probably does wrong things if game has opts but is given str opts NULL
+* in the plugin methods catalogue, allow selecting a game impl, then filter all frontends/engines by compatible
+  * also, probably sort games more tree like?
 * unify resource storage, likely resource repo
 * docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
+  * needs "make default" button for every game impl
 * probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter

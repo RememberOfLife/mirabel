@@ -18,6 +18,7 @@
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap_plugin.h"
 #include "mirabel/game_wrap.h"
+#include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
 
 #include "control/plugins.hpp"
@@ -293,7 +294,14 @@ namespace Control {
             add_game_wrap(&tictactoe_gw);
             add_game_wrap(&twixt_pp_gw);
 
-            //TODO load default frontends
+            add_frontend(&empty_fem);
+            add_frontend(&fallback_text_fem);
+
+            add_frontend(&chess_fem);
+            add_frontend(&havannah_fem);
+            add_frontend(&tictactoe_ultimate_fem);
+            add_frontend(&tictactoe_fem);
+            add_frontend(&twixt_pp_fem);
 
             add_engine_methods(&randomengine_ebe);
 

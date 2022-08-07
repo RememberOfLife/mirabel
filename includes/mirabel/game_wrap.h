@@ -14,7 +14,6 @@ static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 5;
 
 typedef struct game_wrap_feature_flags_s {
     bool options : 1;
-    bool initial_state : 1;
     bool runtime : 1;
 } game_wrap_feature_flags;
 
@@ -34,8 +33,10 @@ typedef struct game_wrap_s {
     // for both: if str_buf is NULL, set ret_size to required size, otherwise it is ignored!
     // FEATURE: !backend.options_bin
     error_code (*opts_bin_to_str)(void* options_struct, char* str_buf, size_t* ret_size); 
+
+    //TODO want this? or a more general approach where the wrap gets the whole game? or even at all?
     // FEATURE: options && initial_state
-    error_code (*opts_initial_state)(void* options_struct, char* str_buf, size_t* ret_size); //TODO use this in the client
+    // error_code (*opts_initial_state)(void* options_struct, char* str_buf, size_t* ret_size);
 
     // FEATURE: runtime
     // runtime state, created when the game is created, destroyed when the game is destroyed
@@ -43,6 +44,7 @@ typedef struct game_wrap_s {
     error_code (*runtime_create)(game* rgame, void** runtime_struct);
     error_code (*runtime_display)(game* rgame, void* runtime_struct);
     error_code (*runtime_destroy)(void* runtime_struct);
+    //TODO this needs some way to issue state updates, just the client inbox, or a dedicated struct like the frontend display data?
 
 } game_wrap;
 

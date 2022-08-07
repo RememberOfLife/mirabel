@@ -8,13 +8,15 @@
 #include "surena/games/havannah.h"
 #include "surena/game.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/frontend.h"
+#include "control/client.hpp"
 #include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 
 #include "frontends/havannah.hpp"
+#include "frontends/frontend_catalogue.hpp"
 
 namespace Frontends {
 
@@ -403,3 +405,99 @@ namespace Frontends {
     }
 
 }
+
+namespace {
+
+    const char* get_last_error(frontend* self)
+    {
+        //TODO
+        return NULL;
+    }
+
+    error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code destroy(frontend* self)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code runtime_opts_display(frontend* self)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code process_event(frontend* self, f_event_any event)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code process_input(frontend* self, SDL_Event event)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code update(frontend* self, player_id view)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code background(frontend* self, float x, float y, float w, float h)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code render(frontend* self, player_id view, float x, float y, float w, float h)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+    error_code is_game_compatible(game* compat_game)
+    {
+        //TODO
+        return ERR_OK;
+    }
+
+}
+
+const frontend_methods havannah_fem{
+    .frontend_name = "havannah",
+    .version = semver{0, 1, 0},
+    .features = frontend_feature_flags{
+        .options = false,
+        .global_background = true,
+    },
+
+    .internal_methods = NULL,
+
+    .opts_create = NULL,
+    .opts_display = NULL,
+    .opts_destroy = NULL,
+
+    .get_last_error = get_last_error,
+
+    .create = create,
+    .destroy = destroy,
+
+    .runtime_opts_display = runtime_opts_display,
+
+    .process_event = process_event,
+    .process_input = process_input,
+    .update = update,
+
+    .background = background,
+    .render = render,
+
+    .is_game_compatible = is_game_compatible,    
+
+};

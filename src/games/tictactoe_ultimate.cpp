@@ -14,6 +14,7 @@ namespace {
     error_code runtime_create(game* rgame, void** runtime_struct)
     {
         //TODO
+        *runtime_struct = rgame->data1; // fill runtime struct with a spoofed pointer
         return ERR_OK;
     }
 
@@ -50,7 +51,6 @@ const game_wrap tictactoe_ultimate_gw{
     .backend = &tictactoe_ultimate_gbe,
     .features = (game_wrap_feature_flags){
         .options = false,
-        .initial_state = false,
         .runtime = true,
     },
 
@@ -59,7 +59,6 @@ const game_wrap tictactoe_ultimate_gw{
     .opts_destroy = NULL,
 
     .opts_bin_to_str = NULL,
-    .opts_initial_state = NULL,
 
     .runtime_create = runtime_create,
     .runtime_display = runtime_display,
