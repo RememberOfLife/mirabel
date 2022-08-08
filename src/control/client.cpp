@@ -31,7 +31,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 0};
+    const semver client_version = semver{0, 2, 1};
 
     Client* main_client = NULL;
 
@@ -365,17 +365,22 @@ namespace Control {
                         if (the_game) {
                             // send frontend game load copy of running game
                             size_t size_fill;
-                            char* tg_opts = (char*)malloc(the_game->sizer.options_str);
+                            char* tg_opts = NULL;
+                            if (the_game->methods->features.options) {
+                                tg_opts = (char*)malloc(the_game->sizer.options_str);
+                                the_game->methods->export_options_str(the_game, &size_fill, tg_opts);
+                            }
                             char* tg_state = (char*)malloc(the_game->sizer.state_str);
-                            the_game->methods->export_options_str(the_game, &size_fill, tg_opts);
-                            the_game->methods->export_state(the_game, &size_fill, tg_opts);
+                            the_game->methods->export_state(the_game, &size_fill, tg_state);
                             f_event_any se;
                             f_event_create_game_load_methods(&se, the_game->methods, tg_opts);
                             the_frontend->methods->process_event(the_frontend, se);
                             f_event_create_game_state(&se, F_EVENT_CLIENT_NONE, tg_state);
                             the_frontend->methods->process_event(the_frontend, se);
-                            free(tg_opts);
                             free(tg_state);
+                            if (the_game->methods->features.options) {
+                                free(tg_opts);
+                            }
                         }
                         MetaGui::running_fem_idx = MetaGui::selected_fem_idx;
                     } break;
