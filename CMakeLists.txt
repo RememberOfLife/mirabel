@@ -71,17 +71,18 @@ set(SOURCES
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/games/twixt_pp.cpp
     lib/surena/src/util/fast_prng.cpp
-    lib/surena/src/util/noise.cpp
+    lib/surena/src/util/noise.c
+    lib/surena/src/util/raw_stream.c
     lib/surena/src/util/semver.c
     lib/surena/src/engine.cpp
     lib/surena/src/game.c
+    lib/surena/src/move_history.c
 
     src/control/client.cpp
     src/control/config.cpp
     src/control/event_queue.cpp
     src/control/event.cpp
     src/control/lobby.cpp
-    src/control/move_history.cpp
     src/control/plugins.cpp
     src/control/server.cpp
     src/control/timeout_crash.cpp

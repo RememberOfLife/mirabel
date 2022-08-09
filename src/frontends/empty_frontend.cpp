@@ -53,25 +53,6 @@ namespace {
         return ERR_OK;
     }
 
-    //TODO both background and render would usually want to overdraw a little so borders get drawn correctly, this is not ok with new param setup
-
-    error_code background(frontend* self, float x, float y, float w, float h)
-    {
-        NVGcontext* dc = Control::main_client->nanovg_ctx;
-
-        //TODO how to get the dc in a proper way?
-        nvgSave(dc);
-
-        nvgBeginPath(dc);
-        nvgRect(dc, x-10, y-10, w+20, h+20);
-        nvgFillColor(dc, nvgRGB(114, 140, 153));
-        nvgFill(dc);
-
-        nvgRestore(dc);
-
-        return ERR_OK;
-    }
-
     error_code render(frontend* self, player_id view, float x, float y, float w, float h)
     {
         NVGcontext* dc = Control::main_client->nanovg_ctx;
@@ -107,7 +88,6 @@ const frontend_methods empty_fem{
     .version = semver{0, 1, 1},
     .features = frontend_feature_flags{
         .options = false,
-        .global_background = true,
     },
 
     .internal_methods = NULL,
@@ -127,7 +107,6 @@ const frontend_methods empty_fem{
     .process_input = process_input,
     .update = update,
 
-    .background = background,
     .render = render,
 
     .is_game_compatible = is_game_compatible,    

@@ -19,7 +19,7 @@
 
 #include "mirabel/event.h"
 #include "mirabel/event_queue.h"
-#include "mirabel/move_history.h"
+#include "surena/move_history.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -655,7 +655,7 @@ namespace Control {
             the_frontend->methods->update(the_frontend, PLAYER_NONE); //TODO use privacy view player id
             nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
             // frontend only gets the frontend metagui dockspace
-            the_frontend->methods->render(the_frontend, PLAYER_NONE, fx_px, fy_px, fw_px, fh_px); //TODO use privacy view player id
+            the_frontend->methods->render(the_frontend, PLAYER_NONE, fx_px - x_px, fy_px - y_px, fw_px, fh_px); //TODO use privacy view player id
             nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();

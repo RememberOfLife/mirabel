@@ -12,14 +12,14 @@
 #include "mirabel/config.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "mirabel/move_history.h"
+#include "surena/move_history.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//NOTE: updates to {config, event, event_queue, frontend, move_history} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 5;
+//NOTE: updates to {config, event, event_queue, frontend} will incur a version increase here
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 6;
 
 
 
@@ -48,11 +48,7 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
 
 
 typedef struct frontend_feature_flags_s {
-
     bool options : 1;
-
-    bool global_background : 1;
-
 } frontend_feature_flags;
 
 typedef struct frontend_s frontend; // forward declare the frontend for the frontend methods
@@ -108,10 +104,7 @@ typedef struct frontend_methods_s {
 
     error_code (*update)(frontend* self, player_id view);
 
-    // FEATURE: global_background
-    // if the user also enables this, the frontend can draw a global background, even behind the metagui windows docked on top of it
-    error_code (*background)(frontend* self, float x, float y, float w, float h);
-
+    //TODO remove privacy view here, only update needs it, probably also from display data?, same for xywh
     error_code (*render)(frontend* self, player_id view, float x, float y, float w, float h);
 
     error_code (*is_game_compatible)(const game_methods* methods);

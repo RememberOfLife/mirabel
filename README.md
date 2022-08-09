@@ -72,8 +72,6 @@ Collect more general resources:
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
-* bug: can not select among multiple frontends, try with fallback text
-* switching from a frontend that once had a game running to another game crashes the frontend by set_game, not realiably reproducable so far
 
 ## todo
 * problem with plugins
@@ -82,11 +80,9 @@ Collect more general resources:
 * in the plugin methods catalogue, allow selecting a game impl, then filter all frontends/engines by compatible
   * also, probably sort games more tree like?
 * unify resource storage, likely resource repo
-* docking imgui windows in top or left breaks x and y for drawing
 * game config window display a move list somewhere?
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
   * needs "make default" button for every game impl
-* probably drop description etc from frontend and games?
 * config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
 * add option to use different imgui font
@@ -160,6 +156,8 @@ Collect more general resources:
 * frontend should be able to easily change the cursor, offer some util at least locally
 
 ## problems
+* how do sync data events work with the history manager?
+  * does the server also need to keep a history just for syncing new joining players, e.g. if a game is not serializable
 * history manager should only set the guithread state, client will still use newest one for networking, except if user distributed to network?
   * on which state should the engine search, main line or selected state
   * in general what is the network interaction for the history manager

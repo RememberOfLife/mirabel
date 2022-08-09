@@ -5,7 +5,7 @@
 #include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "mirabel/move_history.h"
+#include "surena/move_history.h"
 
 #include "meta_gui/meta_gui.hpp"
 

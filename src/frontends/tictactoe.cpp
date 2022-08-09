@@ -246,13 +246,7 @@ namespace {
         //TODO
         return ERR_OK;
     }
-
-    error_code background(frontend* self, float x, float y, float w, float h)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
+    
     error_code render(frontend* self, player_id view, float x, float y, float w, float h)
     {
         //TODO
@@ -274,7 +268,6 @@ const frontend_methods tictactoe_fem{
     .version = semver{0, 1, 0},
     .features = frontend_feature_flags{
         .options = false,
-        .global_background = true,
     },
 
     .internal_methods = NULL,
@@ -294,7 +287,6 @@ const frontend_methods tictactoe_fem{
     .process_input = process_input,
     .update = update,
 
-    .background = background,
     .render = render,
 
     .is_game_compatible = is_game_compatible,    

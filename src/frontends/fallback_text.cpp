@@ -203,13 +203,6 @@ namespace {
         return ERR_OK;
     }
 
-    error_code background(frontend* self, float x, float y, float w, float h)
-    {
-        data_repr& data = _get_repr(self);
-        //TODO
-        return ERR_OK;
-    }
-
     error_code render(frontend* self, player_id view, float x, float y, float w, float h)
     {
         data_repr& data = _get_repr(self);
@@ -295,7 +288,6 @@ const frontend_methods fallback_text_fem{
     .version = semver{1, 0, 0},
     .features = frontend_feature_flags{
         .options = false,
-        .global_background = true,
     },
 
     .internal_methods = NULL,
@@ -315,7 +307,6 @@ const frontend_methods fallback_text_fem{
     .process_input = process_input,
     .update = update,
 
-    .background = background,
     .render = render,
 
     .is_game_compatible = is_game_compatible,    
