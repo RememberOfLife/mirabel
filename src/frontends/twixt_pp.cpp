@@ -725,13 +725,13 @@ namespace {
         return ERR_OK;
     }
 
-    error_code update(frontend* self, player_id view)
+    error_code update(frontend* self)
     {
         //TODO
         return ERR_OK;
     }
 
-    error_code render(frontend* self, player_id view, float x, float y, float w, float h)
+    error_code render(frontend* self)
     {
         //TODO
         return ERR_OK;

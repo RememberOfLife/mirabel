@@ -17,7 +17,7 @@ namespace {
 
     struct data_repr {
         NVGcontext* dc;
-        frontend_display_data* display;
+        frontend_display_data* dd;
         game g;
         bool dirty;
         char* g_opts;
@@ -51,7 +51,7 @@ namespace {
         data_repr& data = _get_repr(self);
         data = (data_repr){
             .dc = Control::main_client->nanovg_ctx,
-            .display = display_data,
+            .dd = display_data,
             .g = (game){
                 .methods = NULL,
             },
@@ -107,7 +107,7 @@ namespace {
         data_repr& data = _get_repr(self);
         switch(event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
-                f_event_queue_push(data.display->outbox, &event);
+                f_event_queue_push(data.dd->outbox, &event);
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 data.g.methods = event.game_load_methods.methods;
@@ -179,7 +179,7 @@ namespace {
         return ERR_OK;
     }
 
-    error_code update(frontend* self, player_id view)
+    error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
         if (data.dirty == false)  {
@@ -203,10 +203,11 @@ namespace {
         return ERR_OK;
     }
 
-    error_code render(frontend* self, player_id view, float x, float y, float w, float h)
+    error_code render(frontend* self)
     {
         data_repr& data = _get_repr(self);
         NVGcontext* dc = data.dc;
+        frontend_display_data& dd = *data.dd;
 
         //TODO
         const float xcol_offset = 100;
@@ -217,7 +218,7 @@ namespace {
 
         nvgSave(dc);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, x+w+20, y+h+20);
+        nvgRect(dc, -10, -10, dd.x+dd.w+20, dd.y+dd.h+20);
         nvgFillColor(dc, nvgRGB(210, 210, 210));
         nvgFill(dc);
         

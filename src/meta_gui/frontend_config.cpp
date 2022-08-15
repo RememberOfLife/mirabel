@@ -79,7 +79,7 @@ namespace MetaGui {
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
                 f_event_any es;
-                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(frontend_load_options));
+                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
                 f_event_queue_push(&Control::main_client->inbox, &es);
             }
             ImGui::SameLine();
@@ -91,7 +91,7 @@ namespace MetaGui {
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
                 f_event_any es;
-                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(frontend_load_options));
+                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
                 f_event_queue_push(&Control::main_client->inbox, &es);
             }
         }

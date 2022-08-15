@@ -31,7 +31,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 1};
+    const semver client_version = semver{0, 2, 2};
 
     Client* main_client = NULL;
 
@@ -148,6 +148,20 @@ namespace Control {
             printf("[ERROR] nvg failed to load font 2\n");
         }
 
+        dd = (frontend_display_data){
+            .outbox = &inbox,
+            .view = PLAYER_NONE,
+            .x = 0,
+            .y = 0,
+            .w = 1,
+            .h = 1,
+            .time_ctl_count = 0,
+            .time_ctl = NULL,
+            .time_ctl_player_count = 0,
+            .time_ctl_player = NULL,
+            .history = NULL,
+        };
+
         // init default context
         empty_fe = (frontend*)malloc(sizeof(frontend));
         *empty_fe = (frontend){
@@ -155,7 +169,7 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        empty_fe->methods->create(empty_fe, NULL, NULL); //TODO //BUG? supply some display data?
+        empty_fe->methods->create(empty_fe, &dd, NULL);
         the_frontend = empty_fe;
 
         // init engine manager with a context queue to our inbox
@@ -219,6 +233,13 @@ namespace Control {
         float fy_px = y_px;
         float fw_px = w_px;
         float fh_px = h_px;
+
+        //TODO somehow needs to be initialized to a sane value before event loops on frontend, but not here?
+        dd.view = PLAYER_NONE; //TODO use correct view
+        dd.x = fx_px - x_px;
+        dd.y = fy_px - y_px;
+        dd.w = fw_px;
+        dd.h = fh_px;
 
         bool ctrl_left = false;
         bool ctrl_right = false;
@@ -322,6 +343,9 @@ namespace Control {
                         }
                         the_game->methods->import_state(the_game, e.game_state.state);
                         game_step++;
+                        f_event_any se;
+                        f_event_copy(&se, &e);
+                        the_frontend->methods->process_event(the_frontend, se);
                         engine_mgr->game_state(e.game_state.state);
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
@@ -342,6 +366,9 @@ namespace Control {
                         }
                         the_game->methods->make_move(the_game, pbuf[0], e.game_move.code); //FIXME ptm
                         game_step++;
+                        f_event_any se;
+                        f_event_copy(&se, &e);
+                        the_frontend->methods->process_event(the_frontend, se);
                         engine_mgr->game_move(pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         if (pbuf_cnt == 0) {
@@ -646,16 +673,23 @@ namespace Control {
             y_px = imgui_viewport->WorkPos.y;
             w_px = imgui_viewport->WorkSize.x;
             h_px = imgui_viewport->WorkSize.y;
+
+            dd.view = PLAYER_NONE; //TODO use correct view
+            dd.x = fx_px - x_px;
+            dd.y = fy_px - y_px;
+            dd.w = fw_px;
+            dd.h = fh_px;
+
             // rendering
             glViewport(0, 0, (int)w_px, (int)h_px);
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
             glOrtho(0.0, (GLdouble)w_px, (GLdouble)h_px, 0.0, -1, 1);
 
-            the_frontend->methods->update(the_frontend, PLAYER_NONE); //TODO use privacy view player id
+            the_frontend->methods->update(the_frontend);
             nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
             // frontend only gets the frontend metagui dockspace
-            the_frontend->methods->render(the_frontend, PLAYER_NONE, fx_px - x_px, fy_px - y_px, fw_px, fh_px); //TODO use privacy view player id
+            the_frontend->methods->render(the_frontend);
             nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();

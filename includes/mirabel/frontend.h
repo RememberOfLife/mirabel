@@ -19,19 +19,28 @@ extern "C" {
 #endif
 
 //NOTE: updates to {config, event, event_queue, frontend} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 6;
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 7;
 
 
 
 //TODO this mirrors a lot of the info that will be stored in the client lobby
 typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
+    // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
 
     // game g; //TODO what is the purpose of this game?!
 
     // config_registry* global_cr; //TODO
 
+    //TODO background job queue
+
     // all readonly:
+
+    player_id view;
+    float x;
+    float y;
+    float w;
+    float h;
 
     // lobby info (player names, etc?)
 
@@ -89,23 +98,21 @@ typedef struct frontend_methods_s {
     // same for options specific data, if it exists
     error_code (*destroy)(frontend* self);
 
-    //TODO somehow separate the loading of textures etc parallel to the main guithread?
-
     error_code (*runtime_opts_display)(frontend* self);
+
+    // calling chain is: all mirabel events, all sdl events, (opts + runtime_opts), update, render, (loop)
 
     // in general, passthrough all EVENT_TYPE_HEARTBEAT events untouched
     // a heartbeat id=0 can be used to assert that the frontend is up to date with all the queued input events (if it is buffering)  //TODO fine?
     // games will be passed to the frontend using EVENT_TYPE_GAME_LOAD_METHODS containing a pointer to the methods to be used
-    // the frontend has to destroy the passed event
+    // the frontend has to destroy the event copy it is passed
     error_code (*process_event)(frontend* self, f_event_any event);
 
     error_code (*process_input)(frontend* self, SDL_Event event);
-    //TODO how does the frontend know in which area it is allowed to process inputs?, move render xywh to display struct..
 
-    error_code (*update)(frontend* self, player_id view);
+    error_code (*update)(frontend* self);
 
-    //TODO remove privacy view here, only update needs it, probably also from display data?, same for xywh
-    error_code (*render)(frontend* self, player_id view, float x, float y, float w, float h);
+    error_code (*render)(frontend* self);
 
     error_code (*is_game_compatible)(const game_methods* methods);
 

@@ -186,7 +186,7 @@ namespace Control {
     FrontendImpl::~FrontendImpl()
     {}
 
-    frontend* FrontendImpl::new_frontend(void* load_opts) const
+    frontend* FrontendImpl::new_frontend(frontend_display_data* dd, void* load_opts) const
     {
         frontend* new_fe = (frontend*)malloc(sizeof(frontend));
         *new_fe = frontend{
@@ -194,7 +194,7 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        new_fe->methods->create(new_fe, NULL, load_opts); //TODO //BUG supply some frontend display data struct
+        new_fe->methods->create(new_fe, dd, load_opts);
         return new_fe;
     }
 
@@ -311,7 +311,7 @@ namespace Control {
             // add_frontend(&chess_fem);
             // add_frontend(&havannah_fem);
             // add_frontend(&tictactoe_ultimate_fem);
-            // add_frontend(&tictactoe_fem);
+            add_frontend(&tictactoe_fem);
             // add_frontend(&twixt_pp_fem);
 
             add_engine_methods(&randomengine_ebe);

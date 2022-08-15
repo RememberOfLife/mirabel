@@ -72,8 +72,14 @@ Collect more general resources:
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
+* networking is entirely broken (again)
 
 ## todo
+* general purpose job queue for background processes
+  * useful e.g. as async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
+    * after enqueuing the gui gets back a struct where it can see if e.g. the operation has finished yet
+    * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
+  * offer this in the display data struct
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
   * new game on server probably does wrong things if game has opts but is given str opts NULL
@@ -97,7 +103,10 @@ Collect more general resources:
 * add fullscreen toggle to main menu bar
 * chess frontend sounds
 * chess frontend animations
-* change window title according to the loaded game and frontend
+* change window title:
+  * loaded game and frontend
+  * connected server if any
+  * mirabel version
 * sound
   * sound menu for muting and volume
   * https://gist.github.com/armornick/3447121
@@ -109,8 +118,9 @@ Collect more general resources:
 ## ideas
 * global overlay notifications, (top-right, centered (e.g. mc title), sticky, progress..)
   * want notifications IN mirabel, or should mirabel issue to the environment notification service?
+  * possibly unify this and some other features in a more general common frontend library
+    * e.g. display a line at the top to show what is happening right now / being waited on (e.g. other player is selecting cards to discard, etc..)
 * need some unit tests for things like move_history, config_registry etc?
-* general purpose job queue for background processes
 * draw and resign are events
   * player offering draw may set timeout, can not be taken back, on timeout it auto expires
 * maybe replace SDL_net with another cpp raw networking lib (https://github.com/SLikeSoft/SLikeNet) so we dont have to download opengl on a server just for it
@@ -130,7 +140,6 @@ Collect more general resources:
 * maybe make the state editor something like a toggle?
   * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from
   * that would require interaction between the frontend and the basegamevariant
-* meta gui window snapping/anchoring?
 * "moving" around the board by an offset using middle mouse dragging?
 * filter games list with some categories/tags? (e.g. player count, randomness, hidden info, simul moves, abstract strategy)
 * quick launcher menu:
@@ -143,10 +152,6 @@ Collect more general resources:
 * offer some global color palette from the mirabel settings (can be edited there), every frontend may use this if it wants / if the user sets an option to do so
   * global dark theme toggle
 * some sort of general config/settings meta storage which the application uses to store saved preferences for each game frontend and general etc..
-* some sort of async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
-  * after enqueuing the gui gets back a struct where it can see if e.g. the object has finished constructing yet
-  * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
-  * also frontendwrappers could cache constructe frontends and just return the cached one, this would keep settings per runtime and reduce loading times after first loading
 * button for screenshots
   * definitely need a feature to export focused graphics from games so commentators/analysts can compose game "diagrams"
 * create icon, show it on the empty (default) frontend
@@ -163,6 +168,7 @@ Collect more general resources:
   * in general what is the network interaction for the history manager
 * local docs / game rule window, per variant? images/graphic representations?
   * load rules from res?
+  * rule window from frontend or game wrap?
 * localization
 * file paths should have some sort of file manager menu
   * https://codereview.stackexchange.com/questions/194553/c-dear-imgui-file-browser

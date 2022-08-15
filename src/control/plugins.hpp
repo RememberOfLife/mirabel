@@ -98,7 +98,7 @@ namespace Control {
             FrontendImpl(const frontend_methods* methods);
             ~FrontendImpl();
 
-            frontend* new_frontend(void* load_opts) const;
+            frontend* new_frontend(frontend_display_data* dd, void* load_opts) const;
 
             const char* get_name() const;
 

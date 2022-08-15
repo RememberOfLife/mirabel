@@ -13,6 +13,17 @@
 
 namespace {
 
+    struct data_repr {
+        NVGcontext* dc;
+        frontend_display_data* dd;
+        char vstr[64];
+    };
+
+    data_repr& _get_repr(frontend* self)
+    {
+        return *((data_repr*)(self->data1));
+    }
+
     const char* get_last_error(frontend* self)
     {
         //TODO
@@ -21,8 +32,13 @@ namespace {
 
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
-        self->data1 = malloc(64);
-        sprintf((char*)self->data1, "mirabel v%u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
+        self->data1 = malloc(sizeof(data_repr));
+        data_repr& data = _get_repr(self);
+        data = (data_repr){
+            .dc = Control::main_client->nanovg_ctx,
+            .dd = display_data,
+        };
+        sprintf(data.vstr, "mirabel v%u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
         return ERR_OK;
     }
 
@@ -48,20 +64,21 @@ namespace {
         return ERR_OK;
     }
 
-    error_code update(frontend* self, player_id view)
+    error_code update(frontend* self)
     {
         return ERR_OK;
     }
 
-    error_code render(frontend* self, player_id view, float x, float y, float w, float h)
+    error_code render(frontend* self)
     {
-        NVGcontext* dc = Control::main_client->nanovg_ctx;
+        data_repr& data = _get_repr(self);
+        NVGcontext* dc = data.dc;
+        frontend_display_data& dd = *data.dd;
 
-        //TODO how to get the dc in a proper way?
         nvgSave(dc);
 
         nvgBeginPath(dc);
-        nvgRect(dc, x-10, y-10, w+20, h+20);
+        nvgRect(dc, dd.x-10, dd.y-10, dd.w+20, dd.h+20);
         nvgFillColor(dc, nvgRGB(114, 140, 153));
         nvgFill(dc);
 
@@ -69,7 +86,7 @@ namespace {
         nvgFontFace(dc, "ff");
         nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_BASELINE);
         nvgFillColor(dc, nvgRGB(210, 210, 210));
-        nvgText(dc, x + w - 15, y + h - 15, (char*)self->data1, NULL);
+        nvgText(dc, dd.x + dd.w - 15, dd.y + dd.h - 15, data.vstr, NULL);
 
         nvgRestore(dc);
         

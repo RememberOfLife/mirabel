@@ -70,6 +70,7 @@ set(SOURCES
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/games/twixt_pp.cpp
+    lib/surena/src/util/base64.c
     lib/surena/src/util/fast_prng.cpp
     lib/surena/src/util/noise.c
     lib/surena/src/util/raw_stream.c

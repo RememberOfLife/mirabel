@@ -45,6 +45,7 @@ namespace Control {
 
             PluginManager plugin_mgr;
 
+            frontend_display_data dd;
             frontend* the_frontend;
             frontend* empty_fe;
             Engines::EngineManager* engine_mgr;
