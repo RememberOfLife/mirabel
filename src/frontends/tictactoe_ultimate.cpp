@@ -10,69 +10,173 @@
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
 #include "control/client.hpp"
-#include "games/game_catalogue.hpp"
 
-#include "frontends/tictactoe_ultimate.hpp"
 #include "frontends/frontend_catalogue.hpp"
 
-namespace Frontends {
+namespace {
 
-    void TicTacToe_Ultimate::sbtn::update(float mx, float my) {
-        hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
+    struct sbtn {
+        float x;
+        float y;
+        float w;
+        float h;
+        bool hovered;
+        bool mousedown;
+        void update(float mx, float my)
+        {
+            hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
+        }
+    };
+
+    struct data_repr {
+        NVGcontext* dc;
+        frontend_display_data* dd;
+        game g;
+        const tictactoe_ultimate_internal_methods* gi;
+        uint8_t pbuf_c;
+        player_id pbuf;
+        float button_size;
+        float local_padding;
+        float global_padding;
+        int mx;
+        int my;
+        sbtn board_buttons[9][9]; // board_buttons[y][x] origin is bottom left
+    };
+
+    data_repr& _get_repr(frontend* self)
+    {
+        return *((data_repr*)(self->data1));
     }
 
-    TicTacToe_Ultimate::TicTacToe_Ultimate():
-        the_game(NULL)
+    const char* get_last_error(frontend* self)
     {
-        dc = Control::main_client->nanovg_ctx;
+        //TODO
+        return NULL;
+    }
+
+    error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
+    {
+        self->data1 = malloc(sizeof(data_repr));
+        data_repr& data = _get_repr(self);
+        data = (data_repr){
+            .dc = Control::main_client->nanovg_ctx,
+            .dd = display_data,
+            .g = (game){
+                .methods = NULL,
+            },
+            .gi = NULL,
+            .pbuf_c = 0,
+            .pbuf = PLAYER_NONE,
+            .button_size = 65,
+            .local_padding = 3,
+            .global_padding = 20,
+            .mx = 0,
+            .my = 0,
+        };
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
-                        board_buttons[8-(gy*3+ly)][gx*3+lx] = sbtn{
-                            static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding),
-                            static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding),
-                            button_size, button_size, false, false
+                        data.board_buttons[8-(gy*3+ly)][gx*3+lx] = sbtn{
+                            static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding),
+                            static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding),
+                            data.button_size, data.button_size, false, false
                         };
                     }
                 }
             }
         }
+        return ERR_OK;
     }
 
-    TicTacToe_Ultimate::~TicTacToe_Ultimate()
-    {}
-
-    void TicTacToe_Ultimate::set_game(game* new_game)
+    error_code destroy(frontend* self)
     {
-        the_game = new_game;
-        the_game_int = the_game ? (tictactoe_ultimate_internal_methods*)the_game->methods->internal_methods : NULL;
+        free(self->data1);
+        self->data1 = NULL;
+        return ERR_OK;
     }
 
-    void TicTacToe_Ultimate::process_event(SDL_Event event)
+    error_code runtime_opts_display(frontend* self)
     {
-        if (!the_game) {
-            return;
+        data_repr& data = _get_repr(self);
+        ImGui::SliderFloat("button size", &data.button_size, 20, 100, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("local padding", &data.local_padding, 0, 20, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::SliderFloat("global padding", &data.global_padding, 0, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+        return ERR_OK;
+    }
+
+    error_code process_event(frontend* self, f_event_any event)
+    {
+        data_repr& data = _get_repr(self);
+        bool dirty = false;
+        switch(event.base.type) {
+            case EVENT_TYPE_HEARTBEAT: {
+                f_event_queue_push(data.dd->outbox, &event);
+            } break;
+            case EVENT_TYPE_GAME_LOAD_METHODS: {
+                if (data.g.methods) {
+                    data.g.methods->destroy(&data.g);
+                }
+                data.g.methods = event.game_load_methods.methods;
+                data.g.data1 = NULL;
+                data.g.data2 = NULL;
+                data.g.methods->create_default(&data.g);
+                data.gi = (const tictactoe_ultimate_internal_methods*)data.g.methods->internal_methods;
+                dirty = true;
+            } break;
+            case EVENT_TYPE_GAME_UNLOAD: {
+                if (data.g.methods) {
+                    data.g.methods->destroy(&data.g);
+                }
+                data.g.methods = NULL;
+                dirty = false;
+                data.gi = NULL;
+            } break;
+            case EVENT_TYPE_GAME_STATE: {
+                data.g.methods->import_state(&data.g, event.game_state.state);
+                dirty = true;
+            } break;
+            case EVENT_TYPE_GAME_MOVE: {
+                data.g.methods->make_move(&data.g, data.pbuf, event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                dirty = true;
+            } break;
+            default: {
+                // pass
+            } break;
         }
-        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
-        if (pbuf_c == 0) {
-            return;
+        f_event_destroy(&event);
+        if (dirty) {
+            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
+            if (data.pbuf_c == 0) {
+                uint8_t pres;
+                data.g.methods->get_results(&data.g, &pres, &data.pbuf);
+            }
+        }
+        return ERR_OK;
+    }
+
+    error_code process_input(frontend* self, SDL_Event event)
+    {
+        data_repr& data = _get_repr(self);
+        //TODO
+        if (data.g.methods == NULL || data.pbuf_c == 0) {
+            return ERR_OK;
         }
         switch (event.type) {
             case SDL_MOUSEMOTION: {
-                mx = event.motion.x - x_px;
-                my = event.motion.y - y_px;
+                data.mx = event.motion.x - data.dd->x;
+                data.my = event.motion.y - data.dd->y;
             } break;
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
-                    int mX = event.button.x - x_px;
-                    int mY = event.button.y - y_px;
-                    mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-                    mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
+                    int mX = event.button.x - data.dd->x;
+                    int mY = event.button.y - data.dd->y;
+                    mX -= data.dd->w/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
+                    mY -= data.dd->h/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
                     uint8_t global_target;
-                    the_game_int->get_global_target(the_game, &global_target);
+                    data.gi->get_global_target(&data.g, &global_target);
                     for (int gy = 0; gy < 3; gy++) {
                         for (int gx = 0; gx < 3; gx++) {
                             if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -82,19 +186,19 @@ namespace Frontends {
                                 for (int lx = 0; lx < 3; lx++) {
                                     int ix = gx*3+lx;
                                     int iy = 8-(gy*3+ly);
-                                    board_buttons[iy][ix].update(mX, mY);
+                                    data.board_buttons[iy][ix].update(mX, mY);
                                     if (event.type == SDL_MOUSEBUTTONUP) {
                                         player_id cell_local;
-                                        the_game_int->get_cell_local(the_game, ix, iy, &cell_local);
-                                        if (board_buttons[iy][ix].hovered && board_buttons[iy][ix].mousedown && cell_local == 0) {
+                                        data.gi->get_cell_local(&data.g, ix, iy, &cell_local);
+                                        if (data.board_buttons[iy][ix].hovered && data.board_buttons[iy][ix].mousedown && cell_local == 0) {
                                             uint64_t move_code = ix | (iy<<4);
                                             f_event_any es;
                                             f_event_create_game_move(&es, move_code);
-                                            f_event_queue_push(&Control::main_client->inbox, &es);
+                                            f_event_queue_push(data.dd->outbox, &es);
                                         }
-                                        board_buttons[iy][ix].mousedown = false;
+                                        data.board_buttons[iy][ix].mousedown = false;
                                     }
-                                    board_buttons[iy][ix].mousedown |= (board_buttons[iy][ix].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                                    data.board_buttons[iy][ix].mousedown |= (data.board_buttons[iy][ix].hovered && event.type == SDL_MOUSEBUTTONDOWN);
                                 }
                             }
                         }
@@ -102,24 +206,24 @@ namespace Frontends {
                 }
             } break;
         }
+        return ERR_OK;
     }
 
-    void TicTacToe_Ultimate::update()
+    error_code update(frontend* self)
     {
-        if (!the_game) {
-            return;
-        }
-        the_game->methods->players_to_move(the_game, &pbuf_c, &pbuf);
-        if (pbuf_c == 0) {
-            return;
+        data_repr& data = _get_repr(self);
+        //TODO put button pos/size recalc into sdl resize event
+        //TODO when reloading the game after a game is done, the hover does not reset
+        if (data.g.methods == NULL || data.pbuf_c == 0) {
+            return ERR_OK;
         }
         // set button hovered
-        int mX = mx;
-        int mY = my;
-        mX -= w_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
-        mY -= h_px/2-(9*button_size+6*local_padding+2*global_padding)/2;
+        int mX = data.mx;
+        int mY = data.my;
+        mX -= data.dd->w/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
+        mY -= data.dd->h/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
         uint8_t global_target;
-        the_game_int->get_global_target(the_game, &global_target);
+        data.gi->get_global_target(&data.g, &global_target);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
@@ -129,58 +233,63 @@ namespace Frontends {
                     for (int lx = 0; lx < 3; lx++) {
                         int ix = gx*3+lx;
                         int iy = 8-(gy*3+ly);
-                        board_buttons[8-(gy*3+ly)][gx*3+lx].x = static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding);
-                        board_buttons[8-(gy*3+ly)][gx*3+lx].y = static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding);
-                        board_buttons[8-(gy*3+ly)][gx*3+lx].w = button_size;
-                        board_buttons[8-(gy*3+ly)][gx*3+lx].h = button_size;
-                        board_buttons[iy][ix].update(mX, mY);
+                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].x = static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding);
+                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].y = static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding);
+                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].w = data.button_size;
+                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].h = data.button_size;
+                        data.board_buttons[iy][ix].update(mX, mY);
                     }
                 }
             }
         }
+        return ERR_OK;
     }
 
-    void TicTacToe_Ultimate::render()
+    error_code render(frontend* self)
     {
-        float local_baord_size = 3*button_size+2*local_padding;
+        data_repr& data = _get_repr(self);
+        NVGcontext* dc = data.dc;
+        frontend_display_data& dd = *data.dd;
+        float local_board_size = 3*data.button_size+2*data.local_padding;
         uint8_t global_target = 0;
-        if (the_game) {
-            the_game_int->get_global_target(the_game, &global_target);
+        if (data.g.methods != NULL) {
+            data.gi->get_global_target(&data.g, &global_target);
         }
         nvgSave(dc);
+        nvgTranslate(dc, dd.x, dd.y);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, w_px+20, h_px+20);
+        nvgRect(dc, -10, -10, data.dd->w+20, data.dd->h+20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, w_px/2-(3*local_baord_size+2*global_padding)/2, h_px/2-(3*local_baord_size+2*global_padding)/2);
+        nvgTranslate(dc, data.dd->w/2-(3*local_board_size+2*data.global_padding)/2, data.dd->h/2-(3*local_board_size+2*data.global_padding)/2);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 uint8_t local_result = 0;
-                if (the_game) {
-                    the_game_int->get_cell_global(the_game, gx, 2-gy, &local_result);
+                if (data.g.methods != NULL) {
+                    data.gi->get_cell_global(&data.g, gx, 2-gy, &local_result);
                 }
-                float base_x = gx*(local_baord_size+global_padding);
-                float base_y = gy*(local_baord_size+global_padding);
+                float base_x = gx*(local_board_size+data.global_padding);
+                float base_y = gy*(local_board_size+data.global_padding);
                 if (local_result > 0) {
                     nvgBeginPath(dc);
-                    nvgRect(dc, base_x, base_y, local_baord_size, local_baord_size);
+                    nvgRect(dc, base_x, base_y, local_board_size, local_board_size);
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
                     nvgFill(dc);
                     nvgBeginPath(dc);
-                    nvgStrokeWidth(dc, local_baord_size*0.175);
+                    nvgStrokeWidth(dc, local_board_size*0.175);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     switch (local_result) {
                         case 1: {
                             // X
-                            nvgMoveTo(dc, base_x+local_baord_size*0.175, base_y+local_baord_size*0.175);
-                            nvgLineTo(dc, base_x+local_baord_size*0.825, base_y+local_baord_size*0.825);
-                            nvgMoveTo(dc, base_x+local_baord_size*0.175, base_y+local_baord_size*0.825);
-                            nvgLineTo(dc, base_x+local_baord_size*0.825, base_y+local_baord_size*0.175);
+                            nvgMoveTo(dc, base_x+local_board_size*0.175, base_y+local_board_size*0.175);
+                            nvgLineTo(dc, base_x+local_board_size*0.825, base_y+local_board_size*0.825);
+                            nvgMoveTo(dc, base_x+local_board_size*0.175, base_y+local_board_size*0.825);
+                            nvgLineTo(dc, base_x+local_board_size*0.825, base_y+local_board_size*0.175);
                             nvgStroke(dc);
                         } break;
                         case 2: {
                             // O
-                            nvgCircle(dc, base_x+local_baord_size/2, base_y+local_baord_size/2, local_baord_size*0.3);
+                            nvgCircle(dc, base_x+local_board_size/2, base_y+local_board_size/2, local_board_size*0.3);
                             nvgStroke(dc);
                         } break;
                         case 3: {
@@ -191,43 +300,43 @@ namespace Frontends {
                 }
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
-                        float base_x = static_cast<float>(gx)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(lx)*(button_size+local_padding);
-                        float base_y = static_cast<float>(gy)*(3*button_size+2*local_padding+global_padding)+static_cast<float>(ly)*(button_size+local_padding);
-                        nvgStrokeWidth(dc, button_size*0.175);
+                        float base_x = static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding);
+                        float base_y = static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding);
+                        nvgStrokeWidth(dc, data.button_size*0.175);
                         nvgBeginPath(dc);
-                        nvgRect(dc, base_x, base_y, button_size, button_size);
-                        if (the_game && pbuf_c != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
+                        nvgRect(dc, base_x, base_y, data.button_size, data.button_size);
+                        if (data.g.methods != NULL && data.pbuf_c != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
                             nvgFillColor(dc, nvgRGB(240, 217, 181));
                         } else {
                             nvgFillColor(dc, nvgRGB(161, 119, 67));
                         }
                         nvgFill(dc);
-                        if (!the_game) {
+                        if (data.g.methods == NULL) {
                             continue;
                         }
                         int ix = gx*3+lx;
                         int iy = 8-(gy*3+ly);
                         uint8_t player_in_cell;
-                        the_game_int->get_cell_local(the_game, ix, iy, &player_in_cell);
+                        data.gi->get_cell_local(&data.g, ix, iy, &player_in_cell);
                         if (player_in_cell == 1) {
                             // X
                             nvgBeginPath(dc);
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                            nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.175);
-                            nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.825);
-                            nvgMoveTo(dc, base_x+button_size*0.175, base_y+button_size*0.825);
-                            nvgLineTo(dc, base_x+button_size*0.825, base_y+button_size*0.175);
+                            nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.175);
+                            nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.825);
+                            nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.825);
+                            nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.175);
                             nvgStroke(dc);
                         } else if (player_in_cell == 2) {
                             // O
                             nvgBeginPath(dc);
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                            nvgCircle(dc, base_x+button_size/2, base_y+button_size/2, button_size*0.3);
+                            nvgCircle(dc, base_x+data.button_size/2, base_y+data.button_size/2, data.button_size*0.3);
                             nvgStroke(dc);
-                        } else if (board_buttons[iy][ix].hovered && pbuf_c > 0) {
+                        } else if (data.board_buttons[iy][ix].hovered && data.pbuf_c > 0) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
-                            nvgRect(dc, board_buttons[iy][ix].x+button_size*0.05, board_buttons[iy][ix].y+button_size*0.05, board_buttons[iy][ix].w-button_size*0.1, board_buttons[iy][ix].h-button_size*0.1);
+                            nvgRect(dc, data.board_buttons[iy][ix].x+data.button_size*0.05, data.board_buttons[iy][ix].y+data.button_size*0.05, data.board_buttons[iy][ix].w-data.button_size*0.1, data.board_buttons[iy][ix].h-data.button_size*0.1);
                             nvgFill(dc);
                         }
                         //TODO
@@ -242,86 +351,6 @@ namespace Frontends {
             }
         }
         nvgRestore(dc);
-    }
-
-    void TicTacToe_Ultimate::draw_options()
-    {
-        ImGui::SliderFloat("button size", &button_size, 20, 100, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        ImGui::SliderFloat("local padding", &local_padding, 0, 20, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-        ImGui::SliderFloat("global padding", &global_padding, 0, 80, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-    }
-
-    TicTacToe_Ultimate_FEW::TicTacToe_Ultimate_FEW():
-        FrontendWrap("TicTacToe_Ultimate")
-    {}
-
-    TicTacToe_Ultimate_FEW::~TicTacToe_Ultimate_FEW()
-    {}
-    
-    bool TicTacToe_Ultimate_FEW::game_methods_compatible(const game_methods* methods)
-    {
-        return (strcmp(methods->game_name, "TicTacToe") == 0 && strcmp(methods->variant_name, "Ultimate") == 0 && strcmp(methods->impl_name, "surena_default") == 0);
-    }
-    
-    Frontend* TicTacToe_Ultimate_FEW::new_frontend()
-    {
-        return new TicTacToe_Ultimate();
-    }
-
-    void TicTacToe_Ultimate_FEW::draw_options()
-    {
-        ImGui::TextDisabled("<no options>");
-    }
-
-}
-
-namespace {
-
-    const char* get_last_error(frontend* self)
-    {
-        //TODO
-        return NULL;
-    }
-
-    error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code destroy(frontend* self)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code runtime_opts_display(frontend* self)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code process_event(frontend* self, f_event_any event)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code process_input(frontend* self, SDL_Event event)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code update(frontend* self)
-    {
-        //TODO
-        return ERR_OK;
-    }
-
-    error_code render(frontend* self)
-    {
-        //TODO
         return ERR_OK;
     }
 
@@ -337,7 +366,7 @@ namespace {
 
 const frontend_methods tictactoe_ultimate_fem{
     .frontend_name = "tictactoe_ultimate",
-    .version = semver{0, 1, 0},
+    .version = semver{0, 2, 0},
     .features = frontend_feature_flags{
         .options = false,
     },

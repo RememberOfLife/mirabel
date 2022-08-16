@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <set>
+#include <unordered_map>
 
 #ifdef WIN32
 #include <GL/glew.h>
@@ -31,7 +33,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 2};
+    const semver client_version = semver{0, 2, 3};
 
     Client* main_client = NULL;
 
@@ -285,11 +287,13 @@ namespace Control {
                         const char* base_name = e.game_load.base_name;
                         const char* variant_name = e.game_load.variant_name;
                         const char* impl_name = e.game_load.impl_name;
-                        uint32_t impl_idx = plugin_mgr.get_game_impl_idx(base_name, variant_name, impl_name);
-                        if (impl_idx == 0) {
+                        uint32_t impl_idx = 0;
+                        if (!plugin_mgr.get_game_impl_idx(base_name, variant_name, impl_name, &MetaGui::game_base_idx, &MetaGui::game_variant_idx, &impl_idx)) {
                             MetaGui::logf("#W guithread: failed to find game: %s.%s.%s\n", base_name, variant_name, impl_name);
                             break;
                         }
+                        // set meta gui combo boxes, in case this was a network event, others are already set
+                        MetaGui::game_impl_idx = impl_idx;
                         // actually load the game
                         the_game = plugin_mgr.impl_lookup[impl_idx]->new_game(MetaGui::game_load_options, e.game_load.options);
                         if (the_game->methods->features.options) {
@@ -318,9 +322,11 @@ namespace Control {
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
-                        // create runtime opts for metagui
-                        plugin_mgr.impl_lookup[MetaGui::game_impl_idx]->destroy_runtime(MetaGui::game_runtime_options); //HACK dont use metagui game impl idx here for game unloading
-                        MetaGui::game_runtime_options = NULL;
+                        if (MetaGui::game_impl_idx > 0) {
+                            // create runtime opts for metagui
+                            plugin_mgr.impl_lookup[MetaGui::game_impl_idx]->destroy_runtime(MetaGui::game_runtime_options); //HACK dont use metagui game impl idx here for game unloading
+                            MetaGui::game_runtime_options = NULL;
+                        }
                         engine_mgr->game_load(NULL);
                         f_event_any se;
                         f_event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
@@ -669,25 +675,26 @@ namespace Control {
 
             //TODO put this in the sdl resize event, make a resize function on the context app
             // whole workspace under the menubar, use this for frontend background if wanted
+            //TODO just need w and h of whole window, replace
             x_px = imgui_viewport->WorkPos.x;
             y_px = imgui_viewport->WorkPos.y;
             w_px = imgui_viewport->WorkSize.x;
             h_px = imgui_viewport->WorkSize.y;
 
             dd.view = PLAYER_NONE; //TODO use correct view
-            dd.x = fx_px - x_px;
-            dd.y = fy_px - y_px;
+            dd.x = fx_px;
+            dd.y = fy_px;
             dd.w = fw_px;
             dd.h = fh_px;
 
             // rendering
-            glViewport(0, 0, (int)w_px, (int)h_px);
+            glViewport(0, 0, (int)x_px+w_px, (int)y_px+h_px); //TODO is this fine? is this missing the menu bar in its height?
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            glOrtho(0.0, (GLdouble)w_px, (GLdouble)h_px, 0.0, -1, 1);
+            glOrtho(0.0, (GLdouble)x_px+w_px, (GLdouble)y_px+h_px, 0.0, -1, 1);
 
             the_frontend->methods->update(the_frontend);
-            nvgBeginFrame(nanovg_ctx, w_px, h_px, 2); //TODO use proper devicePixelRatio
+            nvgBeginFrame(nanovg_ctx, x_px+w_px, y_px+h_px, 2); //TODO use proper devicePixelRatio
             // frontend only gets the frontend metagui dockspace
             the_frontend->methods->render(the_frontend);
             nvgEndFrame(nanovg_ctx);

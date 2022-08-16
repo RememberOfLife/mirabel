@@ -72,7 +72,7 @@ Collect more general resources:
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
-* networking is entirely broken (again)
+* metagui game load options are not created and initialized correctly if the game is started via network (i.e. its comboboxes are not set via interaction and the creation doesnt fire)
 
 ## todo
 * general purpose job queue for background processes

@@ -72,7 +72,7 @@ typedef struct frontend_methods_s {
 
     // the frontend method specific internal method struct, NULL if not available
     // use the frontend_name to make sure you know what this will be
-    const void* internal_methods;
+    const void* internal_methods; //TODO any actual use for this?
 
     //TODO should load opts_create for frontends and game/engine wraps get a pointer ref, or return its own pointer?
     // FEATURE: options
@@ -111,6 +111,8 @@ typedef struct frontend_methods_s {
     error_code (*process_input)(frontend* self, SDL_Event event);
 
     error_code (*update)(frontend* self);
+
+    //TODO re-add background rendering, needs different xywh than normal rendering!
 
     error_code (*render)(frontend* self);
 

@@ -217,8 +217,10 @@ namespace {
         int yrow = 1;
 
         nvgSave(dc);
+        nvgTranslate(dc, dd.x, dd.y);
+
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.x+dd.w+20, dd.y+dd.h+20);
+        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
         nvgFillColor(dc, nvgRGB(210, 210, 210));
         nvgFill(dc);
         

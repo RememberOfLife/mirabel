@@ -102,8 +102,8 @@ namespace Control {
                 const char* base_name = e.game_load.base_name;
                 const char* variant_name = e.game_load.variant_name;
                 const char* impl_name = e.game_load.impl_name;
-                uint32_t impl_idx = plugin_mgr->get_game_impl_idx(base_name, variant_name, impl_name);
-                if (impl_idx == 0) {
+                uint32_t impl_idx = 0;
+                if (!plugin_mgr->get_game_impl_idx(base_name, variant_name, impl_name, NULL, NULL, &impl_idx)) {
                     printf("[WARN] failed to find game: %s.%s.%s\n", base_name, variant_name, impl_name);
                     break;
                 }

@@ -308,11 +308,11 @@ namespace Control {
 
             add_frontend(&fallback_text_fem); //TODO somehow make this show last in the list?
 
-            // add_frontend(&chess_fem);
-            // add_frontend(&havannah_fem);
-            // add_frontend(&tictactoe_ultimate_fem);
+            add_frontend(&chess_fem);
+            add_frontend(&havannah_fem);
+            add_frontend(&tictactoe_ultimate_fem);
             add_frontend(&tictactoe_fem);
-            // add_frontend(&twixt_pp_fem);
+            add_frontend(&twixt_pp_fem);
 
             add_engine_methods(&randomengine_ebe);
 
@@ -614,22 +614,31 @@ namespace Control {
         the_plugin.loaded = false;
     }
 
-    uint32_t PluginManager::get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name)
+    bool PluginManager::get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name, uint32_t* base_idx, uint32_t* variant_idx, uint32_t* impl_idx)
     {
         std::set<BaseGame>::iterator itrG = game_catalogue.find(base_name);
         if (itrG == game_catalogue.end()) {
-            return 0;
+            return false;
         }
         std::set<BaseGameVariant>::iterator itrV = itrG->variants.find(variant_name);
         if (itrV == itrG->variants.end()) {
-            return 0;
+            return false;
         }
         for (BaseGameVariantImpl itrI : itrV->impls) {
             if (strcmp(itrI.get_name(), impl_name) == 0) {
-                return itrI.map_idx;
+                if (base_idx) {
+                    *base_idx = itrG->map_idx;
+                }
+                if (variant_idx) {
+                    *variant_idx = itrV->map_idx;
+                }
+                if (impl_idx) {
+                    *impl_idx = itrI.map_idx;
+                }
+                return true;
             }
         }
-        return 0;
+        return false;
     }
 
     bool PluginManager::add_game_impl(const char* game_name, const char* variant_name, BaseGameVariantImpl impl)

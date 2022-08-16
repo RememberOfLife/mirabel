@@ -16,6 +16,7 @@
 namespace {
 
     //TODO display winning line
+    //TODO button detection is one pixel to far to the top and left
 
     struct sbtn {
         float x;
@@ -88,6 +89,7 @@ namespace {
     error_code destroy(frontend* self)
     {
         free(self->data1);
+        self->data1 = NULL;
         return ERR_OK;
     }
 
@@ -108,6 +110,9 @@ namespace {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
+                if (data.g.methods) {
+                    data.g.methods->destroy(&data.g);
+                }
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
@@ -219,8 +224,8 @@ namespace {
         data_repr& data = _get_repr(self);
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
-        //TODO
         nvgSave(dc);
+        nvgTranslate(dc, dd.x, dd.y);
         nvgStrokeWidth(dc, data.button_size*0.175);
         nvgBeginPath(dc);
         nvgRect(dc, -10, -10, dd.w+20, dd.h+20);

@@ -184,7 +184,7 @@ namespace Control {
             void load_plugin(int idx);
             void unload_plugin(int idx);
 
-            uint32_t get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name);
+            bool get_game_impl_idx(const char* base_name, const char* variant_name, const char* impl_name, uint32_t* base_idx, uint32_t* variant_idx, uint32_t* impl_idx);
             //TODO get compatible for frontends and engines?
 
             // return true if the impl was added, false if dupe
