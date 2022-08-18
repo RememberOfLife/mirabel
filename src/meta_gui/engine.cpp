@@ -227,11 +227,22 @@ namespace MetaGui {
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_COMBO: {
-                                        //TODO unstatic
-                                        static int combo_selected = 0; //TODO use value to set this
-                                        if (ImGui::Combo(eopt.name, &combo_selected, eopt.l.v.var)) {
-                                            MetaGui::logf("engine option \"%s\": changed\n", eopt.name);
-                                            //TODO
+                                        // the options combo points to the selected element in the v.var
+                                        if (ImGui::BeginCombo(eopt.name, eopt.value.combo)) {
+                                            char* p_sel_combo = eopt.l.v.var;
+                                            while (*p_sel_combo != '\0') {
+                                                bool is_selected = (strcmp(eopt.value.combo, p_sel_combo) == 0);
+                                                if (ImGui::Selectable(p_sel_combo, is_selected)) {
+                                                    eopt.value.combo = p_sel_combo;
+                                                    tec.submit_option(&eopt); // this resubmits options even if the selected value didnt change! //TODO wanted behaviour?
+                                                }
+                                                // set the initial focus when opening the combo
+                                                if (is_selected) {
+                                                    ImGui::SetItemDefaultFocus();
+                                                }
+                                                p_sel_combo += strlen(p_sel_combo) + 1;
+                                            }
+                                            ImGui::EndCombo();
                                         }
                                     } break;
                                     case EE_OPTION_TYPE_BUTTON: {

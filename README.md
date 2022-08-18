@@ -75,11 +75,7 @@ Collect more general resources:
 * metagui game load options are not created and initialized correctly if the game is started via network (i.e. its comboboxes are not set via interaction and the creation doesnt fire)
 
 ## todo
-* general purpose job queue for background processes
-  * useful e.g. as async loading threadpool, where the gui can enqueue long operations which then get executed on another thread
-    * after enqueuing the gui gets back a struct where it can see if e.g. the operation has finished yet
-    * use this to parallelize loading/saving of all sorts of assets (images,sound,configs,etc..)
-  * offer this in the display data struct
+* finalize config api and implement it
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
   * new game on server probably does wrong things if game has opts but is given str opts NULL
@@ -100,13 +96,8 @@ Collect more general resources:
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs
 * network client should try reconnecting itself on lost connection, cache access params for that
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
-* add fullscreen toggle to main menu bar
 * chess frontend sounds
 * chess frontend animations
-* change window title:
-  * loaded game and frontend
-  * connected server if any
-  * mirabel version
 * sound
   * sound menu for muting and volume
   * https://gist.github.com/armornick/3447121
@@ -116,6 +107,12 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* chat window should nerver draw focus from click
+  * also, messages should fade out from view over time
+  * offer hotkey 'y' to show history while holding, this ALSO enabled drag focus
+  * or just enter the chat using enter to get focus
+  * ctrl+t only enable disabled, never provides focus!
+  * some way to resizechat still?
 * global overlay notifications, (top-right, centered (e.g. mc title), sticky, progress..)
   * want notifications IN mirabel, or should mirabel issue to the environment notification service?
   * possibly unify this and some other features in a more general common frontend library
@@ -175,7 +172,7 @@ Collect more general resources:
 * how to notify players if the other party has made a move in a correspondence game?
   * maybe users can supply a webhook?
 * how to manage teams in games, i.e. multiple people playing for a shared reward?
-* how are guithread state variables exposed? e.g. where to store fullscreen and frame_work_time such that it can be read from the outside?
+* how are guithread state variables exposed? e.g. where to store frame_work_time such that it can be read from the outside?
 
 ### integration workflow
 * ==> tripcodes

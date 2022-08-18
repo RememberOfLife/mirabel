@@ -1,0 +1,45 @@
+#pragma once
+
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//TODO maybe offer priorities for jobs?
+
+//TODO downsizing the threadpool waits for unfinished jobs to end on the exiting threads: *dont't* make the gui wait for the downsizing
+
+typedef enum JOB_ITEM_STATE_E : uint8_t {
+    JOB_ITEM_STATE_NONE = 0,
+    JOB_ITEM_STATE_WAITING,
+    JOB_ITEM_STATE_RUNNING,
+    JOB_ITEM_STATE_ABORTED,
+    JOB_ITEM_STATE_ERROR,
+    JOB_ITEM_STATE_SUCCESS,
+} JOB_ITEM_STATE;
+
+typedef struct job_item_s {
+    char _padding[24];
+} job_item;
+
+typedef struct job_queue_s {
+    char _padding[216];
+} job_queue;
+
+void job_item_create(job_item* ji, void* data, JOB_ITEM_STATE (*work)(job_item* ji, void** data)); // can be used on ANY job not waiting or running
+JOB_ITEM_STATE job_item_get_state(job_item* ji);
+void* job_item_get_data(job_item* ji); // only legal while job is not waiting or running
+bool job_item_abort_requested(job_item* ji); // job work can check this periodically on itself to see if it was cancelled
+
+// dont use multiple create/set_thread/destroy calls in parallel, for obvious reasons
+void job_queue_create(job_queue* jq, uint32_t threads);
+void job_queue_set_threads(job_queue* jq, uint32_t threads);
+void job_queue_destroy(job_queue* jq);
+void job_queue_item_push(job_queue* jq, job_item* ji);
+bool job_queue_item_abort(job_queue* jq, job_item* ji); // returns true if the item was removed from the queue, false if it was already started
+
+#ifdef __cplusplus
+}
+#endif

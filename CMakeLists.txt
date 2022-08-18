@@ -83,6 +83,7 @@ set(SOURCES
     src/control/config.cpp
     src/control/event_queue.cpp
     src/control/event.cpp
+    src/control/job_queue.cpp
     src/control/lobby.cpp
     src/control/plugins.cpp
     src/control/server.cpp

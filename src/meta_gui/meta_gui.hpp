@@ -14,6 +14,7 @@ namespace MetaGui {
 
     extern bool show_main_menu_bar;
     void main_menu_bar(bool* p_open);
+    extern bool fullscreen;
 
     extern bool show_stats_overlay;
     void stats_overlay(bool* p_open);

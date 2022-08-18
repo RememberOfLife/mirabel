@@ -8,18 +8,19 @@
 #include "surena/util/semver.h"
 #include "surena/engine.h"
 #include "surena/game.h"
+#include "surena/move_history.h"
 
 #include "mirabel/config.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "surena/move_history.h"
+#include "mirabel/job_queue.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-//NOTE: updates to {config, event, event_queue, frontend} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 7;
+//NOTE: updates to {config, event_queue, event, frontend, job_queue} will incur a version increase here
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 8;
 
 
 
@@ -28,13 +29,13 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
     // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
 
-    // game g; //TODO what is the purpose of this game?!
-
     // config_registry* global_cr; //TODO
 
-    //TODO background job queue
+    job_queue jobs;
 
     // all readonly:
+
+    uint64_t ms_tick; // updated at the beginning of the frame before supplying events/inputs, and again before update
 
     player_id view;
     float x;

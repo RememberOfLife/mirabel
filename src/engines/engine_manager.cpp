@@ -150,7 +150,7 @@ namespace Engines {
         free(option->name);
         option->name = NULL;
         if (option->type == EE_OPTION_TYPE_COMBO) {
-            free(option->value.combo);
+            // do not destroy value.combo, it points to within l.v.var
             free(option->l.v.var);
         }
         if (option->type == EE_OPTION_TYPE_STRING) {
@@ -333,7 +333,7 @@ namespace Engines {
                                 break;
                             }
                             for (int i = 0; i < tec.options.size(); i++) {
-                                if (strcmp(tec.options[i].name, e.option.name)) {
+                                if (strcmp(tec.options[i].name, e.option.name) == 0) {
                                     tec.destroy_option(&tec.options[i]);
                                     tec.options.erase(tec.options.begin() + 1);
                                     tec.options_changed.erase(tec.options_changed.begin() + 1);
@@ -349,9 +349,37 @@ namespace Engines {
                             tec.options.back().l.mm = e.option.l.mm;
                         } break;
                         case EE_OPTION_TYPE_COMBO: {
-                            tec.options.back().value.str = (char*)malloc(STR_BUF_MAX);
-                            strcpy(tec.options.back().value.str, e.option.value.str);
-                            tec.options.back().l.v.var = strdup(e.option.l.v.var);
+                            // the options combo points to the selected element in the v.var
+                            {
+                                size_t varsize = 1;
+                                const char* varp = e.option.l.v.var;
+                                while (*varp != '\0') {
+                                    size_t svs = strlen(varp) + 1;
+                                    varsize += svs;
+                                    varp += svs;
+                                }
+                                tec.options.back().l.v.var  = (char*)malloc(varsize);
+                                memcpy(tec.options.back().l.v.var, e.option.l.v.var, varsize);
+                            }
+                            tec.options.back().value.combo = NULL;
+                            char* p_sel_combo = tec.options.back().l.v.var;
+                            while (*p_sel_combo != '\0') {
+                                MetaGui::logf("%s %s\n", p_sel_combo, e.option.value.combo);
+                                if (strcmp(e.option.value.combo, p_sel_combo) == 0) {
+                                    tec.options.back().value.combo = p_sel_combo;
+                                    break;
+                                }
+                                p_sel_combo += strlen(p_sel_combo) + 1;
+                            }
+                            if (tec.options.back().value.combo == NULL) {
+                                // default combo selection not among the given options, abort adding this option
+                                free(tec.options.back().l.v.var);
+                                free(tec.options.back().name);
+                                tec.options.pop_back();
+                                tec.options_changed.pop_back();
+                                MetaGui::logf("#W E%u sent an invalid combobox selection\n", e.engine_id);
+                                break;
+                            }
                         } break;
                         case EE_OPTION_TYPE_BUTTON: {
                             // pass

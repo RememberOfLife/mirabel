@@ -19,8 +19,10 @@
 #include "surena/util/semver.h"
 #include "surena/game.h"
 
-#include "mirabel/event.h"
 #include "mirabel/event_queue.h"
+#include "mirabel/event.h"
+#include "mirabel/frontend.h"
+#include "mirabel/job_queue.h"
 #include "surena/move_history.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
@@ -33,7 +35,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 3};
+    const semver client_version = semver{0, 2, 4};
 
     Client* main_client = NULL;
 
@@ -152,6 +154,8 @@ namespace Control {
 
         dd = (frontend_display_data){
             .outbox = &inbox,
+            /* .jobs : initailized right after */
+            .ms_tick = surena_get_ms64(),
             .view = PLAYER_NONE,
             .x = 0,
             .y = 0,
@@ -163,6 +167,7 @@ namespace Control {
             .time_ctl_player = NULL,
             .history = NULL,
         };
+        job_queue_create(&dd.jobs, 8); //TODO threads from config
 
         // init default context
         empty_fe = (frontend*)malloc(sizeof(frontend));
@@ -198,6 +203,8 @@ namespace Control {
 
         free(the_game);
 
+        job_queue_destroy(&dd.jobs); //TODO need a pre-quit for this too? is this location ok?
+
         //TODO delete loaded font images
 
         nvgDeleteGL3(nanovg_ctx);
@@ -224,7 +231,6 @@ namespace Control {
     {
         //TODO cleanup statics here
         bool show_hud = true;
-        bool fullscreen = false;
         bool show_demo_window = false;
         ImGuiViewport* imgui_viewport = ImGui::GetMainViewport();
         float x_px = imgui_viewport->WorkPos.x;
@@ -256,6 +262,8 @@ namespace Control {
             std::this_thread::sleep_for(std::chrono::nanoseconds(frame_budget_ns-frame_work_ns));
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
+
+            dd.ms_tick = surena_get_ms64();
 
             f_event_any e;
             f_event_queue_pop(&inbox, &e, 0);
@@ -571,9 +579,9 @@ namespace Control {
                         show_demo_window = !show_demo_window;
                     }
                     if (event.key.keysym.sym == SDLK_F11) {
-                        fullscreen = !fullscreen;
+                        MetaGui::fullscreen = !MetaGui::fullscreen;
                         // borderless fullscreen
-                        SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                        SDL_SetWindowFullscreen(sdl_window, MetaGui::fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                     }
                     if (event.key.keysym.sym == SDLK_k && (ctrl_left || ctrl_right)) {
                         MetaGui::show_config_registry_window = !MetaGui::show_config_registry_window;
@@ -646,6 +654,19 @@ namespace Control {
             // update engine containers by their queues
             engine_mgr->update();
 
+            // update window title every frame //TODO wasteful, cache this out
+            char window_title[256];
+            char* wtp = window_title;
+            if (the_game) {
+                wtp += sprintf(wtp, "%s.%s.%s ", the_game->methods->game_name, the_game->methods->variant_name, the_game->methods->impl_name);
+            }
+            wtp += sprintf(wtp, "%s ", the_frontend->methods->frontend_name);
+            if (network_send_queue) {
+                wtp += sprintf(wtp, "%s@%s:%hu ", MetaGui::conn_info.username, MetaGui::conn_info.server_address, MetaGui::conn_info.server_port);
+            }
+            wtp += sprintf(wtp, "- mirabel %u.%u.%u", client_version.major, client_version.minor, client_version.patch);
+            SDL_SetWindowTitle(sdl_window, window_title);
+
             // start the dear imgui frame
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplSDL2_NewFrame();
@@ -693,6 +714,7 @@ namespace Control {
             glLoadIdentity();
             glOrtho(0.0, (GLdouble)x_px+w_px, (GLdouble)y_px+h_px, 0.0, -1, 1);
 
+            dd.ms_tick = surena_get_ms64();
             the_frontend->methods->update(the_frontend);
             nvgBeginFrame(nanovg_ctx, x_px+w_px, y_px+h_px, 2); //TODO use proper devicePixelRatio
             // frontend only gets the frontend metagui dockspace

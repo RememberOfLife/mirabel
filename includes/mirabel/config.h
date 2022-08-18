@@ -135,7 +135,7 @@ cfg_ovac* cj_deserialize(const char* buf, size_t len);
 // for arrays one can also use [-1] to get the last element
 // when using set, array indices also have more utilizations:
 // [0] replaces element at idx 0, [+] appends to the list, [+0] makes available at idx 0 but preserves all other elements
-// for delete the is also [*] to delete all elements, equivalent to setting parent to an empty list
+// for delete there is also [*] to delete all elements, equivalent to setting parent to an empty list
 cfg_ovac* cj_find(cfg_ovac* root, const char* data_path);
 cfg_ovac* cj_get(cfg_ovac* root, const char* data_path); // behaves like cj_find + cj_ovac_duplicate
 cfg_ovac* cj_set(cfg_ovac* root, const char* data_path, cfg_ovac* ovac, bool overwrite); // behaves like cj_find + cj_ovac_replace
@@ -143,10 +143,11 @@ cfg_ovac* cj_remove(cfg_ovac* root, const char* data_path);
 //TODO general detach, dupe ?
 
 // same as find but only return a shallow value copy, return true if successful
+//TODO use argument(bool* vnull), check vnull to see if it was value null, optional (if not existant then function returns false on vnull?)
 bool cj_get_u64(cfg_ovac* root, const char* data_path, uint64_t* rv);
 bool cj_get_f32(cfg_ovac* root, const char* data_path, float* rv);
 bool cj_get_bool(cfg_ovac* root, const char* data_path, bool* rv);
-bool cj_get_str(cfg_ovac* root, const char* data_path, cgf_sb_string* rv);
+bool cj_get_str(cfg_ovac* root, const char* data_path, cgf_sb_string* rv); //TODO does this allocate or copy?
 // bool cj_get_col4u(cfg_ovac* ovac, const char* data_path, cfg_color4u* rv);
 // bool cj_get_col4f(cfg_ovac* ovac, const char* data_path, cfg_color4f* rv);
 

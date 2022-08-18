@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "imgui.h"
-#include "surena/engines/randomengine.h"
 #include "surena/engine_plugin.h"
 #include "surena/engine.h"
 #include "surena/game_plugin.h"
@@ -18,6 +17,7 @@
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap_plugin.h"
 #include "mirabel/game_wrap.h"
+#include "engines/engine_catalogue.hpp"
 #include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
 
