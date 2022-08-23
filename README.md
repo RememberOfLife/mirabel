@@ -1,13 +1,18 @@
 # mirabel
 
 General purpose board game playing GUI and server with some useful features.
-* Online/Offline Multiplayer
+* Online/Offline Multiplayer (no account required)
+  * Self-hostable Server
+* Linux + Windows Builds
 * Engine Integration
-* Windows Builds
-
-Future features will include:
-* Support for games using random moves, hidden information and simultaneous moves.
 * Plugin support for loading more games, frontends and engines.
+  * Powerful API
+  * Multithreaded asset loading.
+  * Reuseable resources available.
+
+Future features:
+* Histoy Manager for game state tracking and analysis.
+* Support for games using random moves, hidden information and simultaneous moves.
 
 ## dependencies
 
@@ -73,9 +78,10 @@ Collect more general resources:
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 * metagui game load options are not created and initialized correctly if the game is started via network (i.e. its comboboxes are not set via interaction and the creation doesnt fire)
+* fix windows build to work with plugin loading
 
 ## todo
-* finalize config api and implement it
+* implement config cj serialization, and proper config meta gui window; actually use a config file for saving!
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
   * new game on server probably does wrong things if game has opts but is given str opts NULL

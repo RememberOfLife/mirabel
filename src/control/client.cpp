@@ -19,6 +19,7 @@
 #include "surena/util/semver.h"
 #include "surena/game.h"
 
+#include "mirabel/config.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
@@ -35,7 +36,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 4};
+    const semver client_version = semver{0, 2, 5};
 
     Client* main_client = NULL;
 
@@ -44,6 +45,27 @@ namespace Control {
     {
         main_client = this;
         f_event_queue_create(&inbox);
+
+        dd = (frontend_display_data){
+            .outbox = &inbox,
+            /* .cfg_lock : initialized right after */
+            /* .cfg : initialized right after */
+            /* .jobs : initailized right after */
+            .ms_tick = surena_get_ms64(),
+            .view = PLAYER_NONE,
+            .x = 0,
+            .y = 0,
+            .w = 1,
+            .h = 1,
+            .time_ctl_count = 0,
+            .time_ctl = NULL,
+            .time_ctl_player_count = 0,
+            .time_ctl_player = NULL,
+            .history = NULL,
+        };
+        dd.cfg_lock = cfg_lock_create();
+        dd.cfg = cj_create_object(0); //TODO load from config file
+        job_queue_create(&dd.jobs, 8); //TODO threads from config
 
         // start watchdog so it can oversee explicit construction
         t_tc.start();
@@ -152,23 +174,6 @@ namespace Control {
             printf("[ERROR] nvg failed to load font 2\n");
         }
 
-        dd = (frontend_display_data){
-            .outbox = &inbox,
-            /* .jobs : initailized right after */
-            .ms_tick = surena_get_ms64(),
-            .view = PLAYER_NONE,
-            .x = 0,
-            .y = 0,
-            .w = 1,
-            .h = 1,
-            .time_ctl_count = 0,
-            .time_ctl = NULL,
-            .time_ctl_player_count = 0,
-            .time_ctl_player = NULL,
-            .history = NULL,
-        };
-        job_queue_create(&dd.jobs, 8); //TODO threads from config
-
         // init default context
         empty_fe = (frontend*)malloc(sizeof(frontend));
         *empty_fe = (frontend){
@@ -203,8 +208,6 @@ namespace Control {
 
         free(the_game);
 
-        job_queue_destroy(&dd.jobs); //TODO need a pre-quit for this too? is this location ok?
-
         //TODO delete loaded font images
 
         nvgDeleteGL3(nanovg_ctx);
@@ -225,6 +228,10 @@ namespace Control {
         t_tc.join();
 
         f_event_queue_destroy(&inbox);
+
+        cfg_lock_destroy(dd.cfg_lock);
+        cj_ovac_destroy(dd.cfg); //TODO save to config file
+        job_queue_destroy(&dd.jobs); //TODO need a pre-quit for this too? is this location ok?
     }
 
     void Client::loop()

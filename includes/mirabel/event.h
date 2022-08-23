@@ -193,14 +193,14 @@ typedef struct f_event_game_move_s {
     //TODO use move string instead?
     //TODO player and sync ctr
     MANAGED_INTERNAL_DEFAULT;
-}f_event_game_move;
+} f_event_game_move;
 void f_event_create_game_move(f_event_any* e, move_code code);
 
 typedef struct f_event_frontend_load_s {
     f_event base;
     void* frontend;
     MANAGED_INTERNAL_DEFAULT;
-}f_event_frontend_load;
+} f_event_frontend_load;
 void f_event_create_frontend_load(f_event_any* e, void* frontend);
 
 typedef struct f_event_ssl_thumbprint_s {

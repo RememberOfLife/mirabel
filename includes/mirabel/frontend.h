@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 //NOTE: updates to {config, event_queue, event, frontend, job_queue} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 8;
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 9;
 
 
 
@@ -29,7 +29,8 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
     // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
 
-    // config_registry* global_cr; //TODO
+    void* cfg_lock;
+    cj_ovac* cfg; //TODO some kind of read/write limitations so a frontend will only ever write its own config?
 
     job_queue jobs;
 
