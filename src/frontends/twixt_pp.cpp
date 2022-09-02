@@ -234,7 +234,6 @@ namespace {
                 twixt_pp_options* opts_ref;
                 data.g.methods->get_options_bin_ref(&data.g, (void**)&opts_ref);
                 data.opts = *opts_ref;
-                MetaGui::logf("%d %d\n", data.opts.wx, data.opts.wy);
                 free(data.board_buttons);
                 data.board_buttons = (sbtn*)malloc(sizeof(sbtn) * data.opts.wx * data.opts.wy);
                 memset((char*)data.board_buttons, 0x00, sizeof(sbtn) * data.opts.wx * data.opts.wy);
@@ -307,7 +306,6 @@ namespace {
                     // detect swap button press
                     int mXp = mX + data.padding/2;
                     int mYp = mY + data.padding/2;
-                    // MetaGui::logf("%d %d\n", mXp, mYp);
                     if (mXp >= 0 && mYp >= 0 && mXp <= data.padding && mYp <= data.padding) {
                         data.gi->can_swap(&data.g, &data.swap_hover);
                         if (data.swap_hover && data.swap_down && event.type == SDL_MOUSEBUTTONUP) {

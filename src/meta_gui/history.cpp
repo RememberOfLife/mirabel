@@ -21,7 +21,6 @@ namespace MetaGui {
         while (lp) {
             nvgSave(dc);
             nvgTranslate(dc, cc*70, 50);
-
             // render line to child
             nvgBeginPath(dc);
             if (sel && h->selected_child == lp->idx_in_parent) {
@@ -31,14 +30,24 @@ namespace MetaGui {
             }
             nvgMoveTo(dc, 0, 0);
             nvgLineTo(dc, 0, -25);
+            if (lp->parent && lp->parent->is_split && lp->idx_in_parent == 0) {
+                nvgLineTo(dc, 0, 50 * lp->parent->split_height);
+            }
             nvgStrokeWidth(dc, 3);
             nvgStroke(dc);
+            if (lp->parent && lp->parent->is_split && lp->idx_in_parent == 0) {
+                nvgTranslate(dc, 0, 50 * lp->parent->split_height);
+            }
             cc += 1;
             if (sel && h->selected_child == lp->idx_in_parent) {
                 ccs = cc;
             }
             ccl = cc;
-            cc += hm_render(dc, lp, sel && h->selected_child == lp->idx_in_parent);
+            if (lp->parent && lp->parent->is_split && lp->idx_in_parent == 0) {
+                hm_render(dc, lp, sel && h->selected_child == lp->idx_in_parent);
+            } else {
+                cc += hm_render(dc, lp, sel && h->selected_child == lp->idx_in_parent);
+            }
             nvgRestore(dc);
             lp = lp->right_sibling;
         }
@@ -94,7 +103,7 @@ namespace MetaGui {
         nvgTextAlign(dc, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
         nvgText(dc, 0, 0, strbuf, NULL);
 
-        sprintf(strbuf, "%u/%u", h->split_height, h->width);
+        sprintf(strbuf, "%u/%u/%u", h->height, h->split_height, h->width);
         nvgBeginPath(dc);
         nvgFillColor(dc, nvgRGB(0, 0, 0));
         nvgFontFace(dc, "df");
@@ -166,7 +175,7 @@ namespace MetaGui {
             }
         }
         if (ImGui::Button("t split")) {
-            current->is_split = !current->is_split;
+            move_history_split(current, !current->is_split);
         }
         if (ImGui::Button("promote main")) {
             move_history_promote(current, true);

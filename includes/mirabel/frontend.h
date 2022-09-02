@@ -20,12 +20,13 @@ extern "C" {
 #endif
 
 //NOTE: updates to {config, event_queue, event, frontend, job_queue} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 9;
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 10;
 
 
 
 //TODO this mirrors a lot of the info that will be stored in the client lobby
 typedef struct /*grand_unified_*/frontend_display_data_s {
+    //TODO move outbox to a frontend only receive queue, so errors dont propagate as much
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
     // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
 
@@ -38,7 +39,12 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
 
     uint64_t ms_tick; // updated at the beginning of the frame before supplying events/inputs, and again before update
 
+    // privacy view information
     player_id view;
+    // framebuffer height and width
+    float fbw;
+    float fbh;
+    // offset for drawing the frontend, origin is top left of the window
     float x;
     float y;
     float w;
@@ -92,14 +98,16 @@ typedef struct frontend_methods_s {
     // if options_struct is NULL then the default options are loaded
     // construct and initialize a new frontend specific data object into self
     // if any options exist, the defaults are used
+    // if the load options feature is not supported then options_struct is NULL
     // a frontend can only be created once, must be matched with a call to destroy
     // !! even if create fails, the frontend has to be destroyed before releasing or creating again
-    error_code (*create)(frontend* self, frontend_display_data* display_data, void* options_struct);
+    error_code (*create)(frontend* self, frontend_display_data* display_data, void* options_struct); //TODO make display data a pointer to const?
 
     // deconstruct and release any (complex) frontend specific data, if it has been created already
     // same for options specific data, if it exists
     error_code (*destroy)(frontend* self);
 
+    //TODO make feature?
     error_code (*runtime_opts_display)(frontend* self);
 
     // calling chain is: all mirabel events, all sdl events, (opts + runtime_opts), update, render, (loop)
@@ -110,6 +118,7 @@ typedef struct frontend_methods_s {
     // the frontend has to destroy the event copy it is passed
     error_code (*process_event)(frontend* self, f_event_any event);
 
+    // the frontend is passed a shallow copy of the sdl event, it need not be released/freed in any way
     error_code (*process_input)(frontend* self, SDL_Event event);
 
     error_code (*update)(frontend* self);

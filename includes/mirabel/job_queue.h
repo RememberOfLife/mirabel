@@ -10,6 +10,11 @@ extern "C" {
 //TODO maybe offer priorities for jobs?
 
 //TODO downsizing the threadpool waits for unfinished jobs to end on the exiting threads: *dont't* make the gui wait for the downsizing
+//TODO should auto cleanup threads by using cpp jthread, use thread detach?
+
+//TODO fireandforget job item run mode: does not return anything and has to cleanup its own item after running
+
+//TODO should have some more immediate parameters for the job to work with
 
 typedef enum JOB_ITEM_STATE_E : uint8_t {
     JOB_ITEM_STATE_NONE = 0,

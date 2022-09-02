@@ -36,7 +36,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 5};
+    const semver client_version = semver{0, 2, 6};
 
     Client* main_client = NULL;
 
@@ -46,6 +46,9 @@ namespace Control {
         main_client = this;
         f_event_queue_create(&inbox);
 
+        const int initial_window_width = 1280;
+        const int initial_window_height = 720;
+
         dd = (frontend_display_data){
             .outbox = &inbox,
             /* .cfg_lock : initialized right after */
@@ -53,6 +56,8 @@ namespace Control {
             /* .jobs : initailized right after */
             .ms_tick = surena_get_ms64(),
             .view = PLAYER_NONE,
+            .fbw = initial_window_height,
+            .fbh = initial_window_height,
             .x = 0,
             .y = 0,
             .w = 1,
@@ -97,7 +102,7 @@ namespace Control {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,16);
         SDL_GL_SetSwapInterval(1); // vsync with 1, possibly set after window creation
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-        sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
+        sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
         sdl_glcontext = SDL_GL_CreateContext(sdl_window);
         SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
 
@@ -251,6 +256,8 @@ namespace Control {
 
         //TODO somehow needs to be initialized to a sane value before event loops on frontend, but not here?
         dd.view = PLAYER_NONE; //TODO use correct view
+        dd.fbw = imgui_viewport->Size.x;
+        dd.fbh = imgui_viewport->Size.y;
         dd.x = fx_px - x_px;
         dd.y = fy_px - y_px;
         dd.w = fw_px;
@@ -537,7 +544,7 @@ namespace Control {
             }
 
             // work through interface events: clicks, key presses, gui commands structs for updating interface elems
-            SDL_Event event;
+            SDL_Event event; //TODO need to free this later somewhere?
             while (SDL_PollEvent(&event))
             {
                 // pass event through imgui
@@ -710,20 +717,26 @@ namespace Control {
             h_px = imgui_viewport->WorkSize.y;
 
             dd.view = PLAYER_NONE; //TODO use correct view
+            dd.fbw = imgui_viewport->Size.x;
+            dd.fbh = imgui_viewport->Size.y;
             dd.x = fx_px;
             dd.y = fy_px;
             dd.w = fw_px;
             dd.h = fh_px;
 
             // rendering
-            glViewport(0, 0, (int)x_px+w_px, (int)y_px+h_px); //TODO is this fine? is this missing the menu bar in its height?
+            glViewport(0, 0, (int)dd.fbw, (int)dd.fbh); //TODO is this fine? is this missing the menu bar in its height?
             glMatrixMode(GL_PROJECTION);
             glLoadIdentity();
-            glOrtho(0.0, (GLdouble)x_px+w_px, (GLdouble)y_px+h_px, 0.0, -1, 1);
+            glOrtho(0.0, (GLdouble)dd.fbw, (GLdouble)dd.fbh, 0.0, -1, 1);
 
             dd.ms_tick = surena_get_ms64();
             the_frontend->methods->update(the_frontend);
-            nvgBeginFrame(nanovg_ctx, x_px+w_px, y_px+h_px, 2); //TODO use proper devicePixelRatio
+            nvgBeginFrame(nanovg_ctx, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio //TODO use proper frame size by window size
+            nvgBeginPath(nanovg_ctx);
+            nvgFillColor(nanovg_ctx, nvgRGB(250, 200, 200));
+            nvgRect(nanovg_ctx, -10, -10, dd.fbw + 20, dd.fbh + 20);
+            nvgFill(nanovg_ctx);
             // frontend only gets the frontend metagui dockspace
             the_frontend->methods->render(the_frontend);
             nvgEndFrame(nanovg_ctx);

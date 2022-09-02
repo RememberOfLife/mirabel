@@ -79,8 +79,11 @@ Collect more general resources:
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 * metagui game load options are not created and initialized correctly if the game is started via network (i.e. its comboboxes are not set via interaction and the creation doesnt fire)
 * fix windows build to work with plugin loading
+* network: event deserialize has to check that received strings are valid utf-8
+  * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
+* use proper profiler like gprof to get some perf metrics for the whole application
 * implement config cj serialization, and proper config meta gui window; actually use a config file for saving!
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
@@ -113,6 +116,11 @@ Collect more general resources:
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* universal plugin load api via stringly typed plugin types
+  * e.g. get_loader_capi_version() into get_plugin_types(enum or string outputs?) into get_methods(enum or string)
+  * then the plugin catalogue can be queried for a plugin of a type just by using something like pluginmgr.get_dyn_plugins(string id)
+    * could offer some kind of filtering based on games? i.e. get_dyn_plugins_compatible(stringid, game_methods)
+  * anyone, even plugins, can then make themselves moddable and extensible by just using a call to the pluginmgr api with the plugin type, and will get returned the loaded extension method wrappers if any
 * chat window should nerver draw focus from click
   * also, messages should fade out from view over time
   * offer hotkey 'y' to show history while holding, this ALSO enabled drag focus
@@ -123,6 +131,7 @@ Collect more general resources:
   * want notifications IN mirabel, or should mirabel issue to the environment notification service?
   * possibly unify this and some other features in a more general common frontend library
     * e.g. display a line at the top to show what is happening right now / being waited on (e.g. other player is selecting cards to discard, etc..)
+  * can use flashing window to draw attention on anything relevant new happening (https://wiki.libsdl.org/SDL_FlashWindow)
 * need some unit tests for things like move_history, config_registry etc?
 * draw and resign are events
   * player offering draw may set timeout, can not be taken back, on timeout it auto expires

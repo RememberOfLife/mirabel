@@ -128,6 +128,7 @@ set(SOURCES
     src/network/util.cpp
 
     src/prototype_util/direct_draw.cpp
+    src/prototype_util/imgui_c_thin.cpp
     src/prototype_util/st_gui.cpp
     
     src/main.cpp
@@ -150,6 +151,8 @@ target_compile_options(mirabel PRIVATE
 )
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
+
+target_link_options(mirabel PRIVATE -rdynamic)
 
 target_link_libraries(mirabel Threads::Threads)
 
