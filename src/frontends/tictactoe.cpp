@@ -224,6 +224,9 @@ namespace {
         data_repr& data = _get_repr(self);
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
+
+        nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
+
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
         nvgStrokeWidth(dc, data.button_size*0.175);
@@ -280,6 +283,9 @@ namespace {
             }
         }
         nvgRestore(dc);
+
+        nvgEndFrame(dc);
+
         return ERR_OK;
     }
 

@@ -36,7 +36,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 2, 6};
+    const semver client_version = semver{0, 2, 7};
 
     Client* main_client = NULL;
 
@@ -719,6 +719,7 @@ namespace Control {
             dd.view = PLAYER_NONE; //TODO use correct view
             dd.fbw = imgui_viewport->Size.x;
             dd.fbh = imgui_viewport->Size.y;
+            // frontend only gets the frontend metagui dockspace
             dd.x = fx_px;
             dd.y = fy_px;
             dd.w = fw_px;
@@ -732,14 +733,7 @@ namespace Control {
 
             dd.ms_tick = surena_get_ms64();
             the_frontend->methods->update(the_frontend);
-            nvgBeginFrame(nanovg_ctx, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio //TODO use proper frame size by window size
-            nvgBeginPath(nanovg_ctx);
-            nvgFillColor(nanovg_ctx, nvgRGB(250, 200, 200));
-            nvgRect(nanovg_ctx, -10, -10, dd.fbw + 20, dd.fbh + 20);
-            nvgFill(nanovg_ctx);
-            // frontend only gets the frontend metagui dockspace
             the_frontend->methods->render(the_frontend);
-            nvgEndFrame(nanovg_ctx);
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

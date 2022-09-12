@@ -75,6 +75,8 @@ namespace {
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
 
+        nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
+
         nvgSave(dc);
 
         nvgBeginPath(dc);
@@ -89,7 +91,9 @@ namespace {
         nvgText(dc, dd.x + dd.w - 15, dd.y + dd.h - 15, data.vstr, NULL);
 
         nvgRestore(dc);
-        
+
+        nvgEndFrame(dc);
+
         return ERR_OK;
     }
 

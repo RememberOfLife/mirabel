@@ -11,7 +11,7 @@ General purpose board game playing GUI and server with some useful features.
   * Reuseable resources available.
 
 Future features:
-* Histoy Manager for game state tracking and analysis.
+* History Manager for game state tracking and analysis.
 * Support for games using random moves, hidden information and simultaneous moves.
 
 ## dependencies
@@ -83,18 +83,25 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
+* proper config meta gui window; actually use a config file for saving!
+* config get an extra config folger (not res!), also, save metagui windows
+* frontend should be able to easily change the cursor, offer some util at least locally
+* to keep games in sync with server, client needs one active board and another synchronized board which is only ever updated with things the server sends, then if missmatch update active board with sync board, otherwise normally user makes move on active board and server shortly confirms to sync board so pieces stay where they are put, immediately
+  * also, add a way to introduce artificial network delay, maybe as a client setting? for debugging
+  * note: the active board is effectively the frontends own board, so the client can also just buffer all sent out events and check if the returned ones from the server are in the correct order as expected
+* separate queue for frontend, and *gamewrap also needs a queue* for output of e.g. state events
+* plugins allow: files, symlinks to files, folders, symlinks to folders
+  * json meta info file can offer names and version and in general paths to plugins for a folder, e.g. by glob (use posix c api)
 * use proper profiler like gprof to get some perf metrics for the whole application
-* implement config cj serialization, and proper config meta gui window; actually use a config file for saving!
 * problem with plugins
   * if method gets unloaded while opts are created -> memory leak
   * new game on server probably does wrong things if game has opts but is given str opts NULL
 * in the plugin methods catalogue, allow selecting a game impl, then filter all frontends/engines by compatible
   * also, probably sort games more tree like?
 * unify resource storage, likely resource repo
-* game config window display a move list somewhere?
+* add basic move list display and ability to move from game config
 * when starting a game, start the default frontend for it automatically, i.e. last used if multiple
   * needs "make default" button for every game impl
-* config get an extra config folger (not res!), also, save metagui windows
 * (create) use and send surena game sync counter
 * add option to use different imgui font
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
@@ -107,15 +114,12 @@ Collect more general resources:
 * use proper directory where the binary is located to infer default resource paths, ofc should also be passable as a config
 * chess frontend sounds
 * chess frontend animations
-* sound
-  * sound menu for muting and volume
-  * https://gist.github.com/armornick/3447121
-  * https://metacpan.org/pod/SDL2::audio
-  * https://github.com/jakebesworth/Simple-SDL2-Audio
+* sound api
 * actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 
 ## ideas
+* move out games and frontends to separate repo(s) and no default catalogue entries
 * universal plugin load api via stringly typed plugin types
   * e.g. get_loader_capi_version() into get_plugin_types(enum or string outputs?) into get_methods(enum or string)
   * then the plugin catalogue can be queried for a plugin of a type just by using something like pluginmgr.get_dyn_plugins(string id)
@@ -127,6 +131,9 @@ Collect more general resources:
   * or just enter the chat using enter to get focus
   * ctrl+t only enable disabled, never provides focus!
   * some way to resizechat still?
+  * add more chat msg types, i.e. announce type that highlights the whole row bg, etc..
+    * also command handling
+    * add chat command functionality and ability to move via chat cmd
 * global overlay notifications, (top-right, centered (e.g. mc title), sticky, progress..)
   * want notifications IN mirabel, or should mirabel issue to the environment notification service?
   * possibly unify this and some other features in a more general common frontend library
@@ -170,7 +177,6 @@ Collect more general resources:
 * combobox for gamevariant board implementation (e.g. bitboards, havannah eval persistent storage, etc..)
 * semver for all the components
 * ability to play a plugin game without the server loading it, by just forwarding everything to the trusted host player
-* frontend should be able to easily change the cursor, offer some util at least locally
 
 ## problems
 * how do sync data events work with the history manager?

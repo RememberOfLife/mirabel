@@ -125,6 +125,7 @@ typedef struct frontend_methods_s {
 
     //TODO re-add background rendering, needs different xywh than normal rendering!
 
+    //TODO render can take a bool wether the frontend is forced to redraw
     error_code (*render)(frontend* self);
 
     error_code (*is_game_compatible)(const game_methods* methods);

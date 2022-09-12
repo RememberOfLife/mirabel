@@ -60,8 +60,6 @@ namespace MetaGui {
             case CJ_TYPE_STRING: {
                 ImGui::Text("str: %s", ovac->v.s.str);
             } break;
-            case CJ_TYPE_COL4U:
-            case CJ_TYPE_COL4F:
             case CJ_TYPE_COUNT:
                 break;
         }
@@ -81,6 +79,53 @@ namespace MetaGui {
 
         cfg_rlock(Control::main_client->dd.cfg_lock);
         show_config_ovac(Control::main_client->dd.cfg);
+        /*{
+            static bool init = false;
+            if (!init) {
+                init = true;
+                cj_ovac* cfg = Control::main_client->dd.cfg;
+                cj_object_append(cfg, "abc", cj_create_vnull());
+                cj_object_append(cfg, "123", cj_create_f32(7.25));
+                cj_ovac* a1 = cj_create_object(0);
+                cj_object_append(a1, "a_key", cj_create_vnull());
+                cj_object_append(a1, "anotherone", cj_create_str(200, "some string"));
+                cj_object_append(cfg, "obj_key", a1);
+                cj_ovac* a2 = cj_create_array(0);
+                cj_array_append(a2, cj_create_u64(1));
+                cj_array_append(a2, cj_create_u64(3));
+                cj_array_append(a2, cj_create_u64(2));
+                cj_array_append(a2, cj_create_u64(4));
+                cj_object_append(cfg, "arr_key", a2);
+                cj_object_append(cfg, "17", cj_create_u64(42));
+                cj_object_append(cfg, "mybool", cj_create_bool(false));
+            }
+            static char* serializedstr = (char*)malloc(8000);
+            cj_serialize(serializedstr, Control::main_client->dd.cfg, true);
+            ImGui::Separator();
+            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, true));
+            ImGui::Text("%s", serializedstr);
+            ImGui::Text("real measure: %zu", strlen(serializedstr) + 1);
+            cj_serialize(serializedstr, Control::main_client->dd.cfg, false);
+            ImGui::Separator();
+            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, false));
+            ImGui::Text("%s", serializedstr);
+            ImGui::Text("real measure: %zu", strlen(serializedstr) + 1);
+            ImGui::Separator();
+            static char* readin = (char*)malloc(8000);
+            static bool readininit = false;
+            if (!readininit) {
+                readininit = true;
+                readin[0] = '\0';
+            }
+            ImGui::InputTextMultiline("json input", readin, 8000);
+            if (ImGui::Button("parse")) {
+                cj_ovac* newcfg = cj_deserialize(readin);
+                if (newcfg) {
+                    cj_ovac_destroy(Control::main_client->dd.cfg);
+                    Control::main_client->dd.cfg = newcfg;
+                }
+            }
+        }*/
         cfg_runlock(Control::main_client->dd.cfg_lock);
         
         ImGui::End();

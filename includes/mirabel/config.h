@@ -22,8 +22,8 @@ typedef enum CJ_TYPE_E : uint8_t {
     CJ_TYPE_F32,
     CJ_TYPE_BOOL,
     CJ_TYPE_STRING,
-    CJ_TYPE_COL4U,
-    CJ_TYPE_COL4F,
+    // CJ_TYPE_COL4U,
+    // CJ_TYPE_COL4F,
     CJ_TYPE_COUNT,
 } CJ_TYPE;
 
@@ -52,8 +52,8 @@ typedef union cj_value_u {
     float f32;
     bool b;
     cj_sb_string s;
-    cj_color4u col4u;
-    cj_color4f col4f;
+    // cj_color4u col4u;
+    // cj_color4f col4f;
 } cj_value;
 
 // config object/value/array-container
@@ -64,7 +64,7 @@ struct cj_ovac_s {
     // only valid if object/array
     uint32_t child_cap;
     uint32_t child_count;
-    cj_ovac** children;
+    cj_ovac** children; //TODO maybe want to store the actual children instead of pointers here?
     //TODO use proper hashmap for object access! (additionaly, obj children are ordered so the plain array will always exist too!)
 
     //TODO could use ref counting and pointer to newer version here
@@ -81,6 +81,8 @@ struct cj_ovac_s {
 //TODO actually want color types?
 //TODO make duplicate and destroy iterative instead of recursive
 
+//TODO cj_sb_string resize to target buffer size
+
 cj_ovac* cj_create_object(uint32_t cap);
 void cj_object_append(cj_ovac* obj, const char* key, cj_ovac* ovac);
 //TODO cj_object_insert by idx?
@@ -93,7 +95,7 @@ cj_ovac* cj_create_vnull();
 cj_ovac* cj_create_u64(uint64_t value);
 cj_ovac* cj_create_f32(float value);
 cj_ovac* cj_create_bool(bool value);
-cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self
+cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self, cap must be >= strlen(str)+1
 // cj_ovac* cj_create_col4u(cj_color4u value);
 // cj_ovac* cj_create_col4f(cj_color4f value);
 
@@ -111,11 +113,10 @@ void cj_ovac_replace(cj_ovac* entry_ovac, cj_ovac* data_ovac);
 
 void cj_ovac_destroy(cj_ovac* ovac); // if ovac is in a parent container, it will automatically be removed from there first
 
-/* no backend //TODO
-size_t cj_measure(cj_ovac* ovac, bool packed);
-void cj_serialize(char* buf, cj_ovac* ovac, bool packed);
-cj_ovac* cj_deserialize(const char* buf, size_t len);
-*/
+// no backend //TODO
+size_t cj_measure(cj_ovac* ovac, bool packed); // includes a final zero terminator
+void cj_serialize(char* buf, cj_ovac* ovac, bool packed); // returns a pointer just beyond the last written character
+cj_ovac* cj_deserialize(const char* buf); // must be zero terminated
 
 /* no backend, //TODO finalize api
 

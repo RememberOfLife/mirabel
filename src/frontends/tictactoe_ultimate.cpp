@@ -250,6 +250,9 @@ namespace {
         data_repr& data = _get_repr(self);
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
+
+        nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
+
         float local_board_size = 3*data.button_size+2*data.local_padding;
         uint8_t global_target = 0;
         if (data.g.methods != NULL) {
@@ -351,6 +354,9 @@ namespace {
             }
         }
         nvgRestore(dc);
+
+        nvgEndFrame(dc);
+
         return ERR_OK;
     }
 

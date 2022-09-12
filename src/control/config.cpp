@@ -342,8 +342,6 @@ cj_ovac* cj_ovac_duplicate(cj_ovac* ovac)
             };
             strcpy(clone->v.s.str, ovac->v.s.str);
         } break;
-        case CJ_TYPE_COL4U:
-        case CJ_TYPE_COL4F:
         case CJ_TYPE_COUNT: {
             assert(0);
         } break;
@@ -410,20 +408,296 @@ void cj_ovac_destroy(cj_ovac* ovac)
     free(ovac);
 }
 
+size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth)
+{
+    size_t acc = 0;
+    if (ovac->label_str != NULL) {
+        acc += 3 + strlen(ovac->label_str) + (packed ? 0 : 1); // "\"%s\": "
+    }
+    switch (ovac->type) {
+        case CJ_TYPE_NONE: {
+            assert(0);
+        } break;
+        case CJ_TYPE_OBJECT:
+        case CJ_TYPE_ARRAY: {
+            acc += 2; // "{" and "}" or "[" or "]"
+            if (ovac->child_count > 0) {
+                if (packed == false) {
+                    acc += 1 + 4 * depth; // "\n" and "    " for every child
+                }
+                for (uint32_t i = 0; i < ovac->child_count; i++) {
+                    if (packed == false) {
+                        acc += 4 * (depth + 1) + 1; // padding for child and "\n" since unpacked
+                    }
+                    acc += cj_measure_impl(ovac->children[i], packed, depth + 1);
+                    if (packed == false || i < ovac->child_count - 1) {
+                        acc += 1; // "," at end of child
+                    }
+                }
+            }
+        } break;
+        case CJ_TYPE_VNULL: {
+            acc += 4;
+        } break;
+        case CJ_TYPE_U64: {
+            acc += snprintf(NULL, 0, "%lu", ovac->v.u64);
+        } break;
+        case CJ_TYPE_F32: {
+            acc += snprintf(NULL, 0, "%f", ovac->v.f32);
+        } break;
+        case CJ_TYPE_BOOL: {
+            acc += ovac->v.b ? 4 : 5;
+        } break;
+        case CJ_TYPE_STRING: {
+            acc += 2 + strlen(ovac->v.s.str); // "\"%s\"" //TODO lots of encoding issues
+        } break;
+        case CJ_TYPE_COUNT: {
+            assert(0);
+        } break;
+    }
+    if (depth == 0) {
+        acc += 2; // "\n" and "\0" for root obj
+    }
+    return acc;
+}
+
 size_t cj_measure(cj_ovac* ovac, bool packed)
 {
-    //TODO
-    return 0;
+    return cj_measure_impl(ovac, packed, 0);
+}
+
+char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth)
+{
+    char* wrp = buf;
+    if (ovac->label_str != NULL) {
+        wrp += sprintf(wrp, "\"%s\":", ovac->label_str);
+        if (packed == false) {
+            wrp += sprintf(wrp, " ");
+        }
+    }
+    switch (ovac->type) {
+        case CJ_TYPE_NONE: {
+            assert(0);
+        } break;
+        case CJ_TYPE_OBJECT:
+        case CJ_TYPE_ARRAY: {
+            switch (ovac->type) {
+                case CJ_TYPE_OBJECT: {
+                    wrp += sprintf(wrp, "{");
+                } break;
+                case CJ_TYPE_ARRAY: {
+                    wrp += sprintf(wrp, "[");
+                } break;
+                default: {
+                    assert(0);
+                } break;
+            }
+            if (ovac->child_count > 0) {
+                if (packed == false) {
+                    wrp += sprintf(wrp, "\n");
+                }
+                for (uint32_t i = 0; i < ovac->child_count; i++) {
+                    if (packed == false) {
+                        memset(wrp, ' ', 4 * (depth + 1));
+                        wrp += 4 * (depth + 1);
+                    }
+                    wrp = cj_serialize_impl(wrp, ovac->children[i], packed, depth + 1);
+                    if (packed == false || i < ovac->child_count - 1) {
+                        wrp += sprintf(wrp, ",");
+                    }
+                    if (packed == false) {
+                        wrp += sprintf(wrp, "\n");
+                    }
+                }
+                if (packed == false) {
+                    memset(wrp, ' ', 4 * depth);
+                    wrp += 4 * depth;
+                }
+            }
+            switch (ovac->type) {
+                case CJ_TYPE_OBJECT: {
+                    wrp += sprintf(wrp, "}");
+                } break;
+                case CJ_TYPE_ARRAY: {
+                    wrp += sprintf(wrp, "]");
+                } break;
+                default: {
+                    assert(0);
+                } break;
+            }
+        } break;
+        case CJ_TYPE_VNULL: {
+            wrp += sprintf(wrp, "null");
+        } break;
+        case CJ_TYPE_U64: {
+            wrp += sprintf(wrp, "%lu", ovac->v.u64);
+        } break;
+        case CJ_TYPE_F32: {
+            wrp += sprintf(wrp, "%f", ovac->v.f32);
+        } break;
+        case CJ_TYPE_BOOL: {
+            wrp += sprintf(wrp, ovac->v.b ? "true" : "false");
+        } break;
+        case CJ_TYPE_STRING: {
+            wrp += sprintf(wrp, "\"%s\"", ovac->v.s.str); //TODO lots of encoding issues
+        } break;
+        case CJ_TYPE_COUNT: {
+            assert(0);
+        } break;
+    }
+    if (depth == 0) {
+        wrp += sprintf(wrp, "\n");
+    }
+    return wrp;
 }
 
 void cj_serialize(char* buf, cj_ovac* ovac, bool packed)
 {
-    //TODO
+    cj_serialize_impl(buf, ovac, packed, 0);
 }
 
-cj_ovac* cj_deserialize(const char* buf, size_t len)
+const char* cj_deserialize_impl_parse_string(const char* buf, cj_sb_string* sbs)
 {
-    //TODO
+    const char* wbuf = buf;
+    //TODO //BUG this currently does not allow '\"' escaping, it just stops the string immediately on the first '"'
+    while (*wbuf != '\0' && *wbuf != '\"') {
+        wbuf++;
+    }
+    *sbs = (cj_sb_string){
+        .cap = (size_t)(wbuf - buf + 1),
+        .str = (char*)malloc(wbuf - buf + 1),
+    };
+    memcpy(sbs->str, buf, sbs->cap);
+    sbs->str[sbs->cap - 1] = '\0';
+    return wbuf + 1;
+}
+
+//TODO need this at all?
+//TODO could also just return a string ovac containing the parsing error message
+cj_ovac* cj_deserialize_impl_abort(cj_ovac* ovac)
+{
+    cj_ovac* dp = ovac;
+    while (dp->parent) {
+        dp = dp->parent;
+    }
+    cj_ovac_destroy(dp);
+    return NULL;
+}
+
+//BUG this does basically no error checking at all //TODO
+cj_ovac* cj_deserialize(const char* buf)
+{
+    const char* wbuf = buf;
+
+    cj_ovac* ccon = NULL; // current container (object/array)
+    cj_sb_string pstr = (cj_sb_string){.cap = 0, .str = NULL};
+
+    char c = *(wbuf++);
+    while (c != '\0') {
+        switch (c) {
+            case ' ':
+            case '\n': {
+                // pass
+            } break;
+            case '{':
+            case '[': {
+                cj_ovac* new_con;
+                if (c == '{') {
+                    new_con = cj_create_object(0);
+                } else {
+                    new_con = cj_create_array(0);
+                }
+                if (ccon != NULL) {
+                    if (ccon->type == CJ_TYPE_OBJECT) {
+                        cj_object_append(ccon, pstr.str, new_con);
+                        pstr.cap = 0;
+                        free(pstr.str);
+                        pstr.str = NULL;
+                    } else if (ccon->type == CJ_TYPE_ARRAY) {
+                        cj_array_append(ccon, new_con);
+                    } else {
+                        assert(0);
+                    }
+                }
+                new_con->parent = ccon;
+                ccon = new_con;
+            } break;
+            case '}':
+            case ']': {
+                // close container
+                if (ccon->parent == NULL) {
+                    //TODO special case if this closed the main object?
+                    // check that only whitespace follows, then return parsed obj?
+                    return ccon;
+                }
+                ccon = ccon->parent;
+            } break;
+            case '"': {
+                // parse the string currently at buf
+                if (pstr.str == NULL && ccon->type == CJ_TYPE_OBJECT) {
+                    // this a key
+                    wbuf = cj_deserialize_impl_parse_string(wbuf, &pstr);
+                } else {
+                    cj_sb_string val_str;
+                    wbuf = cj_deserialize_impl_parse_string(wbuf, &val_str);
+                    cj_ovac* new_str = cj_create_str(val_str.cap, val_str.str);
+                    free(val_str.str);
+                    if (pstr.str != NULL) {
+                        cj_object_append(ccon, pstr.str, new_str);
+                        pstr.cap = 0;
+                        free(pstr.str);
+                        pstr.str = NULL;
+                    } else {
+                        cj_array_append(ccon, new_str);
+                    }
+                }
+            } break;
+            case ':': {
+                // pass
+            } break;
+            case ',': {
+                // pass
+            } break;
+            default: {
+                // value: vnull, u64, f32, bool
+                cj_ovac* new_val = NULL;
+                uint64_t u64;
+                float f32;
+                int vlen = 1;
+                int scan_len;
+                const char* cbuf = wbuf;
+                // skip forward to next non value character //TODO //BUG make this proper
+                while (*cbuf != '\0' && *cbuf != ',' && *cbuf != ' ' && *cbuf != '\n' && *cbuf != '}' && *cbuf != ']') {
+                    cbuf++;
+                }
+                vlen += cbuf - wbuf;
+                if (strncmp(wbuf - 1, "null", 4) == 0) {
+                    new_val = cj_create_vnull();
+                } else if (strncmp(wbuf - 1, "true", 4) == 0) {
+                    new_val = cj_create_bool(true);
+                } else if (strncmp(wbuf - 1, "false", 5) == 0) {
+                    new_val = cj_create_bool(false);
+                } else if (sscanf(wbuf - 1, "%lu%n", &u64, &scan_len) == 1 && scan_len == vlen) {
+                    new_val = cj_create_u64(u64);
+                } else if (sscanf(wbuf - 1, "%f%n", &f32, &scan_len) == 1 && scan_len == vlen) {
+                    new_val = cj_create_f32(f32);
+                } else {
+                    assert(0);
+                }
+                wbuf = cbuf;
+                // append value to container
+                if (pstr.str != NULL) {
+                    cj_object_append(ccon, pstr.str, new_val);
+                    pstr.cap = 0;
+                    free(pstr.str);
+                    pstr.str = NULL;
+                } else {
+                    cj_array_append(ccon, new_val);
+                }
+            } break;
+        }
+        c = *(wbuf++);
+    }
     return NULL;
 }
 

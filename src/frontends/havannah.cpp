@@ -274,6 +274,9 @@ namespace {
         data_repr& data = _get_repr(self);
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
+
+        nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
+
         //TODO
         const float hex_angle = 2 * M_PI / 6;
         const float fitting_hex_radius = data.button_size+data.padding;
@@ -461,6 +464,9 @@ namespace {
             }
         }
         nvgRestore(dc);
+
+        nvgEndFrame(dc);
+
         return ERR_OK;
     }
 

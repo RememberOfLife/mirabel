@@ -209,6 +209,8 @@ namespace {
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
 
+        nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
+
         //TODO
         const float xcol_offset = 100;
         const float xcol_spacing = 20;
@@ -275,6 +277,8 @@ namespace {
         }
 
         nvgRestore(dc);
+
+        nvgEndFrame(dc);
 
         return ERR_OK;
     }
