@@ -22,6 +22,7 @@ typedef enum CJ_TYPE_E : uint8_t {
     CJ_TYPE_F32,
     CJ_TYPE_BOOL,
     CJ_TYPE_STRING,
+    CJ_TYPE_ERROR,
     // CJ_TYPE_COL4U,
     // CJ_TYPE_COL4F,
     CJ_TYPE_COUNT,
@@ -95,7 +96,7 @@ cj_ovac* cj_create_vnull();
 cj_ovac* cj_create_u64(uint64_t value);
 cj_ovac* cj_create_f32(float value);
 cj_ovac* cj_create_bool(bool value);
-cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self, cap must be >= strlen(str)+1
+cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self, cap must be >= strlen(str)+1 //TODO make this more accessible: version with implicit cap and version without an actual string, i.e. null
 // cj_ovac* cj_create_col4u(cj_color4u value);
 // cj_ovac* cj_create_col4f(cj_color4f value);
 
@@ -113,10 +114,10 @@ void cj_ovac_replace(cj_ovac* entry_ovac, cj_ovac* data_ovac);
 
 void cj_ovac_destroy(cj_ovac* ovac); // if ovac is in a parent container, it will automatically be removed from there first
 
-// no backend //TODO
-size_t cj_measure(cj_ovac* ovac, bool packed); // includes a final zero terminator
-void cj_serialize(char* buf, cj_ovac* ovac, bool packed); // returns a pointer just beyond the last written character
-cj_ovac* cj_deserialize(const char* buf); // must be zero terminated
+// if str_hint is true then "\!XXX" and "\0" are enabled for use in strings
+size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint); // includes a final zero terminator
+char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint); // returns a pointer just beyond the last written character
+cj_ovac* cj_deserialize(const char* buf, bool str_hint); // must be zero terminated, returns an obj ovac if successful, otherwise an ovac of type CJ_TYPE_ERROR, which has a string value containing the error string, or NULL if no error specified
 
 /* no backend, //TODO finalize api
 

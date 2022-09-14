@@ -1,7 +1,9 @@
 #include <cassert>
+#include <cstdarg>
 #include <cstdbool>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <mutex>
 #include <unordered_map>
@@ -325,6 +327,7 @@ cj_ovac* cj_ovac_duplicate(cj_ovac* ovac)
             };
         } break;
         case CJ_TYPE_STRING: {
+            //TODO clone for NULL strings
             *clone = (cj_ovac){
                 .parent = NULL,
                 .child_cap = 0,
@@ -341,6 +344,9 @@ cj_ovac* cj_ovac_duplicate(cj_ovac* ovac)
                 },
             };
             strcpy(clone->v.s.str, ovac->v.s.str);
+        } break;
+        case CJ_TYPE_ERROR: {
+            assert(0); //TODO rather error?
         } break;
         case CJ_TYPE_COUNT: {
             assert(0);
@@ -408,7 +414,7 @@ void cj_ovac_destroy(cj_ovac* ovac)
     free(ovac);
 }
 
-size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth)
+size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint)
 {
     size_t acc = 0;
     if (ovac->label_str != NULL) {
@@ -429,7 +435,7 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth)
                     if (packed == false) {
                         acc += 4 * (depth + 1) + 1; // padding for child and "\n" since unpacked
                     }
-                    acc += cj_measure_impl(ovac->children[i], packed, depth + 1);
+                    acc += cj_measure_impl(ovac->children[i], packed, depth + 1, str_hint);
                     if (packed == false || i < ovac->child_count - 1) {
                         acc += 1; // "," at end of child
                     }
@@ -449,7 +455,18 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth)
             acc += ovac->v.b ? 4 : 5;
         } break;
         case CJ_TYPE_STRING: {
-            acc += 2 + strlen(ovac->v.s.str); // "\"%s\"" //TODO lots of encoding issues
+            if (ovac->v.s.str == NULL) {
+                if (str_hint == true) {
+                    acc += 5; // for null hint and its quotes: "\!0"
+                } else {
+                    acc += 4; // for "null"
+                }
+            } else {
+                acc += 2 + strlen(ovac->v.s.str); // "\"%s\"" //TODO lots of encoding issues
+            }
+        } break;
+        case CJ_TYPE_ERROR: {
+            assert(0); //TODO rather error?
         } break;
         case CJ_TYPE_COUNT: {
             assert(0);
@@ -461,12 +478,12 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth)
     return acc;
 }
 
-size_t cj_measure(cj_ovac* ovac, bool packed)
+size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint)
 {
-    return cj_measure_impl(ovac, packed, 0);
+    return cj_measure_impl(ovac, packed, 0, str_hint);
 }
 
-char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth)
+char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint)
 {
     char* wrp = buf;
     if (ovac->label_str != NULL) {
@@ -501,7 +518,7 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth)
                         memset(wrp, ' ', 4 * (depth + 1));
                         wrp += 4 * (depth + 1);
                     }
-                    wrp = cj_serialize_impl(wrp, ovac->children[i], packed, depth + 1);
+                    wrp = cj_serialize_impl(wrp, ovac->children[i], packed, depth + 1, str_hint);
                     if (packed == false || i < ovac->child_count - 1) {
                         wrp += sprintf(wrp, ",");
                     }
@@ -539,7 +556,18 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth)
             wrp += sprintf(wrp, ovac->v.b ? "true" : "false");
         } break;
         case CJ_TYPE_STRING: {
-            wrp += sprintf(wrp, "\"%s\"", ovac->v.s.str); //TODO lots of encoding issues
+            if (ovac->v.s.str == NULL) {
+                if (str_hint == true) {
+                    wrp += sprintf(wrp, "\"\\!0\"");
+                } else {
+                    wrp += sprintf(wrp, "null");
+                }
+            } else {
+                wrp += sprintf(wrp, "\"%s\"", ovac->v.s.str); //TODO lots of encoding issues
+            }
+        } break;
+        case CJ_TYPE_ERROR: {
+            assert(0); //TODO rather error?
         } break;
         case CJ_TYPE_COUNT: {
             assert(0);
@@ -551,43 +579,55 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth)
     return wrp;
 }
 
-void cj_serialize(char* buf, cj_ovac* ovac, bool packed)
+char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint)
 {
-    cj_serialize_impl(buf, ovac, packed, 0);
+    return cj_serialize_impl(buf, ovac, packed, 0, str_hint);
 }
 
-const char* cj_deserialize_impl_parse_string(const char* buf, cj_sb_string* sbs)
+cj_ovac* cj_deserialize_impl_abort(cj_ovac* ovac, size_t lnum, size_t cnum, const char* fmt, ...)
+{
+    if (ovac != NULL) {
+        // destroy ovac
+        cj_ovac* dp = ovac;
+        while (dp->parent) {
+            dp = dp->parent;
+        }
+        cj_ovac_destroy(dp);
+    }
+    // return a formatted error
+    if (fmt == NULL) {
+        return NULL;
+    }
+    char* estr;
+    va_list args;
+    va_start(args, fmt);
+    size_t len = snprintf(NULL, 0, "%zu:%zu: ", lnum, cnum) + vsnprintf(NULL, 0, fmt, args) + 1;
+    va_end(args);
+    estr = (char*)malloc(len);
+    if (estr == NULL) {
+        return NULL;
+    }
+    cj_ovac* rp = cj_create_str(len, "");
+    rp->type = CJ_TYPE_ERROR;
+    char* rp_str = rp->v.s.str + sprintf(rp->v.s.str, "%zu:%zu: ", lnum, cnum);
+    va_start(args, fmt);
+    vsnprintf(rp_str, len, fmt, args);
+    va_end(args);
+    return rp;
+}
+
+//TODO allow \t as whitespace
+// allows for block comments "/*...*/", which may never interrupt values, but can otherwise appear anywhere
+cj_ovac* cj_deserialize(const char* buf, bool str_hint)
 {
     const char* wbuf = buf;
-    //TODO //BUG this currently does not allow '\"' escaping, it just stops the string immediately on the first '"'
-    while (*wbuf != '\0' && *wbuf != '\"') {
-        wbuf++;
-    }
-    *sbs = (cj_sb_string){
-        .cap = (size_t)(wbuf - buf + 1),
-        .str = (char*)malloc(wbuf - buf + 1),
-    };
-    memcpy(sbs->str, buf, sbs->cap);
-    sbs->str[sbs->cap - 1] = '\0';
-    return wbuf + 1;
-}
 
-//TODO need this at all?
-//TODO could also just return a string ovac containing the parsing error message
-cj_ovac* cj_deserialize_impl_abort(cj_ovac* ovac)
-{
-    cj_ovac* dp = ovac;
-    while (dp->parent) {
-        dp = dp->parent;
-    }
-    cj_ovac_destroy(dp);
-    return NULL;
-}
+    size_t lnum = 0;
+    size_t cnum = 0;
 
-//BUG this does basically no error checking at all //TODO
-cj_ovac* cj_deserialize(const char* buf)
-{
-    const char* wbuf = buf;
+    bool want_colon = false;
+    bool want_comma = false;
+    bool want_value = true;
 
     cj_ovac* ccon = NULL; // current container (object/array)
     cj_sb_string pstr = (cj_sb_string){.cap = 0, .str = NULL};
@@ -595,15 +635,44 @@ cj_ovac* cj_deserialize(const char* buf)
     char c = *(wbuf++);
     while (c != '\0') {
         switch (c) {
-            case ' ':
-            case '\n': {
+            case '/': {
+                if (*wbuf != '*') {
+                    break;
+                }
+                size_t e_lnum = lnum;
+                size_t e_cnum = cnum;
+                wbuf++;
+                cnum++;
+                // skip forward until end of comment
+                const char* cbuf = wbuf;
+                while (*cbuf != '\0' && (*cbuf != '*' || *(cbuf + 1) != '/')) {
+                    cnum++;
+                    if (*cbuf == '\n') {
+                        lnum++;
+                        cnum = 0;
+                    }
+                    cbuf++;
+                }
+                if (*cbuf == '*') {
+                    cbuf += 2;
+                    cnum += 2;
+                } else {
+                    return cj_deserialize_impl_abort(ccon, e_lnum, e_cnum, "unterminated block comment");
+                }
+                wbuf = cbuf;
+            } break;
+            case ' ': {
                 // pass
+            } break;
+            case '\n': {
+                lnum++;
             } break;
             case '{':
             case '[': {
                 cj_ovac* new_con;
                 if (c == '{') {
                     new_con = cj_create_object(0);
+                    want_value = false;
                 } else {
                     new_con = cj_create_array(0);
                 }
@@ -616,7 +685,7 @@ cj_ovac* cj_deserialize(const char* buf)
                     } else if (ccon->type == CJ_TYPE_ARRAY) {
                         cj_array_append(ccon, new_con);
                     } else {
-                        assert(0);
+                        assert(0); // this can never happen
                     }
                 }
                 new_con->parent = ccon;
@@ -625,49 +694,266 @@ cj_ovac* cj_deserialize(const char* buf)
             case '}':
             case ']': {
                 // close container
+                if (ccon == NULL) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "can not close missing container");
+                }
+                if (c == '}' && ccon->type != CJ_TYPE_OBJECT) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected '}' on closing array");
+                } else if (c == ']' && ccon->type != CJ_TYPE_ARRAY) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected ']' on closing object");
+                }
+                if (want_colon == true || (ccon->type == CJ_TYPE_OBJECT && want_value == true)) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal key without value on container close");
+                }
                 if (ccon->parent == NULL) {
-                    //TODO special case if this closed the main object?
-                    // check that only whitespace follows, then return parsed obj?
-                    return ccon;
+                    // check that only whitespace follows, then return parsed ovac
+                    while (*wbuf != '\0' && (*wbuf == ' ' || *wbuf == '\n')) {
+                        cnum++;
+                        if (*wbuf == '\n') {
+                            lnum++;
+                            cnum = 0;
+                        }
+                        wbuf++;
+                    }
+                    if (*wbuf == '\0') {
+                        return ccon;
+                    } else {
+                        return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal non whitespace content after main content");
+                    }
                 }
                 ccon = ccon->parent;
+                want_comma = true;
+                want_value = (ccon->type == CJ_TYPE_ARRAY);
             } break;
             case '"': {
+                //TODO validate that all codepoints are valid utf-8
                 // parse the string currently at buf
-                if (pstr.str == NULL && ccon->type == CJ_TYPE_OBJECT) {
-                    // this a key
-                    wbuf = cj_deserialize_impl_parse_string(wbuf, &pstr);
+                cj_sb_string val_str;
+                size_t str_len = 0;
+                size_t cap_res = SIZE_MAX;
+                size_t e_lnum = lnum;
+                size_t e_cnum = cnum;
+                const char* cbuf = wbuf;
+                while (*cbuf != '\0' && *cbuf != '\"' && *cbuf != '\n') {
+                    if (*cbuf == '\\') {
+                        cbuf++;
+                        switch (*cbuf) {
+                            case '!': { // custom string hint escape code, must be the last thing in the json string
+                                if (str_hint == false) {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected string capacity reservation hint, disallowed by runtime");
+                                }
+                                if (ccon && pstr.str == NULL && ccon->type == CJ_TYPE_OBJECT) {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "string capacity reservation only allowed in value strings");
+                                }
+                                int scan_len;
+                                int ec = sscanf(cbuf, "!%zu%n", &cap_res, &scan_len);
+                                if (ec != 1) {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "invalid string capacity reservation");
+                                }
+                                if (cap_res == 0) {
+                                    if (cbuf > wbuf + 1) {
+                                        return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal null string hint in non null string");
+                                    }
+                                }
+                                cbuf += scan_len - 1;
+                                cnum += scan_len - 1;
+                                if (*(cbuf + 1) != '\"') {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "invalid string capacity reservation is not final in string");
+                                }
+                                str_len--;
+                            } break;
+                            case '0': { // additional sanity escape code for zero terminator
+                                if (str_hint == false) {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected zero terminator string hint, disallowed by runtime");
+                                }
+                                if (ccon && pstr.str == NULL && ccon->type == CJ_TYPE_OBJECT) {
+                                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "zero terminator only allowed in value strings");
+                                }
+                                str_len--;
+                            } break;
+                            // normal escapes: " \ / b f n r t
+                            case '\"':
+                            case '\\':
+                            case '/':
+                            case 'b':
+                            case 'f':
+                            case 'n':
+                            case 'r':
+                            case 't': {
+                                // pass
+                            } break;
+                            case 'u': {
+                                // explicit unicode point
+                                //TODO check for validity
+                                cbuf += 3;
+                                cnum += 3;
+                            } break;
+                            default: {
+                                return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal escape character: %c (%hhu)", *cbuf, (uint8_t)*cbuf);
+                            } break;
+                        }
+                        cnum++;
+                    }
+                    str_len++;
+                    cbuf++;
+                    cnum++;
+                }
+                if (*cbuf == '\0') {
+                    return cj_deserialize_impl_abort(ccon, e_lnum, e_cnum, "unterminated string");
+                } else if (*cbuf == '\n') {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "raw newline in string");
+                }
+                if (cap_res > 0) {
+                    if (cap_res == SIZE_MAX) {
+                        // no size hint given, use detected length
+                        cap_res = str_len + 1;
+                    } else if (cap_res < str_len + 1) {
+                        // increase cap_res 
+                        cap_res = str_len + 1;
+                    }
+                    val_str.cap = cap_res;
+                    val_str.str = (char*)malloc(cap_res);
+                    if (val_str.str == NULL) {
+                        return cj_deserialize_impl_abort(ccon, lnum, cnum, NULL);
+                    }
+                    // need to memcpy each char individually in extra loop to allow for escape codes
+                    size_t copy_idx = 0;
+                    while (*wbuf != '\"') {
+                        if (*wbuf == '\\') {
+                            wbuf++;
+                            switch (*wbuf) {
+                                case '!': { // custom string hint escape code
+                                    while (*(wbuf + 1) != '\"') {
+                                        wbuf++;
+                                    }
+                                } break;
+                                case '0': { // additional sanity escape code for zero terminator
+                                    val_str.str[copy_idx] = '\0';
+                                } break;
+                                // normal escapes: " \ / b f n r t
+                                case '\"': {
+                                    val_str.str[copy_idx] = '\"';
+                                } break;
+                                case '\\': {
+                                    val_str.str[copy_idx] = '\\';
+                                } break;
+                                case '/': {
+                                    val_str.str[copy_idx] = '/';
+                                } break;
+                                case 'b': {
+                                    val_str.str[copy_idx] = '\b';
+                                } break;
+                                case 'f': {
+                                    val_str.str[copy_idx] = '\f';
+                                } break;
+                                case 'n': {
+                                    val_str.str[copy_idx] = '\n';
+                                } break;
+                                case 'r': {
+                                    val_str.str[copy_idx] = '\r';
+                                } break;
+                                case 't': {
+                                    val_str.str[copy_idx] = '\t';
+                                } break;
+                                case 'u': {
+                                    // explicit unicode point
+                                    //TODO
+                                    wbuf += 3;
+                                } break;
+                                default: {
+                                    assert(0); // handled in first loop
+                                } break;
+                            }
+                        } else {
+                            val_str.str[copy_idx] = *wbuf;
+                        }
+                        wbuf++;
+                        copy_idx++;
+                    }
+                    val_str.str[str_len] = '\0';
                 } else {
-                    cj_sb_string val_str;
-                    wbuf = cj_deserialize_impl_parse_string(wbuf, &val_str);
-                    cj_ovac* new_str = cj_create_str(val_str.cap, val_str.str);
-                    free(val_str.str);
+                    // value string is hinted null
+                    val_str.cap = 0;
+                    val_str.str = NULL;
+                }
+                wbuf = cbuf + 1;
+                cnum++;
+                // process parsed string
+                if (ccon != NULL && pstr.str == NULL && ccon->type == CJ_TYPE_OBJECT) {
+                    // this a key
+                    pstr = val_str;
+                    want_colon = true;
+                    want_value = false;
+                } else {
+                    // this is a value string
+                    cj_ovac* new_str;
+                    if (val_str.str == NULL) {
+                        new_str = cj_create_vnull();
+                        new_str->type = CJ_TYPE_STRING;
+                        new_str->v.s = (cj_sb_string){.cap = 0, .str = NULL};
+                    } else {
+                        new_str = cj_create_str(val_str.cap, val_str.str);
+                        free(val_str.str);
+                    }
+                    if (ccon == NULL) {
+                        // root value instead of obj/arr
+                        return new_str;
+                    }
                     if (pstr.str != NULL) {
                         cj_object_append(ccon, pstr.str, new_str);
                         pstr.cap = 0;
                         free(pstr.str);
                         pstr.str = NULL;
+                        want_value = false;
                     } else {
                         cj_array_append(ccon, new_str);
+                        want_value = true;
                     }
+                    want_comma = true;
                 }
             } break;
             case ':': {
-                // pass
+                if (want_colon == true) {
+                    want_colon = false;
+                    want_value = true;
+                } else {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected ':'");
+                }
             } break;
             case ',': {
-                // pass
+                if (want_comma == true) {
+                    want_comma = false;
+                    want_value = (ccon->type == CJ_TYPE_ARRAY);
+                } else {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected ','");
+                }
             } break;
             default: {
+                if (want_comma == true) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value, missing ','");
+                }
+                if (want_colon == true) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value, missing ':'");
+                }
+                if (want_value == false) {
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value");
+                }
                 // value: vnull, u64, f32, bool
                 cj_ovac* new_val = NULL;
                 uint64_t u64;
                 float f32;
                 int vlen = 1;
                 int scan_len;
+                size_t e_lnum = lnum;
+                size_t e_cnum = cnum;
                 const char* cbuf = wbuf;
                 // skip forward to next non value character //TODO //BUG make this proper
                 while (*cbuf != '\0' && *cbuf != ',' && *cbuf != ' ' && *cbuf != '\n' && *cbuf != '}' && *cbuf != ']') {
+                    cnum++;
+                    if (*wbuf == '\n') {
+                        lnum++;
+                        cnum = 0;
+                    }
                     cbuf++;
                 }
                 vlen += cbuf - wbuf;
@@ -682,9 +968,13 @@ cj_ovac* cj_deserialize(const char* buf)
                 } else if (sscanf(wbuf - 1, "%f%n", &f32, &scan_len) == 1 && scan_len == vlen) {
                     new_val = cj_create_f32(f32);
                 } else {
-                    assert(0);
+                    return cj_deserialize_impl_abort(ccon, e_lnum, e_cnum, "invalid value type");
                 }
                 wbuf = cbuf;
+                if (ccon == NULL) {
+                    // root value instead of obj/arr
+                    return new_val;
+                }
                 // append value to container
                 if (pstr.str != NULL) {
                     cj_object_append(ccon, pstr.str, new_val);
@@ -694,11 +984,18 @@ cj_ovac* cj_deserialize(const char* buf)
                 } else {
                     cj_array_append(ccon, new_val);
                 }
+                want_comma = true;
+                want_value = (ccon->type == CJ_TYPE_ARRAY);
             } break;
         }
         c = *(wbuf++);
+        cnum++;
     }
-    return NULL;
+    if (ccon == NULL) {
+        return cj_deserialize_impl_abort(ccon, lnum, cnum, "no content");
+    } else {
+        return cj_deserialize_impl_abort(ccon, lnum, cnum, "unterminated root container");
+    }
 }
 
 //////////////

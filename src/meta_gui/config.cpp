@@ -21,7 +21,9 @@ namespace MetaGui {
                 ImGui::Text("obj %u children", ovac->child_count);
                 for (uint32_t i = 0; i < ovac->child_count; i++) {
                     if (ovac->children[i]->type == CJ_TYPE_OBJECT || ovac->children[i]->type == CJ_TYPE_ARRAY) {
-                        if (ImGui::TreeNode(ovac->children[i]->label_str)) {
+                        char idbuf[500];
+                        sprintf(idbuf, "%s##%p", ovac->children[i]->label_str, ovac->children[i]);
+                        if (ImGui::TreeNode(idbuf)) {
                             show_config_ovac(ovac->children[i]);
                             ImGui::TreePop();
                         }
@@ -58,10 +60,12 @@ namespace MetaGui {
                 ImGui::Text("b: %s", ovac->v.b ? "true" : "false");
             } break;
             case CJ_TYPE_STRING: {
-                ImGui::Text("str: %s", ovac->v.s.str);
+                ImGui::Text("str (cap%zu): %s", ovac->v.s.cap, ovac->v.s.str);
             } break;
-            case CJ_TYPE_COUNT:
-                break;
+            case CJ_TYPE_ERROR: {
+                ImGui::Text("err: %s", ovac->v.s.str);
+            } break;
+            case CJ_TYPE_COUNT: break;
         }
     }
 
@@ -79,7 +83,8 @@ namespace MetaGui {
 
         cfg_rlock(Control::main_client->dd.cfg_lock);
         show_config_ovac(Control::main_client->dd.cfg);
-        /*{
+        {
+            //REMOVE debugging utilities for json serialization api
             static bool init = false;
             if (!init) {
                 init = true;
@@ -100,32 +105,42 @@ namespace MetaGui {
                 cj_object_append(cfg, "mybool", cj_create_bool(false));
             }
             static char* serializedstr = (char*)malloc(8000);
-            cj_serialize(serializedstr, Control::main_client->dd.cfg, true);
+            cj_serialize(serializedstr, Control::main_client->dd.cfg, true, true);
             ImGui::Separator();
-            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, true));
+            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, true, true));
             ImGui::Text("%s", serializedstr);
             ImGui::Text("real measure: %zu", strlen(serializedstr) + 1);
-            cj_serialize(serializedstr, Control::main_client->dd.cfg, false);
+            cj_serialize(serializedstr, Control::main_client->dd.cfg, false, true);
             ImGui::Separator();
-            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, false));
+            ImGui::Text("measure: %zu", cj_measure(Control::main_client->dd.cfg, false, true));
             ImGui::Text("%s", serializedstr);
             ImGui::Text("real measure: %zu", strlen(serializedstr) + 1);
             ImGui::Separator();
             static char* readin = (char*)malloc(8000);
             static bool readininit = false;
+            static cj_ovac* parseerror = NULL;
             if (!readininit) {
                 readininit = true;
                 readin[0] = '\0';
             }
             ImGui::InputTextMultiline("json input", readin, 8000);
             if (ImGui::Button("parse")) {
-                cj_ovac* newcfg = cj_deserialize(readin);
+                cj_ovac* newcfg = cj_deserialize(readin, true);
                 if (newcfg) {
-                    cj_ovac_destroy(Control::main_client->dd.cfg);
-                    Control::main_client->dd.cfg = newcfg;
+                    if (newcfg->type != CJ_TYPE_ERROR) {
+                        cj_ovac_destroy(Control::main_client->dd.cfg);
+                        Control::main_client->dd.cfg = newcfg;
+                        parseerror = NULL;
+                    } else {
+                        parseerror = newcfg;
+                    }
                 }
             }
-        }*/
+            ImGui::Separator();
+            if (parseerror) {
+                ImGui::Text("PARSE ERROR: %s", parseerror->v.s.str);
+            }
+        }
         cfg_runlock(Control::main_client->dd.cfg_lock);
         
         ImGui::End();
