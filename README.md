@@ -83,8 +83,17 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
-* proper config meta gui window; actually use a config file for saving!
-* config get an extra config folger (not res!), also, save metagui windows
+* actually use clang-format to make everything look uniform
+* config:
+  * proper meta gui window for display
+  * where is the config file stored?
+    * search:
+      1. directly besides the binary
+      2. running users "~/.config/mirabel/config.json"
+    * cli flag to create a config, option to do so in the config metagui menu
+      * otherwise it is not automatically created, options just get lost, but at least we don't touch the users system if it isnt wanted, like almost every other application that places unsolicited files everywhere
+    * actually use it
+  * save metagui windows
 * frontend should be able to easily change the cursor, offer some util at least locally
 * to keep games in sync with server, client needs one active board and another synchronized board which is only ever updated with things the server sends, then if missmatch update active board with sync board, otherwise normally user makes move on active board and server shortly confirms to sync board so pieces stay where they are put, immediately
   * also, add a way to introduce artificial network delay, maybe as a client setting? for debugging
@@ -115,7 +124,6 @@ Collect more general resources:
 * chess frontend sounds
 * chess frontend animations
 * sound api
-* actually use clang-format to make everything look uniform
 * main_ctrl should be a context object (low prio)
 
 ## ideas

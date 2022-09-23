@@ -53,8 +53,6 @@ typedef union cj_value_u {
     float f32;
     bool b;
     cj_sb_string s;
-    // cj_color4u col4u;
-    // cj_color4f col4f;
 } cj_value;
 
 // config object/value/array-container
@@ -79,10 +77,21 @@ struct cj_ovac_s {
     cj_value v;
 };
 
-//TODO actually want color types?
-//TODO make duplicate and destroy iterative instead of recursive
+//TODO file api for loading whole file to membuffer and writing whole file from membuffer
 
-//TODO cj_sb_string resize to target buffer size
+// operation on inplace sb_strings
+void cj_sb_string_create(cj_sb_string* sbs, size_t cap, const char* str); // str is optional, and can be left NULL, use cap 0 to either infer the strlen or init as NULL is no str is given, if cap is non zero the initial str will be truncated if necessary
+void cj_sb_string_resize(cj_sb_string* sbs, size_t cap, bool can_shrink);
+void cj_sb_string_destroy(cj_sb_string* sbs);
+
+// if str is an ovac of type vnull, retype it to sb_string, if cap > 0 then automaticall creates the internal string as well otherwise init to NULL
+void cj_str_assume(cj_ovac* str, size_t cap);
+
+cj_color4u cj_color4u_read(const char* str);
+cj_color4f cj_color4f_read(const char* str);
+// str must have capacity of at least 7 characters (9 if write_alpha is true)
+void cj_color4u_write(char* str, cj_color4u c4u, bool write_alpha);
+void cj_color4f_write(char* str, cj_color4f c4f, bool write_alpha);
 
 cj_ovac* cj_create_object(uint32_t cap);
 void cj_object_append(cj_ovac* obj, const char* key, cj_ovac* ovac);
@@ -97,8 +106,6 @@ cj_ovac* cj_create_u64(uint64_t value);
 cj_ovac* cj_create_f32(float value);
 cj_ovac* cj_create_bool(bool value);
 cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self, cap must be >= strlen(str)+1 //TODO make this more accessible: version with implicit cap and version without an actual string, i.e. null
-// cj_ovac* cj_create_col4u(cj_color4u value);
-// cj_ovac* cj_create_col4f(cj_color4f value);
 
 cj_ovac* cj_create_array(uint32_t cap);
 void cj_array_append(cj_ovac* arr, cj_ovac* ovac);
@@ -115,40 +122,44 @@ void cj_ovac_replace(cj_ovac* entry_ovac, cj_ovac* data_ovac);
 void cj_ovac_destroy(cj_ovac* ovac); // if ovac is in a parent container, it will automatically be removed from there first
 
 // if str_hint is true then "\!XXX" and "\0" are enabled for use in strings
-size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint); // includes a final zero terminator
-char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint); // returns a pointer just beyond the last written character
+size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint); // includes a final zero terminator, returns 0 if a measure error occured, or ovac is NULL
+char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint); // returns a pointer just beyond the last written character, or NULL if a serialization error occured (e.g. invalid types)
 cj_ovac* cj_deserialize(const char* buf, bool str_hint); // must be zero terminated, returns an obj ovac if successful, otherwise an ovac of type CJ_TYPE_ERROR, which has a string value containing the error string, or NULL if no error specified
 
-/* no backend, //TODO finalize api
+
 
 // cj_find uses a data path api to find the specified entry in the ovac (json) tree
 // examples:
 // "client.global.palette.wood_dark" returns a color4u ovac
-//WARNING array indices not currently supported, future feature only
 // "client.plugins.loadlist[0]" returns the sb_str ovac which is the first element of the loadlist array
 // for arrays one can also use [-1] to get the last element
+//WARNING array indices for set not currently supported, future feature only
 // when using set, array indices also have more utilizations:
 // [0] replaces element at idx 0, [+] appends to the list, [+0] makes available at idx 0 but preserves all other elements
 // for delete there is also [*] to delete all elements, equivalent to setting parent to an empty list
+//TODO '[' that are part of a label string (key in an obj) need to be escaped accessed via thing["subkey\[text"] where in this format '[' has to be escaped by "\[" and '\' by "\\"
 cj_ovac* cj_find(cj_ovac* root, const char* data_path);
-cj_ovac* cj_set(cj_ovac* root, const char* data_path, cj_ovac* ovac, bool overwrite); // behaves like cj_find + cj_ovac_replace
-cj_ovac* cj_remove(cj_ovac* root, const char* data_path); // behaves like cj_find + cj_ovac_destroy
-//TODO general detach, dupe ?
+// cj_ovac* cj_set(cj_ovac* root, const char* data_path, cj_ovac* ovac, bool overwrite); // behaves like cj_find + cj_ovac_replace
+// cj_ovac* cj_remove(cj_ovac* root, const char* data_path); // behaves like cj_find + cj_ovac_destroy
+//TODO general detached, duplicate, replace?
 
-// same as find but only return a shallow value copy, return true if successful
-//TODO use argument(bool* vnull), check vnull to see if it was value null, optional (if not existant then function returns false on vnull?)
-bool cj_get_u64(cj_ovac* root, const char* data_path, uint64_t* rv);
-bool cj_get_f32(cj_ovac* root, const char* data_path, float* rv);
-bool cj_get_bool(cj_ovac* root, const char* data_path, bool* rv);
-// bool cj_get_str(cj_ovac* root, const char* data_path, cgf_sb_string* rv); //TODO does this allocate or copy?
-// bool cj_get_col4u(cj_ovac* ovac, const char* data_path, cj_color4u* rv);
-// bool cj_get_col4f(cj_ovac* ovac, const char* data_path, cj_color4f* rv);
+// same as find but only return a shallow value copy, return true if successfully written to rv
+// check vnull to see if it was value null, optional (if not existant then function returns false on vnull b/c no value was written to rv)
+bool cj_get_u64(cj_ovac* root, const char* data_path, uint64_t* rv, bool* vnull);
+bool cj_get_f32(cj_ovac* root, const char* data_path, float* rv, bool* vnull);
+bool cj_get_bool(cj_ovac* root, const char* data_path, bool* rv, bool* vnull);
+// bool cj_get_str(cj_ovac* root, const char* data_path, cj_sb_string* rv); //TODO does this allocate or copy?
+// shallow color get assumes data_path leads to a string ovac, this is then parsed as a color
+bool cj_get_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, bool* vnull);
+bool cj_get_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, bool* vnull);
 
 // shallow value set, return true if the data path existed and was of the correct type, false otherwise
 // bool cj_set_u64(cj_ovac* root, const char* data_path, uint64_t v); //TODO want shallow value set?
 //...
 
-*/
+//TODO some easy way to set defaults on startup and still be able to overwrite fixed values
+
+
 
 // for concurrent access to the tree, later on might make the tree more capable and lock free
 void* cfg_lock_create();

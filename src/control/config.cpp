@@ -18,6 +18,108 @@ extern "C" {
 
 static const uint32_t CJ_BASE_CAP = 4;
 
+void cj_sb_string_create(cj_sb_string* sbs, size_t cap, const char* str)
+{
+    sbs->cap = cap;
+    if (cap == 0 && str == NULL) {
+        sbs->str = NULL;
+        return;
+    }
+    if (cap == 0) {
+        sbs->cap = strlen(str) + 1;
+    }
+    sbs->str = (char*)malloc(sbs->cap);
+    if (str != NULL) {
+        strncpy(sbs->str, str, sbs->cap - 1);
+    }
+}
+
+void cj_sb_string_resize(cj_sb_string* sbs, size_t cap, bool can_shrink)
+{
+    if (cap == sbs->cap) {
+        return;
+    }
+    sbs->cap = cap;
+    if (cap == 0) {
+        if (sbs->str != NULL) {
+            free(sbs->str);
+        }
+        return;
+    }
+    if (can_shrink == false && cap < sbs->cap) {
+        return;
+    }
+    char* new_str = (char*)malloc(cap);
+    strncpy(new_str, sbs->str, cap - 1);
+    if (sbs->str != NULL) {
+        free(sbs->str);
+    }
+    sbs->str = new_str;
+}
+
+void cj_sb_string_destroy(cj_sb_string* sbs)
+{
+    if (sbs->str != NULL) {
+        free(sbs->str);
+    }
+    sbs->cap = 0;
+    sbs = NULL;
+}
+
+void cj_str_assume(cj_ovac* str, size_t cap)
+{
+    if (str->type == CJ_TYPE_VNULL) {
+        str->type = CJ_TYPE_STRING;
+        str->v.s = (cj_sb_string){
+            .cap = cap,
+            .str = cap > 0 ? (char*)malloc(cap) : NULL,
+        };
+    }
+}
+
+cj_color4u cj_color4u_read(const char* str)
+{
+    cj_color4u ret;
+    int ec = sscanf(str, "#%02hhx%02hhx%02hhx%02hhx", &ret.r, &ret.g, &ret.b, &ret.a);
+    if (ec == 4) {
+        return ret;
+    } else if (ec == 3) {
+        ret.a = UINT8_MAX;
+        return ret;
+    }
+    return (cj_color4u){.r = 0, .g = 0, .b = 0, .a = UINT8_MAX};
+}
+
+cj_color4f cj_color4f_read(const char* str)
+{
+    cj_color4u c4u = cj_color4u_read(str);
+    return (cj_color4f){
+        .r = (float)c4u.r / UINT8_MAX,
+        .g = (float)c4u.g / UINT8_MAX,
+        .b = (float)c4u.b / UINT8_MAX,
+        .a = (float)c4u.a / UINT8_MAX,
+    };
+}
+
+void cj_color4u_write(char* str, cj_color4u c4u, bool write_alpha)
+{
+    if (write_alpha == true) {
+        sprintf(str, "#%02hhx%02hhx%02hhx%02hhx", c4u.r, c4u.g, c4u.b, c4u.a);
+    } else  {
+        sprintf(str, "#%02hhx%02hhx%02hhx", c4u.r, c4u.g, c4u.b);
+    }
+}
+
+void cj_color4f_write(char* str, cj_color4f c4f, bool write_alpha)
+{
+    cj_color4u_write(str, (cj_color4u){
+        .r = (uint8_t)(c4f.r * UINT8_MAX),
+        .g = (uint8_t)(c4f.g * UINT8_MAX),
+        .b = (uint8_t)(c4f.b * UINT8_MAX),
+        .a = (uint8_t)(c4f.a * UINT8_MAX),
+    }, write_alpha);
+}
+
 cj_ovac* cj_create_object(uint32_t cap)
 {
     cj_ovac* obj = (cj_ovac*)malloc(sizeof(cj_ovac));
@@ -246,7 +348,7 @@ void cj_array_insert(cj_ovac* arr, uint32_t idx, cj_ovac* ovac)
         arr->children = children_new;
     }
     //TODO move this memmove up into the if, so its only 2 of half size instead of one large and 1 half
-    memmove(arr->children + idx + 1, arr-> children + idx, sizeof(cj_ovac*) * (arr->child_count - idx));
+    memmove(arr->children + idx + 1, arr->children + idx, sizeof(cj_ovac*) * (arr->child_count - idx));
     arr->children[idx] = ovac;
     arr->child_count++;
     ovac->parent = arr;
@@ -422,7 +524,7 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint
     }
     switch (ovac->type) {
         case CJ_TYPE_NONE: {
-            assert(0);
+            return 0;
         } break;
         case CJ_TYPE_OBJECT:
         case CJ_TYPE_ARRAY: {
@@ -466,10 +568,10 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint
             }
         } break;
         case CJ_TYPE_ERROR: {
-            assert(0); //TODO rather error?
+            return 0;
         } break;
         case CJ_TYPE_COUNT: {
-            assert(0);
+            return 0;
         } break;
     }
     if (depth == 0) {
@@ -480,6 +582,9 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint
 
 size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint)
 {
+    if (ovac == NULL) {
+        return 0;
+    }
     return cj_measure_impl(ovac, packed, 0, str_hint);
 }
 
@@ -494,7 +599,7 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth, b
     }
     switch (ovac->type) {
         case CJ_TYPE_NONE: {
-            assert(0);
+            return NULL;
         } break;
         case CJ_TYPE_OBJECT:
         case CJ_TYPE_ARRAY: {
@@ -567,10 +672,10 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth, b
             }
         } break;
         case CJ_TYPE_ERROR: {
-            assert(0); //TODO rather error?
+            return NULL;
         } break;
         case CJ_TYPE_COUNT: {
-            assert(0);
+            return NULL;
         } break;
     }
     if (depth == 0) {
@@ -581,7 +686,11 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth, b
 
 char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint)
 {
-    return cj_serialize_impl(buf, ovac, packed, 0, str_hint);
+    if (ovac == NULL) {
+        return NULL;
+    }
+    return cj_serialize_impl(buf, ovac, packed, 0, str_hint); // recursive implementation
+    // iterative implementation: easily without extra stack if children of node are stored raw not as pointers, then every node automatically knows it s idx in the parent container by (this - this->parent.children) b/c this points inside the children array
 }
 
 cj_ovac* cj_deserialize_impl_abort(cj_ovac* ovac, size_t lnum, size_t cnum, const char* fmt, ...)
@@ -703,7 +812,7 @@ cj_ovac* cj_deserialize(const char* buf, bool str_hint)
                     return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected ']' on closing object");
                 }
                 if (want_colon == true || (ccon->type == CJ_TYPE_OBJECT && want_value == true)) {
-                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal key without value on container close");
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "illegal key without value on closing object");
                 }
                 if (ccon->parent == NULL) {
                     // check that only whitespace follows, then return parsed ovac
@@ -808,7 +917,7 @@ cj_ovac* cj_deserialize(const char* buf, bool str_hint)
                         // no size hint given, use detected length
                         cap_res = str_len + 1;
                     } else if (cap_res < str_len + 1) {
-                        // increase cap_res 
+                        // increase cap_res
                         cap_res = str_len + 1;
                     }
                     val_str.cap = cap_res;
@@ -936,7 +1045,7 @@ cj_ovac* cj_deserialize(const char* buf, bool str_hint)
                     return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value, missing ':'");
                 }
                 if (want_value == false) {
-                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value");
+                    return cj_deserialize_impl_abort(ccon, lnum, cnum, "unexpected value, missing key");
                 }
                 // value: vnull, u64, f32, bool
                 cj_ovac* new_val = NULL;
@@ -996,6 +1105,192 @@ cj_ovac* cj_deserialize(const char* buf, bool str_hint)
     } else {
         return cj_deserialize_impl_abort(ccon, lnum, cnum, "unterminated root container");
     }
+}
+
+cj_ovac* cj_find(cj_ovac* root, const char* data_path)
+{
+    cj_ovac* ccon = root;
+    const char* rbuf = data_path;
+
+    bool want_dot = false;
+
+    char c = *(rbuf++);
+    while (c != '\0') {
+        switch (c) {
+            case '.': {
+                if (want_dot == false) {
+                    return NULL;
+                }
+                want_dot = false;
+            } break;
+            case '[': {
+                if (want_dot == true) {
+                    return NULL;
+                }
+                // array indexing
+                if (ccon->type != CJ_TYPE_ARRAY) {
+                    return NULL;
+                }
+                int64_t scan_child_idx;
+                int scan_len;
+                int ec = sscanf(rbuf, "%li]%n", &scan_child_idx, &scan_len);
+                if (ec != 1) {
+                    return NULL;
+                }
+                uint32_t child_idx = (scan_child_idx < 0 ? ccon->child_count - (uint32_t)(-scan_child_idx) : (uint32_t)scan_child_idx);
+                if (child_idx >= ccon->child_count) {
+                    return NULL;
+                }
+                ccon = ccon->children[child_idx];
+                rbuf = rbuf + scan_len;
+                want_dot = (ccon->type == CJ_TYPE_OBJECT);
+            } break;
+            default: {
+                if (want_dot == true) {
+                    return NULL;
+                }
+                // normal object key
+                if (ccon->type != CJ_TYPE_OBJECT) {
+                    return NULL;
+                }
+                rbuf--;
+                const char* key_end = rbuf;
+                while (*key_end != '\0' && *key_end != '.' && *key_end != '[') {
+                    key_end++;
+                }
+                cj_ovac* new_con = NULL;
+                {
+                    //WARNING this break with new obj find key impls
+                    uint32_t key_hash = strhash(rbuf, key_end);
+                    for (uint32_t idx = 0; idx < ccon->child_count; idx++) {
+                        cj_ovac* cp = ccon->children[idx];
+                        if (cp->label_hash == key_hash && strncmp(cp->label_str, rbuf, key_end - rbuf) == 0) {
+                            new_con = cp;
+                            break;
+                        }
+                    }
+                }
+                if (new_con == NULL) {
+                    return NULL;
+                }
+                ccon = new_con;
+                rbuf = key_end;
+                want_dot = (ccon->type == CJ_TYPE_OBJECT);
+            } break;
+        }
+        c = *(rbuf++);
+    }
+    return ccon;
+}
+
+bool cj_get_u64(cj_ovac* root, const char* data_path, uint64_t* rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_U64) {
+        return false;
+    }
+    *rv = ovac->v.u64;
+    return true;
+}
+
+bool cj_get_f32(cj_ovac* root, const char* data_path, float* rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_F32) {
+        return false;
+    }
+    *rv = ovac->v.f32;
+    return true;
+}
+
+bool cj_get_bool(cj_ovac* root, const char* data_path, bool* rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_BOOL) {
+        return false;
+    }
+    *rv = ovac->v.b;
+    return true;
+}
+
+bool cj_get_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_STRING || ovac->v.s.cap < 7) {
+        return false;
+    }
+    *rv = cj_color4u_read(ovac->v.s.str);
+    return true;
+}
+
+bool cj_get_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_STRING || ovac->v.s.cap < 7) {
+        return false;
+    }
+    *rv = cj_color4f_read(ovac->v.s.str);
+    return true;
 }
 
 //////////////

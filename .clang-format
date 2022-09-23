@@ -43,24 +43,33 @@ EmptyLineAfterAccessModifier: Always
 EmptyLineBeforeAccessModifier: Always
 IndentAccessModifiers: false
 IndentCaseLabels: true
-IndentExternBlock: Indent
-IndentPPDirectives: BeforeHash
+IndentExternBlock: NoIndent
+IndentPPDirectives: None
 IndentWidth: 4
 InsertTrailingCommas: Wrapped
 MacroBlockBegin: "^BEGIN_.*"
 MacroBlockBegin: "^END_.*"
 NamespaceIndentation: All
-# PackConstructorInitializers: CurrentLine # v14
+PackConstructorInitializers: CurrentLine
 PenaltyReturnTypeOnItsOwnLine: 100
 PointerAlignment: Left
-# QualifierAlignment: Custom # v14
-# QualifierOrder: ['inline', 'static', 'const', 'type'] # v14
+QualifierAlignment: Custom
+QualifierOrder: ['inline', 'static', 'const', 'type']
 ReflowComments: false
-# SeparateDefinitionBlocks: Always # v14
+SeparateDefinitionBlocks: Always
 ShortNamespaceLines: 0
 SortIncludes: Never
 SpaceAfterTemplateKeyword: false
 SpaceBeforeCtorInitializerColon: false
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterForeachMacros: false
+  AfterFunctionDeclarationName: false
+  AfterFunctionDefinitionName: false
+  AfterIfMacros: false
+  AfterOverloadedOperator: false
+  BeforeNonEmptyParentheses: false
 SpacesInContainerLiterals: false
 UseCRLF: false
 UseTab: Never

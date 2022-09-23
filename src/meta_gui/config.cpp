@@ -13,6 +13,10 @@ namespace MetaGui {
     {
         //TODO how to make values adjustable? imgui needs a value pointer, but there is no real guarantee the config object will event exist after dropping the lock for the frame
         //TODO can keep a second copy of the whole config tree, on render needs to run through all open nodes anyway, just update them on the fly, on value update true json tree is guaranteed to have the corresponding node available
+        if (ovac->label_str != NULL) {
+            ImGui::Text("%s ::", ovac->label_str);
+            ImGui::SameLine();
+        }
         switch (ovac->type) {
             case CJ_TYPE_NONE: {
                 assert(0);
@@ -136,9 +140,20 @@ namespace MetaGui {
                     }
                 }
             }
-            ImGui::Separator();
             if (parseerror) {
                 ImGui::Text("PARSE ERROR: %s", parseerror->v.s.str);
+            }
+            ImGui::Separator();
+            static char findpath[500];
+            static bool findpathinit = false;
+            if (!findpathinit) {
+                findpathinit = true;
+                findpath[0] = '\0';
+            }
+            ImGui::InputText("datapath", findpath, 500);
+            cj_ovac* found = cj_find(Control::main_client->dd.cfg, findpath);
+            if (found) {
+                show_config_ovac(found);
             }
         }
         cfg_runlock(Control::main_client->dd.cfg_lock);
