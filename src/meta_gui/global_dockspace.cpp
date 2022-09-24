@@ -35,4 +35,4 @@ namespace MetaGui {
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

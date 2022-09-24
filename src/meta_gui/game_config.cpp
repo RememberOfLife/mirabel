@@ -23,8 +23,7 @@ namespace MetaGui {
         ImGui::SetNextWindowPos(ImVec2(50, 80), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(230, 300), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Game Config", p_open);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             return;
         }
@@ -233,4 +232,4 @@ namespace MetaGui {
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

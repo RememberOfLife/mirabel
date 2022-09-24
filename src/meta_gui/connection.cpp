@@ -14,8 +14,7 @@
 
 namespace MetaGui {
 
-    struct TextFilters
-    {
+    struct TextFilters {
         // return 0 (pass) if the character is allowed
         static int FilterSanitizedTextLetters(ImGuiInputTextCallbackData* data)
         {
@@ -23,6 +22,7 @@ namespace MetaGui {
                 return 0;
             return 1;
         }
+
         static int FilterAddressLetters(ImGuiInputTextCallbackData* data)
         {
             if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:", (char)data->EventChar))
@@ -38,8 +38,7 @@ namespace MetaGui {
         ImGui::SetNextWindowSize(ImVec2(280, 300), ImGuiCond_FirstUseEver);
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
         bool window_contents_visible = ImGui::Begin("Connection", p_open, window_flags);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             return;
         }
@@ -90,14 +89,15 @@ namespace MetaGui {
             case RUNNING_STATE_NONE: {
                 ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "offline");
             } break;
-            case RUNNING_STATE_ONGOING: {            
+            case RUNNING_STATE_ONGOING: {
                 ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "connecting..");
             } break;
             case RUNNING_STATE_DONE: {
                 ImGui::TextColored(ImVec4(0.22, 0.85, 0.52, 1), "connected");
                 switch (conn_info.connection) {
-                    case RUNNING_STATE_NONE: break;
-                    case RUNNING_STATE_ONGOING: {      
+                    case RUNNING_STATE_NONE:
+                        break;
+                    case RUNNING_STATE_ONGOING: {
                         ImGui::SameLine();
                         ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), " (ssl)");
                     } break;
@@ -110,10 +110,10 @@ namespace MetaGui {
                             break;
                         }
                         switch (conn_info.authentication) {
-                            case RUNNING_STATE_NONE: {   
+                            case RUNNING_STATE_NONE: {
                                 ImGui::Text(" (auth)");
                             } break;
-                            case RUNNING_STATE_ONGOING: {   
+                            case RUNNING_STATE_ONGOING: {
                                 ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), " (auth)");
                             } break;
                             case RUNNING_STATE_DONE: {
@@ -140,7 +140,7 @@ namespace MetaGui {
             const int show_bytes = 8;
             for (int i = 0; i < show_bytes; i++) {
                 ImGui::SameLine();
-                ImGui::Text("%02x", *(conn_info.server_cert_thumbprint+i));
+                ImGui::Text("%02x", *(conn_info.server_cert_thumbprint + i));
                 if (i < show_bytes - 1) {
                     ImGui::SameLine();
                     ImGui::TextUnformatted(":");
@@ -151,14 +151,13 @@ namespace MetaGui {
             if (ImGui::SmallButton("F")) {
                 ImGui::OpenPopup("full_thumbprint");
             }
-            if (ImGui::BeginPopup("full_thumbprint"))
-            {
+            if (ImGui::BeginPopup("full_thumbprint")) {
                 if (ImGui::SmallButton("Close")) {
                     ImGui::CloseCurrentPopup();
                 }
                 const int show_bytes_x = 8;
                 int show_bytes_y = Network::SHA256_LEN / show_bytes_x;
-                int show_bytes_x_overflow = Network::SHA256_LEN - (show_bytes_x*show_bytes_y);
+                int show_bytes_x_overflow = Network::SHA256_LEN - (show_bytes_x * show_bytes_y);
                 if (show_bytes_x_overflow > 1) {
                     show_bytes_y++;
                 }
@@ -166,7 +165,7 @@ namespace MetaGui {
                     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, -1)); //TODO can we just skip proper vertical spacing here?
                     int show_bytes_x_cur = (i == show_bytes_y - 1 && show_bytes_x_overflow > 0 ? show_bytes_x_overflow : show_bytes_x);
                     for (int j = 0; j < show_bytes_x_cur; j++) {
-                        ImGui::Text("%02x", *(conn_info.server_cert_thumbprint+i*show_bytes_x+j));
+                        ImGui::Text("%02x", *(conn_info.server_cert_thumbprint + i * show_bytes_x + j));
                         ImGui::SameLine();
                         if (j < show_bytes_x_cur - 1) {
                             ImGui::TextUnformatted(":");
@@ -192,7 +191,7 @@ namespace MetaGui {
             {
                 ImGui::Text("Server cert verification failed:");
                 ImGui::TextColored(ImVec4(0.89, 0.29, 0.46, 1), " %s", conn_info.verifail_reason);
-                
+
                 ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(154, 58, 58, 255));
                 ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(212, 81, 81, 255));
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
@@ -318,4 +317,4 @@ namespace MetaGui {
         conn_info.authfail_reason = NULL;
     }
 
-}
+} // namespace MetaGui

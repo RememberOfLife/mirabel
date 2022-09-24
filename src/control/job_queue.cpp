@@ -15,7 +15,8 @@ extern "C" {
 
 struct job_item_impl {
     void* data;
-    JOB_ITEM_STATE (*work)(job_item* ji, void** data);
+    JOB_ITEM_STATE(*work)
+    (job_item* ji, void** data); //TODO stop clang-format from this ridiculous formatting
     std::atomic<JOB_ITEM_STATE> state;
     std::atomic<bool> abort;
 };
@@ -40,7 +41,7 @@ static_assert(sizeof(job_queue) >= sizeof(job_queue_impl), "job_queue impl size 
 void job_item_create(job_item* ji, void* data, JOB_ITEM_STATE (*work)(job_item* ji, void** data))
 {
     job_item_impl* jii = (job_item_impl*)ji;
-    new(jii) job_item_impl;
+    new (jii) job_item_impl;
     jii->data = data;
     jii->work = work;
     jii->state = JOB_ITEM_STATE_NONE;
@@ -103,7 +104,7 @@ void job_runner(job_thread* jt, job_queue_impl* jqi)
 void job_queue_create(job_queue* jq, uint32_t threads)
 {
     job_queue_impl* jqi = (job_queue_impl*)jq;
-    new(jqi) job_queue_impl();
+    new (jqi) job_queue_impl();
     std::unique_lock<std::mutex> lock(jqi->m);
     for (uint32_t tc = 0; tc < threads; tc++) {
         job_thread* jt = new job_thread;

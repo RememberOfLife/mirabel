@@ -105,7 +105,7 @@ namespace {
     error_code process_event(frontend* self, f_event_any event)
     {
         data_repr& data = _get_repr(self);
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -182,7 +182,7 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
-        if (data.dirty == false)  {
+        if (data.dirty == false) {
             return ERR_OK;
         }
         size_t size_fill;
@@ -222,13 +222,13 @@ namespace {
         nvgTranslate(dc, dd.x, dd.y);
 
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
+        nvgRect(dc, -10, -10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(210, 210, 210));
         nvgFill(dc);
-        
+
         nvgFontSize(dc, 20);
         nvgFontFace(dc, "mf");
-        
+
         nvgFillColor(dc, nvgRGB(25, 25, 25));
 
         if (data.g.methods) {
@@ -271,9 +271,8 @@ namespace {
                     strend = strchr(strstart, '\n');
                 }
             }
-        
-            //TODO render all available moves and ptm and make them clickable
 
+            //TODO render all available moves and ptm and make them clickable
         }
 
         nvgRestore(dc);
@@ -288,7 +287,7 @@ namespace {
         return ERR_OK;
     }
 
-}
+} // namespace
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
@@ -316,6 +315,6 @@ const frontend_methods fallback_text_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

@@ -22,10 +22,8 @@ extern "C" {
 //NOTE: updates to {config, event_queue, event, frontend, job_queue} will incur a version increase here
 static const uint64_t MIRABEL_FRONTEND_API_VERSION = 10;
 
-
-
 //TODO this mirrors a lot of the info that will be stored in the client lobby
-typedef struct /*grand_unified_*/frontend_display_data_s {
+typedef struct /*grand_unified_*/ frontend_display_data_s {
     //TODO move outbox to a frontend only receive queue, so errors dont propagate as much
     f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
     // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
@@ -61,8 +59,6 @@ typedef struct /*grand_unified_*/frontend_display_data_s {
 
     //TODO engine info
 } frontend_display_data;
-
-
 
 typedef struct frontend_feature_flags_s {
     bool options : 1;

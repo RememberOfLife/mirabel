@@ -49,7 +49,7 @@ namespace Network {
         if (socketset == NULL || ssl_ctx == NULL) {
             return false;
         }
-        server_address = (char*)malloc(strlen(host_address)+1);
+        server_address = (char*)malloc(strlen(host_address) + 1);
         strcpy(server_address, host_address);
         server_port = host_port;
         send_runner = std::thread(&NetworkClient::send_loop, this); // socket open, start send_runner
@@ -348,15 +348,15 @@ namespace Network {
                 if (hash_ok == 0 || hash_len != SHA256_LEN) {
                     MetaGui::log(log_id, "server cert (THUMBPRINT FAILURE)\n");
                 } else {
-                    char str_buf[3*SHA256_LEN]; // size for 2 hex symbols per byte, one separator between each, and the NUL terminator
+                    char str_buf[3 * SHA256_LEN]; // size for 2 hex symbols per byte, one separator between each, and the NUL terminator
                     char* str_buf_m = str_buf;
                     for (size_t i = 0; i < SHA256_LEN; i++) {
                         str_buf_m += sprintf(str_buf_m, "%02x", hash_buf[i]);
-                        if (i < SHA256_LEN-1) {
+                        if (i < SHA256_LEN - 1) {
                             str_buf_m += sprintf(str_buf_m, ":");
                         }
                     }
-                    str_buf[sizeof(str_buf)-1] = '\0';
+                    str_buf[sizeof(str_buf) - 1] = '\0';
                     MetaGui::logf(log_id, "server cert thumbprint (%s)\n", str_buf);
                 }
                 // prepare connection state event for client
@@ -384,7 +384,7 @@ namespace Network {
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + time_str_len;
                         es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
-                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, time_str);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint + SHA256_LEN, err_str, time_str);
                         free(time_str);
                         BIO_free(print_bio);
                     } break;
@@ -394,13 +394,13 @@ namespace Network {
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1;
                         es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
-                        strcpy((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str);
+                        strcpy((char*)es.ssl_thumbprint.thumbprint + SHA256_LEN, err_str);
                     } break;
                     case X509_V_ERR_HOSTNAME_MISMATCH: {
                         char** name_list;
                         int name_count;
                         size_t names_totalsize = util_cert_get_subjects(peer_cert, &name_list, &name_count);
-                        char* str_buf = (char*)malloc(names_totalsize + name_count*2 - 1); // need extra space for ", "
+                        char* str_buf = (char*)malloc(names_totalsize + name_count * 2 - 1); // need extra space for ", "
                         char* str_buf_m = str_buf;
                         for (int i = 0; i < name_count; i++) {
                             strcpy(str_buf_m, name_list[i]);
@@ -417,7 +417,7 @@ namespace Network {
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + (str_buf_m - str_buf);
                         es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
-                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, str_buf);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint + SHA256_LEN, err_str, str_buf);
                         free(str_buf);
                         util_cert_free_subjects(name_list, name_count);
                     } break;
@@ -427,7 +427,7 @@ namespace Network {
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
                         es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
-                        sprintf((char*)es.ssl_thumbprint.thumbprint+SHA256_LEN, err_str, verify_result);
+                        sprintf((char*)es.ssl_thumbprint.thumbprint + SHA256_LEN, err_str, verify_result);
                     } break;
                 }
                 X509_free(peer_cert);
@@ -445,7 +445,7 @@ namespace Network {
             recv_len = 0;
             while (recv_len < buffer_size) {
                 // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
-                int im_rd = SSL_read(conn.ssl_session, data_buffer+recv_len, buffer_size-recv_len); // read as much from ssl as we can to jumpstart event processing
+                int im_rd = SSL_read(conn.ssl_session, data_buffer + recv_len, buffer_size - recv_len); // read as much from ssl as we can to jumpstart event processing
                 if (im_rd == 0) {
                     break;
                 }
@@ -470,7 +470,7 @@ namespace Network {
                 }
                 //TODO handle events longer than one buffer filling
                 //TODO handle event fragmentation
-                
+
                 // universal packet->event decoding, then place it in the recv_queue
                 // at least one event here, process it from data_buffer
                 f_event_any recv_event;
@@ -482,7 +482,8 @@ namespace Network {
 
                 // switch on type
                 switch (recv_event.base.type) {
-                    case EVENT_TYPE_NULL: break; // drop null events
+                    case EVENT_TYPE_NULL:
+                        break; // drop null events
                     case EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT: {
                         //REWORK need more?
                         conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
@@ -516,5 +517,5 @@ namespace Network {
         f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);
         f_event_queue_push(recv_queue, &es);
     }
-    
-}
+
+} // namespace Network

@@ -15,7 +15,7 @@ namespace STGui {
     {
         is_hovered = false;
         is_clicked = false;
-        if (hypot(x-mX, y-mY) <= r) {
+        if (hypot(x - mX, y - mY) <= r) {
             is_hovered = true;
             if (mouse_buttons & SDL_BUTTON_LMASK) {
                 is_clicked = true;
@@ -40,7 +40,7 @@ namespace STGui {
     {
         is_hovered = false;
         is_clicked = false;
-        if (mX >= x && mX <= x+w && mY >= y && mY <= y+h) {
+        if (mX >= x && mX <= x + w && mY >= y && mY <= y + h) {
             is_hovered = true;
             if (mouse_buttons & SDL_BUTTON_LMASK) {
                 is_clicked = true;
@@ -69,7 +69,7 @@ namespace STGui {
         //     return;
         // }
         //TODO proper hexagon collision check
-        if (hypot(x-mX, y-mY) <= r) {
+        if (hypot(x - mX, y - mY) <= r) {
             is_hovered = true;
             if (mouse_buttons & SDL_BUTTON_LMASK) {
                 is_clicked = true;
@@ -90,10 +90,10 @@ namespace STGui {
         DD::Push();
         DD::Translate(x, y);
         if (!flat_top) {
-            DD::Rotate(DD::PI/2);
+            DD::Rotate(DD::PI / 2);
         }
         DD::DrawRegularPolygon(6, 0, 0, r);
         DD::Pop();
     }
 
-}
+} // namespace STGui

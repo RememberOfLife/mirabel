@@ -25,7 +25,7 @@ static_assert(sizeof(f_event_queue) >= sizeof(f_event_queue_impl), "f_event_queu
 void f_event_queue_create(f_event_queue* eq)
 {
     f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
-    new(eqi) f_event_queue_impl();
+    new (eqi) f_event_queue_impl();
 }
 
 void f_event_queue_destroy(f_event_queue* eq)

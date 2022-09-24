@@ -83,30 +83,30 @@ namespace Network {
                 SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, verify_peer_cb);
             } break;
         }
-        
+
         // certificate fullchain file, also contains the public key
         r = SSL_CTX_use_certificate_chain_file(ctx, chain_file);
-        if(r != 1) {
+        if (r != 1) {
             util_ssl_ctx_free(ctx);
             return NULL;
         }
-        
+
         // load private key
         r = SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
-        if(r != 1) {
+        if (r != 1) {
             util_ssl_ctx_free(ctx);
             return NULL;
         }
-        
+
         // check if the private key is valid
         r = SSL_CTX_check_private_key(ctx);
-        if(r != 1) {
+        if (r != 1) {
             util_ssl_ctx_free(ctx);
             return NULL;
         }
 
         return ctx;
-    } 
+    }
 
     void util_ssl_ctx_free(SSL_CTX* ctx)
     {
@@ -163,7 +163,7 @@ namespace Network {
     {
         // "ok" will never fail on its own if the diy check passes
         // if the user wants to keep a verification failing connection anyway, we can show a warning, and choose to ignore the fail here
-        return 1; 
+        return 1;
     }
 
     size_t util_cert_get_subjects(X509* cert, char*** r_names, int* r_count)
@@ -188,10 +188,10 @@ namespace Network {
                 break;
             }
             // convert the CN field to a c string
-            ASN1_STRING *common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
+            ASN1_STRING* common_name_asn1 = X509_NAME_ENTRY_get_data(common_name_entry);
             if (common_name_asn1 == NULL) {
                 break;
-            }			
+            }
             common_name_str = (char*)ASN1_STRING_get0_data(common_name_asn1); // ssl owned, do not free
             // make sure there isn't an embedded NUL character in the CN
             if (ASN1_STRING_length(common_name_asn1) != strlen(common_name_str)) {
@@ -213,7 +213,7 @@ namespace Network {
             // copy common name into result
             tmp_str_size = strlen(common_name_str);
             ret_totalsize += tmp_str_size;
-            ret_names[ret_count] = (char*)malloc(tmp_str_size+1);
+            ret_names[ret_count] = (char*)malloc(tmp_str_size + 1);
             strcpy(ret_names[ret_count++], common_name_str);
         }
         for (int i = 0; i < san_names_count; i++) {
@@ -225,13 +225,13 @@ namespace Network {
                     // dns_name is a valid an, copy it into result
                     tmp_str_size = strlen(dns_name);
                     ret_totalsize += tmp_str_size;
-                    ret_names[ret_count] = (char*)malloc(tmp_str_size+1);
+                    ret_names[ret_count] = (char*)malloc(tmp_str_size + 1);
                     strcpy(ret_names[ret_count++], dns_name);
                 }
             }
         }
         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-        
+
         *r_names = ret_names;
         *r_count = ret_count;
         return ret_totalsize;
@@ -245,4 +245,4 @@ namespace Network {
         free(r_names);
     }
 
-}
+} // namespace Network

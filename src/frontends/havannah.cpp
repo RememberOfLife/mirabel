@@ -35,6 +35,7 @@ namespace {
         uint8_t iy;
         bool hovered;
         bool mousedown;
+
         void update(float mx, float my)
         {
             const float hex_angle = 2 * M_PI / 6;
@@ -54,8 +55,7 @@ namespace {
         NVGcontext* dc;
         frontend_display_data* dd;
         game g = (game){
-            .methods = NULL
-        };
+            .methods = NULL};
         const havannah_internal_methods* gi = NULL;
 
         uint8_t pbuf_c = 0;
@@ -63,7 +63,7 @@ namespace {
 
         int size = 10;
 
-        // runtime graphics options 
+        // runtime graphics options
         bool flat_top = false;
         float button_size = 25;
         float padding = 2.5;
@@ -92,7 +92,7 @@ namespace {
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
         self->data1 = malloc(sizeof(data_repr));
-        new(self->data1) data_repr;
+        new (self->data1) data_repr;
         data_repr& data = _get_repr(self);
         data.dc = Control::main_client->nanovg_ctx;
         data.dd = display_data;
@@ -123,7 +123,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -188,9 +188,9 @@ namespace {
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     const float hex_angle = 2 * M_PI / 6;
-                    const float fitting_hex_radius = data.button_size+data.padding;
+                    const float fitting_hex_radius = data.button_size + data.padding;
                     const float flat_radius = sin(hex_angle) * fitting_hex_radius;
-                    int board_sizer = (2*data.size-1);
+                    int board_sizer = (2 * data.size - 1);
                     float mX = event.button.x - data.dd->x;
                     float mY = event.button.y - data.dd->y;
                     mX -= data.dd->w / 2;
@@ -203,19 +203,19 @@ namespace {
                             if (!(x - y < data.size) || !(y - x < data.size)) {
                                 continue;
                             }
-                            data.board_buttons[y*board_sizer+x].update(mX, mY);
+                            data.board_buttons[y * board_sizer + x].update(mX, mY);
                             if (event.type == SDL_MOUSEBUTTONUP) {
                                 HAVANNAH_PLAYER cp;
                                 data.gi->get_cell(&data.g, x, y, &cp);
-                                if (data.board_buttons[y*board_sizer+x].hovered && data.board_buttons[y*board_sizer+x].mousedown && cp == 0) {
-                                    uint64_t move_code = y | (x<<8);
+                                if (data.board_buttons[y * board_sizer + x].hovered && data.board_buttons[y * board_sizer + x].mousedown && cp == 0) {
+                                    uint64_t move_code = y | (x << 8);
                                     f_event_any es;
                                     f_event_create_game_move(&es, move_code);
                                     f_event_queue_push(data.dd->outbox, &es);
                                 }
-                                data.board_buttons[y*board_sizer+x].mousedown = false;
+                                data.board_buttons[y * board_sizer + x].mousedown = false;
                             }
-                            data.board_buttons[y*board_sizer+x].mousedown |= (data.board_buttons[y*board_sizer+x].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                            data.board_buttons[y * board_sizer + x].mousedown |= (data.board_buttons[y * board_sizer + x].hovered && event.type == SDL_MOUSEBUTTONDOWN);
                         }
                     }
                 }
@@ -234,15 +234,15 @@ namespace {
         }
         // set button hovered
         const float hex_angle = 2 * M_PI / 6;
-        const float fitting_hex_radius = data.button_size+data.padding;
+        const float fitting_hex_radius = data.button_size + data.padding;
         const float flat_radius = sin(hex_angle) * fitting_hex_radius;
-        int board_sizer = (2*data.size-1);
-        float offset_x = -(data.size*flat_radius)+flat_radius;
-        float offset_y = -((3*data.size-3)*fitting_hex_radius)/2;
+        int board_sizer = (2 * data.size - 1);
+        float offset_x = -(data.size * flat_radius) + flat_radius;
+        float offset_y = -((3 * data.size - 3) * fitting_hex_radius) / 2;
         float mX = data.mx;
         float mY = data.my;
-        mX -= data.dd->w/2;
-        mY -= data.dd->h/2;
+        mX -= data.dd->w / 2;
+        mY -= data.dd->h / 2;
         if (!data.flat_top) {
             // if global board is not flat topped, rotate the mouse so it is, for the collision check
             rotate_cords(mX, mY, hex_angle);
@@ -257,13 +257,13 @@ namespace {
                 if (y % 2 != 0) {
                     base_x += flat_radius;
                 }
-                float base_y = y*(fitting_hex_radius*1.5);
-                data.board_buttons[y*board_sizer+x].x = offset_x + base_x;
-                data.board_buttons[y*board_sizer+x].y = offset_y + base_y;
-                data.board_buttons[y*board_sizer+x].r = data.button_size;
-                data.board_buttons[y*board_sizer+x].ix = x;
-                data.board_buttons[y*board_sizer+x].iy = y;
-                data.board_buttons[y*board_sizer+x].update(mX, mY);
+                float base_y = y * (fitting_hex_radius * 1.5);
+                data.board_buttons[y * board_sizer + x].x = offset_x + base_x;
+                data.board_buttons[y * board_sizer + x].y = offset_y + base_y;
+                data.board_buttons[y * board_sizer + x].r = data.button_size;
+                data.board_buttons[y * board_sizer + x].ix = x;
+                data.board_buttons[y * board_sizer + x].iy = y;
+                data.board_buttons[y * board_sizer + x].update(mX, mY);
             }
         }
         return ERR_OK;
@@ -279,18 +279,18 @@ namespace {
 
         //TODO
         const float hex_angle = 2 * M_PI / 6;
-        const float fitting_hex_radius = data.button_size+data.padding;
+        const float fitting_hex_radius = data.button_size + data.padding;
         const float flat_radius = sin(hex_angle) * fitting_hex_radius;
-        int board_sizer = (2*data.size-1);
+        int board_sizer = (2 * data.size - 1);
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
+        nvgRect(dc, -10, -10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, dd.w/2, dd.h/2);
+        nvgTranslate(dc, dd.w / 2, dd.h / 2);
         if (!data.flat_top) {
-            nvgRotate(dc, hex_angle/2);
+            nvgRotate(dc, hex_angle / 2);
         }
         // colored board border for current/winning player
         data.pbuf = HAVANNAH_PLAYER_NONE;
@@ -317,15 +317,15 @@ namespace {
             // actually we just want the ptm in there, so reste it back to that
             data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
         }
-        nvgStrokeWidth(dc, flat_radius*0.5);
-        nvgMoveTo(dc, static_cast<float>(data.size*2)*flat_radius, 0);
+        nvgStrokeWidth(dc, flat_radius * 0.5);
+        nvgMoveTo(dc, static_cast<float>(data.size * 2) * flat_radius, 0);
         for (int i = 0; i < 6; i++) {
-            nvgRotate(dc, M_PI/3);
-            nvgLineTo(dc, static_cast<float>(data.size*2)*flat_radius, 0);
+            nvgRotate(dc, M_PI / 3);
+            nvgLineTo(dc, static_cast<float>(data.size * 2) * flat_radius, 0);
         }
         nvgStroke(dc);
         // translate back up to board rendering position and render board
-        nvgTranslate(dc, -(data.size*flat_radius)+flat_radius, -((3*data.size-3)*fitting_hex_radius)/2);
+        nvgTranslate(dc, -(data.size * flat_radius) + flat_radius, -((3 * data.size - 3) * fitting_hex_radius) / 2);
         for (int y = 0; y < board_sizer; y++) {
             for (int x = 0; x < board_sizer; x++) {
                 if (!(x - y < data.size) || !(y - x < data.size)) {
@@ -336,7 +336,7 @@ namespace {
                 if (y % 2 != 0) {
                     base_x += flat_radius;
                 }
-                float base_y = y*(fitting_hex_radius*1.5);
+                float base_y = y * (fitting_hex_radius * 1.5);
                 nvgBeginPath(dc);
                 if (data.g.methods == NULL || data.pbuf_c == 0) {
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
@@ -345,10 +345,10 @@ namespace {
                 }
                 nvgSave(dc);
                 nvgTranslate(dc, base_x, base_y);
-                nvgRotate(dc, hex_angle/2);
+                nvgRotate(dc, hex_angle / 2);
                 nvgMoveTo(dc, data.button_size, 0);
                 for (int i = 0; i < 6; i++) {
-                    nvgRotate(dc, M_PI/3);
+                    nvgRotate(dc, M_PI / 3);
                     nvgLineTo(dc, data.button_size, 0);
                 }
                 nvgFill(dc);
@@ -360,13 +360,13 @@ namespace {
                 data.gi->get_cell(&data.g, x, y, &cell_color);
                 switch (cell_color) {
                     case HAVANNAH_PLAYER_NONE: {
-                        if (data.board_buttons[y*board_sizer+x].hovered && data.pbuf > HAVANNAH_PLAYER_NONE) {
+                        if (data.board_buttons[y * board_sizer + x].hovered && data.pbuf > HAVANNAH_PLAYER_NONE) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
-                            nvgMoveTo(dc, data.button_size*0.9, 0);
+                            nvgMoveTo(dc, data.button_size * 0.9, 0);
                             for (int i = 0; i < 6; i++) {
-                                nvgRotate(dc, M_PI/3);
-                                nvgLineTo(dc, data.button_size*0.9, 0);
+                                nvgRotate(dc, M_PI / 3);
+                                nvgLineTo(dc, data.button_size * 0.9, 0);
                             }
                             nvgFill(dc);
                         }
@@ -375,13 +375,13 @@ namespace {
                         nvgBeginPath(dc);
                         nvgFillColor(dc, nvgRGB(141, 35, 35));
                         if (data.hex_stones) {
-                            nvgMoveTo(dc, data.button_size*data.stone_size_mult, 0);
+                            nvgMoveTo(dc, data.button_size * data.stone_size_mult, 0);
                             for (int i = 0; i < 6; i++) {
-                                nvgRotate(dc, M_PI/3);
-                                nvgLineTo(dc, data.button_size*data.stone_size_mult, 0);
+                                nvgRotate(dc, M_PI / 3);
+                                nvgLineTo(dc, data.button_size * data.stone_size_mult, 0);
                             }
                         } else {
-                            nvgCircle(dc, 0, 0, data.button_size*data.stone_size_mult);
+                            nvgCircle(dc, 0, 0, data.button_size * data.stone_size_mult);
                         }
                         nvgFill(dc);
                     } break;
@@ -389,13 +389,13 @@ namespace {
                         nvgBeginPath(dc);
                         nvgFillColor(dc, nvgRGB(25, 25, 25));
                         if (data.hex_stones) {
-                            nvgMoveTo(dc, data.button_size*data.stone_size_mult, 0);
+                            nvgMoveTo(dc, data.button_size * data.stone_size_mult, 0);
                             for (int i = 0; i < 6; i++) {
-                                nvgRotate(dc, M_PI/3);
-                                nvgLineTo(dc, data.button_size*data.stone_size_mult, 0);
+                                nvgRotate(dc, M_PI / 3);
+                                nvgLineTo(dc, data.button_size * data.stone_size_mult, 0);
                             }
                         } else {
-                            nvgCircle(dc, 0, 0, data.button_size*data.stone_size_mult);
+                            nvgCircle(dc, 0, 0, data.button_size * data.stone_size_mult);
                         }
                         nvgFill(dc);
                     } break;
@@ -409,21 +409,21 @@ namespace {
                     // draw for self<->{1(x-1,y),3(x,y-1),2(x-1,y-1)}
                     uint8_t connections_to_draw = 0;
                     HAVANNAH_PLAYER cell_other;
-                    data.gi->get_cell(&data.g, x-1, y, &cell_other);
+                    data.gi->get_cell(&data.g, x - 1, y, &cell_other);
                     if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b001;
                     }
-                    data.gi->get_cell(&data.g, x, y-1, &cell_other);
+                    data.gi->get_cell(&data.g, x, y - 1, &cell_other);
                     if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b100;
                     }
-                    data.gi->get_cell(&data.g, x-1, y-1, &cell_other);
+                    data.gi->get_cell(&data.g, x - 1, y - 1, &cell_other);
                     if (cell_color == cell_other && cell_other != HAVANNAH_PLAYER_INVALID) {
                         connections_to_draw |= 0b010;
                     }
                     if (connections_to_draw) {
                         nvgSave(dc);
-                        nvgRotate(dc, -M_PI/6);
+                        nvgRotate(dc, -M_PI / 6);
                         nvgBeginPath(dc);
                         switch (cell_color) {
                             case HAVANNAH_PLAYER_WHITE: {
@@ -437,19 +437,19 @@ namespace {
                                 assert(false);
                             } break;
                         }
-                        nvgRotate(dc, -M_PI-M_PI/3);
+                        nvgRotate(dc, -M_PI - M_PI / 3);
                         for (int rot = 0; rot < 3; rot++) {
-                            nvgRotate(dc, M_PI/3);
-                            if (!((connections_to_draw >> rot)&0b1)) {
+                            nvgRotate(dc, M_PI / 3);
+                            if (!((connections_to_draw >> rot) & 0b1)) {
                                 continue;
                             }
-                            nvgRect(dc, -connection_draw_width/2, -connection_draw_width/2, connection_draw_width+flat_radius*2, connection_draw_width);
+                            nvgRect(dc, -connection_draw_width / 2, -connection_draw_width / 2, connection_draw_width + flat_radius * 2, connection_draw_width);
                         }
                         nvgFill(dc);
                         nvgRestore(dc);
                     }
                 }
-                //TODO draw engine best move 
+                //TODO draw engine best move
                 /*if (engine && engine->player_to_move() != 0 && engine->get_best_move() == ((x<<8)|y)) {
                     nvgStrokeColor(dc, nvgRGB(125, 187, 248));
                     nvgStrokeWidth(dc, data.button_size*0.1);
@@ -478,7 +478,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods havannah_fem{
     .frontend_name = "havannah",
@@ -506,6 +506,6 @@ const frontend_methods havannah_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

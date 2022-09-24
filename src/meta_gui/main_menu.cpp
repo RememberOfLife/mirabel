@@ -51,9 +51,9 @@ namespace MetaGui {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Fullscreen", "F11", fullscreen)) {
-                        fullscreen = !fullscreen;
-                        // borderless fullscreen
-                        SDL_SetWindowFullscreen(Control::main_client->sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+                    fullscreen = !fullscreen;
+                    // borderless fullscreen
+                    SDL_SetWindowFullscreen(Control::main_client->sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
@@ -67,4 +67,4 @@ namespace MetaGui {
         }
     }
 
-}
+} // namespace MetaGui

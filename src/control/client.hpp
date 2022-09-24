@@ -22,42 +22,41 @@ namespace Control {
 
     class Client {
 
-        public:
+      public:
 
-            TimeoutCrash t_tc; // client owns this
-            TimeoutCrash::timeout_info tc_info;
+        TimeoutCrash t_tc; // client owns this
+        TimeoutCrash::timeout_info tc_info;
 
-            Network::NetworkClient* t_network = NULL;
-            f_event_queue* network_send_queue = NULL;
-            // offline server likely somewhere here
+        Network::NetworkClient* t_network = NULL;
+        f_event_queue* network_send_queue = NULL;
+        // offline server likely somewhere here
 
-            SDL_Window* sdl_window;
-            SDL_GLContext sdl_glcontext;
-            ImGuiIO* imgui_io;
-            NVGcontext* nanovg_ctx;
+        SDL_Window* sdl_window;
+        SDL_GLContext sdl_glcontext;
+        ImGuiIO* imgui_io;
+        NVGcontext* nanovg_ctx;
 
-            f_event_queue inbox;
+        f_event_queue inbox;
 
-            game* the_game = NULL;
-            uint64_t game_step = 1;
-            //TODO game_timectl
-            //TODO game_history
+        game* the_game = NULL;
+        uint64_t game_step = 1;
+        //TODO game_timectl
+        //TODO game_history
 
-            PluginManager plugin_mgr;
+        PluginManager plugin_mgr;
 
-            frontend_display_data dd;
-            frontend* the_frontend;
-            frontend* empty_fe;
-            Engines::EngineManager* engine_mgr;
+        frontend_display_data dd;
+        frontend* the_frontend;
+        frontend* empty_fe;
+        Engines::EngineManager* engine_mgr;
 
-            float dpi_scale;
+        float dpi_scale;
 
-            Client();
-            ~Client();
-            void loop();
-
+        Client();
+        ~Client();
+        void loop();
     };
 
     extern Client* main_client;
 
-}
+} // namespace Control

@@ -22,7 +22,7 @@ namespace Network {
         if (server_socketset == NULL) {
             printf("[ERROR] failed to allocate server socketset\n");
         }
-        client_connections = (connection*)malloc(client_connection_bucket_size*sizeof(connection));
+        client_connections = (connection*)malloc(client_connection_bucket_size * sizeof(connection));
         if (client_connections == NULL) {
             printf("[ERROR] failed to allocate client connections bucket\n");
         }
@@ -122,7 +122,7 @@ namespace Network {
             for (uint32_t i = 0; i < client_connection_bucket_size; i++) {
                 if (client_connections[i].socket == NULL) {
                     connection_slot = &(client_connections[i]);
-                    connection_id = i+1;
+                    connection_id = i + 1;
                     break;
                 }
             }
@@ -140,7 +140,7 @@ namespace Network {
                 // slot available for new client, accept it
                 // send protocol client id set, functions as ok if set as initial
                 *db_event_type = EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET;
-                *(db_event_type+1) = connection_id;
+                *(db_event_type + 1) = connection_id;
                 int send_len = sizeof(f_event);
                 int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(f_event));
                 if (sent_len != send_len) {
@@ -375,7 +375,7 @@ namespace Network {
                 recv_len = 0;
                 while (recv_len < buffer_size) {
                     // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
-                    int im_rd = SSL_read(ready_client->ssl_session, data_buffer+recv_len, buffer_size-recv_len); // read as much from ssl as we can to jumpstart event processing
+                    int im_rd = SSL_read(ready_client->ssl_session, data_buffer + recv_len, buffer_size - recv_len); // read as much from ssl as we can to jumpstart event processing
                     if (im_rd == 0) {
                         break;
                     }
@@ -401,7 +401,7 @@ namespace Network {
                     }
                     //TODO handle events longer than one buffer filling
                     //TODO handle event fragmentation
-                    
+
                     // universal packet->event decoding, then place it in the recv_queue
                     // at least one event here, process it from data_buffer
                     f_event_any recv_event;
@@ -418,7 +418,8 @@ namespace Network {
 
                     // switch on type
                     switch (recv_event.base.type) {
-                        case EVENT_TYPE_NULL: break; // drop null events
+                        case EVENT_TYPE_NULL:
+                            break; // drop null events
                         case EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT: {
                             //REWORK need more?
                             ready_client->state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
@@ -452,4 +453,4 @@ namespace Network {
         f_event_queue_push(recv_queue, &es);
     }
 
-}
+} // namespace Network

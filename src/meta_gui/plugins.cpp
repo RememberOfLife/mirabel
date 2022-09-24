@@ -27,8 +27,7 @@ namespace MetaGui {
 
         Control::PluginManager& plugin_mgr = Control::main_client->plugin_mgr;
 
-        if (ImGui::BeginTabBar("plugins and components"))
-        {
+        if (ImGui::BeginTabBar("plugins and components")) {
             if (ImGui::BeginTabItem("Plugins")) {
 
                 std::vector<Control::PluginManager::plugin_file>& plugins_ref = plugin_mgr.plugins;
@@ -171,4 +170,4 @@ namespace MetaGui {
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

@@ -72,16 +72,14 @@ namespace MetaGui {
         const char* buf_end = log_buffer.end();
         ImGuiListClipper clipper;
         clipper.Begin(log_line_offsets.size());
-        while (clipper.Step())
-        {
-            for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
-            {
+        while (clipper.Step()) {
+            for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++) {
                 const char* line_start = buf + log_line_offsets[line_no];
                 const char* line_end = (line_no + 1 < log_line_offsets.size()) ? (buf + log_line_offsets[line_no + 1] - 1) : buf_end;
                 bool colored = false;
                 if (*line_start == '#') {
                     colored = true;
-                    switch (*(line_start+1)) {
+                    switch (*(line_start + 1)) {
                         default: {
                             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255));
                         } break;
@@ -95,12 +93,12 @@ namespace MetaGui {
                             ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(222, 44, 44, 255));
                         } break;
                     }
-                    if (line_end-line_start > 3) {
+                    if (line_end - line_start > 3) {
                         line_start += 3;
                     }
                 }
-                if (line_no < log_line_offsets.size()-1) {
-                    ImGui::Text("[%09lu]", std::chrono::duration_cast<std::chrono::milliseconds>(log_line_timestamps[line_no]-LOG_START_TIME).count());
+                if (line_no < log_line_offsets.size() - 1) {
+                    ImGui::Text("[%09lu]", std::chrono::duration_cast<std::chrono::milliseconds>(log_line_timestamps[line_no] - LOG_START_TIME).count());
                 }
                 ImGui::SameLine();
                 ImGui::TextUnformatted(line_start, line_end);
@@ -128,14 +126,14 @@ namespace MetaGui {
                 log_line_timestamps.push_back(std::chrono::steady_clock::now());
             }
         }
-        int line_offset = log_line_offsets.size()-2;
+        int line_offset = log_line_offsets.size() - 2;
         if (line_offset < 0) {
             line_offset = 0;
-        } 
-        const char* line_start = log_buffer.begin()+(log_line_offsets[line_offset]);
+        }
+        const char* line_start = log_buffer.begin() + (log_line_offsets[line_offset]);
         LOG_LEVEL update_dirty = LOG_LEVEL_NONE;
         if (*line_start == '#') {
-            switch (*(line_start+1)) {
+            switch (*(line_start + 1)) {
                 case 'I': {
                     update_dirty = LOG_LEVEL_INFO;
                 } break;
@@ -152,7 +150,7 @@ namespace MetaGui {
         }
         m.unlock();
     }
-    
+
     void logger::logfv(const char* fmt, va_list args)
     {
         m.lock();
@@ -164,14 +162,14 @@ namespace MetaGui {
                 log_line_timestamps.push_back(std::chrono::steady_clock::now());
             }
         }
-        int line_offset = log_line_offsets.size()-2;
+        int line_offset = log_line_offsets.size() - 2;
         if (line_offset < 0) {
             line_offset = 0;
-        } 
-        const char* line_start = log_buffer.begin()+(log_line_offsets[line_offset]);
+        }
+        const char* line_start = log_buffer.begin() + (log_line_offsets[line_offset]);
         LOG_LEVEL update_dirty = LOG_LEVEL_LOG;
         if (*line_start == '#') {
-            switch (*(line_start+1)) {
+            switch (*(line_start + 1)) {
                 case 'I': {
                     update_dirty = LOG_LEVEL_INFO;
                 } break;
@@ -199,7 +197,7 @@ namespace MetaGui {
         m.unlock();
     }
 
-    static uint32_t next_log_id = DEBUG_LOG+1;
+    static uint32_t next_log_id = DEBUG_LOG + 1;
     static std::unordered_map<uint32_t, logger*> logs = {{DEBUG_LOG, new logger("DEBUG", LOG_DEFAULT_BUFFER_SIZE)}};
     static std::vector<uint32_t> visible_logs = {DEBUG_LOG}; // this keeps the order of the visible logs
     static uint32_t visible_log = DEBUG_LOG;
@@ -223,17 +221,14 @@ namespace MetaGui {
     {
         ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Logs", p_open);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             return;
         }
-        if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_TabListPopupButton))
-        {
+        if (ImGui::BeginTabBar("##tabs", ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_TabListPopupButton)) {
             //TODO fix for closed elsewhere glitch
             // submit Tabs
-            for (int log_n = 0; log_n < visible_logs.size(); log_n++)
-            {
+            for (int log_n = 0; log_n < visible_logs.size(); log_n++) {
                 uint32_t current_log_id = visible_logs[log_n];
                 logger* current_log = logs[current_log_id];
                 switch (current_log->dirty) {
@@ -263,7 +258,7 @@ namespace MetaGui {
                     // collapsing header with info + settings about the log
                     if (ImGui::CollapsingHeader("Logger", ImGuiTreeNodeFlags_DefaultOpen)) {
                         ImGui::AlignTextToFramePadding();
-                        ImGui::Text("line count: %lu", current_log->log_line_offsets.size()-1);
+                        ImGui::Text("line count: %lu", current_log->log_line_offsets.size() - 1);
                         ImGui::SameLine();
                         ImGui::NextColumn();
                         const char* text_auto_scroll = "auto-scroll";
@@ -273,7 +268,7 @@ namespace MetaGui {
                     }
                     current_log->show();
                     current_log->dirty = LOG_LEVEL_NONE;
-                    
+
                     ImGui::EndTabItem();
                 }
                 ImGui::PopID();
@@ -287,7 +282,7 @@ namespace MetaGui {
     {
         log(DEBUG_LOG, str, str_end);
     }
-    
+
     void logf(const char* fmt, ...)
     {
         va_list args;
@@ -302,7 +297,7 @@ namespace MetaGui {
             logs[log_id]->log(str, str_end);
         }
     }
-    
+
     void logf(uint32_t log_id, const char* fmt, ...)
     {
         if (log_exists(log_id)) {
@@ -311,9 +306,8 @@ namespace MetaGui {
             logs[log_id]->logfv(fmt, args);
             va_end(args);
         }
-        
     }
-    
+
     void logfv(uint32_t log_id, const char* fmt, va_list args)
     {
         if (log_exists(log_id)) {
@@ -361,4 +355,4 @@ namespace MetaGui {
         logf("#I cleared logger#%d: %s\n", log_id, logs[log_id]->name);
     }
 
-}
+} // namespace MetaGui

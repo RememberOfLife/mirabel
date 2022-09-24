@@ -45,7 +45,7 @@ namespace Control {
         q(target_queue),
         quit(false)
     {
-        name = (char*)malloc(strlen(new_name)+1);
+        name = (char*)malloc(strlen(new_name) + 1);
         strcpy(name, new_name);
     }
 
@@ -58,7 +58,7 @@ namespace Control {
     {
         f_event_queue_destroy(&inbox);
     }
-    
+
     void TimeoutCrash::loop()
     {
         bool quit = false;
@@ -82,7 +82,7 @@ namespace Control {
             f_event_any e;
             f_event_queue_pop(&inbox, &e, heartbeat_deadline);
             std::chrono::steady_clock::time_point sleep_stop = std::chrono::steady_clock::now();
-            int real_sleep_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_stop-sleep_start).count();
+            int real_sleep_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_stop - sleep_start).count();
             // upon wakeup, check for heartbeat responses
             m.lock();
             while (e.base.type != EVENT_TYPE_NULL) {
@@ -144,7 +144,7 @@ namespace Control {
                 tii.last_heartbeat_age += real_sleep_time;
                 if (tii.last_heartbeat_age >= tii.timeout_ms) {
                     // heartbeat deadline
-                    if (tii.heartbeat_answered)  {
+                    if (tii.heartbeat_answered) {
                         tii.last_heartbeat_age -= tii.timeout_ms;
                         tii.heartbeat_answered = false;
                         f_event_any es;
@@ -163,21 +163,19 @@ namespace Control {
                 map_iter++;
             }
             m.unlock();
-
         }
     }
-    
 
     void TimeoutCrash::start()
     {
         runner = std::thread(&TimeoutCrash::loop, this);
     }
-    
+
     void TimeoutCrash::join()
     {
         runner.join();
     }
-    
+
     TimeoutCrash::timeout_info TimeoutCrash::register_timeout_item(f_event_queue* target_queue, const char* name, int initial_delay, int timeout_ms)
     {
         m.lock();
@@ -227,4 +225,4 @@ namespace Control {
         return false;
     }
 
-}
+} // namespace Control

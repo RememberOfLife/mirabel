@@ -36,7 +36,7 @@ namespace Control {
             fprintf(stderr, "[FATAL] sdl_net init error: %s\n", SDLNet_GetError());
             exit(1);
         }
-        
+
         Network::NetworkServer* net_server = new Network::NetworkServer();
         if (!net_server->open(NULL, 61801)) {
             fprintf(stderr, "[FATAL] networkserver failed to open\n");
@@ -156,12 +156,12 @@ namespace Control {
                         free(e.auth.username);
                         static fast_prng rng(123);
                         const int assigned_length = 5;
-                        const int guestname_length = 6+assigned_length;
+                        const int guestname_length = 6 + assigned_length;
                         e.auth.username = (char*)malloc(guestname_length);
                         char* str_p = e.auth.username;
                         str_p += sprintf(str_p, "Guest");
                         for (int i = 0; i < assigned_length; i++) {
-                            str_p += sprintf(str_p, "%d", rng.rand()%10);
+                            str_p += sprintf(str_p, "%d", rng.rand() % 10);
                         }
                     }
                     f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, e.auth.username, NULL);
@@ -197,4 +197,4 @@ namespace Control {
         printf("[INFO] server exiting main loop\n");
     }
 
-}
+} // namespace Control

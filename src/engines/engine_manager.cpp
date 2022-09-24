@@ -60,7 +60,7 @@ namespace Engines {
         name_swap = (char*)malloc(STR_BUF_MAX);
         strcpy(name_swap, name);
     }
-    
+
     EngineManager::engine_container::~engine_container()
     {
         free(name);
@@ -200,7 +200,7 @@ namespace Engines {
             }
         }
     }
-    
+
     void EngineManager::game_move(player_id player, move_code code, sync_counter sync)
     {
         engine_event e;
@@ -212,7 +212,7 @@ namespace Engines {
             }
         }
     }
-    
+
     void EngineManager::game_sync(void* data_start, void* data_end)
     {
         engine_event e;
@@ -224,12 +224,11 @@ namespace Engines {
             }
         }
     }
-    
+
     void EngineManager::update()
     {
         engine_event e = (engine_event){
-            .type = EE_TYPE_NULL
-        };
+            .type = EE_TYPE_NULL};
         do {
             eevent_destroy(&e);
             eevent_queue_pop(&engine_outbox, &e, 0);
@@ -358,7 +357,7 @@ namespace Engines {
                                     varsize += svs;
                                     varp += svs;
                                 }
-                                tec.options.back().l.v.var  = (char*)malloc(varsize);
+                                tec.options.back().l.v.var = (char*)malloc(varsize);
                                 memcpy(tec.options.back().l.v.var, e.option.l.v.var, varsize);
                             }
                             tec.options.back().value.combo = NULL;
@@ -480,7 +479,7 @@ namespace Engines {
             }
         } while (e.type != EE_TYPE_NULL);
         uint64_t sdl_ticks = SDL_GetTicks64();
-        for (int i = 0; i < engines.size(); ) {
+        for (int i = 0; i < engines.size();) {
             engine_container& tec = *engines[i];
             if (tec.eq != NULL && sdl_ticks - tec.heartbeat_last_ticks > 3000) { // 3000ms bewteen forced heartbeats
                 eevent_create_heartbeat(&e, tec.e.engine_id, tec.heartbeat_next_id++);
@@ -496,7 +495,7 @@ namespace Engines {
             }
         }
     }
-    
+
     EngineManager::engine_container* EngineManager::container_by_engine_id(uint32_t engine_id)
     {
         for (int i = 0; i < engines.size(); i++) {
@@ -583,4 +582,4 @@ namespace Engines {
         }
     }
 
-}
+} // namespace Engines

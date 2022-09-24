@@ -95,4 +95,4 @@ namespace DD {
     InvertMask()
     */
 
-}
+} // namespace DD

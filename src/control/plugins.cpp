@@ -278,7 +278,7 @@ namespace Control {
             }
         }
     }
-    
+
     void EngineImpl::destroy_opts(void* opts) const
     {
         if (wrapped) {
@@ -315,7 +315,7 @@ namespace Control {
             add_frontend(&twixt_pp_fem);
 
             add_engine_methods(&randomengine_ebe);
-
+            add_engine_methods(&uci_wrap_ebe);
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist
@@ -332,7 +332,7 @@ namespace Control {
 
     void PluginManager::detect_plugins()
     {
-        for (int i = plugins.size() - 1; i >= 0; i-- ){
+        for (int i = plugins.size() - 1; i >= 0; i--) {
             if (plugins[i].loaded == false) {
                 plugins.erase(plugins.begin() + i);
             }
@@ -342,8 +342,7 @@ namespace Control {
             return;
         }
         struct dirent* dp = readdir(dir);
-        while (dp)
-        {
+        while (dp) {
             if (dp->d_type == DT_REG) { //TODO want to allow symlinks?
                 if (strstr(dp->d_name, ".so") != NULL || strstr(dp->d_name, ".dll") != NULL) { //TODO make sure that these occur as the very last thing in the filename
                     bool skip = false;
@@ -520,27 +519,27 @@ namespace Control {
         //TODO remove reuse
         for (int i = the_plugin.provided_game_methods.size() - 1; i >= 0; i--) {
             if (add_game_methods(the_plugin.provided_game_methods[i]) == false) {
-                the_plugin.provided_game_methods.erase(the_plugin.provided_game_methods.begin()+i);
+                the_plugin.provided_game_methods.erase(the_plugin.provided_game_methods.begin() + i);
             }
         }
         for (int i = the_plugin.provided_game_wraps.size() - 1; i >= 0; i--) {
             if (add_game_wrap(the_plugin.provided_game_wraps[i]) == false) {
-                the_plugin.provided_game_wraps.erase(the_plugin.provided_game_wraps.begin()+i);
+                the_plugin.provided_game_wraps.erase(the_plugin.provided_game_wraps.begin() + i);
             }
         }
         for (int i = the_plugin.provided_frontends.size() - 1; i >= 0; i--) {
             if (add_frontend(the_plugin.provided_frontends[i]) == false) {
-                the_plugin.provided_frontends.erase(the_plugin.provided_frontends.begin()+i);
+                the_plugin.provided_frontends.erase(the_plugin.provided_frontends.begin() + i);
             }
         }
         for (int i = the_plugin.provided_engine_methods.size() - 1; i >= 0; i--) {
             if (add_engine_methods(the_plugin.provided_engine_methods[i]) == false) {
-                the_plugin.provided_engine_methods.erase(the_plugin.provided_engine_methods.begin()+i);
+                the_plugin.provided_engine_methods.erase(the_plugin.provided_engine_methods.begin() + i);
             }
         }
         for (int i = the_plugin.provided_engine_wraps.size() - 1; i >= 0; i--) {
             if (add_engine_wrap(the_plugin.provided_engine_wraps[i]) == false) {
-                the_plugin.provided_engine_wraps.erase(the_plugin.provided_engine_wraps.begin()+i);
+                the_plugin.provided_engine_wraps.erase(the_plugin.provided_engine_wraps.begin() + i);
             }
         }
 
@@ -767,4 +766,4 @@ namespace Control {
         }
     }
 
-}
+} // namespace Control

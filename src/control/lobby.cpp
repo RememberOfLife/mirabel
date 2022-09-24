@@ -23,7 +23,7 @@ namespace Control {
         game_variant(NULL),
         game_impl(NULL),
         max_users(max_users),
-        user_client_ids(static_cast<uint32_t*>(malloc(max_users*sizeof(uint32_t))))
+        user_client_ids(static_cast<uint32_t*>(malloc(max_users * sizeof(uint32_t))))
     {
         for (uint32_t i = 0; i < max_users; i++) {
             user_client_ids[i] = F_EVENT_CLIENT_NONE;
@@ -199,4 +199,4 @@ namespace Control {
         }
     }
 
-}
+} // namespace Control

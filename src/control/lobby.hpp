@@ -12,31 +12,32 @@
 namespace Control {
 
     class Lobby {
-        public:
-            PluginManager* plugin_mgr;
-            f_event_queue* send_queue;
+      public:
 
-            // uint64_t id;
-            char* game_base;
-            char* game_variant;
-            char* game_impl;
-            char* game_options;
-            game* the_game;
-            // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user 
-            uint16_t max_users;
-            uint32_t* user_client_ids; //TODO should use some user struct, for now just stores client ids of connected clients
+        PluginManager* plugin_mgr;
+        f_event_queue* send_queue;
 
-            uint32_t lobby_msg_id_ctr = 1;
+        // uint64_t id;
+        char* game_base;
+        char* game_variant;
+        char* game_impl;
+        char* game_options;
+        game* the_game;
+        // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user
+        uint16_t max_users;
+        uint32_t* user_client_ids; //TODO should use some user struct, for now just stores client ids of connected clients
 
-            Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users);
-            ~Lobby();
+        uint32_t lobby_msg_id_ctr = 1;
 
-            void AddUser(uint32_t client_id);
-            void RemoveUser(uint32_t client_id);
+        Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users);
+        ~Lobby();
 
-            void HandleEvent(f_event_any e); // handle events that are specifically assigned to this lobby
+        void AddUser(uint32_t client_id);
+        void RemoveUser(uint32_t client_id);
 
-            void SendToAllButOne(f_event_any e, uint32_t excluded_client_id);
+        void HandleEvent(f_event_any e); // handle events that are specifically assigned to this lobby
+
+        void SendToAllButOne(f_event_any e, uint32_t excluded_client_id);
     };
 
-}
+} // namespace Control

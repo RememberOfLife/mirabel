@@ -25,9 +25,10 @@ namespace {
         float h;
         bool hovered;
         bool mousedown;
+
         void update(float mx, float my)
         {
-            hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
+            hovered = (mx >= x && mx <= x + w && my >= y && my <= y + h);
         }
     };
 
@@ -77,9 +78,12 @@ namespace {
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
                 data.board_buttons[y][x] = sbtn{
-                    static_cast<float>(x)*(data.button_size+data.padding),
-                    (2*data.button_size+2*data.padding)-static_cast<float>(y)*(data.button_size+data.padding),
-                    data.button_size, data.button_size, false, false
+                    static_cast<float>(x) * (data.button_size + data.padding),
+                    (2 * data.button_size + 2 * data.padding) - static_cast<float>(y) * (data.button_size + data.padding),
+                    data.button_size,
+                    data.button_size,
+                    false,
+                    false,
                 };
             }
         }
@@ -105,7 +109,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -169,8 +173,8 @@ namespace {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     int mX = event.button.x - data.dd->x;
                     int mY = event.button.y - data.dd->y;
-                    mX -= data.dd->w/2-(3*data.button_size+2*data.padding)/2;
-                    mY -= data.dd->h/2-(3*data.button_size+2*data.padding)/2;
+                    mX -= data.dd->w / 2 - (3 * data.button_size + 2 * data.padding) / 2;
+                    mY -= data.dd->h / 2 - (3 * data.button_size + 2 * data.padding) / 2;
                     for (int x = 0; x < 3; x++) {
                         for (int y = 0; y < 3; y++) {
                             data.board_buttons[y][x].update(mX, mY);
@@ -178,7 +182,7 @@ namespace {
                                 player_id cell_player;
                                 data.gi->get_cell(&data.g, x, y, &cell_player);
                                 if (data.board_buttons[y][x].hovered && data.board_buttons[y][x].mousedown && cell_player == 0) {
-                                    uint64_t move_code = x | (y<<2);
+                                    uint64_t move_code = x | (y << 2);
                                     f_event_any es;
                                     f_event_create_game_move(&es, move_code);
                                     f_event_queue_push(data.dd->outbox, &es);
@@ -205,12 +209,12 @@ namespace {
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
-        mX -= data.dd->w/2-(3*data.button_size+2*data.padding)/2;
-        mY -= data.dd->h/2-(3*data.button_size+2*data.padding)/2;
+        mX -= data.dd->w / 2 - (3 * data.button_size + 2 * data.padding) / 2;
+        mY -= data.dd->h / 2 - (3 * data.button_size + 2 * data.padding) / 2;
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                data.board_buttons[y][x].x = static_cast<float>(x)*(data.button_size+data.padding);
-                data.board_buttons[y][x].y = (2*data.button_size+2*data.padding)-static_cast<float>(y)*(data.button_size+data.padding);
+                data.board_buttons[y][x].x = static_cast<float>(x) * (data.button_size + data.padding);
+                data.board_buttons[y][x].y = (2 * data.button_size + 2 * data.padding) - static_cast<float>(y) * (data.button_size + data.padding);
                 data.board_buttons[y][x].w = data.button_size;
                 data.board_buttons[y][x].h = data.button_size;
                 data.board_buttons[y][x].update(mX, mY);
@@ -218,7 +222,7 @@ namespace {
         }
         return ERR_OK;
     }
-    
+
     error_code render(frontend* self)
     {
         data_repr& data = _get_repr(self);
@@ -229,16 +233,16 @@ namespace {
 
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
-        nvgStrokeWidth(dc, data.button_size*0.175);
+        nvgStrokeWidth(dc, data.button_size * 0.175);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
+        nvgRect(dc, -10, -10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, dd.w/2-(3*data.button_size+2*data.padding)/2, dd.h/2-(3*data.button_size+2*data.padding)/2);
+        nvgTranslate(dc, dd.w / 2 - (3 * data.button_size + 2 * data.padding) / 2, dd.h / 2 - (3 * data.button_size + 2 * data.padding) / 2);
         for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++) {
-                float base_x = static_cast<float>(x)*(data.button_size+data.padding);
-                float base_y = (2*data.button_size+2*data.padding)-static_cast<float>(y)*(data.button_size+data.padding);
+                float base_x = static_cast<float>(x) * (data.button_size + data.padding);
+                float base_y = (2 * data.button_size + 2 * data.padding) - static_cast<float>(y) * (data.button_size + data.padding);
                 nvgBeginPath(dc);
                 nvgRect(dc, base_x, base_y, data.button_size, data.button_size);
                 if (data.g.methods == NULL || data.pbuf_c == 0) {
@@ -256,21 +260,21 @@ namespace {
                     // X
                     nvgBeginPath(dc);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                    nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.175);
-                    nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.825);
-                    nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.825);
-                    nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.175);
+                    nvgMoveTo(dc, base_x + data.button_size * 0.175, base_y + data.button_size * 0.175);
+                    nvgLineTo(dc, base_x + data.button_size * 0.825, base_y + data.button_size * 0.825);
+                    nvgMoveTo(dc, base_x + data.button_size * 0.175, base_y + data.button_size * 0.825);
+                    nvgLineTo(dc, base_x + data.button_size * 0.825, base_y + data.button_size * 0.175);
                     nvgStroke(dc);
                 } else if (player_in_cell == 2) {
                     // O
                     nvgBeginPath(dc);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                    nvgCircle(dc, base_x+data.button_size/2, base_y+data.button_size/2, data.button_size*0.3);
+                    nvgCircle(dc, base_x + data.button_size / 2, base_y + data.button_size / 2, data.button_size * 0.3);
                     nvgStroke(dc);
                 } else if (data.board_buttons[y][x].hovered && data.pbuf > 0) {
                     nvgBeginPath(dc);
                     nvgFillColor(dc, nvgRGB(220, 197, 161));
-                    nvgRect(dc, data.board_buttons[y][x].x+data.button_size*0.05, data.board_buttons[y][x].y+data.button_size*0.05, data.board_buttons[y][x].w-data.button_size*0.1, data.board_buttons[y][x].h-data.button_size*0.1);
+                    nvgRect(dc, data.board_buttons[y][x].x + data.button_size * 0.05, data.board_buttons[y][x].y + data.button_size * 0.05, data.board_buttons[y][x].w - data.button_size * 0.1, data.board_buttons[y][x].h - data.button_size * 0.1);
                     nvgFill(dc);
                 }
                 //TODO
@@ -297,7 +301,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods tictactoe_fem{
     .frontend_name = "tictactoe",
@@ -325,6 +329,6 @@ const frontend_methods tictactoe_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

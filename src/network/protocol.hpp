@@ -17,4 +17,4 @@ namespace Network {
         PROTOCOL_CONNECTION_STATE_ACCEPTED, // ssl handshake done, either verify passed or user accepted warning
     };
 
-}
+} // namespace Network

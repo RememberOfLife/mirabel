@@ -105,19 +105,23 @@ void cj_color4u_write(char* str, cj_color4u c4u, bool write_alpha)
 {
     if (write_alpha == true) {
         sprintf(str, "#%02hhx%02hhx%02hhx%02hhx", c4u.r, c4u.g, c4u.b, c4u.a);
-    } else  {
+    } else {
         sprintf(str, "#%02hhx%02hhx%02hhx", c4u.r, c4u.g, c4u.b);
     }
 }
 
 void cj_color4f_write(char* str, cj_color4f c4f, bool write_alpha)
 {
-    cj_color4u_write(str, (cj_color4u){
-        .r = (uint8_t)(c4f.r * UINT8_MAX),
-        .g = (uint8_t)(c4f.g * UINT8_MAX),
-        .b = (uint8_t)(c4f.b * UINT8_MAX),
-        .a = (uint8_t)(c4f.a * UINT8_MAX),
-    }, write_alpha);
+    cj_color4u_write(
+        str,
+        (cj_color4u){
+            .r = (uint8_t)(c4f.r * UINT8_MAX),
+            .g = (uint8_t)(c4f.g * UINT8_MAX),
+            .b = (uint8_t)(c4f.b * UINT8_MAX),
+            .a = (uint8_t)(c4f.a * UINT8_MAX),
+        },
+        write_alpha
+    );
 }
 
 cj_ovac* cj_create_object(uint32_t cap)

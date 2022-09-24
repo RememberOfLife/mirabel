@@ -27,9 +27,10 @@ namespace {
         float y;
         float s;
         bool hovered;
+
         void update(float mx, float my)
         {
-            hovered = (mx >= x && mx <= x+s && my >= y && my <= y+s);
+            hovered = (mx >= x && mx <= x + s && my >= y && my <= y + s);
         }
     };
 
@@ -38,8 +39,7 @@ namespace {
         frontend_display_data* dd;
 
         game g = (game){
-            .methods = NULL
-        };
+            .methods = NULL};
         const chess_internal_methods* gi = NULL;
 
         uint8_t pbuf_c = 0;
@@ -87,7 +87,7 @@ namespace {
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
         self->data1 = malloc(sizeof(data_repr));
-        new(self->data1) data_repr;
+        new (self->data1) data_repr;
         data_repr& data = _get_repr(self);
         data.dc = Control::main_client->nanovg_ctx;
         data.dd = display_data;
@@ -95,18 +95,18 @@ namespace {
         for (int i = 0; i < 12; i++) {
             data.sprites[i] = -1;
         }
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_KING-1] = nvgCreateImage(data.dc, "../res/games/chess/pwk.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_QUEEN-1] = nvgCreateImage(data.dc, "../res/games/chess/pwq.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_ROOK-1] = nvgCreateImage(data.dc, "../res/games/chess/pwr.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_BISHOP-1] = nvgCreateImage(data.dc, "../res/games/chess/pwb.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_KNIGHT-1] = nvgCreateImage(data.dc, "../res/games/chess/pwn.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_WHITE*6-6+CHESS_PIECE_TYPE_PAWN-1] = nvgCreateImage(data.dc, "../res/games/chess/pwp.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_KING-1] = nvgCreateImage(data.dc, "../res/games/chess/pbk.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_QUEEN-1] = nvgCreateImage(data.dc, "../res/games/chess/pbq.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_ROOK-1] = nvgCreateImage(data.dc, "../res/games/chess/pbr.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_BISHOP-1] = nvgCreateImage(data.dc, "../res/games/chess/pbb.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_KNIGHT-1] = nvgCreateImage(data.dc, "../res/games/chess/pbn.png", NVG_IMAGE_GENERATE_MIPMAPS);
-        data.sprites[CHESS_PLAYER_BLACK*6-6+CHESS_PIECE_TYPE_PAWN-1] = nvgCreateImage(data.dc, "../res/games/chess/pbp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_KING - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_QUEEN - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_ROOK - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_BISHOP - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_KNIGHT - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_WHITE * 6 - 6 + CHESS_PIECE_TYPE_PAWN - 1] = nvgCreateImage(data.dc, "../res/games/chess/pwp.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_KING - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbk.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_QUEEN - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbq.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_ROOK - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbr.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_BISHOP - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbb.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_KNIGHT - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbn.png", NVG_IMAGE_GENERATE_MIPMAPS);
+        data.sprites[CHESS_PLAYER_BLACK * 6 - 6 + CHESS_PIECE_TYPE_PAWN - 1] = nvgCreateImage(data.dc, "../res/games/chess/pbp.png", NVG_IMAGE_GENERATE_MIPMAPS);
         for (int i = 0; i < 12; i++) {
             if (data.sprites[i] < 0) {
                 MetaGui::logf("#E chess: sprite loading failure #%d\n", i);
@@ -117,10 +117,10 @@ namespace {
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
                 data.board_buttons[y][x] = sbtn{
-                    static_cast<float>(x)*(data.square_size),
-                    (7*data.square_size)-static_cast<float>(y)*(data.square_size),
-                    data.square_size, false
-                };
+                    static_cast<float>(x) * (data.square_size),
+                    (7 * data.square_size) - static_cast<float>(y) * (data.square_size),
+                    data.square_size,
+                    false};
             }
         }
         return ERR_OK;
@@ -156,7 +156,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -233,17 +233,17 @@ namespace {
                     // is proper left mouse button down event
                     int mX = event.button.x - data.dd->x;
                     int mY = event.button.y - data.dd->y;
-                    mX -= data.dd->w/2-(8*data.square_size)/2;
-                    mY -= data.dd->h/2-(8*data.square_size)/2;
+                    mX -= data.dd->w / 2 - (8 * data.square_size) / 2;
+                    mY -= data.dd->h / 2 - (8 * data.square_size) / 2;
                     // check if promotion menu is active and interacted with
                     if (data.promotion_tx >= 0) {
                         for (int py = 0; py < 2; py++) {
                             for (int px = 0; px < 2; px++) {
-                                if (event.type == SDL_MOUSEBUTTONUP)  {
+                                if (event.type == SDL_MOUSEBUTTONUP) {
                                     data.promotion_buttons[py][px].update(mX, mY);
                                     if (data.promotion_buttons[py][px].hovered && data.promotion_buttons_mdown) {
                                         int promotion_type = py * 2 + px + 2;
-                                        target_move = (promotion_type<<16)|(data.promotion_ox<<12)|(data.promotion_oy<<8)|(data.promotion_tx<<4)|(data.promotion_ty);
+                                        target_move = (promotion_type << 16) | (data.promotion_ox << 12) | (data.promotion_oy << 8) | (data.promotion_tx << 4) | (data.promotion_ty);
                                     }
                                 }
                             }
@@ -258,7 +258,7 @@ namespace {
                             data.promotion_buttons_mdown = false;
                         }
                         data.passive_pin = false;
-                    } 
+                    }
                     if (data.promotion_tx < 0) {
                         for (int y = 0; y < 8; y++) {
                             for (int x = 0; x < 8; x++) {
@@ -281,7 +281,7 @@ namespace {
                                             data.mouse_pindx_y = y;
                                         } else {
                                             // if a pinned piece is set, instead MOVE it to the mousedown location
-                                            target_move = (data.mouse_pindx_x<<12)|(data.mouse_pindx_y<<8)|(x<<4)|(y);
+                                            target_move = (data.mouse_pindx_x << 12) | (data.mouse_pindx_y << 8) | (x << 4) | (y);
                                             // do not set new pickup here, so that the pin gets cleared automatically
                                         }
                                     } else if (data.board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == data.pbuf) {
@@ -298,7 +298,7 @@ namespace {
                                         if (x == data.mouse_pindx_x && y == data.mouse_pindx_y) {
                                             // dropped back onto the picked up piece
                                             data.passive_pin = true;
-                                            // if at least hovered outside of this 
+                                            // if at least hovered outside of this
                                             if (data.hover_outside_of_pin) {
                                                 data.passive_pin = false;
                                                 data.mouse_pindx_x = -1;
@@ -306,7 +306,7 @@ namespace {
                                             }
                                         } else {
                                             // dropped onto another square
-                                            target_move = (data.mouse_pindx_x<<12)|(data.mouse_pindx_y<<8)|(x<<4)|(y);
+                                            target_move = (data.mouse_pindx_x << 12) | (data.mouse_pindx_y << 8) | (x << 4) | (y);
                                         }
                                     }
                                 }
@@ -390,22 +390,22 @@ namespace {
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
-        mX -= data.dd->w/2-(8*data.square_size)/2;
-        mY -= data.dd->h/2-(8*data.square_size)/2;
+        mX -= data.dd->w / 2 - (8 * data.square_size) / 2;
+        mY -= data.dd->h / 2 - (8 * data.square_size) / 2;
         if (data.promotion_tx >= 0) {
             for (int y = 0; y < 2; y++) {
                 for (int x = 0; x < 2; x++) {
-                    data.promotion_buttons[y][x].x = (data.square_size * data.promotion_tx) + (x * data.square_size/2);
-                    data.promotion_buttons[y][x].y = ((7 * data.square_size) - (data.square_size * data.promotion_ty)) + (y * data.square_size/2);
-                    data.promotion_buttons[y][x].s = data.square_size/2;
+                    data.promotion_buttons[y][x].x = (data.square_size * data.promotion_tx) + (x * data.square_size / 2);
+                    data.promotion_buttons[y][x].y = ((7 * data.square_size) - (data.square_size * data.promotion_ty)) + (y * data.square_size / 2);
+                    data.promotion_buttons[y][x].s = data.square_size / 2;
                     data.promotion_buttons[y][x].update(mX, mY);
                 }
             }
         }
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                data.board_buttons[y][x].x = static_cast<float>(x)*(data.square_size);
-                data.board_buttons[y][x].y = (7*data.square_size)-static_cast<float>(y)*(data.square_size);
+                data.board_buttons[y][x].x = static_cast<float>(x) * (data.square_size);
+                data.board_buttons[y][x].y = (7 * data.square_size) - static_cast<float>(y) * (data.square_size);
                 data.board_buttons[y][x].s = data.square_size;
                 data.board_buttons[y][x].update(mX, mY);
                 if (data.board_buttons[y][x].hovered && (data.mouse_pindx_x != x || data.mouse_pindx_y != y)) {
@@ -427,15 +427,15 @@ namespace {
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
+        nvgRect(dc, -10, -10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, dd.w/2-(8*data.square_size)/2, dd.h/2-(8*data.square_size)/2);
+        nvgTranslate(dc, dd.w / 2 - (8 * data.square_size) / 2, dd.h / 2 - (8 * data.square_size) / 2);
         // colored board border for current/winning player
-        float border_size = data.square_size*0.1;
+        float border_size = data.square_size * 0.1;
         nvgBeginPath(dc);
         nvgStrokeWidth(dc, border_size);
-        nvgRect(dc, -border_size, -border_size, 8*data.square_size+2*border_size, 8*data.square_size+2*border_size);
+        nvgRect(dc, -border_size, -border_size, 8 * data.square_size + 2 * border_size, 8 * data.square_size + 2 * border_size);
         if (data.g.methods == NULL) {
             nvgStrokeColor(dc, nvgRGB(128, 128, 128));
         } else {
@@ -443,7 +443,7 @@ namespace {
             data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
             if (data.pbuf_c == 0) {
                 data.g.methods->get_results(&data.g, &data.pbuf_c, &data.pbuf);
-                nvgRect(dc, -2.5*border_size, -2.5*border_size, 8*data.square_size+5*border_size, 8*data.square_size+5*border_size);
+                nvgRect(dc, -2.5 * border_size, -2.5 * border_size, 8 * data.square_size + 5 * border_size, 8 * data.square_size + 5 * border_size);
             }
             color_player = (CHESS_PLAYER)data.pbuf;
             switch (color_player) {
@@ -463,7 +463,7 @@ namespace {
         nvgStroke(dc);
         for (int y = 0; y < 8; y++) {
             for (int x = 0; x < 8; x++) {
-                int iy = 7-y;
+                int iy = 7 - y;
                 float base_x = x * data.square_size;
                 float base_y = y * data.square_size;
                 // draw base square
@@ -486,7 +486,7 @@ namespace {
                             if (data.promotion_buttons[py][px].hovered) {
                                 //TODO gets rendered UNDER the rank-file notation
                                 nvgBeginPath(dc);
-                                nvgRect(dc, base_x + px * data.square_size/2, base_y + py * data.square_size/2, half_sqsize, half_sqsize);
+                                nvgRect(dc, base_x + px * data.square_size / 2, base_y + py * data.square_size / 2, half_sqsize, half_sqsize);
                                 nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
                                 nvgFill(dc);
                             }
@@ -500,13 +500,13 @@ namespace {
                 nvgFontFace(dc, "ff");
                 nvgFillColor(dc, ((x + y) % 2 != 0) ? nvgRGB(240, 217, 181) : nvgRGB(161, 119, 67)); // flip color from base square
                 if (x == 7) {
-                    char_buf[0] = '1'+iy;
+                    char_buf[0] = '1' + iy;
                     nvgBeginPath(dc);
                     nvgTextAlign(dc, NVG_ALIGN_RIGHT | NVG_ALIGN_TOP);
                     nvgText(dc, base_x + data.square_size - text_padding, base_y + text_padding, char_buf, NULL);
                 }
                 if (iy == 0) {
-                    char_buf[0] = 'a'+x;
+                    char_buf[0] = 'a' + x;
                     nvgBeginPath(dc);
                     nvgTextAlign(dc, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
                     nvgText(dc, base_x + text_padding, base_y + data.square_size - text_padding, char_buf, NULL);
@@ -542,23 +542,23 @@ namespace {
                 }
                 if (piece_in_square.type == CHESS_PIECE_TYPE_KING && piece_in_square.player == data.check) {
                     // render red capture type pattern under kings in check
-                    float s = data.square_size*0.3;
+                    float s = data.square_size * 0.3;
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
-                    nvgLineTo(dc, base_x+s, base_y);
-                    nvgLineTo(dc, base_x, base_y+s);
+                    nvgLineTo(dc, base_x + s, base_y);
+                    nvgLineTo(dc, base_x, base_y + s);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x+data.square_size, base_y);
-                    nvgLineTo(dc, base_x+data.square_size-s, base_y);
-                    nvgLineTo(dc, base_x+data.square_size, base_y+s);
+                    nvgMoveTo(dc, base_x + data.square_size, base_y);
+                    nvgLineTo(dc, base_x + data.square_size - s, base_y);
+                    nvgLineTo(dc, base_x + data.square_size, base_y + s);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x, base_y+data.square_size);
-                    nvgLineTo(dc, base_x, base_y+data.square_size-s);
-                    nvgLineTo(dc, base_x+s, base_y+data.square_size);
+                    nvgMoveTo(dc, base_x, base_y + data.square_size);
+                    nvgLineTo(dc, base_x, base_y + data.square_size - s);
+                    nvgLineTo(dc, base_x + s, base_y + data.square_size);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x+data.square_size, base_y+data.square_size);
-                    nvgLineTo(dc, base_x+data.square_size-s, base_y+data.square_size);
-                    nvgLineTo(dc, base_x+data.square_size, base_y+data.square_size-s);
+                    nvgMoveTo(dc, base_x + data.square_size, base_y + data.square_size);
+                    nvgLineTo(dc, base_x + data.square_size - s, base_y + data.square_size);
+                    nvgLineTo(dc, base_x + data.square_size, base_y + data.square_size - s);
                     nvgClosePath(dc);
                     nvgFillColor(dc, nvgRGBA(200, 24, 24, 192));
                     nvgFill(dc);
@@ -566,21 +566,21 @@ namespace {
                 // render the piece sprites
                 nvgBeginPath(dc);
                 nvgRect(dc, base_x, base_y, data.square_size, data.square_size);
-                int sprite_idx = piece_in_square.player*6-6+piece_in_square.type-1;
+                int sprite_idx = piece_in_square.player * 6 - 6 + piece_in_square.type - 1;
                 NVGpaint sprite_paint = nvgImagePattern(dc, base_x, base_y, data.square_size, data.square_size, 0, data.sprites[sprite_idx], sprite_alpha);
                 nvgFillPaint(dc, sprite_paint);
                 nvgFill(dc);
             }
         }
         // render possible moves, if pinned piece exists
-        uint8_t m_from = (data.mouse_pindx_x<<4)|(data.mouse_pindx_y);
+        uint8_t m_from = (data.mouse_pindx_x << 4) | (data.mouse_pindx_y);
         if (data.mouse_pindx_x >= 0 && data.move_map.find(m_from) != data.move_map.end()) {
             uint64_t drawn_bitboard = 0;
             std::vector<uint8_t> moves = data.move_map.at(m_from);
             for (int i = 0; i < moves.size(); i++) {
                 int ix = (moves[i] >> 4) & 0x0F;
                 int iy = (moves[i] & 0x0F);
-                
+
                 uint64_t bitboard_mask = 1;
                 bitboard_mask <<= iy * 8 + ix;
                 if (drawn_bitboard & bitboard_mask) {
@@ -589,7 +589,7 @@ namespace {
                 drawn_bitboard |= bitboard_mask;
 
                 float base_x = ix * data.square_size;
-                float base_y = (7-iy) * data.square_size;
+                float base_y = (7 - iy) * data.square_size;
                 CHESS_piece sp;
                 data.gi->get_cell(&data.g, ix, iy, &sp);
                 if (data.board_buttons[iy][ix].hovered) {
@@ -601,28 +601,28 @@ namespace {
                 } else if (sp.type == CHESS_PIECE_TYPE_NONE) {
                     // is a move to empty square
                     nvgBeginPath(dc);
-                    nvgCircle(dc, base_x+data.square_size/2, base_y+data.square_size/2, data.square_size*0.15);
+                    nvgCircle(dc, base_x + data.square_size / 2, base_y + data.square_size / 2, data.square_size * 0.15);
                     nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
                     nvgFill(dc);
                 } else {
                     // is a capture
-                    float s = data.square_size*0.3;
+                    float s = data.square_size * 0.3;
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
-                    nvgLineTo(dc, base_x+s, base_y);
-                    nvgLineTo(dc, base_x, base_y+s);
+                    nvgLineTo(dc, base_x + s, base_y);
+                    nvgLineTo(dc, base_x, base_y + s);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x+data.square_size, base_y);
-                    nvgLineTo(dc, base_x+data.square_size-s, base_y);
-                    nvgLineTo(dc, base_x+data.square_size, base_y+s);
+                    nvgMoveTo(dc, base_x + data.square_size, base_y);
+                    nvgLineTo(dc, base_x + data.square_size - s, base_y);
+                    nvgLineTo(dc, base_x + data.square_size, base_y + s);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x, base_y+data.square_size);
-                    nvgLineTo(dc, base_x, base_y+data.square_size-s);
-                    nvgLineTo(dc, base_x+s, base_y+data.square_size);
+                    nvgMoveTo(dc, base_x, base_y + data.square_size);
+                    nvgLineTo(dc, base_x, base_y + data.square_size - s);
+                    nvgLineTo(dc, base_x + s, base_y + data.square_size);
                     nvgClosePath(dc);
-                    nvgMoveTo(dc, base_x+data.square_size, base_y+data.square_size);
-                    nvgLineTo(dc, base_x+data.square_size-s, base_y+data.square_size);
-                    nvgLineTo(dc, base_x+data.square_size, base_y+data.square_size-s);
+                    nvgMoveTo(dc, base_x + data.square_size, base_y + data.square_size);
+                    nvgLineTo(dc, base_x + data.square_size - s, base_y + data.square_size);
+                    nvgLineTo(dc, base_x + data.square_size, base_y + data.square_size - s);
                     nvgClosePath(dc);
                     nvgFillColor(dc, nvgRGBA(56, 173, 105, 128));
                     nvgFill(dc);
@@ -636,9 +636,9 @@ namespace {
             CHESS_piece pinned_piece;
             data.gi->get_cell(&data.g, data.mouse_pindx_x, data.mouse_pindx_y, &pinned_piece);
             nvgBeginPath(dc);
-            nvgRect(dc, dd.x + data.mx-data.square_size/2, dd.y + data.my-data.square_size/2, data.square_size, data.square_size);
-            int sprite_idx = pinned_piece.player*6-6+pinned_piece.type-1;
-            NVGpaint sprite_paint = nvgImagePattern(dc, dd.x + data.mx-data.square_size/2, dd.y + data.my-data.square_size/2, data.square_size, data.square_size, 0, data.sprites[sprite_idx], 1);
+            nvgRect(dc, dd.x + data.mx - data.square_size / 2, dd.y + data.my - data.square_size / 2, data.square_size, data.square_size);
+            int sprite_idx = pinned_piece.player * 6 - 6 + pinned_piece.type - 1;
+            NVGpaint sprite_paint = nvgImagePattern(dc, dd.x + data.mx - data.square_size / 2, dd.y + data.my - data.square_size / 2, data.square_size, data.square_size, 0, data.sprites[sprite_idx], 1);
             nvgFillPaint(dc, sprite_paint);
             nvgFill(dc);
         }
@@ -657,7 +657,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods chess_fem{
     .frontend_name = "chess",
@@ -685,6 +685,6 @@ const frontend_methods chess_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

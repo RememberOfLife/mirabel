@@ -26,7 +26,7 @@ namespace {
         //TODO
         tictactoe_internal_methods* ag_int = (tictactoe_internal_methods*)rgame->methods->internal_methods;
         const char* check_options[3] = {"-", "X", "O"};
-        float check_width = 1.2*ImGui::CalcTextSize("XO").x;
+        float check_width = 1.2 * ImGui::CalcTextSize("XO").x;
         int imgui_id = 0;
         // edit: board state
         ImGui::Text("board state:");
@@ -158,7 +158,7 @@ namespace {
         return ERR_OK;
     }
 
-}
+} // namespace
 
 const game_wrap tictactoe_gw{
     .game_api_version = SURENA_GAME_API_VERSION,

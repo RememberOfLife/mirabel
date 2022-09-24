@@ -69,7 +69,8 @@ namespace MetaGui {
             case CJ_TYPE_ERROR: {
                 ImGui::Text("err: %s", ovac->v.s.str);
             } break;
-            case CJ_TYPE_COUNT: break;
+            case CJ_TYPE_COUNT:
+                break;
         }
     }
 
@@ -157,8 +158,8 @@ namespace MetaGui {
             }
         }
         cfg_runlock(Control::main_client->dd.cfg_lock);
-        
+
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

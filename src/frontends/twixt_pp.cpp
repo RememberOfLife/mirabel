@@ -22,6 +22,7 @@ namespace {
         float r;
         bool hovered;
         bool mousedown;
+
         void update(float mx, float my)
         {
             hovered = (hypot(x - mx, y - my) < r);
@@ -32,10 +33,9 @@ namespace {
         NVGcontext* dc;
         frontend_display_data* dd;
         game g = (game){
-            .methods = NULL
-        };
+            .methods = NULL};
         const twixt_pp_internal_methods* gi = NULL;
-        twixt_pp_options opts = (twixt_pp_options) {
+        twixt_pp_options opts = (twixt_pp_options){
             .wx = 24,
             .wy = 24,
         };
@@ -53,7 +53,6 @@ namespace {
         bool display_rankfile = true;
 
         bool rankfile_yoffset = true;
-
 
         int mx = 0;
         int my = 0;
@@ -100,7 +99,7 @@ namespace {
                 nvgBeginPath(dc);
 
                 nvgMoveTo(dc, t, 0);
-                nvgLineTo(dc, t+c, 0);
+                nvgLineTo(dc, t + c, 0);
 
                 nvgStroke(dc);
             }
@@ -162,7 +161,7 @@ namespace {
                 nvgLineTo(dc, bx - data.padding, by + 2 * data.padding);
             } break;
         }
-        nvgStrokeWidth(dc, data.button_size*0.2);
+        nvgStrokeWidth(dc, data.button_size * 0.2);
         nvgStrokeColor(dc, ccol);
         nvgStroke(dc);
     }
@@ -177,7 +176,7 @@ namespace {
     {
         //TODO
         self->data1 = malloc(sizeof(data_repr));
-        new(self->data1) data_repr;
+        new (self->data1) data_repr;
         data_repr& data = _get_repr(self);
         data.dc = Control::main_client->nanovg_ctx;
         data.dd = display_data;
@@ -218,7 +217,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -301,11 +300,11 @@ namespace {
                     if (data.display_rankfile) {
                         mY -= data.padding * 0.25;
                     }
-                    mX -= data.dd->w/2-(data.padding*data.opts.wx)/2 + data.padding/2;
-                    mY -= data.dd->h/2-(data.padding*data.opts.wy)/2 + data.padding/2;
+                    mX -= data.dd->w / 2 - (data.padding * data.opts.wx) / 2 + data.padding / 2;
+                    mY -= data.dd->h / 2 - (data.padding * data.opts.wy) / 2 + data.padding / 2;
                     // detect swap button press
-                    int mXp = mX + data.padding/2;
-                    int mYp = mY + data.padding/2;
+                    int mXp = mX + data.padding / 2;
+                    int mYp = mY + data.padding / 2;
                     if (mXp >= 0 && mYp >= 0 && mXp <= data.padding && mYp <= data.padding) {
                         data.gi->can_swap(&data.g, &data.swap_hover);
                         if (data.swap_hover && data.swap_down && event.type == SDL_MOUSEBUTTONUP) {
@@ -348,7 +347,7 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
-        
+
         if (data.auto_size) {
             float h_pad = data.dd->h / (data.opts.wy + 1);
             float w_pad = data.dd->w / (data.opts.wx + 2);
@@ -360,16 +359,16 @@ namespace {
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
-        mX -= data.dd->w/2-(data.padding*data.opts.wx)/2 + data.padding/2;
-        mY -= data.dd->h/2-(data.padding*data.opts.wy)/2 + data.padding/2;
+        mX -= data.dd->w / 2 - (data.padding * data.opts.wx) / 2 + data.padding / 2;
+        mY -= data.dd->h / 2 - (data.padding * data.opts.wy) / 2 + data.padding / 2;
 
         data.hover_rank = -1;
         data.hover_file = -1;
         // determine hover rank and file, not button based, but range based
         //TODO fix some off by one pixel edge cases on the border of the board
         //TODO when game runs out rank file display freezes
-        int mXp = mX + data.padding/2;
-        int mYp = mY + data.padding/2;
+        int mXp = mX + data.padding / 2;
+        int mYp = mY + data.padding / 2;
         if (mXp >= 0 && mYp >= 0 && mXp <= data.padding * data.opts.wx && mYp <= data.padding * data.opts.wy) {
             data.hover_rank = mYp / data.padding;
             data.hover_file = mXp / data.padding;
@@ -391,8 +390,8 @@ namespace {
         }
         for (int y = 0; y < data.opts.wy; y++) {
             for (int x = 0; x < data.opts.wx; x++) {
-                data.board_buttons[y * data.opts.wx + x].x  = static_cast<float>(x)*(data.padding);
-                data.board_buttons[y * data.opts.wx + x].y  = static_cast<float>(y)*(data.padding);
+                data.board_buttons[y * data.opts.wx + x].x = static_cast<float>(x) * (data.padding);
+                data.board_buttons[y * data.opts.wx + x].y = static_cast<float>(y) * (data.padding);
                 data.board_buttons[y * data.opts.wx + x].r = data.button_size;
                 data.board_buttons[y * data.opts.wx + x].update(mX, mY);
                 //BUG why is it not a potential problem that the button mousedown is never initialized?
@@ -415,14 +414,14 @@ namespace {
         frontend_display_data& dd = *data.dd;
 
         nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
-        
+
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, dd.w+20, dd.h+20);
+        nvgRect(dc, -10, -10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, dd.w/2-(data.padding*data.opts.wx)/2 + data.padding/2, dd.h/2-(data.padding*data.opts.wy)/2 + data.padding*0.5);
+        nvgTranslate(dc, dd.w / 2 - (data.padding * data.opts.wx) / 2 + data.padding / 2, dd.h / 2 - (data.padding * data.opts.wy) / 2 + data.padding * 0.5);
         if (data.display_rankfile) {
             nvgTranslate(dc, 0, data.padding * 0.25);
             if (!data.rankfile_yoffset) {
@@ -436,7 +435,7 @@ namespace {
             // display rank and file descriptions
             nvgSave(dc);
             nvgTranslate(dc, -data.padding, -data.padding);
-            
+
             nvgFontSize(dc, data.padding * 0.5);
             nvgFontFace(dc, "ff");
             char char_buf[4];
@@ -488,17 +487,17 @@ namespace {
         nvgSave(dc);
         for (int i = 0; i < 2; i++) {
             nvgBeginPath(dc);
-            nvgMoveTo(dc, -data.padding/2, -data.padding/2);
-            nvgLineTo(dc, data.padding * data.opts.wx - data.padding/2, -data.padding/2);
-            nvgLineTo(dc, data.padding * (data.opts.wx - 1) - data.padding/2, data.padding/2);
-            nvgLineTo(dc, data.padding/2, data.padding/2);
+            nvgMoveTo(dc, -data.padding / 2, -data.padding / 2);
+            nvgLineTo(dc, data.padding * data.opts.wx - data.padding / 2, -data.padding / 2);
+            nvgLineTo(dc, data.padding * (data.opts.wx - 1) - data.padding / 2, data.padding / 2);
+            nvgLineTo(dc, data.padding / 2, data.padding / 2);
             nvgFillColor(dc, nvgRGB(240, 217, 181)); // wood light
             nvgFill(dc);
             nvgBeginPath(dc);
-            nvgMoveTo(dc, -data.padding/2, -data.padding/2);
-            nvgLineTo(dc, -data.padding/2, data.padding * data.opts.wy - data.padding/2);
-            nvgLineTo(dc, data.padding/2, data.padding * (data.opts.wy - 1) - data.padding/2);
-            nvgLineTo(dc, data.padding/2, data.padding/2);
+            nvgMoveTo(dc, -data.padding / 2, -data.padding / 2);
+            nvgLineTo(dc, -data.padding / 2, data.padding * data.opts.wy - data.padding / 2);
+            nvgLineTo(dc, data.padding / 2, data.padding * (data.opts.wy - 1) - data.padding / 2);
+            nvgLineTo(dc, data.padding / 2, data.padding / 2);
             nvgFillColor(dc, nvgRGB(161, 119, 67)); // wood dark
             nvgFill(dc);
             nvgTranslate(dc, data.padding * (data.opts.wx - 1), data.padding * (data.opts.wy - 1));
@@ -548,29 +547,35 @@ namespace {
                     swy_w = swy;
                     shx_w = shx;
                     shy_w = shy;
-                    draw_dashed_line(self,
-                        (data.padding*(owx))/2 - data.padding/2, (data.padding*(owy))/2 - data.padding * 2.5,
-                        (data.padding*(owx))/2 - data.padding/2, (data.padding*(owy))/2 - data.padding/2,
-                        data.button_size*0.25, data.button_size, rocol);
+                    draw_dashed_line(self, (data.padding * (owx)) / 2 - data.padding / 2, (data.padding * (owy)) / 2 - data.padding * 2.5, (data.padding * (owx)) / 2 - data.padding / 2, (data.padding * (owy)) / 2 - data.padding / 2, data.button_size * 0.25, data.button_size, rocol);
                 } else {
                     swx_w = shy;
                     swy_w = shx;
                     shx_w = swy;
                     shy_w = swx;
-                    draw_dashed_line(self,
-                        (data.padding*(owy))/2 - data.padding/2, (data.padding*(owx))/2 - data.padding * 2.5,
-                        (data.padding*(owy))/2 - data.padding/2, (data.padding*(owx))/2 - data.padding/2,
-                        data.button_size*0.25, data.button_size, rocol);
+                    draw_dashed_line(self, (data.padding * (owy)) / 2 - data.padding / 2, (data.padding * (owx)) / 2 - data.padding * 2.5, (data.padding * (owy)) / 2 - data.padding / 2, (data.padding * (owx)) / 2 - data.padding / 2, data.button_size * 0.25, data.button_size, rocol);
                 }
                 //TODO line width little bit too big on smaller board sizes
                 draw_dashed_line(
-                    self, 0, 0,
-                    data.padding * swx_w, data.padding * swy_w,
-                    data.button_size*0.25, data.button_size, rocol);
+                    self,
+                    0,
+                    0,
+                    data.padding * swx_w,
+                    data.padding * swy_w,
+                    data.button_size * 0.25,
+                    data.button_size,
+                    rocol
+                );
                 draw_dashed_line(
-                    self, 0, 0,
-                    data.padding * shx_w, data.padding * shy_w,
-                    data.button_size*0.25, data.button_size, rocol);
+                    self,
+                    0,
+                    0,
+                    data.padding * shx_w,
+                    data.padding * shy_w,
+                    data.button_size * 0.25,
+                    data.button_size,
+                    rocol
+                );
                 nvgTranslate(dc, data.padding * (i % 2 == 0 ? data.opts.wx - 3 : data.opts.wy - 3), 0);
                 nvgRotate(dc, M_PI / 2);
             }
@@ -582,15 +587,15 @@ namespace {
                 if (data.g.methods == NULL) {
                     continue;
                 }
-                float base_x = static_cast<float>(x)*(data.padding);
-                float base_y = static_cast<float>(y)*(data.padding);
+                float base_x = static_cast<float>(x) * (data.padding);
+                float base_y = static_cast<float>(y) * (data.padding);
                 uint8_t connections;
                 data.gi->get_node_connections(&data.g, x, y, &connections);
                 if (connections & TWIXT_PP_DIR_RT) {
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
                     nvgLineTo(dc, base_x + 2 * data.padding, base_y - data.padding);
-                    nvgStrokeWidth(dc, data.button_size*0.2);
+                    nvgStrokeWidth(dc, data.button_size * 0.2);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgStroke(dc);
                 }
@@ -598,7 +603,7 @@ namespace {
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
                     nvgLineTo(dc, base_x + 2 * data.padding, base_y + data.padding);
-                    nvgStrokeWidth(dc, data.button_size*0.2);
+                    nvgStrokeWidth(dc, data.button_size * 0.2);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgStroke(dc);
                 }
@@ -606,7 +611,7 @@ namespace {
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
                     nvgLineTo(dc, base_x + data.padding, base_y + 2 * data.padding);
-                    nvgStrokeWidth(dc, data.button_size*0.2);
+                    nvgStrokeWidth(dc, data.button_size * 0.2);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgStroke(dc);
                 }
@@ -614,7 +619,7 @@ namespace {
                     nvgBeginPath(dc);
                     nvgMoveTo(dc, base_x, base_y);
                     nvgLineTo(dc, base_x - data.padding, base_y + 2 * data.padding);
-                    nvgStrokeWidth(dc, data.button_size*0.2);
+                    nvgStrokeWidth(dc, data.button_size * 0.2);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     nvgStroke(dc);
                 }
@@ -645,8 +650,8 @@ namespace {
         }
         for (int y = 0; y < data.opts.wy; y++) {
             for (int x = 0; x < data.opts.wx; x++) {
-                float base_x = static_cast<float>(x)*(data.padding);
-                float base_y = static_cast<float>(y)*(data.padding);
+                float base_x = static_cast<float>(x) * (data.padding);
+                float base_y = static_cast<float>(y) * (data.padding);
                 TWIXT_PP_PLAYER np = TWIXT_PP_PLAYER_NONE;
                 if (data.g.methods != NULL) {
                     data.gi->get_node(&data.g, x, y, &np);
@@ -658,7 +663,7 @@ namespace {
                 switch (np) {
                     case TWIXT_PP_PLAYER_NONE: {
                         nvgBeginPath(dc);
-                        nvgCircle(dc, base_x, base_y, data.button_size*0.2);
+                        nvgCircle(dc, base_x, base_y, data.button_size * 0.2);
                         nvgFillColor(dc, nvgRGB(25, 25, 25));
                         nvgFill(dc);
                     } break;
@@ -669,7 +674,7 @@ namespace {
                         nvgFill(dc);
                         nvgBeginPath(dc);
                         nvgCircle(dc, base_x, base_y, data.button_size - data.button_size * 0.1);
-                        nvgStrokeWidth(dc, data.button_size*0.2);
+                        nvgStrokeWidth(dc, data.button_size * 0.2);
                         nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                         nvgStroke(dc);
                     } break;
@@ -687,7 +692,7 @@ namespace {
                         if (can_swap) {
                             if (data.swap_hover) {
                                 nvgBeginPath(dc);
-                                nvgRect(dc, -data.padding*0.45, -data.padding*0.45, data.padding*0.9, data.padding*0.9);
+                                nvgRect(dc, -data.padding * 0.45, -data.padding * 0.45, data.padding * 0.9, data.padding * 0.9);
                                 if (data.swap_down) {
                                     nvgFillColor(dc, nvgRGBA(0, 0, 0, 30));
                                 } else {
@@ -726,36 +731,36 @@ namespace {
                     }
                     if (data.display_hover_indicator_cross) {
                         nvgBeginPath(dc);
-                        nvgStrokeWidth(dc, data.button_size*0.4);
+                        nvgStrokeWidth(dc, data.button_size * 0.4);
                         nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                        nvgMoveTo(dc, base_x-data.button_size*0.75, base_y-data.button_size*0.75);
-                        nvgLineTo(dc, base_x+data.button_size*0.75, base_y+data.button_size*0.75);
-                        nvgMoveTo(dc, base_x-data.button_size*0.75, base_y+data.button_size*0.75);
-                        nvgLineTo(dc, base_x+data.button_size*0.75, base_y-data.button_size*0.75);
+                        nvgMoveTo(dc, base_x - data.button_size * 0.75, base_y - data.button_size * 0.75);
+                        nvgLineTo(dc, base_x + data.button_size * 0.75, base_y + data.button_size * 0.75);
+                        nvgMoveTo(dc, base_x - data.button_size * 0.75, base_y + data.button_size * 0.75);
+                        nvgLineTo(dc, base_x + data.button_size * 0.75, base_y - data.button_size * 0.75);
                         nvgStroke(dc);
 
                         nvgBeginPath(dc);
-                        nvgStrokeWidth(dc, data.button_size*0.3);
+                        nvgStrokeWidth(dc, data.button_size * 0.3);
                         if (data.pbuf == TWIXT_PP_PLAYER_WHITE) {
                             nvgStrokeColor(dc, nvgRGB(236, 236, 236));
                         } else {
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                         }
-                        nvgMoveTo(dc, base_x-data.button_size*0.7, base_y-data.button_size*0.7);
-                        nvgLineTo(dc, base_x+data.button_size*0.7, base_y+data.button_size*0.7);
-                        nvgMoveTo(dc, base_x-data.button_size*0.7, base_y+data.button_size*0.7);
-                        nvgLineTo(dc, base_x+data.button_size*0.7, base_y-data.button_size*0.7);
+                        nvgMoveTo(dc, base_x - data.button_size * 0.7, base_y - data.button_size * 0.7);
+                        nvgLineTo(dc, base_x + data.button_size * 0.7, base_y + data.button_size * 0.7);
+                        nvgMoveTo(dc, base_x - data.button_size * 0.7, base_y + data.button_size * 0.7);
+                        nvgLineTo(dc, base_x + data.button_size * 0.7, base_y - data.button_size * 0.7);
                         nvgStroke(dc);
                     } else {
                         nvgBeginPath(dc);
                         nvgCircle(dc, base_x, base_y, data.button_size - data.button_size * 0.1);
-                        nvgStrokeWidth(dc, data.button_size*0.2);
+                        nvgStrokeWidth(dc, data.button_size * 0.2);
                         nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                         nvgStroke(dc);
 
                         nvgBeginPath(dc);
                         nvgCircle(dc, base_x, base_y, data.button_size - data.button_size * 0.1);
-                        nvgStrokeWidth(dc, data.button_size*0.15); // TODO maybe this thinner to increase contrast for white backline hovers
+                        nvgStrokeWidth(dc, data.button_size * 0.15); // TODO maybe this thinner to increase contrast for white backline hovers
                         if (data.pbuf == TWIXT_PP_PLAYER_WHITE) {
                             nvgStrokeColor(dc, nvgRGB(236, 236, 236));
                         } else {
@@ -781,7 +786,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods twixt_pp_fem{
     .frontend_name = "twixt_pp",
@@ -809,6 +814,6 @@ const frontend_methods twixt_pp_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

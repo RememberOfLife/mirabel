@@ -65,6 +65,7 @@ set(SOURCES
 
     lib/surena/src/engines/randomengine.cpp
     # lib/surena/src/engines/singlethreadedmcts.cpp
+    lib/surena/src/engines/uci_wrap.cpp
     lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp

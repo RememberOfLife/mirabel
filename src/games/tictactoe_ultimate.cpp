@@ -44,7 +44,7 @@ namespace {
         return ERR_OK;
     }
 
-}
+} // namespace
 
 const game_wrap tictactoe_ultimate_gw{
     .game_api_version = SURENA_GAME_API_VERSION,

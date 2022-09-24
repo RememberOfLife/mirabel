@@ -21,7 +21,7 @@ namespace MetaGui {
     bool show_connection_window = false;
     //BUG gcc bug makes this ugly for now https://stackoverflow.com/questions/70172941/c99-designator-member-outside-of-aggregate-initializer
     connection_info conn_info = connection_info{
-        /*.server_address = */"127.0.0.1", //TODO for debugging purposes this is loopback
+        /*.server_address = */ "127.0.0.1", //TODO for debugging purposes this is loopback
         .server_port = 61801, // default mirabel port
         .adapter = RUNNING_STATE_NONE,
         .connection = RUNNING_STATE_NONE,
@@ -32,8 +32,8 @@ namespace MetaGui {
         .auth_allow_login = false,
         .auth_allow_guest = false,
         .auth_want_guest_pw = false,
-        /*.username = */"",
-        /*.password = */"",
+        /*.username = */ "",
+        /*.password = */ "",
         .authfail_reason = NULL,
     };
 
@@ -51,4 +51,4 @@ namespace MetaGui {
 
     bool show_plugins_window = false;
 
-}
+} // namespace MetaGui

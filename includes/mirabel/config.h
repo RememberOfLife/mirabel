@@ -57,6 +57,7 @@ typedef union cj_value_u {
 
 // config object/value/array-container
 typedef struct cj_ovac_s cj_ovac;
+
 struct cj_ovac_s {
     cj_ovac* parent;
 
@@ -126,8 +127,6 @@ size_t cj_measure(cj_ovac* ovac, bool packed, bool str_hint); // includes a fina
 char* cj_serialize(char* buf, cj_ovac* ovac, bool packed, bool str_hint); // returns a pointer just beyond the last written character, or NULL if a serialization error occured (e.g. invalid types)
 cj_ovac* cj_deserialize(const char* buf, bool str_hint); // must be zero terminated, returns an obj ovac if successful, otherwise an ovac of type CJ_TYPE_ERROR, which has a string value containing the error string, or NULL if no error specified
 
-
-
 // cj_find uses a data path api to find the specified entry in the ovac (json) tree
 // examples:
 // "client.global.palette.wood_dark" returns a color4u ovac
@@ -158,8 +157,6 @@ bool cj_get_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, bool* vnul
 //...
 
 //TODO some easy way to set defaults on startup and still be able to overwrite fixed values
-
-
 
 // for concurrent access to the tree, later on might make the tree more capable and lock free
 void* cfg_lock_create();

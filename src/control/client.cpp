@@ -99,7 +99,7 @@ namespace Control {
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES,16);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
         SDL_GL_SetSwapInterval(1); // vsync with 1, possibly set after window creation
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
@@ -117,7 +117,8 @@ namespace Control {
         // setup imgui context
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        imgui_io = &ImGui::GetIO(); (void)imgui_io;
+        imgui_io = &ImGui::GetIO();
+        (void)imgui_io;
         imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // enable keyboard controls
         //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // enable gamepad controls
@@ -267,13 +268,13 @@ namespace Control {
         bool ctrl_right = false;
 
         int frame_work_ns = 0;
-        const int frame_budget_ns = (1000 * 1000 * 1000)/60;
+        const int frame_budget_ns = (1000 * 1000 * 1000) / 60;
         bool quit = false;
         bool try_quit = false;
         while (!quit) {
             // sleep for the dead time that would be wasted by rendering
             // reduces input lag considerably by waiting up to the last possible moment to gather input events before action+rendering
-            std::this_thread::sleep_for(std::chrono::nanoseconds(frame_budget_ns-frame_work_ns));
+            std::this_thread::sleep_for(std::chrono::nanoseconds(frame_budget_ns - frame_work_ns));
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
 
@@ -490,7 +491,7 @@ namespace Control {
                         memcpy(MetaGui::conn_info.server_cert_thumbprint, e.ssl_thumbprint.thumbprint, Network::SHA256_LEN);
                         free(MetaGui::conn_info.verifail_reason);
                         MetaGui::conn_info.verifail_reason = (char*)malloc(strlen((char*)e.ssl_thumbprint.thumbprint) + 1);
-                        strcpy(MetaGui::conn_info.verifail_reason, (char*)e.ssl_thumbprint.thumbprint+Network::SHA256_LEN);
+                        strcpy(MetaGui::conn_info.verifail_reason, (char*)e.ssl_thumbprint.thumbprint + Network::SHA256_LEN);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
                         // finalize connection by setting the sending queue, this transitions from initialization into usage
@@ -545,8 +546,7 @@ namespace Control {
 
             // work through interface events: clicks, key presses, gui commands structs for updating interface elems
             SDL_Event event; //TODO need to free this later somewhere?
-            while (SDL_PollEvent(&event))
-            {
+            while (SDL_PollEvent(&event)) {
                 // pass event through imgui
                 ImGui_ImplSDL2_ProcessEvent(&event);
                 if (event.type == SDL_QUIT) {
@@ -565,17 +565,11 @@ namespace Control {
                     }
                 }
                 // imgui wants mouse: skip mouse events
-                if (imgui_io->WantCaptureMouse && (
-                    event.type == SDL_MOUSEMOTION ||
-                    event.type == SDL_MOUSEBUTTONDOWN ||
-                    event.type == SDL_MOUSEBUTTONUP ||
-                    event.type == SDL_MOUSEWHEEL)) {
+                if (imgui_io->WantCaptureMouse && (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL)) {
                     continue;
                 }
                 // imgui wants keyboard: skip keyboard events
-                if (imgui_io->WantCaptureKeyboard && (
-                    event.type == SDL_KEYDOWN ||
-                    event.type == SDL_KEYUP)) {
+                if (imgui_io->WantCaptureKeyboard && (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)) {
                     continue;
                 }
                 // global window shortcuts
@@ -691,21 +685,49 @@ namespace Control {
             // show imgui windows
             //TODO since all of these only show when the bool is set, it doesnt really need to be an argument, they can just check themselves
             if (show_hud) {
-                if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+                if (show_demo_window) {
+                    ImGui::ShowDemoWindow(&show_demo_window);
+                }
                 //TODO window visiblity needs to be persistent
-                if (MetaGui::show_confirm_exit_modal) MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
-                if (MetaGui::show_main_menu_bar) MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
-                if (MetaGui::show_stats_overlay) MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
-                if (MetaGui::show_logs_window) MetaGui::logs_window(&MetaGui::show_logs_window);
-                if (MetaGui::show_config_registry_window) MetaGui::config_registry_window(&MetaGui::show_config_registry_window);
-                if (MetaGui::show_connection_window) MetaGui::connection_window(&MetaGui::show_connection_window);
-                if (MetaGui::show_game_config_window) MetaGui::game_config_window(&MetaGui::show_game_config_window);
-                if (MetaGui::show_frontend_config_window) MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
-                if (MetaGui::show_engine_window) MetaGui::engine_window(&MetaGui::show_engine_window);
-                if (MetaGui::show_chat_window) MetaGui::chat_window(&MetaGui::show_chat_window);
-                if (MetaGui::show_timectl_window) MetaGui::timectl_window(&MetaGui::show_timectl_window);
-                if (MetaGui::show_history_window) MetaGui::history_window(&MetaGui::show_history_window);
-                if (MetaGui::show_plugins_window) MetaGui::plugins_window(&MetaGui::show_plugins_window);
+                if (MetaGui::show_confirm_exit_modal) {
+                    MetaGui::confirm_exit_modal(&MetaGui::show_confirm_exit_modal);
+                }
+                if (MetaGui::show_main_menu_bar) {
+                    MetaGui::main_menu_bar(&MetaGui::show_main_menu_bar);
+                }
+                if (MetaGui::show_stats_overlay) {
+                    MetaGui::stats_overlay(&MetaGui::show_stats_overlay);
+                }
+                if (MetaGui::show_logs_window) {
+                    MetaGui::logs_window(&MetaGui::show_logs_window);
+                }
+                if (MetaGui::show_config_registry_window) {
+                    MetaGui::config_registry_window(&MetaGui::show_config_registry_window);
+                }
+                if (MetaGui::show_connection_window) {
+                    MetaGui::connection_window(&MetaGui::show_connection_window);
+                }
+                if (MetaGui::show_game_config_window) {
+                    MetaGui::game_config_window(&MetaGui::show_game_config_window);
+                }
+                if (MetaGui::show_frontend_config_window) {
+                    MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
+                }
+                if (MetaGui::show_engine_window) {
+                    MetaGui::engine_window(&MetaGui::show_engine_window);
+                }
+                if (MetaGui::show_chat_window) {
+                    MetaGui::chat_window(&MetaGui::show_chat_window);
+                }
+                if (MetaGui::show_timectl_window) {
+                    MetaGui::timectl_window(&MetaGui::show_timectl_window);
+                }
+                if (MetaGui::show_history_window) {
+                    MetaGui::history_window(&MetaGui::show_history_window);
+                }
+                if (MetaGui::show_plugins_window) {
+                    MetaGui::plugins_window(&MetaGui::show_plugins_window);
+                }
             }
 
             //TODO put this in the sdl resize event, make a resize function on the context app
@@ -740,8 +762,8 @@ namespace Control {
             SDL_GL_SwapWindow(sdl_window);
 
             std::chrono::steady_clock::time_point frame_time_stop = std::chrono::steady_clock::now();
-            frame_work_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(frame_time_stop-frame_time_start).count();
+            frame_work_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(frame_time_stop - frame_time_start).count();
         }
     }
 
-}
+} // namespace Control

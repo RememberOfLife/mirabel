@@ -20,8 +20,7 @@ namespace MetaGui {
         ImGui::SetNextWindowPos(ImVec2(50, 400), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowSize(ImVec2(300, 540), ImGuiCond_FirstUseEver);
         bool window_contents_visible = ImGui::Begin("Engine", p_open);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             return;
         }
@@ -29,8 +28,7 @@ namespace MetaGui {
         Control::PluginManager& plugin_mgr = Control::main_client->plugin_mgr;
 
         static ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_FittingPolicyScroll | ImGuiTabBarFlags_Reorderable | ImGuiTabBarFlags_TabListPopupButton;
-        if (ImGui::BeginTabBar("engines", tab_bar_flags))
-        {
+        if (ImGui::BeginTabBar("engines", tab_bar_flags)) {
             if (ImGui::TabItemButton("+", ImGuiTabItemFlags_Trailing | ImGuiTabItemFlags_NoTooltip)) {
                 Control::main_client->engine_mgr->add_container(PLAYER_NONE);
             }
@@ -47,8 +45,7 @@ namespace MetaGui {
                     item_flags |= ImGuiTabItemFlags_UnsavedDocument;
                     p_open = NULL;
                 }
-                if (((p_open && *p_open == true) || p_open == NULL) && ImGui::BeginTabItem(tec.name, p_open, item_flags))
-                {
+                if (((p_open && *p_open == true) || p_open == NULL) && ImGui::BeginTabItem(tec.name, p_open, item_flags)) {
                     // everything below here should be from an engine container indexed by the active engine tab, displayed inside the tab bar
 
                     const char* selected_name = "<NONE>";
@@ -61,8 +58,7 @@ namespace MetaGui {
                         }
                     }
 
-                    if (ImGui::BeginPopupContextItem())
-                    {
+                    if (ImGui::BeginPopupContextItem()) {
                         if (ImGui::Button("X")) {
                             ImGui::CloseCurrentPopup();
                         }
@@ -74,7 +70,7 @@ namespace MetaGui {
                     } else if (tec.swap_names) {
                         Control::main_client->engine_mgr->rename_container(te_idx);
                     }
-                    
+
                     bool engine_running = (tec.eq != NULL);
 
                     bool disable_startstop = tec.stopping || (tec.catalogue_idx == 0);
@@ -148,7 +144,7 @@ namespace MetaGui {
                         }
 
                         plugin_mgr.engine_lookup[tec.catalogue_idx]->display_opts(tec.load_options);
-                        
+
                         if (engine_running) {
                             ImGui::EndDisabled();
                         }
@@ -160,8 +156,7 @@ namespace MetaGui {
 
                         const ImVec2 cell_padding(8.0f, 0.0f);
                         ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, cell_padding);
-                        if (ImGui::BeginTable("idtable", 2))
-                        {
+                        if (ImGui::BeginTable("idtable", 2)) {
                             ImGui::TableSetupColumn(NULL, ImGuiTableColumnFlags_WidthFixed);
 
                             ImGui::TableNextRow();
@@ -288,7 +283,7 @@ namespace MetaGui {
                                     ImGui::SameLine();
 
                                     float button_width = ImGui::CalcTextSize("S").x + ImGui::GetStyle().FramePadding.x * 2.f;
-                                    float width_needed = /*ImGui::GetStyle().ItemSpacing.x + */button_width;
+                                    float width_needed = /*ImGui::GetStyle().ItemSpacing.x + */ button_width;
                                     ImGui::SetCursorPosX(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - width_needed);
 
                                     ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(154, 58, 58, 255));
@@ -310,7 +305,6 @@ namespace MetaGui {
                             if (engine_searching) {
                                 ImGui::EndDisabled();
                             }
-
                         }
 
                         ImGui::Separator();
@@ -335,14 +329,13 @@ namespace MetaGui {
                                 tec.start_search();
                             }
                         }
-                        
+
                         if (tec.search_constraints_open) {
                             if (engine_searching) {
                                 ImGui::BeginDisabled();
                             }
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
-                            if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders))
-                            {
+                            if (ImGui::BeginTable("table_search_constraints", 1, ImGuiTableFlags_Borders)) {
                                 //TODO combo box for which player to search? (show name in parens)
 
                                 ImGui::TableNextRow();
@@ -372,14 +365,13 @@ namespace MetaGui {
                                 ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, ImVec4(0.16, 0.92, 0.53, 1));
                             } //TODO want more colors, ? e.g. maybe show stale info in the table? or just yellow if not running but info still there
                             ImGuiTableFlags searchinfo_table_flags = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg; // replace Border with ImGuiTableFlags_BordersOuter?
-                            if (ImGui::BeginTable("searchinfo_table", 2, searchinfo_table_flags))
-                            {
+                            if (ImGui::BeginTable("searchinfo_table", 2, searchinfo_table_flags)) {
                                 // ImGui::TableSetupColumn("One");
                                 // ImGui::TableSetupColumn("Two");
                                 // ImGui::TableHeadersRow();
 
                                 //TODO might be able to use a subtle progressbar to hint relative amounts, e.g. hashfull, time used from timeout, etc..
-                                
+
                                 //TODO right align these values
 
                                 ImGui::TableNextRow();
@@ -391,7 +383,7 @@ namespace MetaGui {
                                 } else {
                                     ImGui::TextDisabled("---");
                                 }
-                            
+
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::TextUnformatted("depth");
@@ -411,7 +403,7 @@ namespace MetaGui {
                                 } else {
                                     ImGui::TextDisabled("---");
                                 }
-                            
+
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::TextUnformatted("nodes");
@@ -421,7 +413,7 @@ namespace MetaGui {
                                 } else {
                                     ImGui::TextDisabled("---");
                                 }
-                            
+
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::TextUnformatted("nps");
@@ -431,7 +423,7 @@ namespace MetaGui {
                                 } else {
                                     ImGui::TextDisabled("---");
                                 }
-                            
+
                                 ImGui::TableNextRow();
                                 ImGui::TableSetColumnIndex(0);
                                 ImGui::TextUnformatted("hashfull");
@@ -454,8 +446,7 @@ namespace MetaGui {
                         ImGui::TextUnformatted("Best move per player:");
                         if (tec.bestmove.count > 0) {
                             ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(0.0f, 0.0f));
-                            if (ImGui::BeginTable("bestmoves", 3, ImGuiTableFlags_Borders))
-                            {
+                            if (ImGui::BeginTable("bestmoves", 3, ImGuiTableFlags_Borders)) {
                                 ImGui::TableSetupColumn("player");
                                 ImGui::TableSetupColumn("move");
                                 ImGui::TableSetupColumn("conf");
@@ -479,7 +470,6 @@ namespace MetaGui {
                             ImGui::SameLine();
                             ImGui::TextDisabled("<unavailable>");
                         }
-
                     }
 
                     ImGui::EndTabItem();
@@ -488,7 +478,6 @@ namespace MetaGui {
                 if (*p_open == false) {
                     Control::main_client->engine_mgr->remove_container(te_idx);
                 }
-
             }
 
             if (Control::main_client->engine_mgr->engines.size() == 0) {
@@ -501,4 +490,4 @@ namespace MetaGui {
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

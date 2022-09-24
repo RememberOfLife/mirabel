@@ -2,7 +2,7 @@
 Language: Cpp
 BasedOnStyle: LLVM
 AccessModifierOffset: -2
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false

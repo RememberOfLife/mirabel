@@ -15,38 +15,40 @@
 namespace Network {
 
     class NetworkClient {
-        private:
-            Control::TimeoutCrash* tc; // we don't own this
-            Control::TimeoutCrash::timeout_info tc_info;
+      private:
 
-            uint32_t log_id;
+        Control::TimeoutCrash* tc; // we don't own this
+        Control::TimeoutCrash::timeout_info tc_info;
 
-            //TODO figure out how the network client pushes out state updates for the connection metagui window, just use the recv queue?
-            
-            std::thread send_runner;
-            std::thread recv_runner;
+        uint32_t log_id;
 
-            SSL_CTX* ssl_ctx;
+        //TODO figure out how the network client pushes out state updates for the connection metagui window, just use the recv queue?
 
-            char* server_address;
-            uint16_t server_port;
-            SDLNet_SocketSet socketset = NULL;
-            connection conn; // client id starts out as F_EVENT_CLIENT_NONE before reassignment
+        std::thread send_runner;
+        std::thread recv_runner;
 
-        public:
-            f_event_queue send_queue;
-            f_event_queue* recv_queue;
+        SSL_CTX* ssl_ctx;
 
-            //TODO atomic ping and heartbeat times (hb might go into event)
+        char* server_address;
+        uint16_t server_port;
+        SDLNet_SocketSet socketset = NULL;
+        connection conn; // client id starts out as F_EVENT_CLIENT_NONE before reassignment
 
-            NetworkClient(Control::TimeoutCrash* use_tc);
-            ~NetworkClient();
+      public:
 
-            bool open(const char* host_address, uint16_t host_port);
-            void close();
+        f_event_queue send_queue;
+        f_event_queue* recv_queue;
 
-            void send_loop();
-            void recv_loop();
+        //TODO atomic ping and heartbeat times (hb might go into event)
+
+        NetworkClient(Control::TimeoutCrash* use_tc);
+        ~NetworkClient();
+
+        bool open(const char* host_address, uint16_t host_port);
+        void close();
+
+        void send_loop();
+        void recv_loop();
     };
 
-}
+} // namespace Network

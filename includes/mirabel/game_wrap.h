@@ -32,7 +32,7 @@ typedef struct game_wrap_s {
 
     // for both: if str_buf is NULL, set ret_size to required size, otherwise it is ignored!
     // FEATURE: !backend.options_bin
-    error_code (*opts_bin_to_str)(void* options_struct, char* str_buf, size_t* ret_size); 
+    error_code (*opts_bin_to_str)(void* options_struct, char* str_buf, size_t* ret_size);
 
     //TODO want this? or a more general approach where the wrap gets the whole game? or even at all?
     // FEATURE: options && initial_state

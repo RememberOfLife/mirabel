@@ -58,8 +58,7 @@ namespace MetaGui {
         }
         bool window_contents_visible = ImGui::Begin("Chat", p_open, window_flags);
         window_has_focus = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows);
-        if (!window_contents_visible)
-        {
+        if (!window_contents_visible) {
             ImGui::End();
             ImGui::PopStyleColor(3);
             focus_chat_input = false;
@@ -91,8 +90,7 @@ namespace MetaGui {
             }
             //TODO should only offer popup if we are either msg owner or have mod perms in the lobby
             sprintf(popup_str_id_buf, "%x", chat_log[i].msg_id); //HACK keep the id of the msg stable
-            if (chat_log[i].msg_id < UINT32_MAX && ImGui::BeginPopupContextItem(popup_str_id_buf))
-            {
+            if (chat_log[i].msg_id < UINT32_MAX && ImGui::BeginPopupContextItem(popup_str_id_buf)) {
                 if (ImGui::Selectable("Delete")) {
                     if (Control::main_client->network_send_queue) {
                         f_event_any es;
@@ -160,7 +158,7 @@ namespace MetaGui {
 
     void chat_msg_add(uint32_t msg_id, uint32_t client_id, uint64_t timestamp, const char* text)
     {
-        chat_msg new_msg{msg_id, client_id, timestamp, (char*)malloc(strlen(text)+1)};
+        chat_msg new_msg{msg_id, client_id, timestamp, (char*)malloc(strlen(text) + 1)};
         strcpy(new_msg.text, text);
         chat_log.push_back(new_msg);
     }
@@ -185,4 +183,4 @@ namespace MetaGui {
         chat_log.clear();
     }
 
-}
+} // namespace MetaGui

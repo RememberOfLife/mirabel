@@ -83,7 +83,6 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
-* actually use clang-format to make everything look uniform
 * config:
   * proper meta gui window for display
   * where is the config file stored?
@@ -125,6 +124,7 @@ Collect more general resources:
 * chess frontend animations
 * sound api
 * main_ctrl should be a context object (low prio)
+* stop clang-format newline after structs unions etc.. if already within a struct, union, class, function!
 
 ## ideas
 * move out games and frontends to separate repo(s) and no default catalogue entries

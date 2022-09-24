@@ -20,7 +20,7 @@ namespace MetaGui {
         int ccs = UINT32_MAX;
         while (lp) {
             nvgSave(dc);
-            nvgTranslate(dc, cc*70, 50);
+            nvgTranslate(dc, cc * 70, 50);
             // render line to child
             nvgBeginPath(dc);
             if (sel && h->selected_child == lp->idx_in_parent) {
@@ -57,7 +57,7 @@ namespace MetaGui {
             nvgBeginPath(dc);
             nvgStrokeColor(dc, nvgRGB(200, 200, 200));
             nvgMoveTo(dc, 0, 25);
-            nvgLineTo(dc, (ccl-1)*70, 25);
+            nvgLineTo(dc, (ccl - 1) * 70, 25);
             nvgStrokeWidth(dc, 3);
             nvgStroke(dc);
 
@@ -79,7 +79,7 @@ namespace MetaGui {
             nvgBeginPath(dc);
             nvgStrokeColor(dc, nvgRGB(200, 100, 100));
             nvgMoveTo(dc, 0, 25);
-            nvgLineTo(dc, (ccs-1)*70, 25);
+            nvgLineTo(dc, (ccs - 1) * 70, 25);
             nvgStrokeWidth(dc, 3);
             nvgStroke(dc);
         }
@@ -123,7 +123,7 @@ namespace MetaGui {
 
         return cc > 0 ? cc - 1 : 0;
     }
-    
+
     void history_mockup(NVGcontext* dc)
     {
         //TODO for now this is mockup render directly onto the frontend canvas
@@ -199,4 +199,4 @@ namespace MetaGui {
         //TODO
     }
 
-}
+} // namespace MetaGui

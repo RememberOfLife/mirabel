@@ -12,8 +12,7 @@ namespace MetaGui {
         static int corner = 0;
         ImGuiIO& io = ImGui::GetIO();
         ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-        if (corner != -1)
-        {
+        if (corner != -1) {
             const float PAD = 10.0f;
             const ImGuiViewport* viewport = ImGui::GetMainViewport();
             ImVec2 work_pos = viewport->WorkPos; // use work area to avoid menu-bar/task-bar, if any!
@@ -27,8 +26,7 @@ namespace MetaGui {
             window_flags |= ImGuiWindowFlags_NoMove;
         }
         ImGui::SetNextWindowBgAlpha(0.35f); // transparent background
-        if (ImGui::Begin("Stats Overlay", p_open, window_flags))
-        {
+        if (ImGui::Begin("Stats Overlay", p_open, window_flags)) {
             // ImGui::Text("Stats Overlay");
             // ImGui::Separator();
             static uint64_t last_ticks = 1;
@@ -47,18 +45,29 @@ namespace MetaGui {
             }
             ImGui::Text("FPS: %.1f", last_fps);
             //TODO latency to server in ms goes here, if connected
-            if (ImGui::BeginPopupContextWindow())
-            {
-                if (ImGui::MenuItem("Custom", NULL, corner == -1)) corner = -1;
-                if (ImGui::MenuItem("Top-left", NULL, corner == 0)) corner = 0;
-                if (ImGui::MenuItem("Top-right", NULL, corner == 1)) corner = 1;
-                if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) corner = 2;
-                if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) corner = 3;
-                if (p_open && ImGui::MenuItem("Close")) *p_open = false;
+            if (ImGui::BeginPopupContextWindow()) {
+                if (ImGui::MenuItem("Custom", NULL, corner == -1)) {
+                    corner = -1;
+                }
+                if (ImGui::MenuItem("Top-left", NULL, corner == 0)) {
+                    corner = 0;
+                }
+                if (ImGui::MenuItem("Top-right", NULL, corner == 1)) {
+                    corner = 1;
+                }
+                if (ImGui::MenuItem("Bottom-left", NULL, corner == 2)) {
+                    corner = 2;
+                }
+                if (ImGui::MenuItem("Bottom-right", NULL, corner == 3)) {
+                    corner = 3;
+                }
+                if (p_open && ImGui::MenuItem("Close")) {
+                    *p_open = false;
+                }
                 ImGui::EndPopup();
             }
         }
         ImGui::End();
     }
 
-}
+} // namespace MetaGui

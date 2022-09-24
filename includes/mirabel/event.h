@@ -74,8 +74,8 @@ static const uint32_t F_EVENT_LOBBY_NONE = 0;
 
 #ifdef F_EVENT_INTERNAL
 #define MANAGED_INTERNAL(...) __VA_ARGS__
-#define MANAGED_INTERNAL_DEFAULT                             \
-typedef Control::event_plain_serializer<f_event> serializer;
+#define MANAGED_INTERNAL_DEFAULT \
+    typedef Control::event_plain_serializer<f_event> serializer;
 #else
 #define MANAGED_INTERNAL(...)
 #define MANAGED_INTERNAL_DEFAULT
@@ -90,7 +90,7 @@ typedef Control::event_plain_serializer<f_event> serializer;
 // struct event : public event_netdata { ... }
 
 typedef struct f_event_s {
-    
+
     EVENT_TYPE type;
     uint32_t client_id;
     uint32_t lobby_id;
@@ -102,8 +102,6 @@ typedef struct f_event_s {
 } f_event;
 
 typedef union f_event_any_u f_event_any;
-
-
 
 // general purpose utility functions on events
 
@@ -127,20 +125,18 @@ void f_event_copy(f_event_any* to, f_event_any* from);
 
 void f_event_destroy(f_event_any* e);
 
-
-
 // specific event types
 
 typedef struct f_event_log_s {
     f_event base;
     char* str;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_log_s, 
-            &f_event_log_s::str
-        > serializer;
+        typedef Control::event_string_serializer<f_event_log_s, &f_event_log_s::str> serializer;
     );
 } f_event_log;
+
 void f_event_create_log(f_event_any* e, const char* str);
+
 //TODO logf
 
 typedef struct f_event_heartbeat_s {
@@ -149,6 +145,7 @@ typedef struct f_event_heartbeat_s {
     uint32_t time;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_heartbeat;
+
 void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time);
 
 typedef struct f_event_game_load_s {
@@ -158,14 +155,10 @@ typedef struct f_event_game_load_s {
     char* impl_name;
     char* options;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_game_load_s, 
-            &f_event_game_load_s::base_name,
-            &f_event_game_load_s::variant_name,
-            &f_event_game_load_s::impl_name,
-            &f_event_game_load_s::options
-        > serializer;
+        typedef Control::event_string_serializer<f_event_game_load_s, &f_event_game_load_s::base_name, &f_event_game_load_s::variant_name, &f_event_game_load_s::impl_name, &f_event_game_load_s::options> serializer;
     );
 } f_event_game_load;
+
 void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options);
 
 typedef struct f_event_game_load_methods_s {
@@ -174,17 +167,17 @@ typedef struct f_event_game_load_methods_s {
     char* options;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_game_load_methods;
+
 void f_event_create_game_load_methods(f_event_any* e, const game_methods* methods, const char* options);
 
 typedef struct f_event_game_state_s {
     f_event base;
     char* state;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_game_state_s, 
-            &f_event_game_state_s::state
-        > serializer;
+        typedef Control::event_string_serializer<f_event_game_state_s, &f_event_game_state_s::state> serializer;
     );
 } f_event_game_state;
+
 void f_event_create_game_state(f_event_any* e, uint32_t client_id, const char* state);
 
 typedef struct f_event_game_move_s {
@@ -194,6 +187,7 @@ typedef struct f_event_game_move_s {
     //TODO player and sync ctr
     MANAGED_INTERNAL_DEFAULT;
 } f_event_game_move;
+
 void f_event_create_game_move(f_event_any* e, move_code code);
 
 typedef struct f_event_frontend_load_s {
@@ -201,6 +195,7 @@ typedef struct f_event_frontend_load_s {
     void* frontend;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_frontend_load;
+
 void f_event_create_frontend_load(f_event_any* e, void* frontend);
 
 typedef struct f_event_ssl_thumbprint_s {
@@ -210,7 +205,9 @@ typedef struct f_event_ssl_thumbprint_s {
     void* thumbprint;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_ssl_thumbprint;
+
 void f_event_create_ssl_thumbprint(f_event_any* e, EVENT_TYPE type);
+
 //TODO for with thumbprint
 
 typedef struct f_event_auth_s {
@@ -219,23 +216,20 @@ typedef struct f_event_auth_s {
     char* username;
     char* password;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_auth_s, 
-            &f_event_auth_s::username,
-            &f_event_auth_s::password
-        > serializer;
+        typedef Control::event_string_serializer<f_event_auth_s, &f_event_auth_s::username, &f_event_auth_s::password> serializer;
     );
 } f_event_auth;
+
 void f_event_create_auth(f_event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password);
 
 typedef struct f_event_auth_fail_s {
     f_event base;
     char* reason;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_auth_fail_s, 
-            &f_event_auth_fail_s::reason
-        > serializer;
+        typedef Control::event_string_serializer<f_event_auth_fail_s, &f_event_auth_fail_s::reason> serializer;
     );
 } f_event_auth_fail;
+
 void f_event_create_auth_fail(f_event_any* e, uint32_t client_id, const char* reason);
 
 typedef struct f_event_chat_msg_s {
@@ -245,11 +239,10 @@ typedef struct f_event_chat_msg_s {
     uint64_t timestamp;
     char* text;
     MANAGED_INTERNAL(
-        typedef Control::event_string_serializer<f_event_chat_msg_s, 
-            &f_event_chat_msg_s::text
-        > serializer;
+        typedef Control::event_string_serializer<f_event_chat_msg_s, &f_event_chat_msg_s::text> serializer;
     );
 } f_event_chat_msg;
+
 void f_event_create_chat_msg(f_event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text);
 
 typedef struct f_event_chat_del_s {
@@ -257,6 +250,7 @@ typedef struct f_event_chat_del_s {
     uint32_t msg_id;
     MANAGED_INTERNAL_DEFAULT;
 } f_event_chat_del;
+
 void f_event_create_chat_del(f_event_any* e, uint32_t msg_id);
 
 //#####
@@ -292,7 +286,7 @@ namespace Control {
     template<EVENT_TYPE TYPE, class EVENT>
     struct event_serializer_pair;
 
-    template<class ...EVENTS>
+    template<class... EVENTS>
     struct event_catalogue;
 
     typedef event_catalogue<
@@ -303,18 +297,18 @@ namespace Control {
         event_serializer_pair<EVENT_TYPE_HEARTBEAT_PREQUIT, f_event_heartbeat>,
         event_serializer_pair<EVENT_TYPE_HEARTBEAT_RESET, f_event_heartbeat>,
         event_serializer_pair<EVENT_TYPE_EXIT, f_event>,
-        
+
         event_serializer_pair<EVENT_TYPE_GAME_LOAD, f_event_game_load>,
         event_serializer_pair<EVENT_TYPE_GAME_LOAD_METHODS, f_event_game_load_methods>,
         event_serializer_pair<EVENT_TYPE_GAME_UNLOAD, f_event>,
         event_serializer_pair<EVENT_TYPE_GAME_STATE, f_event_game_state>,
         event_serializer_pair<EVENT_TYPE_GAME_MOVE, f_event_game_move>,
-        
+
         event_serializer_pair<EVENT_TYPE_FRONTEND_LOAD, f_event_frontend_load>,
         event_serializer_pair<EVENT_TYPE_FRONTEND_UNLOAD, f_event>,
-        
+
         event_serializer_pair<EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, f_event>,
-        
+
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_LOAD, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_UNLOAD, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED, f_event>,
@@ -323,23 +317,24 @@ namespace Control {
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL, f_event_ssl_thumbprint>,
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, f_event>,
-        
+
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_OK, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_NOK, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_PING, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_PONG, f_event>,
         event_serializer_pair<EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET, f_event>,
-        
+
         event_serializer_pair<EVENT_TYPE_USER_AUTHINFO, f_event_auth>,
         event_serializer_pair<EVENT_TYPE_USER_AUTHN, f_event_auth>,
         event_serializer_pair<EVENT_TYPE_USER_AUTHFAIL, f_event_auth_fail>,
-        
+
         event_serializer_pair<EVENT_TYPE_LOBBY_CHAT_MSG, f_event_chat_msg>,
         event_serializer_pair<EVENT_TYPE_LOBBY_CHAT_DEL, f_event_chat_del>
 
-    > EVENT_CATALOGUE;
+        >
+        EVENT_CATALOGUE;
 
-}
+} // namespace Control
 
 #endif

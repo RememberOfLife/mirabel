@@ -80,7 +80,7 @@ namespace {
         nvgSave(dc);
 
         nvgBeginPath(dc);
-        nvgRect(dc, dd.x-10, dd.y-10, dd.w+20, dd.h+20);
+        nvgRect(dc, dd.x - 10, dd.y - 10, dd.w + 20, dd.h + 20);
         nvgFillColor(dc, nvgRGB(114, 140, 153));
         nvgFill(dc);
 
@@ -102,7 +102,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods empty_fem{
     .frontend_name = "<empty>", // violates naming convention, but this one is special
@@ -130,6 +130,6 @@ const frontend_methods empty_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };

@@ -46,4 +46,4 @@ namespace Network {
     size_t util_cert_get_subjects(X509* cert, char*** r_names, int* r_count);
     void util_cert_free_subjects(char** r_names, int r_count); // helper function for freeing the mess
 
-}
+} // namespace Network

@@ -40,11 +40,13 @@ namespace MetaGui {
 
     extern bool show_connection_window;
     void connection_window(bool* p_open);
+
     enum RUNNING_STATE {
         RUNNING_STATE_NONE,
         RUNNING_STATE_ONGOING,
         RUNNING_STATE_DONE,
     };
+
     struct connection_info {
         char server_address[64];
         uint16_t server_port;
@@ -61,6 +63,7 @@ namespace MetaGui {
         char password[32];
         char* authfail_reason;
     };
+
     extern connection_info conn_info;
     void connection_info_reset();
 

@@ -19,28 +19,31 @@ namespace Control {
         typedef EVENT event_t;
     };
 
-    template<class ...EVENTS>
+    template<class... EVENTS>
     struct event_catalogue {
 
         static_assert(sizeof...(EVENTS) == EVENT_TYPE_COUNT, "event catalogue count mismatch");
 
-        template<class X, class FIRST, class ...REST>
+        template<class X, class FIRST, class... REST>
         static constexpr size_t event_max_size_impl()
         {
             return (sizeof(typename FIRST::event_t) > event_max_size_impl<X, REST...>())
-                ? sizeof(typename FIRST::event_t) : event_max_size_impl<X, REST...>();
+                       ? sizeof(typename FIRST::event_t)
+                       : event_max_size_impl<X, REST...>();
         }
+
         template<class X>
         static constexpr size_t event_max_size_impl()
         {
             return 0;
         }
+
         static constexpr size_t event_max_size()
         {
             return event_max_size_impl<void, EVENTS...>();
         }
 
-        template<class X, class FIRST, class ...REST>
+        template<class X, class FIRST, class... REST>
         static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
         {
             if (FIRST::event_type == type) {
@@ -51,18 +54,20 @@ namespace Control {
             }
             return get_event_serializer_impl<X, REST...>(type);
         }
+
         template<class X>
         static event_serializer* get_event_serializer_impl(EVENT_TYPE type)
         {
             assert(0 && "not a valid type");
             return NULL;
         }
+
         static event_serializer* get_event_serializer(EVENT_TYPE type)
         {
             return get_event_serializer_impl<void, EVENTS...>(type);
         }
 
-        template<class X, class FIRST, class ...REST>
+        template<class X, class FIRST, class... REST>
         static size_t get_event_raw_size_impl(EVENT_TYPE type)
         {
             if (FIRST::event_type == type) {
@@ -70,27 +75,28 @@ namespace Control {
             }
             return get_event_raw_size_impl<X, REST...>(type);
         }
+
         template<class X>
         static size_t get_event_raw_size_impl(EVENT_TYPE type)
         {
             assert(0 && "not a valid type");
             return 0;
         }
+
         static size_t get_event_raw_size(EVENT_TYPE type)
         {
             return get_event_raw_size_impl<void, EVENTS...>(type);
         }
-
     };
 
-}
+} // namespace Control
 
 // exposed event api
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    
+
 // general purpose event utils
 
 void f_event_create_zero(f_event_any* e)

@@ -15,4 +15,4 @@ namespace MetaGui {
         //TODO
     }
 
-}
+} // namespace MetaGui

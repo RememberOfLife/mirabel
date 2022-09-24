@@ -22,9 +22,10 @@ namespace {
         float h;
         bool hovered;
         bool mousedown;
+
         void update(float mx, float my)
         {
-            hovered = (mx >= x && mx <= x+w && my >= y && my <= y+h);
+            hovered = (mx >= x && mx <= x + w && my >= y && my <= y + h);
         }
     };
 
@@ -77,10 +78,13 @@ namespace {
             for (int gx = 0; gx < 3; gx++) {
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
-                        data.board_buttons[8-(gy*3+ly)][gx*3+lx] = sbtn{
-                            static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding),
-                            static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding),
-                            data.button_size, data.button_size, false, false
+                        data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx] = sbtn{
+                            static_cast<float>(gx) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(lx) * (data.button_size + data.local_padding),
+                            static_cast<float>(gy) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(ly) * (data.button_size + data.local_padding),
+                            data.button_size,
+                            data.button_size,
+                            false,
+                            false,
                         };
                     }
                 }
@@ -109,7 +113,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
-        switch(event.base.type) {
+        switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
                 f_event_queue_push(data.dd->outbox, &event);
             } break;
@@ -173,25 +177,25 @@ namespace {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     int mX = event.button.x - data.dd->x;
                     int mY = event.button.y - data.dd->y;
-                    mX -= data.dd->w/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
-                    mY -= data.dd->h/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
+                    mX -= data.dd->w / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
+                    mY -= data.dd->h / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
                     uint8_t global_target;
                     data.gi->get_global_target(&data.g, &global_target);
                     for (int gy = 0; gy < 3; gy++) {
                         for (int gx = 0; gx < 3; gx++) {
-                            if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
+                            if (global_target != (((2 - gy) << 2) | gx) && global_target != ((3 << 2) | 3)) {
                                 continue;
                             }
                             for (int ly = 0; ly < 3; ly++) {
                                 for (int lx = 0; lx < 3; lx++) {
-                                    int ix = gx*3+lx;
-                                    int iy = 8-(gy*3+ly);
+                                    int ix = gx * 3 + lx;
+                                    int iy = 8 - (gy * 3 + ly);
                                     data.board_buttons[iy][ix].update(mX, mY);
                                     if (event.type == SDL_MOUSEBUTTONUP) {
                                         player_id cell_local;
                                         data.gi->get_cell_local(&data.g, ix, iy, &cell_local);
                                         if (data.board_buttons[iy][ix].hovered && data.board_buttons[iy][ix].mousedown && cell_local == 0) {
-                                            uint64_t move_code = ix | (iy<<4);
+                                            uint64_t move_code = ix | (iy << 4);
                                             f_event_any es;
                                             f_event_create_game_move(&es, move_code);
                                             f_event_queue_push(data.dd->outbox, &es);
@@ -220,23 +224,23 @@ namespace {
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
-        mX -= data.dd->w/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
-        mY -= data.dd->h/2-(9*data.button_size+6*data.local_padding+2*data.global_padding)/2;
+        mX -= data.dd->w / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
+        mY -= data.dd->h / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
         uint8_t global_target;
         data.gi->get_global_target(&data.g, &global_target);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
-                if (global_target != (((2-gy)<<2)|gx) && global_target != ((3<<2)|3)) {
+                if (global_target != (((2 - gy) << 2) | gx) && global_target != ((3 << 2) | 3)) {
                     continue;
                 }
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
-                        int ix = gx*3+lx;
-                        int iy = 8-(gy*3+ly);
-                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].x = static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding);
-                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].y = static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding);
-                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].w = data.button_size;
-                        data.board_buttons[8-(gy*3+ly)][gx*3+lx].h = data.button_size;
+                        int ix = gx * 3 + lx;
+                        int iy = 8 - (gy * 3 + ly);
+                        data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].x = static_cast<float>(gx) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(lx) * (data.button_size + data.local_padding);
+                        data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].y = static_cast<float>(gy) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(ly) * (data.button_size + data.local_padding);
+                        data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].w = data.button_size;
+                        data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].h = data.button_size;
                         data.board_buttons[iy][ix].update(mX, mY);
                     }
                 }
@@ -253,7 +257,7 @@ namespace {
 
         nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
 
-        float local_board_size = 3*data.button_size+2*data.local_padding;
+        float local_board_size = 3 * data.button_size + 2 * data.local_padding;
         uint8_t global_target = 0;
         if (data.g.methods != NULL) {
             data.gi->get_global_target(&data.g, &global_target);
@@ -261,38 +265,38 @@ namespace {
         nvgSave(dc);
         nvgTranslate(dc, dd.x, dd.y);
         nvgBeginPath(dc);
-        nvgRect(dc, -10, -10, data.dd->w+20, data.dd->h+20);
+        nvgRect(dc, -10, -10, data.dd->w + 20, data.dd->h + 20);
         nvgFillColor(dc, nvgRGB(201, 144, 73));
         nvgFill(dc);
-        nvgTranslate(dc, data.dd->w/2-(3*local_board_size+2*data.global_padding)/2, data.dd->h/2-(3*local_board_size+2*data.global_padding)/2);
+        nvgTranslate(dc, data.dd->w / 2 - (3 * local_board_size + 2 * data.global_padding) / 2, data.dd->h / 2 - (3 * local_board_size + 2 * data.global_padding) / 2);
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 uint8_t local_result = 0;
                 if (data.g.methods != NULL) {
-                    data.gi->get_cell_global(&data.g, gx, 2-gy, &local_result);
+                    data.gi->get_cell_global(&data.g, gx, 2 - gy, &local_result);
                 }
-                float base_x = gx*(local_board_size+data.global_padding);
-                float base_y = gy*(local_board_size+data.global_padding);
+                float base_x = gx * (local_board_size + data.global_padding);
+                float base_y = gy * (local_board_size + data.global_padding);
                 if (local_result > 0) {
                     nvgBeginPath(dc);
                     nvgRect(dc, base_x, base_y, local_board_size, local_board_size);
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
                     nvgFill(dc);
                     nvgBeginPath(dc);
-                    nvgStrokeWidth(dc, local_board_size*0.175);
+                    nvgStrokeWidth(dc, local_board_size * 0.175);
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                     switch (local_result) {
                         case 1: {
                             // X
-                            nvgMoveTo(dc, base_x+local_board_size*0.175, base_y+local_board_size*0.175);
-                            nvgLineTo(dc, base_x+local_board_size*0.825, base_y+local_board_size*0.825);
-                            nvgMoveTo(dc, base_x+local_board_size*0.175, base_y+local_board_size*0.825);
-                            nvgLineTo(dc, base_x+local_board_size*0.825, base_y+local_board_size*0.175);
+                            nvgMoveTo(dc, base_x + local_board_size * 0.175, base_y + local_board_size * 0.175);
+                            nvgLineTo(dc, base_x + local_board_size * 0.825, base_y + local_board_size * 0.825);
+                            nvgMoveTo(dc, base_x + local_board_size * 0.175, base_y + local_board_size * 0.825);
+                            nvgLineTo(dc, base_x + local_board_size * 0.825, base_y + local_board_size * 0.175);
                             nvgStroke(dc);
                         } break;
                         case 2: {
                             // O
-                            nvgCircle(dc, base_x+local_board_size/2, base_y+local_board_size/2, local_board_size*0.3);
+                            nvgCircle(dc, base_x + local_board_size / 2, base_y + local_board_size / 2, local_board_size * 0.3);
                             nvgStroke(dc);
                         } break;
                         case 3: {
@@ -303,12 +307,12 @@ namespace {
                 }
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
-                        float base_x = static_cast<float>(gx)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(lx)*(data.button_size+data.local_padding);
-                        float base_y = static_cast<float>(gy)*(3*data.button_size+2*data.local_padding+data.global_padding)+static_cast<float>(ly)*(data.button_size+data.local_padding);
-                        nvgStrokeWidth(dc, data.button_size*0.175);
+                        float base_x = static_cast<float>(gx) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(lx) * (data.button_size + data.local_padding);
+                        float base_y = static_cast<float>(gy) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(ly) * (data.button_size + data.local_padding);
+                        nvgStrokeWidth(dc, data.button_size * 0.175);
                         nvgBeginPath(dc);
                         nvgRect(dc, base_x, base_y, data.button_size, data.button_size);
-                        if (data.g.methods != NULL && data.pbuf_c != 0 && (global_target == (((2-gy)<<2)|gx) || global_target == ((3<<2)|3))) {
+                        if (data.g.methods != NULL && data.pbuf_c != 0 && (global_target == (((2 - gy) << 2) | gx) || global_target == ((3 << 2) | 3))) {
                             nvgFillColor(dc, nvgRGB(240, 217, 181));
                         } else {
                             nvgFillColor(dc, nvgRGB(161, 119, 67));
@@ -317,29 +321,29 @@ namespace {
                         if (data.g.methods == NULL) {
                             continue;
                         }
-                        int ix = gx*3+lx;
-                        int iy = 8-(gy*3+ly);
+                        int ix = gx * 3 + lx;
+                        int iy = 8 - (gy * 3 + ly);
                         uint8_t player_in_cell;
                         data.gi->get_cell_local(&data.g, ix, iy, &player_in_cell);
                         if (player_in_cell == 1) {
                             // X
                             nvgBeginPath(dc);
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                            nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.175);
-                            nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.825);
-                            nvgMoveTo(dc, base_x+data.button_size*0.175, base_y+data.button_size*0.825);
-                            nvgLineTo(dc, base_x+data.button_size*0.825, base_y+data.button_size*0.175);
+                            nvgMoveTo(dc, base_x + data.button_size * 0.175, base_y + data.button_size * 0.175);
+                            nvgLineTo(dc, base_x + data.button_size * 0.825, base_y + data.button_size * 0.825);
+                            nvgMoveTo(dc, base_x + data.button_size * 0.175, base_y + data.button_size * 0.825);
+                            nvgLineTo(dc, base_x + data.button_size * 0.825, base_y + data.button_size * 0.175);
                             nvgStroke(dc);
                         } else if (player_in_cell == 2) {
                             // O
                             nvgBeginPath(dc);
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-                            nvgCircle(dc, base_x+data.button_size/2, base_y+data.button_size/2, data.button_size*0.3);
+                            nvgCircle(dc, base_x + data.button_size / 2, base_y + data.button_size / 2, data.button_size * 0.3);
                             nvgStroke(dc);
                         } else if (data.board_buttons[iy][ix].hovered && data.pbuf_c > 0) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
-                            nvgRect(dc, data.board_buttons[iy][ix].x+data.button_size*0.05, data.board_buttons[iy][ix].y+data.button_size*0.05, data.board_buttons[iy][ix].w-data.button_size*0.1, data.board_buttons[iy][ix].h-data.button_size*0.1);
+                            nvgRect(dc, data.board_buttons[iy][ix].x + data.button_size * 0.05, data.board_buttons[iy][ix].y + data.button_size * 0.05, data.board_buttons[iy][ix].w - data.button_size * 0.1, data.board_buttons[iy][ix].h - data.button_size * 0.1);
                             nvgFill(dc);
                         }
                         //TODO
@@ -368,7 +372,7 @@ namespace {
         return ERR_INVALID_INPUT;
     }
 
-}
+} // namespace
 
 const frontend_methods tictactoe_ultimate_fem{
     .frontend_name = "tictactoe_ultimate",
@@ -396,6 +400,6 @@ const frontend_methods tictactoe_ultimate_fem{
 
     .render = render,
 
-    .is_game_compatible = is_game_compatible,    
+    .is_game_compatible = is_game_compatible,
 
 };
