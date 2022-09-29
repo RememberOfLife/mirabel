@@ -462,7 +462,7 @@ namespace Network {
                     MetaGui::logf(log_id, "#W %d invalid packet length bytes received\n", recv_len);
                     break;
                 }
-                size_t event_length = *(size_t*)data_buffer;
+                size_t event_length = f_event_read_size(data_buffer);
                 if (recv_len < event_length) {
                     //TODO this might also be the case when the data received is simply larger than the buffer for it
                     MetaGui::logf(log_id, "#W discarding %d unusable bytes of received data\n", recv_len);
@@ -475,6 +475,9 @@ namespace Network {
                 // at least one event here, process it from data_buffer
                 f_event_any recv_event;
                 f_event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
+                if (recv_event.base.type == EVENT_TYPE_NULL) {
+                    MetaGui::logf("#W event packet deserialization error, client id %d\n", conn.client_id);
+                }
 
                 // update size of remaining buffer
                 data_buffer += event_length;

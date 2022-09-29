@@ -136,7 +136,7 @@ cj_ovac* cj_deserialize(const char* buf, bool str_hint); // must be zero termina
 // when using set, array indices also have more utilizations:
 // [0] replaces element at idx 0, [+] appends to the list, [+0] makes available at idx 0 but preserves all other elements
 // for delete there is also [*] to delete all elements, equivalent to setting parent to an empty list
-//TODO '[' that are part of a label string (key in an obj) need to be escaped accessed via thing["subkey\[text"] where in this format '[' has to be escaped by "\[" and '\' by "\\"
+//TODO '[' that are part of a label string (key in an obj) need to be escaped accessed via thing["subkey\[text"], use normal escaping for '"' and '\'
 cj_ovac* cj_find(cj_ovac* root, const char* data_path);
 // cj_ovac* cj_set(cj_ovac* root, const char* data_path, cj_ovac* ovac, bool overwrite); // behaves like cj_find + cj_ovac_replace
 // cj_ovac* cj_remove(cj_ovac* root, const char* data_path); // behaves like cj_find + cj_ovac_destroy

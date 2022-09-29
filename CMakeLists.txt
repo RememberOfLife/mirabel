@@ -76,6 +76,7 @@ set(SOURCES
     lib/surena/src/util/noise.c
     lib/surena/src/util/raw_stream.c
     lib/surena/src/util/semver.c
+    lib/surena/src/util/serialization.c
     lib/surena/src/engine.cpp
     lib/surena/src/game.c
     lib/surena/src/move_history.c
@@ -83,7 +84,7 @@ set(SOURCES
     src/control/client.cpp
     src/control/config.cpp
     src/control/event_queue.cpp
-    src/control/event.cpp
+    src/control/event.c
     src/control/job_queue.cpp
     src/control/lobby.cpp
     src/control/plugins.cpp
@@ -146,8 +147,9 @@ target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 target_link_libraries(mirabel nanovg)
 
 target_compile_options(mirabel PRIVATE
-    #"-Wall" # do after nanovg so we dont reenable warnings there
-    "-Werror" # warnings as errors
+    # "-Wall" # do after nanovg so we dont reenable warnings there
+    # "-Wextra"
+    # "-Werror" # warnings as errors
     "-Wfatal-errors" # stop after first error
 )
 

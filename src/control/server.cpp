@@ -124,6 +124,7 @@ namespace Control {
                     f_event_any es;
                     f_event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, e.base.client_id, true, NULL, NULL);
                     f_event_queue_push(network_send_queue, &es);
+                    //TODO it should be *possible* for the server to respond to a authinfo event with a login confirmation
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
                     f_event_any es;
