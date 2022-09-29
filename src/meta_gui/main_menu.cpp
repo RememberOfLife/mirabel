@@ -57,9 +57,9 @@ namespace MetaGui {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit", "CTRL + Q", false)) {
-                    f_event_any es;
-                    f_event_create_type(&es, EVENT_TYPE_EXIT);
-                    f_event_queue_push(&Control::main_client->inbox, &es);
+                    event_any es;
+                    event_create_type(&es, EVENT_TYPE_EXIT);
+                    event_queue_push(&Control::main_client->inbox, &es);
                 }
                 ImGui::EndMenu();
             }

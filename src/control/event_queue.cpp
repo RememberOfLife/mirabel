@@ -14,29 +14,29 @@ extern "C" {
 
 //TODO this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
 // make sure to move pushed and popped elements, make this a proper producer-consumer semaphore
-struct f_event_queue_impl {
+struct event_queue_impl {
     std::mutex m;
-    std::deque<f_event_any> q;
+    std::deque<event_any> q;
     std::condition_variable cv;
 };
 
-static_assert(sizeof(f_event_queue) >= sizeof(f_event_queue_impl), "f_event_queue impl size missmatch");
+static_assert(sizeof(event_queue) >= sizeof(event_queue_impl), "event_queue impl size missmatch");
 
-void f_event_queue_create(f_event_queue* eq)
+void event_queue_create(event_queue* eq)
 {
-    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
-    new (eqi) f_event_queue_impl();
+    event_queue_impl* eqi = (event_queue_impl*)eq;
+    new (eqi) event_queue_impl();
 }
 
-void f_event_queue_destroy(f_event_queue* eq)
+void event_queue_destroy(event_queue* eq)
 {
-    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
-    eqi->~f_event_queue_impl();
+    event_queue_impl* eqi = (event_queue_impl*)eq;
+    eqi->~event_queue_impl();
 }
 
-void f_event_queue_push(f_event_queue* eq, f_event_any* e)
+void event_queue_push(event_queue* eq, event_any* e)
 {
-    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    event_queue_impl* eqi = (event_queue_impl*)eq;
     eqi->m.lock();
     eqi->q.emplace_back(*e);
     eqi->cv.notify_all();
@@ -44,9 +44,9 @@ void f_event_queue_push(f_event_queue* eq, f_event_any* e)
     e->base.type = EVENT_TYPE_NULL;
 }
 
-void f_event_queue_pop(f_event_queue* eq, f_event_any* e, uint32_t t)
+void event_queue_pop(event_queue* eq, event_any* e, uint32_t t)
 {
-    f_event_queue_impl* eqi = (f_event_queue_impl*)eq;
+    event_queue_impl* eqi = (event_queue_impl*)eq;
     std::unique_lock<std::mutex> lock(eqi->m);
     if (eqi->q.size() == 0) {
         if (t > 0) {

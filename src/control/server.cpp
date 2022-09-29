@@ -18,7 +18,7 @@ namespace Control {
     Server::Server():
         plugin_mgr(true, false)
     {
-        f_event_queue_create(&inbox);
+        event_queue_create(&inbox);
 
         // start watchdog so it can oversee explicit construction
         t_tc.start();
@@ -44,9 +44,9 @@ namespace Control {
         }
         t_network = net_server;
         net_server->recv_queue = &inbox;
-        f_event_any es;
-        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_LOAD);
-        f_event_queue_push(&inbox, &es);
+        event_any es;
+        event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_LOAD);
+        event_queue_push(&inbox, &es);
 
         printf("[INFO] networkserver constructed\n");
 
@@ -71,20 +71,20 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        f_event_any es;
-        f_event_create_type(&es, EVENT_TYPE_EXIT);
-        f_event_queue_push(&t_tc.inbox, &es);
+        event_any es;
+        event_create_type(&es, EVENT_TYPE_EXIT);
+        event_queue_push(&t_tc.inbox, &es);
         t_tc.join();
 
-        f_event_queue_destroy(&inbox);
+        event_queue_destroy(&inbox);
     }
 
     void Server::loop()
     {
-        f_event_any e;
+        event_any e;
         bool quit = false;
         while (!quit) {
-            f_event_queue_pop(&inbox, &e, UINT32_MAX);
+            event_queue_pop(&inbox, &e, UINT32_MAX);
             switch (e.base.type) {
                 case EVENT_TYPE_NULL: {
                     printf("[WARN] received impossible null event\n");
@@ -121,36 +121,36 @@ namespace Control {
                 } break;
                 case EVENT_TYPE_USER_AUTHINFO: {
                     // client wants to have the authinfo, serve it
-                    f_event_any es;
-                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, e.base.client_id, true, NULL, NULL);
-                    f_event_queue_push(network_send_queue, &es);
+                    event_any es;
+                    event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, e.base.client_id, true, NULL, NULL);
+                    event_queue_push(network_send_queue, &es);
                     //TODO it should be *possible* for the server to respond to a authinfo event with a login confirmation
                 } break;
                 case EVENT_TYPE_USER_AUTHN: {
-                    f_event_any es;
+                    event_any es;
                     // client wants to auth with given credentials, send back authn or authfail
                     //TODO save guest names and check for dupes
                     if (!e.auth.is_guest) {
-                        f_event_create_auth_fail(&es, e.base.client_id, "user logins not accepted");
-                        f_event_queue_push(network_send_queue, &es);
+                        event_create_auth_fail(&es, e.base.client_id, "user logins not accepted");
+                        event_queue_push(network_send_queue, &es);
                         break;
                     }
                     if (e.auth.username == NULL) {
-                        f_event_create_auth_fail(&es, e.base.client_id, "name NULL");
-                        f_event_queue_push(network_send_queue, &es);
+                        event_create_auth_fail(&es, e.base.client_id, "name NULL");
+                        event_queue_push(network_send_queue, &es);
                         break;
                     }
                     // validate that username uses only allowed characters
                     for (int i = 0; i < strlen(e.auth.username); i++) {
                         if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", e.auth.username[i])) {
-                            f_event_create_auth_fail(&es, e.base.client_id, "name contains illegal characters");
-                            f_event_queue_push(network_send_queue, &es);
+                            event_create_auth_fail(&es, e.base.client_id, "name contains illegal characters");
+                            event_queue_push(network_send_queue, &es);
                             break;
                         }
                     }
                     if (strlen(e.auth.username) > 0 && strlen(e.auth.username) < 3) {
-                        f_event_create_auth_fail(&es, e.base.client_id, "name < 3 characters");
-                        f_event_queue_push(network_send_queue, &es);
+                        event_create_auth_fail(&es, e.base.client_id, "name < 3 characters");
+                        event_queue_push(network_send_queue, &es);
                         break;
                     }
                     if (strlen(e.auth.username) == 0) {
@@ -165,14 +165,14 @@ namespace Control {
                             str_p += sprintf(str_p, "%d", rng.rand() % 10);
                         }
                     }
-                    f_event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, e.auth.username, NULL);
-                    f_event_queue_push(network_send_queue, &es);
+                    event_create_auth(&es, EVENT_TYPE_USER_AUTHN, e.base.client_id, true, e.auth.username, NULL);
+                    event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_USER_AUTHFAIL: {
                     // client wants to logout but keep the connection, we tell them we logged them out
-                    f_event_any es;
-                    f_event_create_auth_fail(&es, e.base.client_id, NULL);
-                    f_event_queue_push(network_send_queue, &es);
+                    event_any es;
+                    event_create_auth_fail(&es, e.base.client_id, NULL);
+                    event_queue_push(network_send_queue, &es);
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_LOAD: {
                     if (t_network != NULL) {
@@ -193,7 +193,7 @@ namespace Control {
                     printf("[WARN] received unexpected event, type: %d\n", e.base.type);
                 } break;
             }
-            f_event_destroy(&e);
+            event_destroy(&e);
         }
         printf("[INFO] server exiting main loop\n");
     }

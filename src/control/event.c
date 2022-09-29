@@ -19,70 +19,70 @@ const serialization_layout sl_baseonly[] = {
 };
 
 const serialization_layout sl_base[] = {
-    {SL_TYPE_U32, offsetof(f_event, type)},
-    {SL_TYPE_U32, offsetof(f_event, client_id)},
-    {SL_TYPE_U32, offsetof(f_event, lobby_id)},
+    {SL_TYPE_U32, offsetof(event, type)},
+    {SL_TYPE_U32, offsetof(event, client_id)},
+    {SL_TYPE_U32, offsetof(event, lobby_id)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_log[] = {
-    {SL_TYPE_STRING, offsetof(f_event_log, str)},
+    {SL_TYPE_STRING, offsetof(event_log, str)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_heartbeat[] = {
-    {SL_TYPE_U32, offsetof(f_event_heartbeat, id)},
-    {SL_TYPE_U32, offsetof(f_event_heartbeat, time)},
+    {SL_TYPE_U32, offsetof(event_heartbeat, id)},
+    {SL_TYPE_U32, offsetof(event_heartbeat, time)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_load[] = {
-    {SL_TYPE_STRING, offsetof(f_event_game_load, base_name)},
-    {SL_TYPE_STRING, offsetof(f_event_game_load, variant_name)},
-    {SL_TYPE_STRING, offsetof(f_event_game_load, impl_name)},
-    {SL_TYPE_STRING, offsetof(f_event_game_load, options)},
+    {SL_TYPE_STRING, offsetof(event_game_load, base_name)},
+    {SL_TYPE_STRING, offsetof(event_game_load, variant_name)},
+    {SL_TYPE_STRING, offsetof(event_game_load, impl_name)},
+    {SL_TYPE_STRING, offsetof(event_game_load, options)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_state[] = {
-    {SL_TYPE_STRING, offsetof(f_event_game_state, state)},
+    {SL_TYPE_STRING, offsetof(event_game_state, state)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_move[] = {
-    {SL_TYPE_U64, offsetof(f_event_game_move, code)},
+    {SL_TYPE_U64, offsetof(event_game_move, code)},
     {SL_TYPE_STOP},
 };
 
 //BUG currently this just leaks memory
 const serialization_layout sl_ssl_thumbprint[] = {
-    // {SL_TYPE_SIZE, offsetof(f_event_ssl_thumbprint, thumbprint_len)},
-    // {SL_TYPE_BLOB, offsetof(f_event_ssl_thumbprint, thumbprint)}, //TODO split into str and thumbprint blob
+    // {SL_TYPE_SIZE, offsetof(event_ssl_thumbprint, thumbprint_len)},
+    // {SL_TYPE_BLOB, offsetof(event_ssl_thumbprint, thumbprint)}, //TODO split into str and thumbprint blob
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_auth[] = {
-    {SL_TYPE_BOOL, offsetof(f_event_auth, is_guest)},
-    {SL_TYPE_STRING, offsetof(f_event_auth, username)},
-    {SL_TYPE_STRING, offsetof(f_event_auth, password)},
+    {SL_TYPE_BOOL, offsetof(event_auth, is_guest)},
+    {SL_TYPE_STRING, offsetof(event_auth, username)},
+    {SL_TYPE_STRING, offsetof(event_auth, password)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_auth_fail[] = {
-    {SL_TYPE_STRING, offsetof(f_event_auth_fail, reason)},
+    {SL_TYPE_STRING, offsetof(event_auth_fail, reason)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_chat_msg[] = {
-    {SL_TYPE_U32, offsetof(f_event_chat_msg, msg_id)},
-    {SL_TYPE_U32, offsetof(f_event_chat_msg, author_client_id)},
-    {SL_TYPE_U64, offsetof(f_event_chat_msg, timestamp)},
-    {SL_TYPE_STRING, offsetof(f_event_chat_msg, text)},
+    {SL_TYPE_U32, offsetof(event_chat_msg, msg_id)},
+    {SL_TYPE_U32, offsetof(event_chat_msg, author_client_id)},
+    {SL_TYPE_U64, offsetof(event_chat_msg, timestamp)},
+    {SL_TYPE_STRING, offsetof(event_chat_msg, text)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_chat_del[] = {
-    {SL_TYPE_U32, offsetof(f_event_chat_del, msg_id)},
+    {SL_TYPE_U32, offsetof(event_chat_del, msg_id)},
     {SL_TYPE_STOP},
 };
 
@@ -133,19 +133,19 @@ const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
 /////
 // event layout serialization wrapper
 
-void f_event_write_size(void* buf, size_t v)
+void event_write_size(void* buf, size_t v)
 {
     raw_stream rs = rs_init(buf);
     rs_w_size(&rs, v);
 }
 
-size_t f_event_read_size(void* buf)
+size_t event_read_size(void* buf)
 {
     raw_stream rs = rs_init(buf);
     return rs_r_size(&rs);
 }
 
-size_t f_event_general_serializer(GSIT itype, f_event_any* in, f_event_any* out, void* buf, void* buf_end)
+size_t event_general_serializer(GSIT itype, event_any* in, event_any* out, void* buf, void* buf_end)
 {
     size_t rsize = 0;
     size_t csize;
@@ -170,150 +170,150 @@ size_t f_event_general_serializer(GSIT itype, f_event_any* in, f_event_any* out,
 /////
 // general purpose event utils
 
-void f_event_create_zero(f_event_any* e)
+void event_create_zero(event_any* e)
 {
     e->base.type = EVENT_TYPE_NULL;
-    e->base.client_id = F_EVENT_CLIENT_NONE;
-    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+    e->base.client_id = EVENT_CLIENT_NONE;
+    e->base.lobby_id = EVENT_LOBBY_NONE;
 }
 
-void f_event_create_type(f_event_any* e, EVENT_TYPE type)
+void event_create_type(event_any* e, EVENT_TYPE type)
 {
     e->base.type = type;
-    e->base.client_id = F_EVENT_CLIENT_NONE;
-    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+    e->base.client_id = EVENT_CLIENT_NONE;
+    e->base.lobby_id = EVENT_LOBBY_NONE;
 }
 
-void f_event_create_type_client(f_event_any* e, EVENT_TYPE type, uint32_t client_id)
+void event_create_type_client(event_any* e, EVENT_TYPE type, uint32_t client_id)
 {
     e->base.type = type;
     e->base.client_id = client_id;
-    e->base.lobby_id = F_EVENT_LOBBY_NONE;
+    e->base.lobby_id = EVENT_LOBBY_NONE;
 }
 
-void f_event_zero(f_event_any* e)
+void event_zero(event_any* e)
 {
-    f_event_destroy(e);
+    event_destroy(e);
     e->base.type = EVENT_TYPE_NULL;
 }
 
-size_t f_event_size(f_event_any* e)
+size_t event_size(event_any* e)
 {
-    return 8 + f_event_general_serializer(GSIT_SIZE, e, NULL, NULL, NULL);
+    return 8 + event_general_serializer(GSIT_SIZE, e, NULL, NULL, NULL);
 }
 
-void f_event_serialize(f_event_any* e, void* buf)
+void event_serialize(event_any* e, void* buf)
 {
-    f_event_write_size(buf, f_event_size(e)); //TODO take some size hint to skip redundant size calculation
-    f_event_general_serializer(GSIT_SERIALIZE, e, NULL, (size_t*)buf + 1, NULL);
+    event_write_size(buf, event_size(e)); //TODO take some size hint to skip redundant size calculation
+    event_general_serializer(GSIT_SERIALIZE, e, NULL, (size_t*)buf + 1, NULL);
 }
 
-void f_event_deserialize(f_event_any* e, void* buf, void* buf_end)
+void event_deserialize(event_any* e, void* buf, void* buf_end)
 {
     size_t event_size = (char*)buf_end - (char*)buf;
-    if (event_size < 8 || f_event_read_size(buf) > event_size) {
-        f_event_create_zero(e);
+    if (event_size < 8 || event_read_size(buf) > event_size) {
+        event_create_zero(e);
         return;
     }
-    size_t ec = f_event_general_serializer(GSIT_DESERIALIZE, NULL, e, (size_t*)buf + 1, buf_end);
+    size_t ec = event_general_serializer(GSIT_DESERIALIZE, NULL, e, (size_t*)buf + 1, buf_end);
     if (ec == LS_ERR) {
-        f_event_create_zero(e);
+        event_create_zero(e);
         return;
     }
 }
 
-void f_event_copy(f_event_any* to, f_event_any* from)
+void event_copy(event_any* to, event_any* from)
 {
-    f_event_general_serializer(GSIT_COPY, from, to, NULL, NULL);
+    event_general_serializer(GSIT_COPY, from, to, NULL, NULL);
 }
 
-void f_event_destroy(f_event_any* e)
+void event_destroy(event_any* e)
 {
-    f_event_general_serializer(GSIT_DESTROY, e, NULL, NULL, NULL);
+    event_general_serializer(GSIT_DESTROY, e, NULL, NULL, NULL);
 }
 
 /////
 // event specific constructors
 
-void f_event_create_log(f_event_any* e, const char* log)
+void event_create_log(event_any* e, const char* log)
 {
-    f_event_create_type(e, EVENT_TYPE_LOG);
+    event_create_type(e, EVENT_TYPE_LOG);
     e->log.str = log ? strdup(log) : NULL;
 }
 
-void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time)
+void event_create_heartbeat(event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time)
 {
-    f_event_create_type(e, type);
+    event_create_type(e, type);
     e->heartbeat.id = id;
     e->heartbeat.time = time;
 }
 
-void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options)
+void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options)
 {
-    f_event_create_type(e, EVENT_TYPE_GAME_LOAD);
+    event_create_type(e, EVENT_TYPE_GAME_LOAD);
     e->game_load.base_name = base_name ? strdup(base_name) : NULL;
     e->game_load.variant_name = variant_name ? strdup(variant_name) : NULL;
     e->game_load.impl_name = impl_name ? strdup(impl_name) : NULL;
     e->game_load.options = options ? strdup(options) : NULL;
 }
 
-void f_event_create_game_load_methods(f_event_any* e, const game_methods* methods, const char* options)
+void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options)
 {
-    f_event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
+    event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
     e->game_load_methods.methods = methods;
     e->game_load_methods.options = options ? strdup(options) : NULL;
 }
 
-void f_event_create_game_state(f_event_any* e, uint32_t client_id, const char* state)
+void event_create_game_state(event_any* e, uint32_t client_id, const char* state)
 {
-    f_event_create_type_client(e, EVENT_TYPE_GAME_STATE, client_id);
+    event_create_type_client(e, EVENT_TYPE_GAME_STATE, client_id);
     e->game_state.state = state ? strdup(state) : NULL;
 }
 
-void f_event_create_game_move(f_event_any* e, move_code code)
+void event_create_game_move(event_any* e, move_code code)
 {
-    f_event_create_type(e, EVENT_TYPE_GAME_MOVE);
+    event_create_type(e, EVENT_TYPE_GAME_MOVE);
     e->game_move.code = code;
 }
 
-void f_event_create_frontend_load(f_event_any* e, void* frontend)
+void event_create_frontend_load(event_any* e, void* frontend)
 {
-    f_event_create_type(e, EVENT_TYPE_FRONTEND_LOAD);
+    event_create_type(e, EVENT_TYPE_FRONTEND_LOAD);
     e->frontend_load.frontend = frontend;
 }
 
-void f_event_create_ssl_thumbprint(f_event_any* e, EVENT_TYPE type)
+void event_create_ssl_thumbprint(event_any* e, EVENT_TYPE type)
 {
-    f_event_create_type(e, type);
+    event_create_type(e, type);
     e->ssl_thumbprint.thumbprint_len = 0;
     e->ssl_thumbprint.thumbprint = NULL;
 }
 
-void f_event_create_auth(f_event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password)
+void event_create_auth(event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password)
 {
-    f_event_create_type_client(e, type, client_id);
+    event_create_type_client(e, type, client_id);
     e->auth.is_guest = is_guest;
     e->auth.username = username ? strdup(username) : NULL;
     e->auth.password = password ? strdup(password) : NULL;
 }
 
-void f_event_create_auth_fail(f_event_any* e, uint32_t client_id, const char* reason)
+void event_create_auth_fail(event_any* e, uint32_t client_id, const char* reason)
 {
-    f_event_create_type_client(e, EVENT_TYPE_USER_AUTHFAIL, client_id);
+    event_create_type_client(e, EVENT_TYPE_USER_AUTHFAIL, client_id);
     e->auth_fail.reason = reason ? strdup(reason) : NULL;
 }
 
-void f_event_create_chat_msg(f_event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text)
+void event_create_chat_msg(event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text)
 {
-    f_event_create_type(e, EVENT_TYPE_LOBBY_CHAT_MSG);
+    event_create_type(e, EVENT_TYPE_LOBBY_CHAT_MSG);
     e->chat_msg.msg_id = msg_id;
     e->chat_msg.author_client_id = author_client_id;
     e->chat_msg.timestamp = timestamp;
     e->chat_msg.text = text ? strdup(text) : NULL;
 }
 
-void f_event_create_chat_del(f_event_any* e, uint32_t msg_id)
+void event_create_chat_del(event_any* e, uint32_t msg_id)
 {
-    f_event_create_type(e, EVENT_TYPE_LOBBY_CHAT_DEL);
+    event_create_type(e, EVENT_TYPE_LOBBY_CHAT_DEL);
     e->chat_del.msg_id = msg_id;
 }

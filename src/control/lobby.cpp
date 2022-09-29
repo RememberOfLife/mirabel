@@ -15,7 +15,7 @@
 
 namespace Control {
 
-    Lobby::Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users):
+    Lobby::Lobby(PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users):
         plugin_mgr(plugin_mgr),
         send_queue(send_queue),
         the_game(NULL),
@@ -26,7 +26,7 @@ namespace Control {
         user_client_ids(static_cast<uint32_t*>(malloc(max_users * sizeof(uint32_t))))
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            user_client_ids[i] = F_EVENT_CLIENT_NONE;
+            user_client_ids[i] = EVENT_CLIENT_NONE;
         }
     }
 
@@ -42,27 +42,27 @@ namespace Control {
     void Lobby::AddUser(uint32_t client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == F_EVENT_CLIENT_NONE) {
+            if (user_client_ids[i] == EVENT_CLIENT_NONE) {
                 user_client_ids[i] = client_id;
-                f_event_any es;
+                event_any es;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    f_event_create_game_load(&es, game_base, game_variant, game_impl, game_options);
+                    event_create_game_load(&es, game_base, game_variant, game_impl, game_options);
                     es.base.client_id = client_id;
-                    f_event_queue_push(send_queue, &es);
+                    event_queue_push(send_queue, &es);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
-                    f_event_create_game_state(&es, client_id, game_state_buffer);
-                    f_event_queue_push(send_queue, &es);
+                    event_create_game_state(&es, client_id, game_state_buffer);
+                    event_queue_push(send_queue, &es);
                 } else {
-                    f_event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
-                    f_event_queue_push(send_queue, &es);
+                    event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
+                    event_queue_push(send_queue, &es);
                 }
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
-                f_event_create_chat_msg(&es, lobby_msg_id_ctr++, F_EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
-                SendToAllButOne(es, F_EVENT_CLIENT_NONE);
+                event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
+                SendToAllButOne(es, EVENT_CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -74,12 +74,12 @@ namespace Control {
     {
         for (uint32_t i = 0; i < max_users; i++) {
             if (user_client_ids[i] == client_id) {
-                user_client_ids[i] = F_EVENT_CLIENT_NONE;
+                user_client_ids[i] = EVENT_CLIENT_NONE;
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
-                f_event_any es;
-                f_event_create_chat_msg(&es, lobby_msg_id_ctr++, F_EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
-                SendToAllButOne(es, F_EVENT_CLIENT_NONE);
+                event_any es;
+                event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
+                SendToAllButOne(es, EVENT_CLIENT_NONE);
                 free(msg_buf);
                 return;
             }
@@ -87,7 +87,7 @@ namespace Control {
         printf("[ERROR] could not find user to remove from lobby\n");
     }
 
-    void Lobby::HandleEvent(f_event_any e)
+    void Lobby::HandleEvent(event_any e)
     {
         switch (e.base.type) {
             //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
@@ -175,10 +175,10 @@ namespace Control {
                 e.chat_msg.author_client_id = e.base.client_id;
                 e.chat_msg.timestamp = SDL_GetTicks64(); //TODO replace by non sdl function and something that is actually useful as a timestamp
                 // send message to everyone
-                SendToAllButOne(e, F_EVENT_CLIENT_NONE);
+                SendToAllButOne(e, EVENT_CLIENT_NONE);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                SendToAllButOne(e, F_EVENT_CLIENT_NONE);
+                SendToAllButOne(e, EVENT_CLIENT_NONE);
             } break;
             default: {
                 printf("[WARN] lobby received unexpected event type %d\n", e.base.type);
@@ -186,16 +186,16 @@ namespace Control {
         }
     }
 
-    void Lobby::SendToAllButOne(f_event_any e, uint32_t excluded_client_id)
+    void Lobby::SendToAllButOne(event_any e, uint32_t excluded_client_id)
     {
         for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == F_EVENT_CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
+            if (user_client_ids[i] == EVENT_CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
                 continue;
             }
             e.base.client_id = user_client_ids[i];
-            f_event_any es;
-            f_event_copy(&es, &e);
-            f_event_queue_push(send_queue, &es);
+            event_any es;
+            event_copy(&es, &e);
+            event_queue_push(send_queue, &es);
         }
     }
 

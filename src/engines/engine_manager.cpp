@@ -159,7 +159,7 @@ namespace Engines {
         option->type = EE_OPTION_TYPE_NONE;
     }
 
-    EngineManager::EngineManager(f_event_queue* _client_inbox):
+    EngineManager::EngineManager(event_queue* _client_inbox):
         client_inbox(_client_inbox)
     {
         log = MetaGui::log_register("engines");

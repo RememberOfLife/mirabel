@@ -28,7 +28,7 @@ namespace Control {
         TimeoutCrash::timeout_info tc_info;
 
         Network::NetworkClient* t_network = NULL;
-        f_event_queue* network_send_queue = NULL;
+        event_queue* network_send_queue = NULL;
         // offline server likely somewhere here
 
         SDL_Window* sdl_window;
@@ -36,7 +36,7 @@ namespace Control {
         ImGuiIO* imgui_io;
         NVGcontext* nanovg_ctx;
 
-        f_event_queue inbox;
+        event_queue inbox;
 
         game* the_game = NULL;
         uint64_t game_step = 1;

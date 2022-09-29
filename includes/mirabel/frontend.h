@@ -25,7 +25,7 @@ static const uint64_t MIRABEL_FRONTEND_API_VERSION = 11;
 //TODO this mirrors a lot of the info that will be stored in the client lobby
 typedef struct /*grand_unified_*/ frontend_display_data_s {
     //TODO move outbox to a frontend only receive queue, so errors dont propagate as much
-    f_event_queue* outbox; // the frontend can place all outgoing interactions of the user here
+    event_queue* outbox; // the frontend can place all outgoing interactions of the user here
     // the frontend is also able to start games by issuing the approproiate event here //TODO make sure meta gui combo boxes are adjusted accordinglys
 
     void* cfg_lock;
@@ -112,7 +112,7 @@ typedef struct frontend_methods_s {
     // a heartbeat id=0 can be used to assert that the frontend is up to date with all the queued input events (if it is buffering)  //TODO fine?
     // games will be passed to the frontend using EVENT_TYPE_GAME_LOAD_METHODS containing a pointer to the methods to be used
     // the frontend has to destroy the event copy it is passed
-    error_code (*process_event)(frontend* self, f_event_any event);
+    error_code (*process_event)(frontend* self, event_any event);
 
     // the frontend is passed a shallow copy of the sdl event, it need not be released/freed in any way
     error_code (*process_input)(frontend* self, SDL_Event event);

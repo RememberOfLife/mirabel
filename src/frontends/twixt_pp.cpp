@@ -213,13 +213,13 @@ namespace {
         return ERR_OK;
     }
 
-    error_code process_event(frontend* self, f_event_any event)
+    error_code process_event(frontend* self, event_any event)
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
         switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
-                f_event_queue_push(data.dd->outbox, &event);
+                event_queue_push(data.dd->outbox, &event);
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
@@ -265,7 +265,7 @@ namespace {
                 // pass
             } break;
         }
-        f_event_destroy(&event);
+        event_destroy(&event);
         if (dirty) {
             data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
             if (data.pbuf_c == 0) {
@@ -308,9 +308,9 @@ namespace {
                     if (mXp >= 0 && mYp >= 0 && mXp <= data.padding && mYp <= data.padding) {
                         data.gi->can_swap(&data.g, &data.swap_hover);
                         if (data.swap_hover && data.swap_down && event.type == SDL_MOUSEBUTTONUP) {
-                            f_event_any es;
-                            f_event_create_game_move(&es, TWIXT_PP_MOVE_SWAP);
-                            f_event_queue_push(data.dd->outbox, &es);
+                            event_any es;
+                            event_create_game_move(&es, TWIXT_PP_MOVE_SWAP);
+                            event_queue_push(data.dd->outbox, &es);
                             data.swap_down = false;
                         }
                         data.swap_down = (event.type == SDL_MOUSEBUTTONDOWN);
@@ -329,9 +329,9 @@ namespace {
                                 data.gi->get_node(&data.g, x, y, &node_player);
                                 if (data.board_buttons[y * data.opts.wx + x].hovered && data.board_buttons[y * data.opts.wx + x].mousedown && node_player == TWIXT_PP_PLAYER_NONE) {
                                     uint64_t move_code = (x << 8) | y;
-                                    f_event_any es;
-                                    f_event_create_game_move(&es, move_code);
-                                    f_event_queue_push(data.dd->outbox, &es);
+                                    event_any es;
+                                    event_create_game_move(&es, move_code);
+                                    event_queue_push(data.dd->outbox, &es);
                                 }
                                 data.board_buttons[y * data.opts.wx + x].mousedown = false;
                             }

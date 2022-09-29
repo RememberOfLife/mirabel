@@ -119,13 +119,13 @@ namespace {
         return ERR_OK;
     }
 
-    error_code process_event(frontend* self, f_event_any event)
+    error_code process_event(frontend* self, event_any event)
     {
         data_repr& data = _get_repr(self);
         bool dirty = false;
         switch (event.base.type) {
             case EVENT_TYPE_HEARTBEAT: {
-                f_event_queue_push(data.dd->outbox, &event);
+                event_queue_push(data.dd->outbox, &event);
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
@@ -160,7 +160,7 @@ namespace {
                 // pass
             } break;
         }
-        f_event_destroy(&event);
+        event_destroy(&event);
         if (dirty) {
             data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
             if (data.pbuf_c == 0) {
@@ -209,9 +209,9 @@ namespace {
                                 data.gi->get_cell(&data.g, x, y, &cp);
                                 if (data.board_buttons[y * board_sizer + x].hovered && data.board_buttons[y * board_sizer + x].mousedown && cp == 0) {
                                     uint64_t move_code = y | (x << 8);
-                                    f_event_any es;
-                                    f_event_create_game_move(&es, move_code);
-                                    f_event_queue_push(data.dd->outbox, &es);
+                                    event_any es;
+                                    event_create_game_move(&es, move_code);
+                                    event_queue_push(data.dd->outbox, &es);
                                 }
                                 data.board_buttons[y * board_sizer + x].mousedown = false;
                             }

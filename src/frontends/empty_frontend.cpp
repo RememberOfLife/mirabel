@@ -53,9 +53,9 @@ namespace {
         return ERR_OK;
     }
 
-    error_code process_event(frontend* self, f_event_any event)
+    error_code process_event(frontend* self, event_any event)
     {
-        f_event_destroy(&event);
+        event_destroy(&event);
         return ERR_OK;
     }
 

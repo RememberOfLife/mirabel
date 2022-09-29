@@ -73,7 +73,6 @@ Collect more general resources:
   * e.g. currently user can make server run out of memory and even just ouright force exit it
 * usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
 * graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
-* security: when the event struct is sent over the network, uninitialized padding bytes are sent too, leaks info
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it

@@ -44,7 +44,7 @@ namespace Control {
         plugin_mgr(true, true)
     {
         main_client = this;
-        f_event_queue_create(&inbox);
+        event_queue_create(&inbox);
 
         const int initial_window_width = 1280;
         const int initial_window_height = 720;
@@ -228,12 +228,12 @@ namespace Control {
         SDL_Quit();
 
         t_tc.unregister_timeout_item(tc_info.id);
-        f_event_any e;
-        f_event_create_type(&e, EVENT_TYPE_EXIT);
-        f_event_queue_push(&t_tc.inbox, &e);
+        event_any e;
+        event_create_type(&e, EVENT_TYPE_EXIT);
+        event_queue_push(&t_tc.inbox, &e);
         t_tc.join();
 
-        f_event_queue_destroy(&inbox);
+        event_queue_destroy(&inbox);
 
         cfg_lock_destroy(dd.cfg_lock);
         cj_ovac_destroy(dd.cfg); //TODO save to config file
@@ -280,8 +280,8 @@ namespace Control {
 
             dd.ms_tick = surena_get_ms64();
 
-            f_event_any e;
-            f_event_queue_pop(&inbox, &e, 0);
+            event_any e;
+            event_queue_pop(&inbox, &e, 0);
             while (e.base.type != EVENT_TYPE_NULL) {
                 // process event e
                 // e.g. game updates, load other ctx or game, etc..
@@ -298,8 +298,8 @@ namespace Control {
                     } break;
                     case EVENT_TYPE_GAME_LOAD: {
                         // reset everything in case we can't find the game later on
-                        f_event_any se;
-                        f_event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
+                        event_any se;
+                        event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
                         the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
                             the_game->methods->destroy(the_game);
@@ -331,17 +331,17 @@ namespace Control {
                         engine_mgr->game_load(the_game);
                         if (the_frontend->methods->is_game_compatible(the_game->methods) != ERR_OK) {
                             // unload frontend if it isnt compatible anymore
-                            f_event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
-                            f_event_queue_push(&inbox, &se);
+                            event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
+                            event_queue_push(&inbox, &se);
                         } else {
-                            f_event_create_game_load_methods(&se, the_game->methods, e.game_load.options);
+                            event_create_game_load_methods(&se, the_game->methods, e.game_load.options);
                             the_frontend->methods->process_event(the_frontend, se);
-                            f_event_create_game_state(&se, F_EVENT_CLIENT_NONE, NULL);
+                            event_create_game_state(&se, EVENT_CLIENT_NONE, NULL);
                             the_frontend->methods->process_event(the_frontend, se);
                         }
                         // everything successful, pass to server
-                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
-                            f_event_queue_push(network_send_queue, &e);
+                        if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
+                            event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
@@ -351,8 +351,8 @@ namespace Control {
                             MetaGui::game_runtime_options = NULL;
                         }
                         engine_mgr->game_load(NULL);
-                        f_event_any se;
-                        f_event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
+                        event_any se;
+                        event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
                         the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
                             the_game->methods->destroy(the_game);
@@ -361,8 +361,8 @@ namespace Control {
                         the_game = NULL;
                         game_step++;
                         // everything successful, pass to server
-                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
-                            f_event_queue_push(network_send_queue, &e);
+                        if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
+                            event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_STATE: {
@@ -372,13 +372,13 @@ namespace Control {
                         }
                         the_game->methods->import_state(the_game, e.game_state.state);
                         game_step++;
-                        f_event_any se;
-                        f_event_copy(&se, &e);
+                        event_any se;
+                        event_copy(&se, &e);
                         the_frontend->methods->process_event(the_frontend, se);
                         engine_mgr->game_state(e.game_state.state);
                         // everything successful, pass to server
-                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
-                            f_event_queue_push(network_send_queue, &e);
+                        if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
+                            event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_GAME_MOVE: {
@@ -395,8 +395,8 @@ namespace Control {
                         }
                         the_game->methods->make_move(the_game, pbuf[0], e.game_move.code); //FIXME ptm
                         game_step++;
-                        f_event_any se;
-                        f_event_copy(&se, &e);
+                        event_any se;
+                        event_copy(&se, &e);
                         the_frontend->methods->process_event(the_frontend, se);
                         engine_mgr->game_move(pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
@@ -408,8 +408,8 @@ namespace Control {
                             MetaGui::logf("game done: winner is player %d\n", pbuf[0]);
                         }
                         // everything successful, pass to server
-                        if (network_send_queue && e.base.client_id == F_EVENT_CLIENT_NONE) {
-                            f_event_queue_push(network_send_queue, &e);
+                        if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
+                            event_queue_push(network_send_queue, &e);
                         }
                     } break;
                     case EVENT_TYPE_FRONTEND_LOAD: {
@@ -428,10 +428,10 @@ namespace Control {
                             }
                             char* tg_state = (char*)malloc(the_game->sizer.state_str);
                             the_game->methods->export_state(the_game, &size_fill, tg_state);
-                            f_event_any se;
-                            f_event_create_game_load_methods(&se, the_game->methods, tg_opts);
+                            event_any se;
+                            event_create_game_load_methods(&se, the_game->methods, tg_opts);
                             the_frontend->methods->process_event(the_frontend, se);
-                            f_event_create_game_state(&se, F_EVENT_CLIENT_NONE, tg_state);
+                            event_create_game_state(&se, EVENT_CLIENT_NONE, tg_state);
                             the_frontend->methods->process_event(the_frontend, se);
                             free(tg_state);
                             if (the_game->methods->features.options) {
@@ -481,9 +481,9 @@ namespace Control {
                         }
                         MetaGui::conn_info.connection = MetaGui::RUNNING_STATE_DONE;
                         // request auth info from server
-                        f_event_any es;
-                        f_event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, F_EVENT_CLIENT_NONE, true, NULL, NULL);
-                        f_event_queue_push(&t_network->send_queue, &es);
+                        event_any es;
+                        event_create_auth(&es, EVENT_TYPE_USER_AUTHINFO, EVENT_CLIENT_NONE, true, NULL, NULL);
+                        event_queue_push(&t_network->send_queue, &es);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL: {
                         free(MetaGui::conn_info.server_cert_thumbprint);
@@ -520,9 +520,9 @@ namespace Control {
                         strcpy(MetaGui::conn_info.username, e.auth.username); // set username in authinfo, as received, may be assigned guest name
                         //TODO should probably store it somewhere else too
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_DONE;
-                        f_event_any es;
-                        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
-                        f_event_queue_push(&inbox, &es);
+                        event_any es;
+                        event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED);
+                        event_queue_push(&inbox, &es);
                     } break;
                     case EVENT_TYPE_USER_AUTHFAIL: {
                         // server told us our authn failed / it signed us out after we requested logout
@@ -532,16 +532,16 @@ namespace Control {
                             e.auth_fail.reason = NULL;
                         }
                         MetaGui::conn_info.authentication = MetaGui::RUNNING_STATE_NONE;
-                        f_event_any es;
-                        f_event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED);
-                        f_event_queue_push(&inbox, &es);
+                        event_any es;
+                        event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED);
+                        event_queue_push(&inbox, &es);
                     } break;
                     default: {
                         MetaGui::logf("#W guithread: received unexpected event, type: %d\n", e.base.type);
                     } break;
                 }
-                f_event_destroy(&e);
-                f_event_queue_pop(&inbox, &e, 0);
+                event_destroy(&e);
+                event_queue_pop(&inbox, &e, 0);
             }
 
             // work through interface events: clicks, key presses, gui commands structs for updating interface elems

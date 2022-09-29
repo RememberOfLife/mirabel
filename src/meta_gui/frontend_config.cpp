@@ -54,9 +54,9 @@ namespace MetaGui {
         if (running_fem_idx > 0 && !selected_fem_compatible && selected_fem_idx > 0) {
             plugin_mgr.frontend_lookup[selected_fem_idx]->destroy_opts(frontend_load_options);
             selected_fem_idx = 0;
-            f_event_any es;
-            f_event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
-            f_event_queue_push(&Control::main_client->inbox, &es);
+            event_any es;
+            event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
+            event_queue_push(&Control::main_client->inbox, &es);
         }
         // if the selected frontend is no longer compatible, deselect
         if (!selected_fem_compatible) {
@@ -77,21 +77,21 @@ namespace MetaGui {
         }
         if (fronend_running) {
             if (ImGui::Button("Restart")) {
-                f_event_any es;
-                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
-                f_event_queue_push(&Control::main_client->inbox, &es);
+                event_any es;
+                event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
+                event_queue_push(&Control::main_client->inbox, &es);
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
-                f_event_any es;
-                f_event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
-                f_event_queue_push(&Control::main_client->inbox, &es);
+                event_any es;
+                event_create_type(&es, EVENT_TYPE_FRONTEND_UNLOAD);
+                event_queue_push(&Control::main_client->inbox, &es);
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                f_event_any es;
-                f_event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
-                f_event_queue_push(&Control::main_client->inbox, &es);
+                event_any es;
+                event_create_frontend_load(&es, plugin_mgr.frontend_lookup[selected_fem_idx]->new_frontend(&Control::main_client->dd, frontend_load_options));
+                event_queue_push(&Control::main_client->inbox, &es);
             }
         }
         if (disable_fronend_loader) {

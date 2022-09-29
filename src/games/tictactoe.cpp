@@ -63,9 +63,9 @@ namespace {
                     size_t game_state_buffer_len = game_clone->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-                    f_event_any es;
-                    f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
-                    f_event_queue_push(&Control::main_client->inbox, &es);
+                    event_any es;
+                    event_create_game_state(&es, EVENT_CLIENT_NONE, game_state_buffer);
+                    event_queue_push(&Control::main_client->inbox, &es);
                     game_clone->methods->destroy(game_clone);
                     free(game_clone);
                 }
@@ -105,9 +105,9 @@ namespace {
             size_t game_state_buffer_len = game_clone->sizer.state_str;
             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-            f_event_any es;
-            f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
-            f_event_queue_push(&Control::main_client->inbox, &es);
+            event_any es;
+            event_create_game_state(&es, EVENT_CLIENT_NONE, game_state_buffer);
+            event_queue_push(&Control::main_client->inbox, &es);
             game_clone->methods->destroy(game_clone);
             free(game_clone);
         }
@@ -143,9 +143,9 @@ namespace {
             size_t game_state_buffer_len = game_clone->sizer.state_str;
             char* game_state_buffer = (char*)malloc(game_state_buffer_len);
             game_clone->methods->export_state(game_clone, &game_state_buffer_len, game_state_buffer);
-            f_event_any es;
-            f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, game_state_buffer);
-            f_event_queue_push(&Control::main_client->inbox, &es);
+            event_any es;
+            event_create_game_state(&es, EVENT_CLIENT_NONE, game_state_buffer);
+            event_queue_push(&Control::main_client->inbox, &es);
             game_clone->methods->destroy(game_clone);
             free(game_clone);
         }

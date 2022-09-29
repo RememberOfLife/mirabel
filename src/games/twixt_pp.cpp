@@ -93,17 +93,17 @@ namespace {
                 ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(226, 51, 51, 255));
                 if (ImGui::Button("S")) {
                     changed = false;
-                    f_event_any es;
-                    f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, state_str);
-                    f_event_queue_push(&Control::main_client->inbox, &es);
+                    event_any es;
+                    event_create_game_state(&es, EVENT_CLIENT_NONE, state_str);
+                    event_queue_push(&Control::main_client->inbox, &es);
                 }
                 ImGui::PopStyleColor(3);
             }
         }
         if (ImGui::Button("reload")) {
-            f_event_any es;
-            f_event_create_game_state(&es, F_EVENT_CLIENT_NONE, state_str);
-            f_event_queue_push(&Control::main_client->inbox, &es);
+            event_any es;
+            event_create_game_state(&es, EVENT_CLIENT_NONE, state_str);
+            event_queue_push(&Control::main_client->inbox, &es);
         }
 
         const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid

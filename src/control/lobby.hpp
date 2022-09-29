@@ -15,7 +15,7 @@ namespace Control {
       public:
 
         PluginManager* plugin_mgr;
-        f_event_queue* send_queue;
+        event_queue* send_queue;
 
         // uint64_t id;
         char* game_base;
@@ -29,15 +29,15 @@ namespace Control {
 
         uint32_t lobby_msg_id_ctr = 1;
 
-        Lobby(PluginManager* plugin_mgr, f_event_queue* send_queue, uint16_t max_users);
+        Lobby(PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users);
         ~Lobby();
 
         void AddUser(uint32_t client_id);
         void RemoveUser(uint32_t client_id);
 
-        void HandleEvent(f_event_any e); // handle events that are specifically assigned to this lobby
+        void HandleEvent(event_any e); // handle events that are specifically assigned to this lobby
 
-        void SendToAllButOne(f_event_any e, uint32_t excluded_client_id);
+        void SendToAllButOne(event_any e, uint32_t excluded_client_id);
     };
 
 } // namespace Control

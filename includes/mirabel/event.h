@@ -69,172 +69,172 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
 
-static const uint32_t F_EVENT_CLIENT_NONE = 0; // none / local
-static const uint32_t F_EVENT_CLIENT_SERVER = UINT32_MAX;
-static const uint32_t F_EVENT_LOBBY_NONE = 0;
+static const uint32_t EVENT_CLIENT_NONE = 0; // none / local
+static const uint32_t EVENT_CLIENT_SERVER = UINT32_MAX;
+static const uint32_t EVENT_LOBBY_NONE = 0;
 
-typedef struct f_event_s {
+typedef struct event_s {
     EVENT_TYPE type;
     uint32_t client_id;
     uint32_t lobby_id;
     uint32_t _padding;
-} f_event;
+} event;
 
-typedef union f_event_any_u f_event_any;
+typedef union event_any_u event_any;
 
 /////
 // general purpose utility functions on events
 
-void f_event_create_zero(f_event_any* e);
+void event_create_zero(event_any* e);
 
-void f_event_create_type(f_event_any* e, EVENT_TYPE type);
+void event_create_type(event_any* e, EVENT_TYPE type);
 
-void f_event_create_type_client(f_event_any* e, EVENT_TYPE type, uint32_t client_id);
+void event_create_type_client(event_any* e, EVENT_TYPE type, uint32_t client_id);
 
-void f_event_zero(f_event_any* e);
+void event_zero(event_any* e);
 
-size_t f_event_size(f_event_any* e);
+size_t event_size(event_any* e);
 
-void f_event_serialize(f_event_any* e, void* buf);
+void event_serialize(event_any* e, void* buf);
 
-void f_event_deserialize(f_event_any* e, void* buf, void* buf_end);
+void event_deserialize(event_any* e, void* buf, void* buf_end);
 
-void f_event_copy(f_event_any* to, f_event_any* from);
+void event_copy(event_any* to, event_any* from);
 
-void f_event_destroy(f_event_any* e);
+void event_destroy(event_any* e);
 
 // direct usage
 
 // total size written before an event package MUST include itself
-void f_event_write_size(void* buf, size_t v);
-size_t f_event_read_size(void* buf);
+void event_write_size(void* buf, size_t v);
+size_t event_read_size(void* buf);
 
 // this does not write, and never assumes, the serialization size which should be present just before the event packet
-size_t f_event_general_serializer(GSIT itype, f_event_any* in, f_event_any* out, void* buf, void* buf_end);
+size_t event_general_serializer(GSIT itype, event_any* in, event_any* out, void* buf, void* buf_end);
 
 /////
 // specific event types
 
-typedef struct f_event_log_s {
-    f_event base;
+typedef struct event_log_s {
+    event base;
     char* str;
-} f_event_log;
+} event_log;
 
-void f_event_create_log(f_event_any* e, const char* str);
+void event_create_log(event_any* e, const char* str);
 
 //TODO logf
 
-typedef struct f_event_heartbeat_s {
-    f_event base;
+typedef struct event_heartbeat_s {
+    event base;
     uint32_t id;
     uint32_t time;
-} f_event_heartbeat;
+} event_heartbeat;
 
-void f_event_create_heartbeat(f_event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time);
+void event_create_heartbeat(event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time);
 
-typedef struct f_event_game_load_s {
-    f_event base;
+typedef struct event_game_load_s {
+    event base;
     char* base_name;
     char* variant_name;
     char* impl_name;
     char* options;
-} f_event_game_load;
+} event_game_load;
 
-void f_event_create_game_load(f_event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options);
+void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options);
 
-typedef struct f_event_game_load_methods_s {
-    f_event base;
+typedef struct event_game_load_methods_s {
+    event base;
     const game_methods* methods;
     char* options;
-} f_event_game_load_methods;
+} event_game_load_methods;
 
-void f_event_create_game_load_methods(f_event_any* e, const game_methods* methods, const char* options);
+void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options);
 
-typedef struct f_event_game_state_s {
-    f_event base;
+typedef struct event_game_state_s {
+    event base;
     char* state;
-} f_event_game_state;
+} event_game_state;
 
-void f_event_create_game_state(f_event_any* e, uint32_t client_id, const char* state);
+void event_create_game_state(event_any* e, uint32_t client_id, const char* state);
 
-typedef struct f_event_game_move_s {
-    f_event base;
+typedef struct event_game_move_s {
+    event base;
     move_code code;
     //TODO use move string instead?
     //TODO player and sync ctr
-} f_event_game_move;
+} event_game_move;
 
-void f_event_create_game_move(f_event_any* e, move_code code);
+void event_create_game_move(event_any* e, move_code code);
 
-typedef struct f_event_frontend_load_s {
-    f_event base;
+typedef struct event_frontend_load_s {
+    event base;
     void* frontend;
-} f_event_frontend_load;
+} event_frontend_load;
 
-void f_event_create_frontend_load(f_event_any* e, void* frontend);
+void event_create_frontend_load(event_any* e, void* frontend);
 
-typedef struct f_event_ssl_thumbprint_s {
-    f_event base;
+typedef struct event_ssl_thumbprint_s {
+    event base;
     //TODO needs reason string and thumbprint should be managed blob
     size_t thumbprint_len;
     void* thumbprint;
-} f_event_ssl_thumbprint;
+} event_ssl_thumbprint;
 
-void f_event_create_ssl_thumbprint(f_event_any* e, EVENT_TYPE type);
+void event_create_ssl_thumbprint(event_any* e, EVENT_TYPE type);
 
 //TODO for with thumbprint
 
-typedef struct f_event_auth_s {
-    f_event base;
+typedef struct event_auth_s {
+    event base;
     bool is_guest;
     char* username;
     char* password;
-} f_event_auth;
+} event_auth;
 
-void f_event_create_auth(f_event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password);
+void event_create_auth(event_any* e, EVENT_TYPE type, uint32_t client_id, bool is_guest, const char* username, const char* password);
 
-typedef struct f_event_auth_fail_s {
-    f_event base;
+typedef struct event_auth_fail_s {
+    event base;
     char* reason;
-} f_event_auth_fail;
+} event_auth_fail;
 
-void f_event_create_auth_fail(f_event_any* e, uint32_t client_id, const char* reason);
+void event_create_auth_fail(event_any* e, uint32_t client_id, const char* reason);
 
-typedef struct f_event_chat_msg_s {
-    f_event base;
+typedef struct event_chat_msg_s {
+    event base;
     uint32_t msg_id;
     uint32_t author_client_id;
     uint64_t timestamp;
     char* text;
-} f_event_chat_msg;
+} event_chat_msg;
 
-void f_event_create_chat_msg(f_event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text);
+void event_create_chat_msg(event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text);
 
-typedef struct f_event_chat_del_s {
-    f_event base;
+typedef struct event_chat_del_s {
+    event base;
     uint32_t msg_id;
-} f_event_chat_del;
+} event_chat_del;
 
-void f_event_create_chat_del(f_event_any* e, uint32_t msg_id);
+void event_create_chat_del(event_any* e, uint32_t msg_id);
 
-// f_event_any is as large as the largest event
+// event_any is as large as the largest event
 // use for arbitrary events, event arrays and deserialization where type and size are unknown
-typedef union f_event_any_u {
+typedef union event_any_u {
     // list all event types here
-    f_event base;
-    f_event_log log;
-    f_event_heartbeat heartbeat;
-    f_event_game_load game_load;
-    f_event_game_load_methods game_load_methods;
-    f_event_game_state game_state;
-    f_event_game_move game_move;
-    f_event_frontend_load frontend_load;
-    f_event_ssl_thumbprint ssl_thumbprint;
-    f_event_auth auth;
-    f_event_auth_fail auth_fail;
-    f_event_chat_msg chat_msg;
-    f_event_chat_del chat_del;
-} f_event_any;
+    event base;
+    event_log log;
+    event_heartbeat heartbeat;
+    event_game_load game_load;
+    event_game_load_methods game_load_methods;
+    event_game_state game_state;
+    event_game_move game_move;
+    event_frontend_load frontend_load;
+    event_ssl_thumbprint ssl_thumbprint;
+    event_auth auth;
+    event_auth_fail auth_fail;
+    event_chat_msg chat_msg;
+    event_chat_del chat_del;
+} event_any;
 
 #ifdef __cplusplus
 }

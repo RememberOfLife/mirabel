@@ -75,7 +75,7 @@ namespace Engines {
         //TODO figure out what can be private
         uint32_t log;
 
-        f_event_queue* client_inbox;
+        event_queue* client_inbox;
 
         eevent_queue engine_outbox; // this is where engines post their results
 
@@ -83,7 +83,7 @@ namespace Engines {
 
         // methods
 
-        EngineManager(f_event_queue* _client_inbox);
+        EngineManager(event_queue* _client_inbox);
 
         ~EngineManager();
 

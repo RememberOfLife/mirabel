@@ -76,14 +76,14 @@ namespace MetaGui {
         // display chat history
         for (int i = 0; i < chat_log.size(); i++) {
             bool colored = false;
-            if (chat_log[i].client_id == F_EVENT_CLIENT_NONE || chat_log[i].msg_id == UINT32_MAX) {
+            if (chat_log[i].client_id == EVENT_CLIENT_NONE || chat_log[i].msg_id == UINT32_MAX) {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(180, 180, 180, 255)); // self/deleted messages are gray
                 colored = true;
-            } else if (chat_log[i].client_id == F_EVENT_CLIENT_SERVER) {
+            } else if (chat_log[i].client_id == EVENT_CLIENT_SERVER) {
                 ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(88, 255, 113, 255)); // server messages are green
                 colored = true;
             }
-            if (chat_log[i].client_id == F_EVENT_CLIENT_SERVER) {
+            if (chat_log[i].client_id == EVENT_CLIENT_SERVER) {
                 ImGui::TextWrapped("[%09lu] %s", chat_log[i].timestamp, chat_log[i].text);
             } else {
                 ImGui::TextWrapped("[%09lu] %d: %s", chat_log[i].timestamp, chat_log[i].client_id, chat_log[i].text);
@@ -93,9 +93,9 @@ namespace MetaGui {
             if (chat_log[i].msg_id < UINT32_MAX && ImGui::BeginPopupContextItem(popup_str_id_buf)) {
                 if (ImGui::Selectable("Delete")) {
                     if (Control::main_client->network_send_queue) {
-                        f_event_any es;
-                        f_event_create_chat_del(&es, chat_log[i].msg_id);
-                        f_event_queue_push(Control::main_client->network_send_queue, &es);
+                        event_any es;
+                        event_create_chat_del(&es, chat_log[i].msg_id);
+                        event_queue_push(Control::main_client->network_send_queue, &es);
                     } else {
                         chat_msg_del(chat_log[i].msg_id);
                     }
@@ -135,9 +135,9 @@ namespace MetaGui {
             }
             if (strlen(msg_start) > 0) {
                 if (Control::main_client->network_send_queue) {
-                    f_event_any es;
-                    f_event_create_chat_msg(&es, 0, 0, 0, msg_start);
-                    f_event_queue_push(Control::main_client->network_send_queue, &es);
+                    event_any es;
+                    event_create_chat_msg(&es, 0, 0, 0, msg_start);
+                    event_queue_push(Control::main_client->network_send_queue, &es);
                 } else {
                     chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), msg_start);
                 }

@@ -18,16 +18,16 @@ namespace Control {
 
     void TimeoutCrash::timeout_info::send_heartbeat()
     {
-        f_event_any es;
-        f_event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, id, 0);
-        f_event_queue_push(q, &es);
+        event_any es;
+        event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, id, 0);
+        event_queue_push(q, &es);
     }
 
     void TimeoutCrash::timeout_info::pre_quit(uint32_t timeout)
     {
-        f_event_any es;
-        f_event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT_PREQUIT, id, timeout);
-        f_event_queue_push(q, &es);
+        event_any es;
+        event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT_PREQUIT, id, timeout);
+        event_queue_push(q, &es);
     }
 
     TimeoutCrash::timeout_item::timeout_item():
@@ -37,7 +37,7 @@ namespace Control {
         quit(false)
     {}
 
-    TimeoutCrash::timeout_item::timeout_item(f_event_queue* target_queue, uint32_t new_id, const char* new_name, int new_initial_delay, int new_timeout_ms):
+    TimeoutCrash::timeout_item::timeout_item(event_queue* target_queue, uint32_t new_id, const char* new_name, int new_initial_delay, int new_timeout_ms):
         id(new_id),
         timeout_ms(new_timeout_ms),
         last_heartbeat_age(-new_initial_delay),
@@ -51,12 +51,12 @@ namespace Control {
 
     TimeoutCrash::TimeoutCrash()
     {
-        f_event_queue_create(&inbox);
+        event_queue_create(&inbox);
     }
 
     TimeoutCrash::~TimeoutCrash()
     {
-        f_event_queue_destroy(&inbox);
+        event_queue_destroy(&inbox);
     }
 
     void TimeoutCrash::loop()
@@ -79,8 +79,8 @@ namespace Control {
             m.unlock();
 
             std::chrono::steady_clock::time_point sleep_start = std::chrono::steady_clock::now();
-            f_event_any e;
-            f_event_queue_pop(&inbox, &e, heartbeat_deadline);
+            event_any e;
+            event_queue_pop(&inbox, &e, heartbeat_deadline);
             std::chrono::steady_clock::time_point sleep_stop = std::chrono::steady_clock::now();
             int real_sleep_time = std::chrono::duration_cast<std::chrono::milliseconds>(sleep_stop - sleep_start).count();
             // upon wakeup, check for heartbeat responses
@@ -135,7 +135,7 @@ namespace Control {
                         MetaGui::logf("#W timeout_crash: received unexpected event, type: %d\n", e.base.type);
                     } break;
                 }
-                f_event_queue_pop(&inbox, &e, 0);
+                event_queue_pop(&inbox, &e, 0);
             }
             // add slept time to all heartbeat ages (except new ones), might've woken up earlier than expected
             map_iter = timeout_items.begin();
@@ -147,9 +147,9 @@ namespace Control {
                     if (tii.heartbeat_answered) {
                         tii.last_heartbeat_age -= tii.timeout_ms;
                         tii.heartbeat_answered = false;
-                        f_event_any es;
-                        f_event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, tii.id, 0);
-                        f_event_queue_push(tii.q, &es);
+                        event_any es;
+                        event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, tii.id, 0);
+                        event_queue_push(tii.q, &es);
                     } else {
                         // if the item has not responded to our heartbeat in timeout ms, quit
                         if (!tii.quit) {
@@ -176,7 +176,7 @@ namespace Control {
         runner.join();
     }
 
-    TimeoutCrash::timeout_info TimeoutCrash::register_timeout_item(f_event_queue* target_queue, const char* name, int initial_delay, int timeout_ms)
+    TimeoutCrash::timeout_info TimeoutCrash::register_timeout_item(event_queue* target_queue, const char* name, int initial_delay, int timeout_ms)
     {
         m.lock();
         uint32_t item_id = next_id++;
@@ -184,13 +184,13 @@ namespace Control {
             MetaGui::logf("#W registering timeout item #%d with an already existing name: %s\n", item_id, name);
         }
         timeout_items[item_id] = timeout_item(target_queue, item_id, name, initial_delay, timeout_ms);
-        f_event_any es;
-        f_event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, item_id, 0);
-        f_event_queue_push(timeout_items[item_id].q, &es);
+        event_any es;
+        event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT, item_id, 0);
+        event_queue_push(timeout_items[item_id].q, &es);
         m.unlock();
         // force wakeup the looping thread to re-calculate nearest deadline, also dont add sleep to the new one
-        f_event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT_RESET, item_id, 0);
-        f_event_queue_push(&inbox, &es);
+        event_create_heartbeat(&es, EVENT_TYPE_HEARTBEAT_RESET, item_id, 0);
+        event_queue_push(&inbox, &es);
         return timeout_info{item_id, &inbox};
     }
 

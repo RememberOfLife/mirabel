@@ -18,9 +18,9 @@ namespace Control {
         TimeoutCrash::timeout_info tc_info;
 
         Network::NetworkServer* t_network = NULL;
-        f_event_queue* network_send_queue = NULL;
+        event_queue* network_send_queue = NULL;
 
-        f_event_queue inbox;
+        event_queue inbox;
 
         Lobby* lobby = NULL;
 

@@ -32,12 +32,12 @@ namespace Network {
         char* server_address;
         uint16_t server_port;
         SDLNet_SocketSet socketset = NULL;
-        connection conn; // client id starts out as F_EVENT_CLIENT_NONE before reassignment
+        connection conn; // client id starts out as EVENT_CLIENT_NONE before reassignment
 
       public:
 
-        f_event_queue send_queue;
-        f_event_queue* recv_queue;
+        event_queue send_queue;
+        event_queue* recv_queue;
 
         //TODO atomic ping and heartbeat times (hb might go into event)
 

@@ -41,8 +41,8 @@ namespace Network {
 
       public:
 
-        f_event_queue send_queue;
-        f_event_queue* recv_queue;
+        event_queue send_queue;
+        event_queue* recv_queue;
 
         NetworkServer();
         ~NetworkServer();
