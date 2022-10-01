@@ -96,7 +96,7 @@ namespace Network {
 
     void NetworkServer::server_loop()
     {
-        uint32_t buffer_size = 8192;
+        uint32_t buffer_size = 16384;
         uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for data
         uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer);
 
@@ -110,12 +110,14 @@ namespace Network {
             if (!SDLNet_SocketReady(server_socket)) {
                 continue;
             }
+            printf("[----] = socket is ready\n");
             TCPsocket incoming_socket;
             incoming_socket = SDLNet_TCP_Accept(server_socket);
             if (incoming_socket == NULL) {
-                printf("[ERROR] server socket closed unexpectedly\n");
+                printf("[ERROR] = server socket closed unexpectedly\n");
                 break;
             }
+            printf("[----] = processing incoming connection\n");
             // check if there is still space for a new client connection
             connection* connection_slot = NULL;
             uint32_t connection_id = EVENT_CLIENT_NONE;
@@ -132,10 +134,10 @@ namespace Network {
                 int send_len = sizeof(event);
                 int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(event));
                 if (sent_len != send_len) {
-                    printf("[WARN] packet sending failed\n");
+                    printf("[WARN] = packet sending failed\n");
                 }
                 SDLNet_TCP_Close(incoming_socket);
-                printf("[INFO] refused new connection\n");
+                printf("[INFO] = refused new connection\n");
             } else {
                 // slot available for new client, accept it
                 // send protocol client id set, functions as ok if set as initial
@@ -144,7 +146,7 @@ namespace Network {
                 int send_len = sizeof(event);
                 int sent_len = SDLNet_TCP_Send(incoming_socket, data_buffer, sizeof(event));
                 if (sent_len != send_len) {
-                    printf("[WARN] packet sending failed\n");
+                    printf("[WARN] = packet sending failed\n");
                 }
                 connection_slot->state = PROTOCOL_CONNECTION_STATE_NONE;
                 connection_slot->socket = incoming_socket;
@@ -152,7 +154,7 @@ namespace Network {
                 connection_slot->client_id = connection_id;
                 util_ssl_session_init(ssl_ctx, connection_slot, UTIL_SSL_CTX_TYPE_SERVER);
                 SDLNet_TCP_AddSocket(client_socketset, connection_slot->socket);
-                printf("[INFO] new connection initializing, client id %d\n", connection_id);
+                printf("[INFO] = new connection initializing, client id %d\n", connection_id);
             }
         }
 
@@ -165,7 +167,7 @@ namespace Network {
 
     void NetworkServer::send_loop()
     {
-        uint32_t base_buffer_size = 8192;
+        uint32_t base_buffer_size = 16384;
         uint8_t* data_buffer_base = (uint8_t*)malloc(base_buffer_size); // recycled buffer for outgoing data
 
         // wait until event available
@@ -176,7 +178,7 @@ namespace Network {
             connection* target_client = NULL; // target client to use for processing this event
             switch (e.base.type) {
                 case EVENT_TYPE_NULL: {
-                    printf("[WARN] received impossible null event\n");
+                    printf("[WARN] > received impossible null event\n");
                 } break;
                 case EVENT_TYPE_EXIT: {
                     quit = true;
@@ -193,21 +195,21 @@ namespace Network {
                         }
                     }
                     if (target_client == NULL) {
-                        printf("[WARN] failed to find connection for sending event, discarded %lu bytes\n", event_size(&e));
+                        printf("[WARN] > failed to find connection for sending event, discarded %lu bytes\n", event_size(&e));
                         break;
                     }
                     if (target_client->state != PROTOCOL_CONNECTION_STATE_ACCEPTED) {
                         switch (target_client->state) {
                             case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
-                                printf("[WARN] SECURITY: outgoing event %d on pre-closed connection dropped\n", e.base.type);
+                                printf("[WARN] > SECURITY: outgoing event %d on pre-closed connection dropped\n", e.base.type);
                             } break;
                             case PROTOCOL_CONNECTION_STATE_NONE:
                             case PROTOCOL_CONNECTION_STATE_INITIALIZING: {
-                                printf("[WARN] SECURITY: outgoing event %d on unsecured connection dropped\n", e.base.type);
+                                printf("[WARN] > SECURITY: outgoing event %d on unsecured connection dropped\n", e.base.type);
                             } break;
                             default:
                             case PROTOCOL_CONNECTION_STATE_WARNHELD: {
-                                printf("[WARN] SECURITY: outgoing event %d on unaccepted connection dropped\n", e.base.type);
+                                printf("[WARN] > SECURITY: outgoing event %d on unaccepted connection dropped\n", e.base.type);
                             } break;
                         }
                         break;
@@ -218,13 +220,12 @@ namespace Network {
                     if (write_len > base_buffer_size) {
                         data_buffer = (uint8_t*)malloc(write_len);
                     }
-
                     event_serialize(&e, data_buffer);
                     int wrote_len = SSL_write(target_client->ssl_session, data_buffer, write_len);
                     if (wrote_len != write_len) {
-                        printf("[WARN] ssl write failed\n");
+                        printf("[WARN] > ssl write failed\n");
                     } else {
-                        printf("[----] wrote event, type %d, len %d\n", e.base.type, write_len);
+                        printf("[----] > ssl wrote event, type %d, len %d\n", e.base.type, write_len);
                     }
                     if (data_buffer != data_buffer_base) {
                         free(data_buffer);
@@ -245,27 +246,29 @@ namespace Network {
                             }
                         }
                         if (target_client == NULL) {
-                            printf("[WARN] failed to find connection %d for sending ssl write\n", e.base.client_id);
+                            printf("[WARN] > failed to find connection %d for sending ssl write\n", e.base.client_id);
                             break;
                         }
                     }
 
                     while (true) {
                         int pend_len = BIO_ctrl_pending(target_client->send_bio);
+                        printf("[----] > pending to send: %i bytes\n", pend_len);
                         if (pend_len == 0) {
                             // nothing pending to send
                             break;
                         }
                         int send_len = BIO_read(target_client->send_bio, data_buffer_base, base_buffer_size);
+                        printf("[----] > ssl outputs %i bytes for sending\n", send_len);
                         if (send_len == 0) {
                             // empty read, can this happen?
                             break;
                         }
                         int sent_len = SDLNet_TCP_Send(target_client->socket, data_buffer_base, send_len);
                         if (sent_len != send_len) {
-                            printf("[WARN] packet sending failed\n");
+                            printf("[WARN] > packet sending failed\n");
                         } else {
-                            printf("[----] sent %d bytes of data to client id %d\n", sent_len, e.base.client_id);
+                            printf("[----] > sent %d bytes of data to client id %d\n", sent_len, e.base.client_id);
                         }
                     }
                 } break;
@@ -277,9 +280,8 @@ namespace Network {
 
     void NetworkServer::recv_loop()
     {
-        uint32_t buffer_size = 8192;
-        uint8_t* data_buffer_base = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
-        uint32_t* db_event_type = reinterpret_cast<uint32_t*>(data_buffer_base);
+        uint32_t buffer_size = 16384;
+        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
 
         while (true) {
             int ready = SDLNet_CheckSockets(client_socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
@@ -296,10 +298,11 @@ namespace Network {
                 if (!SDLNet_SocketReady(client_connections[i].socket)) {
                     continue;
                 }
+                printf("[----] < socket for client id %d is ready\n", client_connections[i].client_id);
                 ready--;
                 ready_client = &(client_connections[i]);
                 // handle data for the ready_client
-                int recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer_base, buffer_size);
+                int recv_len = SDLNet_TCP_Recv(ready_client->socket, data_buffer, buffer_size);
                 if (recv_len <= 0) {
                     // connection closed
                     SDLNet_TCP_DelSocket(client_socketset, ready_client->socket);
@@ -307,19 +310,19 @@ namespace Network {
                     switch (ready_client->state) {
                         default:
                         case PROTOCOL_CONNECTION_STATE_NONE: {
-                            printf("[WARN] client id %d connection closed before initialization\n", ready_client->client_id);
+                            printf("[WARN] < client id %d connection closed before initialization\n", ready_client->client_id);
                         } break;
                         case PROTOCOL_CONNECTION_STATE_INITIALIZING: {
-                            printf("[WARN] client id %d connection closed while initializing\n", ready_client->client_id);
+                            printf("[WARN] < client id %d connection closed while initializing\n", ready_client->client_id);
                         } break;
                         case PROTOCOL_CONNECTION_STATE_WARNHELD:
                         case PROTOCOL_CONNECTION_STATE_ACCEPTED: // both closed unexpectedly
                         case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
                             // pass, everything fine
                             if (ready_client->state == PROTOCOL_CONNECTION_STATE_PRECLOSE) {
-                                printf("[INFO] client id %d connection closed\n", ready_client->client_id);
+                                printf("[INFO] < client id %d connection closed\n", ready_client->client_id);
                             } else {
-                                printf("[WARN] client id %d connection closed unexpectedly\n", ready_client->client_id);
+                                printf("[WARN] < client id %d connection closed unexpectedly\n", ready_client->client_id);
                             }
                             event_any es;
                             event_create_type_client(&es, EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED, ready_client->client_id);
@@ -330,22 +333,23 @@ namespace Network {
                     ready_client->reset(); // sets everything 0/NULL/NONE
                     continue;
                 }
-
-                uint8_t* data_buffer = data_buffer_base;
+                printf("[----] < tcp received %i bytes\n", recv_len);
 
                 if (ready_client->state == PROTOCOL_CONNECTION_STATE_PRECLOSE) {
-                    printf("[WARN] discarding %d recv bytes on pre-closed connection\n", recv_len);
+                    printf("[WARN] < discarding %d recv bytes on pre-closed connection\n", recv_len);
                     continue;
                 }
 
                 if (ready_client->state == PROTOCOL_CONNECTION_STATE_NONE) {
                     // first client response after connection established
+                    printf("[----] < client id %d connection initializing\n", ready_client->client_id);
                     ready_client->state = PROTOCOL_CONNECTION_STATE_INITIALIZING;
                 }
 
                 // forward tcp->ssl
                 // if our buffer is to small, the rest of the data will show up as a ready socket again, then we read it in the next round
                 BIO_write(ready_client->recv_bio, data_buffer, recv_len);
+                printf("[----] < ssl bio ingested %i bytes\n", recv_len);
                 // if ssl is still doing internal things, don't bother
                 if (ready_client->state == PROTOCOL_CONNECTION_STATE_INITIALIZING) {
                     if (!SSL_is_init_finished(ready_client->ssl_session)) {
@@ -354,6 +358,7 @@ namespace Network {
                         event_any es;
                         event_create_type_client(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, ready_client->client_id);
                         event_queue_push(&send_queue, &es);
+                        printf("[----] < ssl handshake progressed + internal ssl write\n");
                         if (!SSL_is_init_finished(ready_client->ssl_session)) {
                             continue;
                         }
@@ -361,7 +366,7 @@ namespace Network {
                     // handshake is finished, promote connection state if possible
                     // no verification necessary on server side
                     ready_client->state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
-                    printf("[INFO] client %d connection accepted\n", ready_client->client_id);
+                    printf("[INFO] < client %d connection accepted\n", ready_client->client_id);
                     //REWORK this never reaches the client at the right point in time, it is sent before the adapter is installed
                     // somehow make sure we only USE the client when has authenticated, i.e. installed its adapter
                     event_any es;
@@ -371,54 +376,72 @@ namespace Network {
 
                 // PROTOCOL_CONNECTION_STATE_WARNHELD, server never uses this
 
-                data_buffer = data_buffer_base;
-                recv_len = 0;
-                while (recv_len < buffer_size) {
-                    // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
-                    int im_rd = SSL_read(ready_client->ssl_session, data_buffer + recv_len, buffer_size - recv_len); // read as much from ssl as we can to jumpstart event processing
-                    if (im_rd == 0) {
-                        break;
-                    }
-                    recv_len += im_rd;
-                }
-                if (recv_len == 0) {
-                    // empty ssl read, don't do processing
-                    continue;
-                }
-
-                // one call to recv may receive MULTIPLE events at once, process them all
                 while (true) {
-
-                    if (recv_len < sizeof(size_t)) {
-                        printf("[WARN] %d invalid packet length bytes received\n", recv_len);
-                        break;
-                    }
-                    size_t event_length = event_read_size(data_buffer);
-                    if (recv_len < event_length) {
-                        //TODO this might also be the case when the data received is simply larger than the buffer for it
-                        printf("[WARN] discarding %d unusable bytes of received data\n", recv_len);
-                        break;
-                    }
-                    //TODO handle events longer than one buffer filling
-                    //TODO handle event fragmentation
-
-                    // universal packet->event decoding, then place it in the recv_queue
-                    // at least one event here, process it from data_buffer
                     event_any recv_event;
-                    event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
-                    if (recv_event.base.type == EVENT_TYPE_NULL) {
-                        printf("[WARN] event packet deserialization error, client id %d\n", ready_client->client_id);
+                    uint8_t size_peek[sizeof(size_t)];
+                    int im_rd = SSL_peek(ready_client->ssl_session, size_peek, sizeof(size_t));
+                    if (im_rd == 0) {
+                        // empty ssl read do nothing
+                        break;
                     }
-
+                    if (im_rd < sizeof(size_t)) {
+                        printf("[WARN] < %d invalid packet length bytes received from client id %d\n", im_rd, ready_client->client_id);
+                        break;
+                    }
+                    size_t event_size = event_read_size(size_peek);
+                    if (ready_client->fragment_buf != NULL || event_size > buffer_size) {
+                        // existing fragment, or does not fit the buffer, handled the same
+                        if (ready_client->fragment_buf == NULL) {
+                            ready_client->fragment_buf = malloc(event_size);
+                            ready_client->fragment_size_target = event_size;
+                            printf("[----] < event packet announced with %zu byte size, client id %d\n", event_size, ready_client->client_id);
+                        } else {
+                            printf("[----] < incoming additional bytes for existing fragment, client id %d\n", ready_client->client_id);
+                        }
+                        while (ready_client->fragment_size < ready_client->fragment_size_target) {
+                            // need to do multiple reads, to catch multiple potential ssl records (16kB)
+                            im_rd = SSL_read(ready_client->ssl_session, (char*)ready_client->fragment_buf + ready_client->fragment_size, ready_client->fragment_size_target - ready_client->fragment_size);
+                            printf("[----] < ssl outputs %i bytes, client id %d\n", im_rd, ready_client->client_id);
+                            if (im_rd == 0) {
+                                break;
+                            }
+                            ready_client->fragment_size += im_rd;
+                        }
+                        if (ready_client->fragment_size < ready_client->fragment_size_target) {
+                            // fragment still incomplete
+                            break;
+                        }
+                        event_deserialize(&recv_event, ready_client->fragment_buf, (char*)ready_client->fragment_buf + event_size);
+                        // reset fragment buffer state
+                        ready_client->fragment_size_target = 0;
+                        ready_client->fragment_size = 0;
+                        free(ready_client->fragment_buf);
+                        ready_client->fragment_buf = NULL;
+                    } else {
+                        printf("[----] < event packet announced with %zu byte size, client id %d\n", event_size, ready_client->client_id);
+                        // not a frag and fits entirely into data_buffer
+                        size_t buffer_fill = 0;
+                        while (buffer_fill < event_size) {
+                            // need to do multiple reads, to catch multiple potential ssl records (16kB)
+                            im_rd = SSL_read(ready_client->ssl_session, data_buffer + buffer_fill, event_size - buffer_fill);
+                            printf("[----] < ssl outputs %i bytes, client id %d\n", im_rd, ready_client->client_id);
+                            if (im_rd == 0) {
+                                break;
+                            }
+                            buffer_fill += im_rd;
+                        }
+                        if (buffer_fill < event_size) {
+                            printf("[WARN] < discarding %zu unusable bytes of received data, client id %d\n", buffer_fill, ready_client->client_id);
+                        }
+                        event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_size);
+                    }
+                    if (recv_event.base.type == EVENT_TYPE_NULL) {
+                        printf("[WARN] < event packet deserialization error, client id %d\n", ready_client->client_id);
+                    }
                     if (recv_event.base.client_id != ready_client->client_id) {
-                        printf("[WARN] client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, recv_event.base.client_id);
+                        printf("[WARN] < client id %d provided wrong id %d in incoming packet\n", ready_client->client_id, recv_event.base.client_id);
                         recv_event.base.client_id = ready_client->client_id;
                     }
-
-                    // update size of remaining buffer
-                    data_buffer += event_length;
-                    recv_len -= event_length;
-
                     // switch on type
                     switch (recv_event.base.type) {
                         case EVENT_TYPE_NULL:
@@ -428,18 +451,15 @@ namespace Network {
                             ready_client->state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                         } break;
                         case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
-                            printf("[INFO] ping from client sending pong\n");
+                            printf("[INFO] < ping from client sending pong\n");
                             event_any es;
                             event_create_type_client(&es, EVENT_TYPE_NETWORK_PROTOCOL_PONG, recv_event.base.client_id);
                             event_queue_push(&send_queue, &es);
                         } break;
                         default: {
-                            printf("[----] received event from client id %d, type: %d\n", ready_client->client_id, recv_event.base.type);
+                            printf("[----] < received event from client id %d, type: %d\n", ready_client->client_id, recv_event.base.type);
                             event_queue_push(recv_queue, &recv_event);
                         } break;
-                    }
-                    if (recv_len == 0) {
-                        break;
                     }
                 }
 
@@ -449,7 +469,7 @@ namespace Network {
             // loop into next wait on socketset
         }
 
-        free(data_buffer_base);
+        free(data_buffer);
         // if server_loop closes, notify server so it can handle it
         event_any es;
         event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);

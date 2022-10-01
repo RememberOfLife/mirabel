@@ -13,7 +13,7 @@ https://github.com/DaveGamble/cJSON
 https://github.com/json-parser/json-parser + builder
 */
 
-typedef enum CJ_TYPE_E : uint8_t {
+typedef enum __attribute__((__packed__)) CJ_TYPE_E {
     CJ_TYPE_NONE = 0,
     CJ_TYPE_OBJECT,
     CJ_TYPE_ARRAY,
@@ -26,6 +26,7 @@ typedef enum CJ_TYPE_E : uint8_t {
     // CJ_TYPE_COL4U,
     // CJ_TYPE_COL4F,
     CJ_TYPE_COUNT,
+    CJ_TYPE__MAX = UINT8_MAX,
 } CJ_TYPE;
 
 // static buffer string with capacity

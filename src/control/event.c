@@ -9,6 +9,8 @@
 #include "surena/util/serialization.h"
 #include "surena/game.h"
 
+#include "mirabel/config.h"
+
 #include "mirabel/event.h"
 
 /////
@@ -86,6 +88,48 @@ const serialization_layout sl_chat_del[] = {
     {SL_TYPE_STOP},
 };
 
+size_t sl_cjovacptr_serializer(GSIT itype, void* obj_in, void* obj_out, void* buf, void* buf_end)
+{
+    cj_ovac** ovac_in = (cj_ovac**)obj_in;
+    cj_ovac** ovac_out = (cj_ovac**)obj_out;
+    switch (itype) {
+        case GSIT_NONE:
+        case GSIT_COUNT:
+        case GSIT_SIZE_MAX: {
+            assert(0);
+        } break;
+        case GSIT_SIZE: {
+            return cj_measure(*ovac_in, true, true);
+        } break;
+        case GSIT_SERIALIZE: {
+            return (char*)cj_serialize(buf, *ovac_in, true, true) - (char*)buf;
+        } break;
+        case GSIT_DESERIALIZE: {
+            cj_ovac* povac = cj_deserialize(buf, true);
+            if (povac->type == CJ_TYPE_ERROR) {
+                cj_ovac_destroy(povac);
+                return LS_ERR;
+            }
+            *ovac_out = povac;
+        } break;
+        case GSIT_COPY: {
+            *ovac_out = cj_ovac_duplicate(*ovac_in);
+        } break;
+        case GSIT_DESTROY: {
+            cj_ovac_destroy(*ovac_in);
+        } break;
+    }
+    return 0;
+}
+
+const serialization_layout sl_dynamic[] = {
+    {SL_TYPE_U32, offsetof(event_dynamic, dyn_type)},
+    {SL_TYPE_U32, offsetof(event_dynamic, msg_id)},
+    {SL_TYPE_CUSTOM, offsetof(event_dynamic, payload), .ext.serializer = sl_cjovacptr_serializer},
+    {SL_TYPE_BLOB, offsetof(event_dynamic, raw)},
+    {SL_TYPE_STOP},
+};
+
 const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NULL] = sl_baseonly,
 
@@ -128,6 +172,8 @@ const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_LOBBY_CHAT_MSG] = sl_chat_msg,
     [EVENT_TYPE_LOBBY_CHAT_DEL] = sl_chat_del,
+
+    [EVENT_TYPE_DYNAMIC] = sl_dynamic,
 };
 
 /////

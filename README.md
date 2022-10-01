@@ -82,6 +82,7 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
+* general solution for proper timestamps synced across clients and servers
 * config:
   * proper meta gui window for display
   * where is the config file stored?
@@ -162,6 +163,8 @@ Collect more general resources:
 * logging wrapper functions for the server so that the offline server logs into the corresponding metagui logger, but the standalone one logs to stdout
   * do debug log statements get a macro? feels like they bloat performance at runtime otherwise
   * should log level be variable at runtime?
+  * log to file (at least for server)
+  * log colors for server?
 * path to res folder shouldnt be hardcoded
 * maybe make the state editor something like a toggle?
   * so that for e.g. chess it just enables unlocked dragging about of pieces, and provides a bar with generic pieces to choose from

@@ -7,6 +7,8 @@
 #include "surena/util/serialization.h"
 #include "surena/game.h"
 
+#include "mirabel/config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -64,6 +66,8 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     // lobby events: deal with client/server communication
     EVENT_TYPE_LOBBY_CHAT_MSG,
     EVENT_TYPE_LOBBY_CHAT_DEL,
+
+    EVENT_TYPE_DYNAMIC, // dynamically typed json even encapsulation
 
     EVENT_TYPE_COUNT,
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
@@ -217,6 +221,14 @@ typedef struct event_chat_del_s {
 
 void event_create_chat_del(event_any* e, uint32_t msg_id);
 
+typedef struct event_dynamic_s {
+    event base;
+    uint32_t dyn_type;
+    uint32_t msg_id;
+    cj_ovac* payload;
+    blob raw;
+} event_dynamic;
+
 // event_any is as large as the largest event
 // use for arbitrary events, event arrays and deserialization where type and size are unknown
 typedef union event_any_u {
@@ -234,6 +246,7 @@ typedef union event_any_u {
     event_auth_fail auth_fail;
     event_chat_msg chat_msg;
     event_chat_del chat_del;
+    event_dynamic dynamic;
 } event_any;
 
 #ifdef __cplusplus

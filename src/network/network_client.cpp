@@ -72,7 +72,7 @@ namespace Network {
     {
         // open the socket
         if (SDLNet_ResolveHost(&conn.peer_addr, server_address, server_port)) {
-            MetaGui::log(log_id, "#W could not resolve host address\n");
+            MetaGui::log(log_id, "#W > could not resolve host address\n");
             event_any es;
             event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);
             event_queue_push(recv_queue, &es);
@@ -80,7 +80,7 @@ namespace Network {
         }
         conn.socket = SDLNet_TCP_Open(&conn.peer_addr);
         if (conn.socket == NULL) {
-            MetaGui::log(log_id, "#W socket failed to open\n");
+            MetaGui::log(log_id, "#W > socket failed to open\n");
             event_any es;
             event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);
             event_queue_push(recv_queue, &es);
@@ -89,7 +89,7 @@ namespace Network {
         SDLNet_TCP_AddSocket(socketset, conn.socket); // cant fail, we only have one socket for our size 1 set
 
         if (!util_ssl_session_init(ssl_ctx, &conn, UTIL_SSL_CTX_TYPE_CLIENT)) {
-            MetaGui::log(log_id, "#W ssl session init failed\n");
+            MetaGui::log(log_id, "#W > ssl session init failed\n");
             event_any es;
             event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);
             event_queue_push(recv_queue, &es);
@@ -100,7 +100,7 @@ namespace Network {
         SSL_set_hostflags(conn.ssl_session, 0);
         // ONLY the hostname part, this will match directly against whats defined in the cert, no https or anything
         if (!SSL_set1_host(conn.ssl_session, server_address)) {
-            MetaGui::log(log_id, "#W ssl session set verify hostname failed\n");
+            MetaGui::log(log_id, "#W > ssl session set verify hostname failed\n");
             event_any es;
             event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);
             event_queue_push(recv_queue, &es);
@@ -117,7 +117,7 @@ namespace Network {
         event_queue_push(recv_queue, &es);
         recv_runner = std::thread(&NetworkClient::recv_loop, this); // socket open, start recv_runner
 
-        size_t base_buffer_size = 8192;
+        size_t base_buffer_size = 16384;
         uint8_t* data_buffer_base = (uint8_t*)malloc(base_buffer_size); // recycled buffer for outgoing data
 
         // wait until event available
@@ -127,7 +127,7 @@ namespace Network {
             event_queue_pop(&send_queue, &e, UINT32_MAX);
             switch (e.base.type) {
                 case EVENT_TYPE_NULL: {
-                    MetaGui::log(log_id, "#W received impossible null event\n");
+                    MetaGui::log(log_id, "#W > received impossible null event\n");
                 } break;
                 case EVENT_TYPE_EXIT: {
                     // stop recv_runner, if it isnt already
@@ -149,22 +149,22 @@ namespace Network {
                 default: {
                     if (conn.socket == NULL) {
                         // this should never happen, send runner is the only one who unsets the socket
-                        MetaGui::log(log_id, "#W dropped outgoing event on NULL socket\n");
+                        MetaGui::log(log_id, "#W > dropped outgoing event on NULL socket\n");
                         break;
                     }
                     if (conn.state != PROTOCOL_CONNECTION_STATE_ACCEPTED) {
                         switch (conn.state) {
                             case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
-                                MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on pre-closed connection dropped\n", e.base.type);
+                                MetaGui::logf(log_id, "#W > SECURITY: outgoing event %d on pre-closed connection dropped\n", e.base.type);
                             } break;
                             case PROTOCOL_CONNECTION_STATE_NONE:
                             case PROTOCOL_CONNECTION_STATE_INITIALIZING: {
-                                MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on unsecured connection dropped\n", e.base.type);
+                                MetaGui::logf(log_id, "#W > SECURITY: outgoing event %d on unsecured connection dropped\n", e.base.type);
                             } break;
                             default:
                             case PROTOCOL_CONNECTION_STATE_WARNHELD: {
                                 //TODO in theory we should still send protocol_disconnect events even while warnheld
-                                MetaGui::logf(log_id, "#W SECURITY: outgoing event %d on unaccepted connection dropped\n", e.base.type);
+                                MetaGui::logf(log_id, "#W > SECURITY: outgoing event %d on unaccepted connection dropped\n", e.base.type);
                             } break;
                         }
                         break;
@@ -179,9 +179,9 @@ namespace Network {
                     event_serialize(&e, data_buffer);
                     int wrote_len = SSL_write(conn.ssl_session, data_buffer, write_len);
                     if (wrote_len != write_len) {
-                        MetaGui::log(log_id, "#W ssl write failed\n");
+                        MetaGui::log(log_id, "#W > ssl write failed\n");
                     } else {
-                        MetaGui::logf(log_id, "wrote event, type %d, len %d\n", e.base.type, write_len);
+                        MetaGui::logf(log_id, "> wrote event, type %d, len %d\n", e.base.type, write_len);
                     }
                     if (data_buffer != data_buffer_base) {
                         free(data_buffer);
@@ -203,9 +203,9 @@ namespace Network {
                         }
                         int sent_len = SDLNet_TCP_Send(conn.socket, data_buffer_base, send_len);
                         if (sent_len != send_len) {
-                            MetaGui::log(log_id, "#W packet sending failed\n");
+                            MetaGui::log(log_id, "#W > packet sending failed\n");
                         } else {
-                            MetaGui::logf(log_id, "sent %d bytes of data\n", sent_len);
+                            MetaGui::logf(log_id, "> sent %d bytes of data\n", sent_len);
                         }
                     }
                 } break;
@@ -228,8 +228,8 @@ namespace Network {
 
     void NetworkClient::recv_loop()
     {
-        size_t buffer_size = 8192;
-        uint8_t* data_buffer_base = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
+        size_t buffer_size = 16384;
+        uint8_t* data_buffer = (uint8_t*)malloc(buffer_size); // recycled buffer for incoming data
 
         while (conn.socket != NULL) {
             int ready = SDLNet_CheckSockets(socketset, 15); //TODO should be UINT32_MAX, but then it doesnt exit on self socket close
@@ -240,7 +240,8 @@ namespace Network {
             if (!SDLNet_SocketReady(conn.socket)) {
                 continue;
             }
-            int recv_len = SDLNet_TCP_Recv(conn.socket, data_buffer_base, buffer_size);
+            MetaGui::log(log_id, "< socket is ready\n");
+            int recv_len = SDLNet_TCP_Recv(conn.socket, data_buffer, buffer_size);
             if (recv_len <= 0) {
                 // connection closed, notify send loop as well, don't unset the socket here or else some sending events might fail
                 event_any es;
@@ -249,26 +250,26 @@ namespace Network {
                 switch (conn.state) {
                     case PROTOCOL_CONNECTION_STATE_PRECLOSE: {
                         // pass, everything fine
+                        MetaGui::log(log_id, "#I < connection closed\n");
                     } break;
                     case PROTOCOL_CONNECTION_STATE_NONE: {
                         // refused by server without pre close
-                        MetaGui::log(log_id, "#I connection refused without pre-close\n");
+                        MetaGui::log(log_id, "#I < connection refused without pre-close\n");
                     } break;
                     default:
                     case PROTOCOL_CONNECTION_STATE_INITIALIZING:
                     case PROTOCOL_CONNECTION_STATE_WARNHELD:
                     case PROTOCOL_CONNECTION_STATE_ACCEPTED: {
                         // closed unexpectedly
-                        MetaGui::log(log_id, "#W connection closed unexpectedly\n");
+                        MetaGui::log(log_id, "#W < connection closed unexpectedly\n");
                     } break;
                 }
                 break;
             }
-
-            uint8_t* data_buffer = data_buffer_base;
+            MetaGui::logf(log_id, "< tcp received %i bytes\n", recv_len);
 
             if (conn.state == PROTOCOL_CONNECTION_STATE_PRECLOSE) {
-                MetaGui::logf(log_id, "#W discarding %d recv bytes on pre-closed connection\n", recv_len);
+                MetaGui::logf(log_id, "#W < discarding %d recv bytes on pre-closed connection\n", recv_len);
                 continue;
             }
 
@@ -276,29 +277,26 @@ namespace Network {
                 // we don't know if the server accepted our connection yet, read exactly one event sized packet from the front of the received data
                 if (recv_len < sizeof(event)) {
                     //TODO can this happen?
-                    MetaGui::logf(log_id, "#W malformed connection initial, discarding %d bytes\n", recv_len);
+                    MetaGui::logf(log_id, "#W < malformed connection initial, discarding %d bytes\n", recv_len);
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
                 // decode one raw event packet using the universal packet->event decoding
                 event_any recv_event;
                 memcpy(&recv_event, data_buffer, sizeof(event));
-                // update size of remaining buffer
-                data_buffer += sizeof(event);
-                recv_len -= sizeof(event);
                 // process the event, can only be of two types
                 if (recv_event.base.type == EVENT_TYPE_NETWORK_PROTOCOL_NOK) {
-                    MetaGui::log(log_id, "#W connection refused\n");
+                    MetaGui::log(log_id, "#W < connection refused\n");
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
                 if (recv_event.base.type != EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET) {
-                    MetaGui::log(log_id, "#W malformed connection initial\n");
+                    MetaGui::log(log_id, "#W < malformed connection initial\n");
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
                     continue;
                 }
                 conn.client_id = recv_event.base.client_id;
-                MetaGui::logf(log_id, "assigned client id %d\n", conn.client_id);
+                MetaGui::logf(log_id, "#I < assigned client id %d\n", conn.client_id);
                 conn.state = PROTOCOL_CONNECTION_STATE_INITIALIZING;
                 // kick of the handshake from client side and enqueue a want write
                 SSL_do_handshake(conn.ssl_session);
@@ -311,6 +309,7 @@ namespace Network {
             // forward tcp->ssl
             // if our buffer is to small, the rest of the data will show up as a ready socket again, then we read it in the next round
             BIO_write(conn.recv_bio, data_buffer, recv_len);
+            MetaGui::logf(log_id, "< ssl bio ingested %i bytes\n", recv_len);
             // if ssl is still doing internal things, don't bother
             if (conn.state == PROTOCOL_CONNECTION_STATE_INITIALIZING) {
                 if (!SSL_is_init_finished(conn.ssl_session)) {
@@ -319,18 +318,19 @@ namespace Network {
                     event_any es;
                     event_create_type(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE);
                     event_queue_push(&send_queue, &es);
+                    MetaGui::log(log_id, "< ssl handshake progressed + internal ssl write\n");
                     if (!SSL_is_init_finished(conn.ssl_session)) {
                         continue;
                     }
                 }
-                MetaGui::log(log_id, "ssl connection established\n");
+                MetaGui::log(log_id, "< ssl connection established\n");
                 // handshake is finished, promote connection state if possible
                 // SSL peer verification:
                 // make sure server presented a certificate
                 X509* peer_cert = SSL_get_peer_certificate(conn.ssl_session);
                 if (!peer_cert) {
                     conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
-                    MetaGui::log(log_id, "#W server did not present certificate, closing connection\n");
+                    MetaGui::log(log_id, "#W < server did not present certificate, closing connection\n");
                     //TODO send the server a notice that we're disconnecting
                     event_any es;
                     event_create_type(&es, EVENT_TYPE_EXIT);
@@ -346,7 +346,7 @@ namespace Network {
                 unsigned int hash_len = 0;
                 int hash_ok = X509_digest(peer_cert, EVP_sha256(), (unsigned char*)hash_buf, &hash_len);
                 if (hash_ok == 0 || hash_len != SHA256_LEN) {
-                    MetaGui::log(log_id, "server cert (THUMBPRINT FAILURE)\n");
+                    MetaGui::log(log_id, "< server cert (THUMBPRINT FAILURE)\n");
                 } else {
                     char str_buf[3 * SHA256_LEN]; // size for 2 hex symbols per byte, one separator between each, and the NUL terminator
                     char* str_buf_m = str_buf;
@@ -357,7 +357,7 @@ namespace Network {
                         }
                     }
                     str_buf[sizeof(str_buf) - 1] = '\0';
-                    MetaGui::logf(log_id, "server cert thumbprint (%s)\n", str_buf);
+                    MetaGui::logf(log_id, "< server cert thumbprint (%s)\n", str_buf);
                 }
                 // prepare connection state event for client
                 event_any es;
@@ -367,7 +367,7 @@ namespace Network {
                     case X509_V_OK: {
                         // no verification errors, promote to accepted
                         conn.state = PROTOCOL_CONNECTION_STATE_ACCEPTED;
-                        MetaGui::log(log_id, "server cert verification passed\n");
+                        MetaGui::log(log_id, "< server cert verification passed\n");
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT;
                         es.ssl_thumbprint.thumbprint = malloc(es.ssl_thumbprint.thumbprint_len);
                     } break;
@@ -379,7 +379,7 @@ namespace Network {
                         size_t time_str_len = BIO_ctrl_pending(print_bio);
                         char* time_str = (char*)malloc(time_str_len);
                         BIO_read(print_bio, time_str, time_str_len);
-                        MetaGui::logf(log_id, "#W server cert verification failed: cert has expired (%s)\n", time_str);
+                        MetaGui::logf(log_id, "#W < server cert verification failed: cert has expired (%s)\n", time_str);
                         const char* err_str = "expired (%s)";
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + time_str_len;
@@ -389,7 +389,7 @@ namespace Network {
                         BIO_free(print_bio);
                     } break;
                     case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: {
-                        MetaGui::log(log_id, "#W server cert verification failed: depth zero self signed cert\n");
+                        MetaGui::log(log_id, "#W < server cert verification failed: depth zero self signed cert\n");
                         const char* err_str = "depth zero self signed";
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1;
@@ -412,7 +412,7 @@ namespace Network {
                             }
                         }
                         *str_buf_m = '\0';
-                        MetaGui::logf(log_id, "#W server cert verification failed: hostname mismatch (%s)\n", str_buf);
+                        MetaGui::logf(log_id, "#W < server cert verification failed: hostname mismatch (%s)\n", str_buf);
                         const char* err_str = "hostname mismatch (%s)";
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + (str_buf_m - str_buf);
@@ -422,7 +422,7 @@ namespace Network {
                         util_cert_free_subjects(name_list, name_count);
                     } break;
                     default: {
-                        MetaGui::logf(log_id, "#W server cert verification failed: x509 v err %lu\n", verify_result);
+                        MetaGui::logf(log_id, "#W < server cert verification failed: x509 v err %lu\n", verify_result);
                         const char* err_str = "x509 v err %lu";
                         es.base.type = EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL;
                         es.ssl_thumbprint.thumbprint_len += strlen(err_str) + 1 + 30; //TODO replace 30 by proper %lu size
@@ -441,48 +441,68 @@ namespace Network {
                 continue;
             }
 
-            data_buffer = data_buffer_base;
-            recv_len = 0;
-            while (recv_len < buffer_size) {
-                // need to do multiple reads, even if pending is 0, because every ssl read will always only output content from ONE corresponding ssl write
-                int im_rd = SSL_read(conn.ssl_session, data_buffer + recv_len, buffer_size - recv_len); // read as much from ssl as we can to jumpstart event processing
-                if (im_rd == 0) {
-                    break;
-                }
-                recv_len += im_rd;
-            }
-            if (recv_len == 0) {
-                // empty ssl read, don't do processing
-                continue;
-            }
-
-            // one call to recv may receive MULTIPLE events at once, process them all
             while (true) {
-                if (recv_len < sizeof(size_t)) {
-                    MetaGui::logf(log_id, "#W %d invalid packet length bytes received\n", recv_len);
-                    break;
-                }
-                size_t event_length = event_read_size(data_buffer);
-                if (recv_len < event_length) {
-                    //TODO this might also be the case when the data received is simply larger than the buffer for it
-                    MetaGui::logf(log_id, "#W discarding %d unusable bytes of received data\n", recv_len);
-                    break;
-                }
-                //TODO handle events longer than one buffer filling
-                //TODO handle event fragmentation
-
-                // universal packet->event decoding, then place it in the recv_queue
-                // at least one event here, process it from data_buffer
                 event_any recv_event;
-                event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_length);
-                if (recv_event.base.type == EVENT_TYPE_NULL) {
-                    MetaGui::logf("#W event packet deserialization error, client id %d\n", conn.client_id);
+                uint8_t size_peek[sizeof(size_t)];
+                int im_rd = SSL_peek(conn.ssl_session, size_peek, sizeof(size_t));
+                if (im_rd == 0) {
+                    // empty ssl read do nothing
+                    break;
                 }
-
-                // update size of remaining buffer
-                data_buffer += event_length;
-                recv_len -= event_length;
-
+                if (im_rd < sizeof(size_t)) {
+                    MetaGui::logf(log_id, "#W < %d invalid packet length bytes received\n", im_rd);
+                    break;
+                }
+                size_t event_size = event_read_size(size_peek);
+                if (conn.fragment_buf != NULL || event_size > buffer_size) {
+                    // existing fragment, or does not fit the buffer, handled the same
+                    if (conn.fragment_buf == NULL) {
+                        conn.fragment_buf = malloc(event_size);
+                        conn.fragment_size_target = event_size;
+                        MetaGui::logf(log_id, "< event packet announced with %zu byte size\n", event_size);
+                    } else {
+                        MetaGui::log(log_id, "< incoming additional bytes for existing fragment\n");
+                    }
+                    while (conn.fragment_size < conn.fragment_size_target) {
+                        // need to do multiple reads, to catch multiple potential ssl records (16kB)
+                        im_rd = SSL_read(conn.ssl_session, (char*)conn.fragment_buf + conn.fragment_size, conn.fragment_size_target - conn.fragment_size);
+                        MetaGui::logf(log_id, "< ssl outputs %i bytes\n", im_rd);
+                        if (im_rd == 0) {
+                            break;
+                        }
+                        conn.fragment_size += im_rd;
+                    }
+                    if (conn.fragment_size < conn.fragment_size_target) {
+                        // fragment still incomplete
+                        break;
+                    }
+                    event_deserialize(&recv_event, conn.fragment_buf, (char*)conn.fragment_buf + event_size);
+                    // reset fragment buffer state
+                    conn.fragment_size_target = 0;
+                    conn.fragment_size = 0;
+                    free(conn.fragment_buf);
+                    conn.fragment_buf = NULL;
+                } else {
+                    MetaGui::logf(log_id, "< event packet announced with %zu byte size\n", event_size);
+                    // not a frag and fits entirely into data_buffer
+                    size_t buffer_fill = 0;
+                    while (buffer_fill < event_size) {
+                        // need to do multiple reads, to catch multiple potential ssl records (16kB)
+                        im_rd = SSL_read(conn.ssl_session, data_buffer + buffer_fill, event_size - buffer_fill);
+                        MetaGui::logf(log_id, "< ssl outputs %i bytes\n", im_rd);
+                        if (im_rd == 0) {
+                            break;
+                        }
+                        buffer_fill += im_rd;
+                    }
+                    if (buffer_fill < event_size) {
+                        MetaGui::logf(log_id, "#W < discarding %zu unusable bytes of received data\n", buffer_fill);
+                    }
+                    event_deserialize(&recv_event, data_buffer, (char*)data_buffer + event_size);
+                }
+                if (recv_event.base.type == EVENT_TYPE_NULL) {
+                    MetaGui::logf(log_id, "#W < event packet deserialization error\n");
+                }
                 // switch on type
                 switch (recv_event.base.type) {
                     case EVENT_TYPE_NULL:
@@ -490,31 +510,27 @@ namespace Network {
                     case EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT: {
                         //REWORK need more?
                         conn.state = PROTOCOL_CONNECTION_STATE_PRECLOSE;
+                        MetaGui::log(log_id, "#I < pre-close announced\n");
                     } break;
                     case EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET: {
                         conn.client_id = recv_event.base.client_id;
-                        MetaGui::logf(log_id, "#I re-assigned client id %d\n", conn.client_id);
+                        MetaGui::logf(log_id, "#I < re-assigned client id %d\n", conn.client_id);
                     } break;
                     case EVENT_TYPE_NETWORK_PROTOCOL_PONG: {
-                        MetaGui::log(log_id, "#I received pong\n");
+                        MetaGui::log(log_id, "#I < received pong\n");
                     } break;
                     default: {
                         // general purpose events get pushed to the recv queue
-                        MetaGui::logf(log_id, "received event, type: %d\n", recv_event.base.type);
-                        event_any es;
-                        event_create_type(&es, EVENT_TYPE_EXIT);
+                        MetaGui::logf(log_id, "< received event, type: %d\n", recv_event.base.type);
                         event_queue_push(recv_queue, &recv_event);
                     } break;
-                }
-                if (recv_len == 0) {
-                    break;
                 }
             }
 
             // loop into next wait on socketset
         }
 
-        free(data_buffer_base);
+        free(data_buffer);
         // if the connection is closed, enqueue a connection closed event to ensure the gui resets its connection
         event_any es;
         event_create_type(&es, EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED);

@@ -16,13 +16,14 @@ extern "C" {
 
 //TODO should have some more immediate parameters for the job to work with
 
-typedef enum JOB_ITEM_STATE_E : uint8_t {
+typedef enum __attribute__((__packed__)) JOB_ITEM_STATE_E {
     JOB_ITEM_STATE_NONE = 0,
     JOB_ITEM_STATE_WAITING,
     JOB_ITEM_STATE_RUNNING,
     JOB_ITEM_STATE_ABORTED,
     JOB_ITEM_STATE_ERROR,
     JOB_ITEM_STATE_SUCCESS,
+    JOB_ITEM_STATE_SIZE_MAX = UINT8_MAX,
 } JOB_ITEM_STATE;
 
 typedef struct job_item_s {
