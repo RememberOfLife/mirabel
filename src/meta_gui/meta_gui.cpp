@@ -51,4 +51,6 @@ namespace MetaGui {
 
     bool show_plugins_window = false;
 
+    bool show_about_window = false;
+
 } // namespace MetaGui

@@ -728,6 +728,9 @@ namespace Control {
                 if (MetaGui::show_plugins_window) {
                     MetaGui::plugins_window(&MetaGui::show_plugins_window);
                 }
+                if (MetaGui::show_about_window) {
+                    MetaGui::about_window(&MetaGui::show_about_window);
+                }
             }
 
             //TODO put this in the sdl resize event, make a resize function on the context app

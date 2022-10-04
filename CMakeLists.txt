@@ -108,6 +108,7 @@ set(SOURCES
     src/games/tictactoe.cpp
     src/games/twixt_pp.cpp
 
+    src/meta_gui/about.cpp
     src/meta_gui/chat.cpp
     src/meta_gui/config.cpp
     src/meta_gui/confirm_exit.cpp

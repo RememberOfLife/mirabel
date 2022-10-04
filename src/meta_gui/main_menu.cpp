@@ -63,6 +63,12 @@ namespace MetaGui {
                 }
                 ImGui::EndMenu();
             }
+            if (ImGui::BeginMenu("Help")) {
+                if (ImGui::MenuItem("About", NULL, show_about_window)) {
+                    show_about_window = !show_about_window;
+                }
+                ImGui::EndMenu();
+            }
             ImGui::EndMainMenuBar();
         }
     }

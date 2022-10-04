@@ -10,12 +10,9 @@ namespace Control {
 
     class TimeoutCrash {
 
-        //TODO some way for a registered item to announce it will deconstruct, then timeoutcrash can watch over the deconstruction
-        // crash if not unregistered before next heartbeat
-
       public:
 
-        struct timeout_info { //TODO better name, heartbeat handle?
+        struct timeout_info {
             uint32_t id;
             event_queue* q;
             void send_heartbeat();
