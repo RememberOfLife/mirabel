@@ -46,6 +46,9 @@ namespace MetaGui {
                 if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
                     show_history_window = !show_history_window;
                 }
+                if (ImGui::MenuItem("Lobby", "CTRL + L", show_lobby_window)) {
+                    show_lobby_window = !show_lobby_window;
+                }
                 if (ImGui::MenuItem("Plugins", "CTRL + P", show_plugins_window)) {
                     show_plugins_window = !show_plugins_window;
                 }

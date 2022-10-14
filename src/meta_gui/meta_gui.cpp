@@ -53,4 +53,6 @@ namespace MetaGui {
 
     bool show_about_window = false;
 
+    bool show_lobby_window = false;
+
 } // namespace MetaGui

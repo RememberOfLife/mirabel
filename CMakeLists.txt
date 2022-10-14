@@ -47,6 +47,7 @@ set(INCLUDES
 
     includes
     src
+    "${CMAKE_BINARY_DIR}/build_generated"
 )
 
 set(SOURCES
@@ -81,15 +82,18 @@ set(SOURCES
     lib/surena/src/game.c
     lib/surena/src/move_history.c
 
+    src/control/auth_manager.cpp
     src/control/client.cpp
     src/control/config.cpp
     src/control/event_queue.cpp
     src/control/event.c
     src/control/job_queue.cpp
+    src/control/lobby_manager.cpp
     src/control/lobby.cpp
     src/control/plugins.cpp
     src/control/server.cpp
     src/control/timeout_crash.cpp
+    src/control/user_manager.cpp
 
     # src/engines/builtin_surena.cpp
     src/engines/engine_manager.cpp
@@ -118,6 +122,7 @@ set(SOURCES
     src/meta_gui/game_config.cpp
     src/meta_gui/global_dockspace.cpp
     src/meta_gui/history.cpp
+    src/meta_gui/lobby.cpp
     src/meta_gui/logs.cpp
     src/meta_gui/main_menu.cpp
     src/meta_gui/meta_gui.cpp
@@ -139,7 +144,19 @@ set(SOURCES
 
 #TODO target for mirabel_server and add a define SERVER for it
 
-add_executable(mirabel ${SOURCES})
+add_executable(mirabel "${SOURCES}" "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h")
+
+# export git commit hash and dirty flag to generated file in the build/build_generated/generated dir
+find_package(Git)
+set(dollar "$") # next file is processed using configure_file so we need to escape dollars to use variables
+configure_file(
+    cmake/generate_git_commit_hash.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake
+    ESCAPE_QUOTES
+)
+add_custom_target(add_generated_dir COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/build_generated/generated")
+add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake")
+add_dependencies(mirabel generate_git_commit_hash)
 
 add_library(nanovg ${SOURCES_NANOVG})
 target_include_directories(nanovg PRIVATE ${INCLUDES_NANOVG})
@@ -163,10 +180,11 @@ target_link_libraries(mirabel Threads::Threads)
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
 target_link_libraries(mirabel ${OPENGL_LIBRARIES})
 
+find_package(GLEW REQUIRED) # need glew for nanovg
+target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
+target_link_libraries(mirabel GLEW::GLEW)
+
 if(WIN32)
-    find_package(GLEW REQUIRED) # need glew for nanovg
-    target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
-    target_link_libraries(mirabel GLEW::GLEW)
     target_link_libraries(mirabel ws2_32 iphlpapi) # for SDL_net
     target_link_libraries(mirabel -mwindows) # we're a gui
     target_compile_definitions(mirabel PRIVATE SDL_MAIN_HANDLED) # stop WinMain panic

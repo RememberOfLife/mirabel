@@ -29,6 +29,7 @@ namespace Network {
         size_t fragment_size_target;
         size_t fragment_size;
         void* fragment_buf;
+        uint64_t user_id;
         connection(uint32_t client_id = EVENT_CLIENT_NONE); // construct empty and NULL
         void reset();
     };

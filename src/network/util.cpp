@@ -6,6 +6,8 @@
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h> // for extensions and subj alt names
 
+#include "control/user_manager.hpp"
+
 #include "network/util.hpp"
 
 namespace Network {
@@ -19,7 +21,8 @@ namespace Network {
         recv_bio(NULL),
         fragment_size_target(0),
         fragment_size(0),
-        fragment_buf(NULL)
+        fragment_buf(NULL),
+        user_id(Control::USER_ID_NONE)
     {}
 
     void connection::reset()

@@ -104,6 +104,9 @@ namespace MetaGui {
     extern bool show_about_window;
     void about_window(bool* p_open);
 
+    extern bool show_lobby_window;
+    void lobby_window(bool* p_open);
+
     //##############################
     // format for windows is:
     // extern bool show_NAME_windowtype;

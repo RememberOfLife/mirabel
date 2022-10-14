@@ -16,10 +16,11 @@ Future features:
 
 ## dependencies
 
+* GLEW
 * SDL (+ OpenGL)
 * SDL_net
 * OpenSSL
-* nanovg (+ stb + GLEW)
+* nanovg (+ stb)
 * imgui
 * surena
 
@@ -82,6 +83,8 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
+* change up main menu bar and introduce some more categories (and placeholders for future features)
+  * change window titles?
 * general solution for proper timestamps synced across clients and servers
 * config:
   * proper meta gui window for display

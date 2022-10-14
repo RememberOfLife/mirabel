@@ -1,0 +1,27 @@
+file(TOUCH "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash")
+file(READ "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash" present_commit_hash)
+string(STRIP "${dollar}{present_commit_hash}" present_commit_hash)
+if("${GIT_FOUND}" STREQUAL "TRUE") # Policy CMP0012 confusion
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD OUTPUT_VARIABLE commit_hash OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" diff-index --quiet --cached HEAD -- RESULT_VARIABLE dirty_status OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if("${dollar}{dirty_status}" STREQUAL "0")
+        set(dirty_status "false")
+    else()
+        set(dirty_status "true")
+    endif()
+    set(raw_commit_hash "${dollar}{commit_hash}+${dollar}{dirty_status}")
+    set(git_commit_hash_header
+        "#pragma once\n"
+        "#include <stdbool.h>\n"
+        "#define GIT_COMMIT_HASH \"${dollar}{commit_hash}\"\n"
+        "#define GIT_COMMIT_DIRTY ${dollar}{dirty_status}\n"
+    )
+    list(JOIN git_commit_hash_header "" git_commit_hash_header)
+else()
+    set(raw_commit_hash "emptiness")
+    set(git_commit_hash_header "#define GIT_COMMIT_HASH NULL")
+endif()
+if(NOT "${dollar}{raw_commit_hash}" STREQUAL "${dollar}{present_commit_hash}")
+    file(WRITE "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash" "${dollar}{raw_commit_hash}\n")
+    file(WRITE "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h" "${dollar}{git_commit_hash_header}")
+endif()

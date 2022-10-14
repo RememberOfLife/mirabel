@@ -5,10 +5,7 @@
 #include <set>
 #include <unordered_map>
 
-#ifdef WIN32
 #include <GL/glew.h>
-#endif
-
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 #include "SDL_net.h"
@@ -36,7 +33,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 1};
+    const semver client_version = semver{0, 3, 2};
 
     Client* main_client = NULL;
 
@@ -106,13 +103,11 @@ namespace Control {
         sdl_glcontext = SDL_GL_CreateContext(sdl_window);
         SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
 
-#ifdef WIN32
         GLenum glew_err = glewInit();
         if (glew_err != GLEW_OK) {
             fprintf(stderr, "[FATAL] glew init error: %s\n", glewGetErrorString(glew_err));
             exit(1);
         }
-#endif
 
         // setup imgui context
         IMGUI_CHECKVERSION();
@@ -621,6 +616,9 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_p && (ctrl_left || ctrl_right)) {
                         MetaGui::show_plugins_window = !MetaGui::show_plugins_window;
                     }
+                    if (event.key.keysym.sym == SDLK_l && (ctrl_left || ctrl_right)) {
+                        MetaGui::show_lobby_window = !MetaGui::show_lobby_window;
+                    }
                     if (event.key.keysym.sym == SDLK_q && (ctrl_left || ctrl_right)) {
                         try_quit = true;
                         break;
@@ -730,6 +728,9 @@ namespace Control {
                 }
                 if (MetaGui::show_about_window) {
                     MetaGui::about_window(&MetaGui::show_about_window);
+                }
+                if (MetaGui::show_lobby_window) {
+                    MetaGui::lobby_window(&MetaGui::show_lobby_window);
                 }
             }
 

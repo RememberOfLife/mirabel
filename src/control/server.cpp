@@ -5,15 +5,21 @@
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
 #include "surena/util/fast_prng.hpp"
+#include "surena/util/semver.h"
 #include "surena/game.h"
 
 #include "mirabel/event.h"
+#include "control/auth_manager.hpp"
+#include "control/lobby_manager.hpp"
 #include "control/plugins.hpp"
+#include "control/user_manager.hpp"
 #include "network/network_server.hpp"
 
 #include "control/server.hpp"
 
 namespace Control {
+
+    const semver server_version = semver{0, 1, 0};
 
     Server::Server():
         plugin_mgr(true, false)
@@ -55,6 +61,9 @@ namespace Control {
         for (int i = 0; i < plugin_mgr.plugins.size(); i++) {
             plugin_mgr.load_plugin(i);
         }
+
+        lobby_mgr.send_queue = network_send_queue;
+        auth_mgr.send_queue = network_send_queue;
     }
 
     Server::~Server()

@@ -14,6 +14,7 @@
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap.h"
 #include "control/client.hpp"
+#include "generated/git_commit_hash.h"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -48,7 +49,7 @@ namespace MetaGui {
         ImGui::Text("MIRABEL"); // make bigger
         ImGui::Text("client version: %u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
         ImGui::Text("mirabel api versions: frontend(%lu) gamewrap(%lu) enginewrap(%lu)", MIRABEL_FRONTEND_API_VERSION, MIRABEL_GAME_WRAP_API_VERSION, MIRABEL_ENGINE_WRAP_API_VERSION);
-        //TODO commit hash of build, also show if modified from commit or not
+        ImGui::Text("git commit hash: %s%s", GIT_COMMIT_HASH == NULL ? "<no commit info available>" : GIT_COMMIT_HASH, GIT_COMMIT_DIRTY ? " (dirty)" : "");
         ImGui::Separator();
         {
             // SDL
