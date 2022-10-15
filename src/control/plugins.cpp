@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <dlfcn.h>
 #include <unordered_set>
+#include <sys/stat.h>
 #include <vector>
 
 #include "imgui.h"
@@ -330,6 +331,9 @@ namespace Control {
         }
     }
 
+    // https://man7.org/linux/man-pages/man0/dirent.h.0p.html
+    // https://man7.org/linux/man-pages/man2/lstat.2.html
+    // https://man7.org/linux/man-pages/man7/inode.7.html
     void PluginManager::detect_plugins()
     {
         for (int i = plugins.size() - 1; i >= 0; i--) {
@@ -343,7 +347,11 @@ namespace Control {
         }
         struct dirent* dp = readdir(dir);
         while (dp) {
-            if (dp->d_type == DT_REG) { //TODO want to allow symlinks?
+            char cur_path[512];
+            sprintf(cur_path, "../plugins/%s", dp->d_name);
+            struct stat cur_stat;
+            lstat(cur_path, &cur_stat); // use stat to get file type (mode) because it is not posix standard
+            if (S_ISREG(cur_stat.st_mode)) { //TODO want to allow symlinks?
                 if (strstr(dp->d_name, ".so") != NULL || strstr(dp->d_name, ".dll") != NULL) { //TODO make sure that these occur as the very last thing in the filename
                     bool skip = false;
                     for (int i = 0; i < plugins.size(); i++) {
@@ -359,7 +367,7 @@ namespace Control {
                         });
                     }
                 }
-            } else if (dp->d_type == DT_DIR) {
+            } else if (S_ISDIR(cur_stat.st_mode)) {
                 //TODO search the folder for the relevant main plugin file and load it with the name of the folder
                 // search locations are: base of the folder, build dir, bin dir
                 //TODO possibly use some plugin description file for base info from the plugins root directory?

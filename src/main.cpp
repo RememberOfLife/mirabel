@@ -18,7 +18,7 @@ int main(int argc, char** argv)
             printf("mirabel client version %u.%u.%u\n", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
             printf("mirabel server version %u.%u.%u\n", Control::server_version.major, Control::server_version.minor, Control::server_version.patch);
             //TODO api versions?
-            printf("git commit hash: %s%s", GIT_COMMIT_HASH == NULL ? "<no commit info available>" : GIT_COMMIT_HASH, GIT_COMMIT_DIRTY ? " (dirty)" : "");
+            printf("git commit hash: %s%s\n", GIT_COMMIT_HASH == NULL ? "<no commit info available>" : GIT_COMMIT_HASH, GIT_COMMIT_DIRTY ? " (dirty)" : "");
             exit(EXIT_SUCCESS);
         } else if (strcmp(w_arg, "server") == 0) {
             //TODO use proper argparsing and offer some more sensible options, e.g. dont use watchdog, etc..

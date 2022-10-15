@@ -67,7 +67,7 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     EVENT_TYPE_LOBBY_CHAT_MSG,
     EVENT_TYPE_LOBBY_CHAT_DEL,
 
-    EVENT_TYPE_DYNAMIC, // dynamically typed json even encapsulation
+    EVENT_TYPE_DYNAMIC, // dynamically typed json event encapsulation
 
     EVENT_TYPE_COUNT,
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,

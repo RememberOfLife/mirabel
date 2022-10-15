@@ -208,6 +208,9 @@ namespace MetaGui {
                                 ee_engine_option& eopt = tec.options[opt_idx];
                                 bool eopt_changed = false;
                                 switch (eopt.type) {
+                                    case EE_OPTION_TYPE_NONE: {
+                                        assert(0);
+                                    } break;
                                     case EE_OPTION_TYPE_CHECK: {
                                         if (ImGui::Checkbox(eopt.name, &eopt.value.check)) {
                                             tec.submit_option(&eopt);
@@ -271,9 +274,6 @@ namespace MetaGui {
                                         if (ImGui::IsItemHovered()) {
                                             ImGui::SetTooltip("min: %lu\nmax: %lu", eopt.l.mm.min, eopt.l.mm.max);
                                         }
-                                    } break;
-                                    default: {
-
                                     } break;
                                 }
                                 if (eopt_changed) {

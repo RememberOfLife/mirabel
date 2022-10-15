@@ -93,10 +93,11 @@ size_t sl_cjovacptr_serializer(GSIT itype, void* obj_in, void* obj_out, void* bu
     cj_ovac** ovac_in = (cj_ovac**)obj_in;
     cj_ovac** ovac_out = (cj_ovac**)obj_out;
     switch (itype) {
-        case GSIT_NONE:
-        case GSIT_COUNT:
-        case GSIT_SIZE_MAX: {
+        case GSIT_NONE: {
             assert(0);
+        } break;
+        case GSIT_INITZERO: {
+            *ovac_in = NULL;
         } break;
         case GSIT_SIZE: {
             return cj_measure(*ovac_in, true, true);
@@ -117,6 +118,10 @@ size_t sl_cjovacptr_serializer(GSIT itype, void* obj_in, void* obj_out, void* bu
         } break;
         case GSIT_DESTROY: {
             cj_ovac_destroy(*ovac_in);
+        } break;
+        case GSIT_COUNT:
+        case GSIT_SIZE_MAX: {
+            assert(0);
         } break;
     }
     return 0;

@@ -454,7 +454,8 @@ cj_ovac* cj_ovac_duplicate(cj_ovac* ovac)
         case CJ_TYPE_ERROR: {
             assert(0); //TODO rather error?
         } break;
-        case CJ_TYPE_COUNT: {
+        case CJ_TYPE_COUNT:
+        case CJ_TYPE_MAX: {
             assert(0);
         } break;
     }
@@ -575,7 +576,8 @@ size_t cj_measure_impl(cj_ovac* ovac, bool packed, uint32_t depth, bool str_hint
             return 0;
         } break;
         case CJ_TYPE_COUNT: {
-            return 0;
+            case CJ_TYPE_MAX:
+                return 0;
         } break;
     }
     if (depth == 0) {
@@ -678,7 +680,8 @@ char* cj_serialize_impl(char* buf, cj_ovac* ovac, bool packed, uint32_t depth, b
         case CJ_TYPE_ERROR: {
             return NULL;
         } break;
-        case CJ_TYPE_COUNT: {
+        case CJ_TYPE_COUNT:
+        case CJ_TYPE_MAX: {
             return NULL;
         } break;
     }
@@ -1253,6 +1256,28 @@ bool cj_get_bool(cj_ovac* root, const char* data_path, bool* rv, bool* vnull)
     return true;
 }
 
+bool cj_get_str(cj_ovac* root, const char* data_path, cj_sb_string** rv, bool* vnull)
+{
+    if (vnull != NULL) {
+        *vnull = false;
+    }
+    cj_ovac* ovac = cj_find(root, data_path);
+    if (ovac == NULL) {
+        return false;
+    }
+    if (ovac->type == CJ_TYPE_VNULL) {
+        if (vnull != NULL) {
+            *vnull = true;
+        }
+        return false;
+    }
+    if (ovac->type != CJ_TYPE_STRING) {
+        return false;
+    }
+    *rv = &ovac->v.s;
+    return true;
+}
+
 bool cj_get_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, bool* vnull)
 {
     if (vnull != NULL) {
@@ -1295,6 +1320,61 @@ bool cj_get_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, bool* vnul
     }
     *rv = cj_color4f_read(ovac->v.s.str);
     return true;
+}
+
+bool cj_dget_u64(cj_ovac* root, const char* data_path, uint64_t* rv, uint64_t dv, bool* vnull)
+{
+    bool found = cj_get_u64(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
+}
+
+bool cj_dget_f32(cj_ovac* root, const char* data_path, float* rv, float dv, bool* vnull)
+{
+    bool found = cj_get_f32(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
+}
+
+bool cj_dget_bool(cj_ovac* root, const char* data_path, bool* rv, bool dv, bool* vnull)
+{
+    bool found = cj_get_bool(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
+}
+
+bool cj_dget_str(cj_ovac* root, const char* data_path, cj_sb_string** rv, cj_sb_string* dv, bool* vnull)
+{
+
+    bool found = cj_get_str(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
+}
+
+bool cj_dget_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, cj_color4u dv, bool* vnull)
+{
+    bool found = cj_get_c4u(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
+}
+
+bool cj_dget_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, cj_color4f dv, bool* vnull)
+{
+    bool found = cj_get_c4f(root, data_path, rv, vnull);
+    if (found == false) {
+        *rv = dv;
+    }
+    return found;
 }
 
 //////////////

@@ -26,7 +26,7 @@ typedef enum __attribute__((__packed__)) CJ_TYPE_E {
     // CJ_TYPE_COL4U,
     // CJ_TYPE_COL4F,
     CJ_TYPE_COUNT,
-    CJ_TYPE__MAX = UINT8_MAX,
+    CJ_TYPE_MAX = UINT8_MAX,
 } CJ_TYPE;
 
 // static buffer string with capacity
@@ -111,7 +111,7 @@ cj_ovac* cj_create_str(size_t cap, const char* str); // copies str into self, ca
 
 cj_ovac* cj_create_array(uint32_t cap);
 void cj_array_append(cj_ovac* arr, cj_ovac* ovac);
-void cj_array_insert(cj_ovac* arr, uint32_t idx, cj_ovac* ovac); // insert such that child is reachable at idx in the array //TODO out of bounds behaviour?
+void cj_array_insert(cj_ovac* arr, uint32_t idx, cj_ovac* ovac); // insert such that child is reachable at idx in the array //TODO out of bounds behaviour? fill with vnull
 void cj_array_replace(cj_ovac* arr, uint32_t idx, cj_ovac* new_ovac);
 cj_ovac* cj_array_detach(cj_ovac* arr, uint32_t idx);
 void cj_array_remove(cj_ovac* arr, uint32_t idx);
@@ -148,16 +148,24 @@ cj_ovac* cj_find(cj_ovac* root, const char* data_path);
 bool cj_get_u64(cj_ovac* root, const char* data_path, uint64_t* rv, bool* vnull);
 bool cj_get_f32(cj_ovac* root, const char* data_path, float* rv, bool* vnull);
 bool cj_get_bool(cj_ovac* root, const char* data_path, bool* rv, bool* vnull);
-// bool cj_get_str(cj_ovac* root, const char* data_path, cj_sb_string* rv); //TODO does this allocate or copy?
-// shallow color get assumes data_path leads to a string ovac, this is then parsed as a color
+bool cj_get_str(cj_ovac* root, const char* data_path, cj_sb_string** rv, bool* vnull);
+// shallow color get assumes data_path leads to a string ovac, this is then parsed as a color //TODO want color funcs?
 bool cj_get_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, bool* vnull);
 bool cj_get_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, bool* vnull);
+
+// default get, same as get but returns the supplied default value if the datapath does not return a valid result
+bool cj_dget_u64(cj_ovac* root, const char* data_path, uint64_t* rv, uint64_t dv, bool* vnull);
+bool cj_dget_f32(cj_ovac* root, const char* data_path, float* rv, float dv, bool* vnull);
+bool cj_dget_bool(cj_ovac* root, const char* data_path, bool* rv, bool dv, bool* vnull);
+bool cj_dget_str(cj_ovac* root, const char* data_path, cj_sb_string** rv, cj_sb_string* dv, bool* vnull);
+bool cj_dget_c4u(cj_ovac* root, const char* data_path, cj_color4u* rv, cj_color4u dv, bool* vnull);
+bool cj_dget_c4f(cj_ovac* root, const char* data_path, cj_color4f* rv, cj_color4f dv, bool* vnull);
+
+//TODO create datapath method and set for array indices creates objects and vnull array entries for things made available at idx (same for normal insert at)
 
 // shallow value set, return true if the data path existed and was of the correct type, false otherwise
 // bool cj_set_u64(cj_ovac* root, const char* data_path, uint64_t v); //TODO want shallow value set?
 //...
-
-//TODO some easy way to set defaults on startup and still be able to overwrite fixed values
 
 // for concurrent access to the tree, later on might make the tree more capable and lock free
 void* cfg_lock_create();

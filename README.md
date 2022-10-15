@@ -78,6 +78,8 @@ Collect more general resources:
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
 * metagui game load options are not created and initialized correctly if the game is started via network (i.e. its comboboxes are not set via interaction and the creation doesnt fire)
+  * when client sets metagui game/variant/impl idx it has to also destroy and create the options
+  * additionally, wrapper create_options needs to also take an initial options str, i.e. what was sent from the server
 * fix windows build to work with plugin loading
 * network: event deserialize has to check that received strings are valid utf-8
   * check for unicode in cmdline args aswell (same for surena)
