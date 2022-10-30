@@ -142,17 +142,21 @@ typedef struct event_game_load_s {
     char* variant_name;
     char* impl_name;
     char* options;
+    char* legacy;
+    char* state;
 } event_game_load;
 
-void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options);
+void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options, const char* legacy, const char* state);
 
 typedef struct event_game_load_methods_s {
     event base;
     const game_methods* methods;
     char* options;
+    char* legacy;
+    char* state;
 } event_game_load_methods;
 
-void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options);
+void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options, const char* legacy, const char* state);
 
 typedef struct event_game_state_s {
     event base;

@@ -15,11 +15,11 @@ Future features:
 * Support for games using random moves, hidden information and simultaneous moves.
 
 ## dependencies
-
-* GLEW
-* SDL (+ OpenGL)
+All dependencies marked `[system]` are system packages/dependencies from your distributions repositories, all others come pre-bundled.
+* GLEW [system]
+* SDL (+ OpenGL) [system]
 * SDL_net
-* OpenSSL
+* OpenSSL [system]
 * nanovg (+ stb)
 * imgui
 * surena
@@ -81,22 +81,27 @@ Collect more general resources:
   * when client sets metagui game/variant/impl idx it has to also destroy and create the options
   * additionally, wrapper create_options needs to also take an initial options str, i.e. what was sent from the server
 * fix windows build to work with plugin loading
+  * dlfcn
+  * lstat (want wstat?)
+  * rdynamic not working
 * network: event deserialize has to check that received strings are valid utf-8
   * check for unicode in cmdline args aswell (same for surena)
 
 ## todo
 * change up main menu bar and introduce some more categories (and placeholders for future features)
   * change window titles?
-* general solution for proper timestamps synced across clients and servers
 * config:
   * proper meta gui window for display
   * where is the config file stored?
     * search:
       1. directly besides the binary
-      2. running users "~/.config/mirabel/config.json"
+         * make this a flag? this shouldnt be default really
+      2. running users `~/.config/mirabel/config.json`
     * cli flag to create a config, option to do so in the config metagui menu
       * otherwise it is not automatically created, options just get lost, but at least we don't touch the users system if it isnt wanted, like almost every other application that places unsolicited files everywhere
     * actually use it
+  * resources: `/usr/share/mirabel/res` > `~/.local/share/mirabel/res` > list of auxilliary paths in config.json 
+  * plugins: `/usr/share/mirabel/plugins` > `~/.local/share/mirabel/plugins` > list of auxilliary paths in config.json
   * save metagui windows
 * frontend should be able to easily change the cursor, offer some util at least locally
 * to keep games in sync with server, client needs one active board and another synchronized board which is only ever updated with things the server sends, then if missmatch update active board with sync board, otherwise normally user makes move on active board and server shortly confirms to sync board so pieces stay where they are put, immediately

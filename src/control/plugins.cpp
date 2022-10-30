@@ -67,15 +67,45 @@ namespace Control {
                 }
             }
             if (effective_opts_string) {
-                new_game->methods->create_with_opts_str(new_game, effective_opts_string);
+                new_game->methods->create(
+                    new_game,
+                    (game_init){
+                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                        .source = {
+                            .standard = {
+                                .opts_type = GAME_INIT_OPTS_TYPE_STR,
+                                .opts = {
+                                    .str = effective_opts_string,
+                                },
+                                .legacy_str = NULL,
+                                .initial_state = NULL,
+                            },
+                        },
+                    }
+                );
             } else {
-                new_game->methods->create_with_opts_bin(new_game, load_opts);
+                new_game->methods->create(
+                    new_game,
+                    (game_init){
+                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                        .source = {
+                            .standard = {
+                                .opts_type = GAME_INIT_OPTS_TYPE_BIN,
+                                .opts = {
+                                    .bin = load_opts,
+                                },
+                                .legacy_str = NULL,
+                                .initial_state = NULL,
+                            },
+                        },
+                    }
+                );
             }
             if (effective_opts_string != opts_str) {
                 free(effective_opts_string);
             }
         } else {
-            new_game->methods->create_default(new_game);
+            new_game->methods->create(new_game, (game_init){.source_type = GAME_INIT_SOURCE_TYPE_DEFAULT});
         }
         new_game->methods->import_state(new_game, NULL); //TODO any facility to load another state right away required? here? or as immediate extra event
         return new_game;

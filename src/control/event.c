@@ -43,6 +43,8 @@ const serialization_layout sl_game_load[] = {
     {SL_TYPE_STRING, offsetof(event_game_load, variant_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, impl_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, options)},
+    {SL_TYPE_STRING, offsetof(event_game_load, legacy)},
+    {SL_TYPE_STRING, offsetof(event_game_load, state)},
     {SL_TYPE_STOP},
 };
 
@@ -299,20 +301,24 @@ void event_create_heartbeat(event_any* e, EVENT_TYPE type, uint32_t id, uint32_t
     e->heartbeat.time = time;
 }
 
-void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options)
+void event_create_game_load(event_any* e, const char* base_name, const char* variant_name, const char* impl_name, const char* options, const char* legacy, const char* state)
 {
     event_create_type(e, EVENT_TYPE_GAME_LOAD);
     e->game_load.base_name = base_name ? strdup(base_name) : NULL;
     e->game_load.variant_name = variant_name ? strdup(variant_name) : NULL;
     e->game_load.impl_name = impl_name ? strdup(impl_name) : NULL;
     e->game_load.options = options ? strdup(options) : NULL;
+    e->game_load.legacy = legacy ? strdup(legacy) : NULL;
+    e->game_load.state = state ? strdup(state) : NULL;
 }
 
-void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options)
+void event_create_game_load_methods(event_any* e, const game_methods* methods, const char* options, const char* legacy, const char* state)
 {
     event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
     e->game_load_methods.methods = methods;
     e->game_load_methods.options = options ? strdup(options) : NULL;
+    e->game_load_methods.legacy = legacy ? strdup(legacy) : NULL;
+    e->game_load_methods.state = state ? strdup(state) : NULL;
 }
 
 void event_create_game_state(event_any* e, uint32_t client_id, const char* state)

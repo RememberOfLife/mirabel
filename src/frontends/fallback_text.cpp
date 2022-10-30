@@ -114,12 +114,39 @@ namespace {
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
                 if (data.g.methods->features.options) {
-                    data.g.methods->create_with_opts_str(&data.g, event.game_load_methods.options);
+                    data.g.methods->create(
+                        &data.g,
+                        (game_init){
+                            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                            .source = {
+                                .standard = {
+                                    .opts_type = GAME_INIT_OPTS_TYPE_STR,
+                                    .opts = {
+                                        .str = event.game_load_methods.options,
+                                    },
+                                    .legacy_str = NULL,
+                                    .initial_state = event.game_load_methods.state,
+                                },
+                            },
+                        }
+                    );
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
                     size_t size_fill;
                     data.g.methods->export_options_str(&data.g, &size_fill, data.g_opts);
                 } else {
-                    data.g.methods->create_default(&data.g);
+                    data.g.methods->create(
+                        &data.g,
+                        (game_init){
+                            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                            .source = {
+                                .standard = {
+                                    .opts_type = GAME_INIT_OPTS_TYPE_DEFAULT,
+                                    .legacy_str = NULL,
+                                    .initial_state = event.game_load_methods.state,
+                                },
+                            },
+                        }
+                    );
                 }
                 // allocate buffers
                 data.g_state = (char*)malloc(data.g.sizer.state_str);
@@ -188,7 +215,7 @@ namespace {
         size_t size_fill;
         data.g.methods->export_state(&data.g, &size_fill, data.g_state);
         if (data.g.methods->features.print) {
-            data.g.methods->debug_print(&data.g, &size_fill, data.g_print);
+            data.g.methods->print(&data.g, &size_fill, data.g_print);
         }
         if (data.g.methods->features.id) {
             data.g.methods->id(&data.g, &data.g_id);

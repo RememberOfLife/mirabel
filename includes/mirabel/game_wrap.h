@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 6;
+static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 7;
 
 typedef struct game_wrap_feature_flags_s {
     bool options : 1;

@@ -33,7 +33,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 2};
+    const semver client_version = semver{0, 3, 3};
 
     Client* main_client = NULL;
 
@@ -96,11 +96,19 @@ namespace Control {
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
-        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 16);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4); //TODO want adjustable (16 is just better) can't be 16 b/c then window creation fails on low end devices
         SDL_GL_SetSwapInterval(1); // vsync with 1, possibly set after window creation
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
         sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
+        if (sdl_window == NULL) {
+            fprintf(stderr, "[FATAL] sdl window create error: %s\n", SDL_GetError());
+            exit(1);
+        }
         sdl_glcontext = SDL_GL_CreateContext(sdl_window);
+        if (sdl_glcontext == NULL) {
+            fprintf(stderr, "[FATAL] sdl gl context create error: %s\n", SDL_GetError());
+            exit(1);
+        }
         SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
 
         GLenum glew_err = glewInit();
@@ -132,6 +140,7 @@ namespace Control {
             }
         }
         imgui_io->FontGlobalScale = dpi_scale;
+        //TODO load font with approriate size instead of scaling it!
 
         // setup platform/renderer backends
         ImGui_ImplSDL2_InitForOpenGL(sdl_window, sdl_glcontext);
@@ -329,9 +338,7 @@ namespace Control {
                             event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
                             event_queue_push(&inbox, &se);
                         } else {
-                            event_create_game_load_methods(&se, the_game->methods, e.game_load.options);
-                            the_frontend->methods->process_event(the_frontend, se);
-                            event_create_game_state(&se, EVENT_CLIENT_NONE, NULL);
+                            event_create_game_load_methods(&se, the_game->methods, e.game_load.options, NULL, NULL);
                             the_frontend->methods->process_event(the_frontend, se);
                         }
                         // everything successful, pass to server
@@ -424,9 +431,7 @@ namespace Control {
                             char* tg_state = (char*)malloc(the_game->sizer.state_str);
                             the_game->methods->export_state(the_game, &size_fill, tg_state);
                             event_any se;
-                            event_create_game_load_methods(&se, the_game->methods, tg_opts);
-                            the_frontend->methods->process_event(the_frontend, se);
-                            event_create_game_state(&se, EVENT_CLIENT_NONE, tg_state);
+                            event_create_game_load_methods(&se, the_game->methods, tg_opts, NULL, tg_state);
                             the_frontend->methods->process_event(the_frontend, se);
                             free(tg_state);
                             if (the_game->methods->features.options) {

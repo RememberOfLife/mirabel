@@ -61,7 +61,7 @@ namespace MetaGui {
         if (game_running) {
             if (ImGui::Button("Restart")) {
                 event_any es;
-                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL);
+                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL, NULL, NULL); //TODO opts and state null here fine?
                 event_queue_push(&Control::main_client->inbox, &es);
             }
             ImGui::SameLine();
@@ -73,7 +73,7 @@ namespace MetaGui {
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
                 event_any es;
-                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL);
+                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL, NULL, NULL); //TODO opts and state null here fine?
                 event_queue_push(&Control::main_client->inbox, &es);
             }
         }

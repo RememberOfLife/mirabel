@@ -78,6 +78,7 @@ set(SOURCES
     lib/surena/src/util/raw_stream.c
     lib/surena/src/util/semver.c
     lib/surena/src/util/serialization.c
+    lib/surena/src/util/timestamp.c
     lib/surena/src/engine.cpp
     lib/surena/src/game.c
     lib/surena/src/move_history.c
@@ -155,7 +156,7 @@ configure_file(
     ESCAPE_QUOTES
 )
 add_custom_target(add_generated_dir COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_BINARY_DIR}/build_generated/generated")
-add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake")
+add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake" BYPRODUCTS "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h")
 add_dependencies(mirabel generate_git_commit_hash)
 
 add_library(nanovg ${SOURCES_NANOVG})

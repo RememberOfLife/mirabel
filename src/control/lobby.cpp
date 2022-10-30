@@ -47,14 +47,12 @@ namespace Control {
                 event_any es;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    event_create_game_load(&es, game_base, game_variant, game_impl, game_options);
                     es.base.client_id = client_id;
                     event_queue_push(send_queue, &es);
                     size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
-                    event_create_game_state(&es, client_id, game_state_buffer);
-                    event_queue_push(send_queue, &es);
+                    event_create_game_load(&es, game_base, game_variant, game_impl, game_options, NULL, game_state_buffer);
                 } else {
                     event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
                     event_queue_push(send_queue, &es);
