@@ -52,7 +52,20 @@ namespace Control {
                     size_t game_state_buffer_len = the_game->sizer.state_str;
                     char* game_state_buffer = (char*)malloc(game_state_buffer_len);
                     the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
-                    event_create_game_load(&es, game_base, game_variant, game_impl, game_options, NULL, game_state_buffer);
+                    game_init init_info = (game_init){
+                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                        .source = {
+                            .standard{
+                                .opts_type = (game_options == NULL ? GAME_INIT_OPTS_TYPE_DEFAULT : GAME_INIT_OPTS_TYPE_STR),
+                                .opts = {
+                                    .str = game_options,
+                                },
+                                .legacy_str = NULL,
+                                .initial_state = game_state_buffer,
+                            },
+                        },
+                    };
+                    event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
                 } else {
                     event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
                     event_queue_push(send_queue, &es);
@@ -105,8 +118,14 @@ namespace Control {
                     printf("[WARN] failed to find game: %s.%s.%s\n", base_name, variant_name, impl_name);
                     break;
                 }
-                game_options = e.game_load.options ? strdup(e.game_load.options) : NULL;
-                the_game = plugin_mgr->impl_lookup[impl_idx]->new_game(NULL, game_options); //BUG make sure this actually works as inteded if game options is NULL on a game that support options
+                the_game = plugin_mgr->impl_lookup[impl_idx]->new_game(e.game_load.init_info);
+                // export opts from the loaded game
+                game_options = NULL;
+                if (the_game->methods->features.options) {
+                    size_t size_fill;
+                    game_options = (char*)malloc(the_game->sizer.options_str);
+                    the_game->methods->export_options_str(the_game, &size_fill, game_options);
+                }
                 // update game name strings
                 game_base = strdup(base_name);
                 game_variant = strdup(variant_name);

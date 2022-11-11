@@ -86,6 +86,8 @@ Collect more general resources:
   * rdynamic not working
 * network: event deserialize has to check that received strings are valid utf-8
   * check for unicode in cmdline args aswell (same for surena)
+* networkserver client segfaults when server alt name is empty
+* upgrade to openssl 3 (until then, there might be lots of issues with the network adapters)
 
 ## todo
 * change up main menu bar and introduce some more categories (and placeholders for future features)

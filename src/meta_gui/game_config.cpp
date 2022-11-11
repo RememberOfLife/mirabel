@@ -58,11 +58,10 @@ namespace MetaGui {
         if (disable_startstop) {
             ImGui::BeginDisabled();
         }
+        bool send_game_load = false;
         if (game_running) {
             if (ImGui::Button("Restart")) {
-                event_any es;
-                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL, NULL, NULL); //TODO opts and state null here fine?
-                event_queue_push(&Control::main_client->inbox, &es);
+                send_game_load = true;
             }
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(-1.0f, 0.0f))) {
@@ -72,9 +71,40 @@ namespace MetaGui {
             }
         } else {
             if (ImGui::Button("Start", ImVec2(-1.0f, 0.0f))) {
-                event_any es;
-                event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), NULL, NULL, NULL); //TODO opts and state null here fine?
-                event_queue_push(&Control::main_client->inbox, &es);
+                send_game_load = true;
+            }
+        }
+        if (send_game_load) {
+            // on start and reset, create game init info
+            std::set<Control::BaseGameVariantImpl>::iterator load_impl = plugin_mgr.impl_lookup[game_impl_idx];
+            game_init init_info;
+            const game_methods* load_methods = load_impl->get_methods();
+            char* effective_opts_string = (char*)game_load_options; // use fallback string options as default
+            if (load_methods->features.options == false) {
+                init_info = (game_init){.source_type = GAME_INIT_SOURCE_TYPE_DEFAULT};
+            } else {
+                init_info.source_type = GAME_INIT_SOURCE_TYPE_STANDARD;
+                if (load_impl->wrapped && load_impl->u.wrap->features.options) {
+                    // for wrappers with options use wrapper opts_bin_to_str
+                    size_t opts_str_len;
+                    load_impl->u.wrap->opts_bin_to_str(game_load_options, NULL, &opts_str_len);
+                    effective_opts_string = (char*)malloc(opts_str_len);
+                    load_impl->u.wrap->opts_bin_to_str(game_load_options, effective_opts_string, &opts_str_len);
+                }
+                init_info.source.standard = {
+                    .opts_type = GAME_INIT_OPTS_TYPE_STR,
+                    .opts = {
+                        .str = effective_opts_string,
+                    },
+                    .legacy_str = NULL,
+                    .initial_state = NULL,
+                };
+            }
+            event_any es;
+            event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), init_info);
+            event_queue_push(&Control::main_client->inbox, &es);
+            if (effective_opts_string != game_load_options) {
+                free(effective_opts_string);
             }
         }
         if (disable_startstop) {

@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 7;
+static const uint64_t MIRABEL_GAME_WRAP_API_VERSION = 8;
 
 typedef struct game_wrap_feature_flags_s {
     bool options : 1;
@@ -30,8 +30,8 @@ typedef struct game_wrap_s {
     error_code (*opts_display)(void* options_struct);
     error_code (*opts_destroy)(void* options_struct);
 
-    // for both: if str_buf is NULL, set ret_size to required size, otherwise it is ignored!
-    // FEATURE: !backend.options_bin
+    // if str_buf is NULL, set ret_size to required size (i.e. incl. zero terminator), otherwise it is ignored!
+    // FEATURE: options
     error_code (*opts_bin_to_str)(void* options_struct, char* str_buf, size_t* ret_size);
 
     //TODO want this? or a more general approach where the wrap gets the whole game? or even at all?

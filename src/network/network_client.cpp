@@ -192,11 +192,13 @@ namespace Network {
                     // or fallthrough from event send ssl write, in any case just send forward ssl->tcp
                     while (true) {
                         int pend_len = BIO_ctrl_pending(conn.send_bio);
+                        MetaGui::logf(log_id, "> pending to send: %d bytes\n", pend_len);
                         if (pend_len == 0) {
                             // nothing pending to send
                             break;
                         }
                         int send_len = BIO_read(conn.send_bio, data_buffer_base, base_buffer_size);
+                        MetaGui::logf(log_id, "> ssl outputs %d bytes for sending\n", send_len);
                         if (send_len == 0) {
                             // empty read, can this happen?
                             break;
@@ -314,6 +316,7 @@ namespace Network {
             if (conn.state == PROTOCOL_CONNECTION_STATE_INITIALIZING) {
                 if (!SSL_is_init_finished(conn.ssl_session)) {
                     SSL_do_handshake(conn.ssl_session);
+                    //TODO error handling
                     // queue generic want write, just in case ssl may want to write
                     event_any es;
                     event_create_type(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE);

@@ -228,22 +228,7 @@ namespace {
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(
-                    &data.g,
-                    (game_init){
-                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                        .source = {
-                            .standard = {
-                                .opts_type = GAME_INIT_OPTS_TYPE_STR,
-                                .opts = {
-                                    .str = event.game_load_methods.options,
-                                },
-                                .legacy_str = NULL,
-                                .initial_state = event.game_load_methods.state,
-                            },
-                        },
-                    }
-                );
+                data.g.methods->create(&data.g, event.game_load_methods.init_info);
                 data.gi = (const twixt_pp_internal_methods*)data.g.methods->internal_methods;
                 twixt_pp_options* opts_ref;
                 data.g.methods->get_options_bin_ref(&data.g, (void**)&opts_ref);

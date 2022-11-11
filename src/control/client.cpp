@@ -14,6 +14,7 @@
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
 #include "surena/util/semver.h"
+#include "surena/util/timestamp.h"
 #include "surena/game.h"
 
 #include "mirabel/config.h"
@@ -322,13 +323,7 @@ namespace Control {
                         // set meta gui combo boxes, in case this was a network event, others are already set
                         MetaGui::game_impl_idx = impl_idx;
                         // actually load the game
-                        the_game = plugin_mgr.impl_lookup[impl_idx]->new_game(MetaGui::game_load_options, e.game_load.options);
-                        if (the_game->methods->features.options) {
-                            // options have been set already by the catalogue through the game config, now export options for server
-                            size_t options_len = the_game->sizer.options_str;
-                            e.game_load.options = (char*)malloc(options_len);
-                            the_game->methods->export_options_str(the_game, &options_len, e.game_load.options);
-                        }
+                        the_game = plugin_mgr.impl_lookup[impl_idx]->new_game(e.game_load.init_info);
                         // create runtime opts for metagui
                         plugin_mgr.impl_lookup[impl_idx]->create_runtime(the_game, &MetaGui::game_runtime_options);
                         game_step++;
@@ -338,7 +333,7 @@ namespace Control {
                             event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
                             event_queue_push(&inbox, &se);
                         } else {
-                            event_create_game_load_methods(&se, the_game->methods, e.game_load.options, NULL, NULL);
+                            event_create_game_load_methods(&se, the_game->methods, e.game_load.init_info);
                             the_frontend->methods->process_event(the_frontend, se);
                         }
                         // everything successful, pass to server
@@ -430,8 +425,21 @@ namespace Control {
                             }
                             char* tg_state = (char*)malloc(the_game->sizer.state_str);
                             the_game->methods->export_state(the_game, &size_fill, tg_state);
+                            game_init init_info = (game_init){
+                                .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                                .source = {
+                                    .standard{
+                                        .opts_type = (tg_opts == NULL ? GAME_INIT_OPTS_TYPE_DEFAULT : GAME_INIT_OPTS_TYPE_STR),
+                                        .opts = {
+                                            .str = tg_opts,
+                                        },
+                                        .legacy_str = NULL,
+                                        .initial_state = tg_state,
+                                    },
+                                },
+                            };
                             event_any se;
-                            event_create_game_load_methods(&se, the_game->methods, tg_opts, NULL, tg_state);
+                            event_create_game_load_methods(&se, the_game->methods, init_info);
                             the_frontend->methods->process_event(the_frontend, se);
                             free(tg_state);
                             if (the_game->methods->features.options) {

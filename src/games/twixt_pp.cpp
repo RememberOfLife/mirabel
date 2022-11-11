@@ -37,7 +37,6 @@ namespace {
     error_code opts_display(void* options_struct)
     {
         twixt_pp_options_gw* opts = (twixt_pp_options_gw*)options_struct;
-        //TODO
         ImGui::TextDisabled("typical sizes: 24, 30, 48");
         const uint8_t min = 10;
         const uint8_t max = 48;
@@ -59,9 +58,24 @@ namespace {
         return ERR_OK;
     }
 
+    error_code opts_bin_to_str(void* options_struct, char* str_buf, size_t* ret_size)
+    {
+        if (str_buf == NULL) {
+            *ret_size = 9;
+            return ERR_OK;
+        }
+        twixt_pp_options* opts = (twixt_pp_options*)options_struct;
+        if (opts->wx == opts->wy) {
+            *ret_size = sprintf(str_buf, "%hhu%c", opts->wx, opts->pie_swap ? '+' : '\0');
+        } else {
+            *ret_size = sprintf(str_buf, "%hhu/%hhu%c", opts->wy, opts->wx, opts->pie_swap ? '+' : '\0');
+        }
+        return ERR_OK;
+    }
+
     error_code runtime_create(game* rgame, void** runtime_struct)
     {
-        //TODO
+        //HACK
         *runtime_struct = rgame->data1; // fill runtime struct with a spoofed pointer
         return ERR_OK;
     }
@@ -143,7 +157,7 @@ const game_wrap twixt_pp_gw{
     .opts_display = opts_display,
     .opts_destroy = opts_destroy,
 
-    .opts_bin_to_str = NULL,
+    .opts_bin_to_str = opts_bin_to_str,
 
     .runtime_create = runtime_create,
     .runtime_display = runtime_display,

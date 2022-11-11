@@ -43,7 +43,7 @@ namespace Control {
     BaseGameVariantImpl::~BaseGameVariantImpl()
     {}
 
-    game* BaseGameVariantImpl::new_game(void* load_opts, const char* opts_str) const
+    game* BaseGameVariantImpl::new_game(game_init init_info) const
     {
         game* new_game = (game*)malloc(sizeof(game));
         *new_game = game{
@@ -51,63 +51,7 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        if (new_game->methods->features.options) {
-            char* effective_opts_string = (char*)opts_str;
-            if (effective_opts_string == NULL) {
-                if (wrapped && u.wrap->features.options) {
-                    if (new_game->methods->features.options_bin == false) {
-                        // for games with options but without features.options_bin, use wrapper opts_bin_to_str
-                        size_t opts_str_len;
-                        u.wrap->opts_bin_to_str(load_opts, NULL, &opts_str_len);
-                        effective_opts_string = (char*)malloc(opts_str_len);
-                        u.wrap->opts_bin_to_str(load_opts, effective_opts_string, &opts_str_len);
-                    }
-                } else {
-                    effective_opts_string = (char*)load_opts; // use fallback string options
-                }
-            }
-            if (effective_opts_string) {
-                new_game->methods->create(
-                    new_game,
-                    (game_init){
-                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                        .source = {
-                            .standard = {
-                                .opts_type = GAME_INIT_OPTS_TYPE_STR,
-                                .opts = {
-                                    .str = effective_opts_string,
-                                },
-                                .legacy_str = NULL,
-                                .initial_state = NULL,
-                            },
-                        },
-                    }
-                );
-            } else {
-                new_game->methods->create(
-                    new_game,
-                    (game_init){
-                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                        .source = {
-                            .standard = {
-                                .opts_type = GAME_INIT_OPTS_TYPE_BIN,
-                                .opts = {
-                                    .bin = load_opts,
-                                },
-                                .legacy_str = NULL,
-                                .initial_state = NULL,
-                            },
-                        },
-                    }
-                );
-            }
-            if (effective_opts_string != opts_str) {
-                free(effective_opts_string);
-            }
-        } else {
-            new_game->methods->create(new_game, (game_init){.source_type = GAME_INIT_SOURCE_TYPE_DEFAULT});
-        }
-        new_game->methods->import_state(new_game, NULL); //TODO any facility to load another state right away required? here? or as immediate extra event
+        new_game->methods->create(new_game, init_info);
         return new_game;
     }
 

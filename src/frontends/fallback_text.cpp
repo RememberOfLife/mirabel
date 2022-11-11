@@ -20,7 +20,9 @@ namespace {
         frontend_display_data* dd;
         game g;
         bool dirty;
+        char* g_name;
         char* g_opts;
+        //TODO legacy
         char* g_state;
         char* g_print;
         uint64_t g_id;
@@ -113,40 +115,13 @@ namespace {
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
+                data.g_name = (char*)malloc(strlen(data.g.methods->game_name) + strlen(data.g.methods->variant_name) + strlen(data.g.methods->impl_name) + 64);
+                sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", data.g.methods->game_name, data.g.methods->variant_name, data.g.methods->impl_name, data.g.methods->version.major, data.g.methods->version.minor, data.g.methods->version.patch);
+                data.g.methods->create(&data.g, event.game_load_methods.init_info);
                 if (data.g.methods->features.options) {
-                    data.g.methods->create(
-                        &data.g,
-                        (game_init){
-                            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                            .source = {
-                                .standard = {
-                                    .opts_type = GAME_INIT_OPTS_TYPE_STR,
-                                    .opts = {
-                                        .str = event.game_load_methods.options,
-                                    },
-                                    .legacy_str = NULL,
-                                    .initial_state = event.game_load_methods.state,
-                                },
-                            },
-                        }
-                    );
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
                     size_t size_fill;
                     data.g.methods->export_options_str(&data.g, &size_fill, data.g_opts);
-                } else {
-                    data.g.methods->create(
-                        &data.g,
-                        (game_init){
-                            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                            .source = {
-                                .standard = {
-                                    .opts_type = GAME_INIT_OPTS_TYPE_DEFAULT,
-                                    .legacy_str = NULL,
-                                    .initial_state = event.game_load_methods.state,
-                                },
-                            },
-                        }
-                    );
                 }
                 // allocate buffers
                 data.g_state = (char*)malloc(data.g.sizer.state_str);
@@ -167,6 +142,8 @@ namespace {
                 }
                 data.g.methods = NULL;
                 data.dirty = false;
+                free(data.g_name);
+                data.g_name = NULL;
                 free(data.g_opts);
                 data.g_opts = NULL;
                 free(data.g_state);
@@ -261,6 +238,12 @@ namespace {
         if (data.g.methods) {
             //TODO draw line between title of line and the line, so if its multi line one can see what it belongs to
 
+            nvgBeginPath(dc);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
+            nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "NAME", NULL);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+            nvgText(dc, xcol_offset, yrow_spacing * yrow++, data.g_name, NULL);
+
             if (data.g.methods->features.options) {
                 nvgBeginPath(dc);
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
@@ -318,7 +301,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 0, 0},
+    .version = semver{1, 1, 0},
     .features = frontend_feature_flags{
         .options = false,
     },

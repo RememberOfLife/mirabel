@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 
 #include "imgui.h"
@@ -15,6 +16,7 @@ namespace {
     {
         havannah_options* opts = (havannah_options*)malloc(sizeof(havannah_options));
         opts->size = 8;
+        opts->pie_swap = true;
         *options_struct = opts;
         return ERR_OK;
     }
@@ -25,6 +27,7 @@ namespace {
         const uint32_t min = 4;
         const uint32_t max = 10;
         ImGui::SliderScalar("size", ImGuiDataType_U32, &opts->size, &min, &max, "%u", ImGuiSliderFlags_AlwaysClamp);
+        ImGui::Checkbox("pie swap", &opts->pie_swap);
         return ERR_OK;
     }
 
@@ -34,9 +37,20 @@ namespace {
         return ERR_OK;
     }
 
+    error_code opts_bin_to_str(void* options_struct, char* str_buf, size_t* ret_size)
+    {
+        if (str_buf == NULL) {
+            *ret_size = 16;
+            return ERR_OK;
+        }
+        havannah_options* opts = (havannah_options*)options_struct;
+        *ret_size = sprintf(str_buf, "%u%c", opts->size, opts->pie_swap ? '+' : '\0');
+        return ERR_OK;
+    }
+
     error_code runtime_create(game* rgame, void** runtime_struct)
     {
-        //TODO
+        //HACK
         *runtime_struct = rgame->data1; // fill runtime struct with a spoofed pointer
         return ERR_OK;
     }
@@ -84,7 +98,7 @@ const game_wrap havannah_gw{
     .opts_display = opts_display,
     .opts_destroy = opts_destroy,
 
-    .opts_bin_to_str = NULL,
+    .opts_bin_to_str = opts_bin_to_str,
 
     .runtime_create = runtime_create,
     .runtime_display = runtime_display,

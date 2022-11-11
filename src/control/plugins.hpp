@@ -35,9 +35,7 @@ namespace Control {
         BaseGameVariantImpl(const game_wrap* wrap);
         ~BaseGameVariantImpl();
 
-        // new opts describe the load opts of the wrapper, or general purpose, if any
-        // if opts_str is supplied, it is instead used for loading options
-        game* new_game(void* load_opts, const char* opts_str) const;
+        game* new_game(game_init init_info) const;
 
         const game_methods* get_methods() const;
         const char* get_name() const;
