@@ -56,12 +56,9 @@ namespace Control {
                         .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                         .source = {
                             .standard{
-                                .opts_type = (game_options == NULL ? GAME_INIT_OPTS_TYPE_DEFAULT : GAME_INIT_OPTS_TYPE_STR),
-                                .opts = {
-                                    .str = game_options,
-                                },
-                                .legacy_str = NULL,
-                                .initial_state = game_state_buffer,
+                                .opts = game_options,
+                                .legacy = NULL,
+                                .state = game_state_buffer,
                             },
                         },
                     };

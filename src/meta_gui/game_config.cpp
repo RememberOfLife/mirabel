@@ -92,12 +92,9 @@ namespace MetaGui {
                     load_impl->u.wrap->opts_bin_to_str(game_load_options, effective_opts_string, &opts_str_len);
                 }
                 init_info.source.standard = {
-                    .opts_type = GAME_INIT_OPTS_TYPE_STR,
-                    .opts = {
-                        .str = effective_opts_string,
-                    },
-                    .legacy_str = NULL,
-                    .initial_state = NULL,
+                    .opts = effective_opts_string,
+                    .legacy = NULL,
+                    .state = NULL,
                 };
             }
             event_any es;

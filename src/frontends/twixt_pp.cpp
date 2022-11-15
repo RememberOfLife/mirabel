@@ -230,9 +230,32 @@ namespace {
                 data.g.data2 = NULL;
                 data.g.methods->create(&data.g, event.game_load_methods.init_info);
                 data.gi = (const twixt_pp_internal_methods*)data.g.methods->internal_methods;
-                twixt_pp_options* opts_ref;
-                data.g.methods->get_options_bin_ref(&data.g, (void**)&opts_ref);
-                data.opts = *opts_ref;
+                //TODO could use internal method for this
+                size_t size_fill;
+                char* opts_export = (char*)malloc(data.g.sizer.options_str);
+                data.g.methods->export_options_str(&data.g, &size_fill, opts_export);
+                {
+                    // parse twixt opts: format y/x+ or s+
+                    data.opts.wy = 0;
+                    char* wp = opts_export;
+                    while (*wp != '\0' && *wp != '/' && *wp != '+') {
+                        data.opts.wy *= 10;
+                        data.opts.wy += (*wp - '0');
+                        wp++;
+                    }
+                    if (*wp == '/') {
+                        wp++;
+                        data.opts.wx = 0;
+                        while (*wp != '\0' && *wp != '+') {
+                            data.opts.wx *= 10;
+                            data.opts.wx += (*wp - '0');
+                            wp++;
+                        }
+                    } else {
+                        data.opts.wx = data.opts.wy;
+                    }
+                    data.opts.pie_swap = (*wp == '+');
+                }
                 free(data.board_buttons);
                 data.board_buttons = (sbtn*)malloc(sizeof(sbtn) * data.opts.wx * data.opts.wy);
                 memset((char*)data.board_buttons, 0x00, sizeof(sbtn) * data.opts.wx * data.opts.wy);

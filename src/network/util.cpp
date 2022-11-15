@@ -63,7 +63,7 @@ namespace Network {
             return NULL;
         }
 
-        r = SSL_CTX_set_ciphersuites(ctx, "TLS_AES_256_GCM_SHA384"); // strongest one according to $ openssl -v 'ALL:@STRENGTH'
+        r = SSL_CTX_set_ciphersuites(ctx, "TLS_AES_256_GCM_SHA384"); // strongest one according to $ openssl ciphers 'ALL:@STRENGTH'
         if (r != 1) {
             util_ssl_ctx_free(ctx);
             return NULL;

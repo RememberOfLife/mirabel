@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "SDL_net.h"
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 #include "mirabel/event_queue.h"
@@ -302,6 +303,12 @@ namespace Network {
                 conn.state = PROTOCOL_CONNECTION_STATE_INITIALIZING;
                 // kick of the handshake from client side and enqueue a want write
                 SSL_do_handshake(conn.ssl_session);
+                //TODO better error handling and at more places
+                unsigned long ev = ERR_get_error();
+                while (ev != 0) {
+                    MetaGui::logf(log_id, "#E %s\n", ERR_error_string(ev, NULL));
+                    ev = ERR_get_error();
+                }
                 event_any es;
                 event_create_type(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE);
                 event_queue_push(&send_queue, &es);
@@ -316,7 +323,12 @@ namespace Network {
             if (conn.state == PROTOCOL_CONNECTION_STATE_INITIALIZING) {
                 if (!SSL_is_init_finished(conn.ssl_session)) {
                     SSL_do_handshake(conn.ssl_session);
-                    //TODO error handling
+                    //TODO better error handling and at more places
+                    unsigned long ev = ERR_get_error();
+                    while (ev != 0) {
+                        MetaGui::logf(log_id, "#E %s\n", ERR_error_string(ev, NULL));
+                        ev = ERR_get_error();
+                    }
                     // queue generic want write, just in case ssl may want to write
                     event_any es;
                     event_create_type(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE);

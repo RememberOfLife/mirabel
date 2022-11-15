@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "SDL_net.h"
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 #include "mirabel/event_queue.h"
@@ -155,6 +156,13 @@ namespace Network {
                 util_ssl_session_init(ssl_ctx, connection_slot, UTIL_SSL_CTX_TYPE_SERVER);
                 SDLNet_TCP_AddSocket(client_socketset, connection_slot->socket);
                 printf("[INFO] = new connection initializing, client id %d\n", connection_id);
+                SSL_do_handshake(connection_slot->ssl_session);
+                //TODO better error handling and at more places
+                unsigned long ev = ERR_get_error();
+                while (ev != 0) {
+                    printf("[ERROR] %s\n", ERR_error_string(ev, NULL));
+                    ev = ERR_get_error();
+                }
             }
         }
 
@@ -354,6 +362,12 @@ namespace Network {
                 if (ready_client->state == PROTOCOL_CONNECTION_STATE_INITIALIZING) {
                     if (!SSL_is_init_finished(ready_client->ssl_session)) {
                         SSL_do_handshake(ready_client->ssl_session);
+                        //TODO better error handling and at more places
+                        unsigned long ev = ERR_get_error();
+                        while (ev != 0) {
+                            printf("[ERROR] %s\n", ERR_error_string(ev, NULL));
+                            ev = ERR_get_error();
+                        }
                         // queue generic want write, just in case ssl may want to write
                         event_any es;
                         event_create_type_client(&es, EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE, ready_client->client_id);

@@ -28,15 +28,6 @@ namespace MetaGui {
     SDLNet_version sdl_net_version_linked;
     bool init_sdl_net_version = false;
 
-    struct custom_openssl_version {
-        uint32_t major;
-        uint32_t minor;
-        uint32_t patch;
-        char tag[16];
-    } the_openssl_version;
-
-    bool init_openssl_version = false;
-
     void about_window(bool* p_open)
     {
         ImGui::SetNextWindowSize(ImVec2(475, 300), ImGuiCond_FirstUseEver);
@@ -81,29 +72,7 @@ namespace MetaGui {
         }
         {
             // OpenSSL
-            if (init_openssl_version == false) {
-                uint32_t vnum = OPENSSL_VERSION_NUMBER;
-                the_openssl_version.major = (vnum >> (7 * 4)) & 0xF;
-                the_openssl_version.minor = (vnum >> (5 * 4)) & 0xFF;
-                char fix = 'a' + ((vnum >> (3 * 4)) & 0xFF) - 1;
-                the_openssl_version.patch = (vnum >> (1 * 4)) & 0xFF;
-                uint8_t tag_nibble = vnum & 0xF;
-                char* add_tag = the_openssl_version.tag;
-                if (fix >= 'a') {
-                    the_openssl_version.tag[0] = fix;
-                    add_tag++;
-                }
-                if (tag_nibble == 0x0) {
-                    sprintf(add_tag, "-dev");
-                } else if (tag_nibble < 0xF) {
-                    sprintf(add_tag, "-beta%i", tag_nibble + 1);
-                } else {
-                    *add_tag = '\0';
-                }
-                init_openssl_version = true;
-            };
-            ImGui::Text("OpenSSL version: %u.%u.%u%s", the_openssl_version.major, the_openssl_version.minor, the_openssl_version.patch, the_openssl_version.tag);
-            //TODO somehow different from version in OPENSSL_VERSION_TEXT, compile vs link version?
+            ImGui::Text("OpenSSL version: %s", OPENSSL_FULL_VERSION_STR);
         }
         {
             // dear imgui

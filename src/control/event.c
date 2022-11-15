@@ -312,7 +312,7 @@ void event_create_game_load_methods(event_any* e, const game_methods* methods, g
 {
     event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
     e->game_load_methods.methods = methods;
-    sl_game_init_info_serializer(GSIT_COPY, &init_info, &e->game_load.init_info, NULL, NULL);
+    sl_game_init_info_serializer(GSIT_COPY, &init_info, &e->game_load_methods.init_info, NULL, NULL);
 }
 
 void event_create_game_state(event_any* e, uint32_t client_id, const char* state)

@@ -540,11 +540,12 @@ namespace Engines {
         assert(container_idx < engines.size());
         engine_container& tec = *engines[container_idx];
         tec.e.methods = Control::main_client->plugin_mgr.engine_lookup[tec.catalogue_idx]->get_methods();
-        //TODO handle engine errors
-        if (tec.load_options == NULL) {
-            tec.e.methods->create_default(&tec.e, tec.e.engine_id, &engine_outbox, &tec.eq);
-        } else {
-            tec.e.methods->create_with_opts_bin(&tec.e, tec.e.engine_id, &engine_outbox, &tec.eq, tec.load_options);
+        {
+            //TODO handle engine errors
+            //tec.e.methods->create_with_opts_bin(&tec.e, tec.e.engine_id, &engine_outbox, &tec.eq, tec.load_options);
+            // binary opts engines wrap needs to provide bin to str
+            //TODO //BUG
+            tec.e.methods->create(&tec.e, tec.e.engine_id, &engine_outbox, &tec.eq, NULL);
         }
         engine_event e;
         eevent_create_heartbeat(&e, tec.e.engine_id, tec.heartbeat_next_id++);

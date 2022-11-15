@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 3};
+    const semver client_version = semver{0, 3, 4};
 
     Client* main_client = NULL;
 
@@ -429,12 +429,9 @@ namespace Control {
                                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                                 .source = {
                                     .standard{
-                                        .opts_type = (tg_opts == NULL ? GAME_INIT_OPTS_TYPE_DEFAULT : GAME_INIT_OPTS_TYPE_STR),
-                                        .opts = {
-                                            .str = tg_opts,
-                                        },
-                                        .legacy_str = NULL,
-                                        .initial_state = tg_state,
+                                        .opts = tg_opts,
+                                        .legacy = NULL,
+                                        .state = tg_state,
                                     },
                                 },
                             };
