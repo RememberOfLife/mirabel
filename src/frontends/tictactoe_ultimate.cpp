@@ -197,7 +197,7 @@ namespace {
                                         if (data.board_buttons[iy][ix].hovered && data.board_buttons[iy][ix].mousedown && cell_local == 0) {
                                             uint64_t move_code = ix | (iy << 4);
                                             event_any es;
-                                            event_create_game_move(&es, move_code);
+                                            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, move_code);
                                             event_queue_push(data.dd->outbox, &es);
                                         }
                                         data.board_buttons[iy][ix].mousedown = false;

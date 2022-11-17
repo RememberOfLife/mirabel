@@ -41,7 +41,7 @@ bool ImGuiThin_SliderScalar(const char* label, IMGUITHIN_DATATYPE type, void* v,
 //TODO offer always clamp option built in and display precision format and step and step buttons
 bool ImGuiThin_InputScalar(const char* label, IMGUITHIN_DATATYPE type, void* v);
 
-void ImGuiThin_BeginDisabled();
+void ImGuiThin_BeginDisabled(bool disable);
 
 void ImGuiThin_EndDisabled();
 

@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 5};
+    const semver client_version = semver{0, 3, 6};
 
     Client* main_client = NULL;
 
@@ -386,7 +386,7 @@ namespace Control {
                         player_id pbuf[253];
                         uint8_t pbuf_cnt = 253;
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
-                        if (the_game->methods->is_legal_move(the_game, pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT) != ERR_OK) {
+                        if (the_game->methods->is_legal_move(the_game, pbuf[0], e.game_move.code) != ERR_OK) {
                             MetaGui::logf("#W illegal move on board\n");
                             break;
                         }
@@ -395,7 +395,7 @@ namespace Control {
                         event_any se;
                         event_copy(&se, &e);
                         the_frontend->methods->process_event(the_frontend, se);
-                        engine_mgr->game_move(pbuf[0], e.game_move.code, SYNC_COUNTER_DEFAULT);
+                        engine_mgr->game_move(pbuf[0], e.game_move.code);
                         the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
                         if (pbuf_cnt == 0) {
                             the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
@@ -421,7 +421,7 @@ namespace Control {
                             char* tg_opts = NULL;
                             if (the_game->methods->features.options) {
                                 tg_opts = (char*)malloc(the_game->sizer.options_str);
-                                the_game->methods->export_options_str(the_game, &size_fill, tg_opts);
+                                the_game->methods->export_options(the_game, &size_fill, tg_opts);
                             }
                             char* tg_state = (char*)malloc(the_game->sizer.state_str);
                             the_game->methods->export_state(the_game, &size_fill, tg_state);

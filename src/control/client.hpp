@@ -39,6 +39,7 @@ namespace Control {
         event_queue inbox;
 
         game* the_game = NULL;
+        uint32_t game_sync = 1; //TODO use and use in server
         uint64_t game_step = 1;
         //TODO game_timectl
         //TODO game_history

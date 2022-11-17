@@ -15,8 +15,7 @@ extern "C" {
 
 struct job_item_impl {
     void* data;
-    JOB_ITEM_STATE(*work)
-    (job_item* ji, void** data); //TODO stop clang-format from this ridiculous formatting
+    job_work* work;
     std::atomic<JOB_ITEM_STATE> state;
     std::atomic<bool> abort;
 };
@@ -38,7 +37,7 @@ static_assert(sizeof(job_item) >= sizeof(job_item_impl), "job_item impl size mis
 
 static_assert(sizeof(job_queue) >= sizeof(job_queue_impl), "job_queue impl size missmatch");
 
-void job_item_create(job_item* ji, void* data, JOB_ITEM_STATE (*work)(job_item* ji, void** data))
+void job_item_create(job_item* ji, void* data, job_work* work)
 {
     job_item_impl* jii = (job_item_impl*)ji;
     new (jii) job_item_impl;

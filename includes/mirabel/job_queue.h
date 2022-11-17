@@ -34,7 +34,9 @@ typedef struct job_queue_s {
     char _padding[216];
 } job_queue;
 
-void job_item_create(job_item* ji, void* data, JOB_ITEM_STATE (*work)(job_item* ji, void** data)); // can be used on ANY job not waiting or running
+typedef JOB_ITEM_STATE job_work(job_item* ji, void** data);
+
+void job_item_create(job_item* ji, void* data, job_work* work); // can be used on ANY job not waiting or running
 JOB_ITEM_STATE job_item_get_state(job_item* ji);
 void* job_item_get_data(job_item* ji); // only legal while job is not waiting or running
 bool job_item_abort_requested(job_item* ji); // job work can check this periodically on itself to see if it was cancelled

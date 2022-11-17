@@ -364,7 +364,7 @@ namespace {
                         for (int i = 0; i < data.move_cnt; i++) {
                             if (data.moves[i] == target_move) {
                                 event_any es;
-                                event_create_game_move(&es, target_move);
+                                event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, target_move);
                                 event_queue_push(data.dd->outbox, &es);
                                 break;
                             }

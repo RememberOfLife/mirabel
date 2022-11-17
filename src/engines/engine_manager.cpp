@@ -201,12 +201,12 @@ namespace Engines {
         }
     }
 
-    void EngineManager::game_move(player_id player, move_code code, sync_counter sync)
+    void EngineManager::game_move(player_id player, move_code code)
     {
         engine_event e;
         for (int i = 0; i < engines.size(); i++) {
             if (engines[i]->eq) {
-                eevent_create_move(&e, engines[i]->e.engine_id, player, code, sync);
+                eevent_create_move(&e, engines[i]->e.engine_id, player, code);
                 eevent_queue_push(engines[i]->eq, &e);
                 eevent_destroy(&e);
             }

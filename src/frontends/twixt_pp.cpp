@@ -233,7 +233,7 @@ namespace {
                 //TODO could use internal method for this
                 size_t size_fill;
                 char* opts_export = (char*)malloc(data.g.sizer.options_str);
-                data.g.methods->export_options_str(&data.g, &size_fill, opts_export);
+                data.g.methods->export_options(&data.g, &size_fill, opts_export);
                 {
                     // parse twixt opts: format y/x+ or s+
                     data.opts.wy = 0;
@@ -332,7 +332,7 @@ namespace {
                         data.gi->can_swap(&data.g, &data.swap_hover);
                         if (data.swap_hover && data.swap_down && event.type == SDL_MOUSEBUTTONUP) {
                             event_any es;
-                            event_create_game_move(&es, TWIXT_PP_MOVE_SWAP);
+                            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, TWIXT_PP_MOVE_SWAP);
                             event_queue_push(data.dd->outbox, &es);
                             data.swap_down = false;
                         }
@@ -353,7 +353,7 @@ namespace {
                                 if (data.board_buttons[y * data.opts.wx + x].hovered && data.board_buttons[y * data.opts.wx + x].mousedown && node_player == TWIXT_PP_PLAYER_NONE) {
                                     uint64_t move_code = (x << 8) | y;
                                     event_any es;
-                                    event_create_game_move(&es, move_code);
+                                    event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, move_code);
                                     event_queue_push(data.dd->outbox, &es);
                                 }
                                 data.board_buttons[y * data.opts.wx + x].mousedown = false;

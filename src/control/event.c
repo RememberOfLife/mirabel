@@ -52,6 +52,8 @@ const serialization_layout sl_game_state[] = {
 };
 
 const serialization_layout sl_game_move[] = {
+    {SL_TYPE_U32, offsetof(event_game_move, sync)},
+    {SL_TYPE_U8, offsetof(event_game_move, player)},
     {SL_TYPE_U64, offsetof(event_game_move, code)},
     {SL_TYPE_STOP},
 };
@@ -321,9 +323,11 @@ void event_create_game_state(event_any* e, uint32_t client_id, const char* state
     e->game_state.state = state ? strdup(state) : NULL;
 }
 
-void event_create_game_move(event_any* e, move_code code)
+void event_create_game_move(event_any* e, uint32_t sync, player_id player, move_code code)
 {
     event_create_type(e, EVENT_TYPE_GAME_MOVE);
+    e->game_move.sync = sync;
+    e->game_move.player = player;
     e->game_move.code = code;
 }
 

@@ -121,7 +121,7 @@ namespace {
                 if (data.g.methods->features.options) {
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
                     size_t size_fill;
-                    data.g.methods->export_options_str(&data.g, &size_fill, data.g_opts);
+                    data.g.methods->export_options(&data.g, &size_fill, data.g_opts);
                 }
                 // allocate buffers
                 data.g_state = (char*)malloc(data.g.sizer.state_str);

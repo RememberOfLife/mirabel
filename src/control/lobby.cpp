@@ -121,7 +121,7 @@ namespace Control {
                 if (the_game->methods->features.options) {
                     size_t size_fill;
                     game_options = (char*)malloc(the_game->sizer.options_str);
-                    the_game->methods->export_options_str(the_game, &size_fill, game_options);
+                    the_game->methods->export_options(the_game, &size_fill, game_options);
                 }
                 // update game name strings
                 game_base = strdup(base_name);

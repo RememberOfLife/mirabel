@@ -40,9 +40,9 @@ bool ImGuiThin_InputScalar(const char* label, IMGUITHIN_DATATYPE type, void* v)
     return ImGui::InputScalar(label, (ImGuiDataType)type, v);
 }
 
-void ImGuiThin_BeginDisabled()
+void ImGuiThin_BeginDisabled(bool disable)
 {
-    ImGui::BeginDisabled();
+    ImGui::BeginDisabled(disable);
 }
 
 void ImGuiThin_EndDisabled()
