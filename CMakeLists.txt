@@ -138,6 +138,7 @@ set(SOURCES
 
     src/prototype_util/direct_draw.cpp
     src/prototype_util/imgui_c_thin.cpp
+    src/prototype_util/log.cpp
     src/prototype_util/st_gui.cpp
     
     src/main.cpp
