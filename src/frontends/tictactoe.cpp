@@ -120,7 +120,7 @@ namespace {
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(&data.g, event.game_load_methods.init_info);
+                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const tictactoe_internal_methods*)data.g.methods->internal_methods;
                 dirty = true;
             } break;

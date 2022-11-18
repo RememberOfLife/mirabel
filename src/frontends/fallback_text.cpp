@@ -117,7 +117,7 @@ namespace {
                 data.g.data2 = NULL;
                 data.g_name = (char*)malloc(strlen(data.g.methods->game_name) + strlen(data.g.methods->variant_name) + strlen(data.g.methods->impl_name) + 64);
                 sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", data.g.methods->game_name, data.g.methods->variant_name, data.g.methods->impl_name, data.g.methods->version.major, data.g.methods->version.minor, data.g.methods->version.patch);
-                data.g.methods->create(&data.g, event.game_load_methods.init_info);
+                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
                 if (data.g.methods->features.options) {
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
                     size_t size_fill;
