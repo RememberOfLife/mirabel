@@ -1,9 +1,9 @@
 #include <cstdint>
 
 #include "imgui.h"
+#include "rosalia/config.h"
 
 #include "control/client.hpp"
-#include "mirabel/config.h"
 
 #include "meta_gui/meta_gui.hpp"
 

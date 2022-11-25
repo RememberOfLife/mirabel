@@ -67,6 +67,8 @@ set(SOURCES
     lib/imgui/imgui.cpp 
 
     lib/surena/lib/rosalia/src/impl/base64.c
+    lib/surena/lib/rosalia/src/impl/config.cpp
+    lib/surena/lib/rosalia/src/impl/jobs.cpp
     lib/surena/lib/rosalia/src/impl/noise.c
     lib/surena/lib/rosalia/src/impl/rand.c
     lib/surena/lib/rosalia/src/impl/raw_stream.c
@@ -88,10 +90,8 @@ set(SOURCES
 
     src/control/auth_manager.cpp
     src/control/client.cpp
-    src/control/config.cpp
     src/control/event_queue.cpp
     src/control/event.c
-    src/control/job_queue.cpp
     src/control/lobby_manager.cpp
     src/control/lobby.cpp
     src/control/plugins.cpp

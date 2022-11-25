@@ -4,10 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "rosalia/config.h"
 #include "rosalia/serialization.h"
 #include "surena/game.h"
-
-#include "mirabel/config.h"
 
 #ifdef __cplusplus
 extern "C" {

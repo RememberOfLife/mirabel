@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "rosalia/config.h"
 #include "rosalia/raw_stream.h"
 #include "rosalia/serialization.h"
 #include "surena/game.h"
-
-#include "mirabel/config.h"
 
 #include "mirabel/event.h"
 

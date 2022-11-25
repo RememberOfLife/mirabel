@@ -5,15 +5,15 @@
 #include <stdint.h>
 
 #include <SDL2/SDL.h>
+#include "rosalia/config.h"
+#include "rosalia/jobs.h"
 #include "rosalia/semver.h"
 #include "surena/engine.h"
 #include "surena/game.h"
 #include "surena/move_history.h"
 
-#include "mirabel/config.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "mirabel/job_queue.h"
 
 #ifdef __cplusplus
 extern "C" {
