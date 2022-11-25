@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "surena/util/semver.h"
+#include "rosalia/semver.h"
 
 #include "control/auth_manager.hpp"
 #include "mirabel/event_queue.h"

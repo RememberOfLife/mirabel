@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "surena/util/serialization.h"
+#include "rosalia/serialization.h"
 #include "surena/game.h"
 
 #include "mirabel/config.h"

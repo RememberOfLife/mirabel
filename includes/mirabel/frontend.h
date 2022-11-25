@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include <SDL2/SDL.h>
-#include "surena/util/semver.h"
+#include "rosalia/semver.h"
 #include "surena/engine.h"
 #include "surena/game.h"
 #include "surena/move_history.h"

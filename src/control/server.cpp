@@ -4,8 +4,8 @@
 
 #include <SDL2/SDL.h>
 #include "SDL_net.h"
-#include "surena/util/fast_prng.h"
-#include "surena/util/semver.h"
+#include "rosalia/rand.h"
+#include "rosalia/semver.h"
 #include "surena/game.h"
 
 #include "mirabel/event.h"
@@ -19,7 +19,7 @@
 
 namespace Control {
 
-    const semver server_version = semver{0, 1, 0};
+    const semver server_version = semver{0, 1, 1};
 
     Server::Server():
         plugin_mgr(true, false)

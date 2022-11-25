@@ -8,7 +8,7 @@
 #include <mutex>
 #include <unordered_map>
 
-#include "surena/util/noise.h"
+#include "rosalia/noise.h"
 
 #include "mirabel/config.h"
 

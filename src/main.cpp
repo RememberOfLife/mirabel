@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "surena/util/semver.h"
+#include "rosalia/semver.h"
 
 #include "control/client.hpp"
 #include "control/server.hpp"

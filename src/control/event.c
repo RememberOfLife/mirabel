@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "surena/util/raw_stream.h"
-#include "surena/util/serialization.h"
+#include "rosalia/raw_stream.h"
+#include "rosalia/serialization.h"
 #include "surena/game.h"
 
 #include "mirabel/config.h"

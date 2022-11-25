@@ -13,8 +13,8 @@
 #include "imgui.h"
 #include "imgui_impl_sdl.h"
 #include "imgui_impl_opengl3.h"
-#include "surena/util/semver.h"
-#include "surena/util/timestamp.h"
+#include "rosalia/semver.h"
+#include "rosalia/timestamp.h"
 #include "surena/game.h"
 
 #include "mirabel/config.h"
@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 7};
+    const semver client_version = semver{0, 3, 8};
 
     Client* main_client = NULL;
 
@@ -52,7 +52,7 @@ namespace Control {
             /* .cfg_lock : initialized right after */
             /* .cfg : initialized right after */
             /* .jobs : initailized right after */
-            .ms_tick = surena_get_ms64(),
+            .ms_tick = timestamp_get_ms64(),
             .view = PLAYER_NONE,
             .fbw = initial_window_height,
             .fbh = initial_window_height,
@@ -283,7 +283,7 @@ namespace Control {
             // start measuring event + action and render time
             std::chrono::steady_clock::time_point frame_time_start = std::chrono::steady_clock::now();
 
-            dd.ms_tick = surena_get_ms64();
+            dd.ms_tick = timestamp_get_ms64();
 
             event_any e;
             event_queue_pop(&inbox, &e, 0);
@@ -767,7 +767,7 @@ namespace Control {
             glLoadIdentity();
             glOrtho(0.0, (GLdouble)dd.fbw, (GLdouble)dd.fbh, 0.0, -1, 1);
 
-            dd.ms_tick = surena_get_ms64();
+            dd.ms_tick = timestamp_get_ms64();
             the_frontend->methods->update(the_frontend);
             the_frontend->methods->render(the_frontend);
 

@@ -43,6 +43,8 @@ set(INCLUDES
     lib/imgui/backends
     lib/imgui
 
+    lib/surena/lib/rosalia/includes
+
     lib/surena/includes
 
     includes
@@ -64,6 +66,14 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
+    lib/surena/lib/rosalia/src/impl/base64.c
+    lib/surena/lib/rosalia/src/impl/noise.c
+    lib/surena/lib/rosalia/src/impl/rand.c
+    lib/surena/lib/rosalia/src/impl/raw_stream.c
+    lib/surena/lib/rosalia/src/impl/semver.c
+    lib/surena/lib/rosalia/src/impl/serialization.c
+    lib/surena/lib/rosalia/src/impl/timestamp.c
+
     lib/surena/src/engines/randomengine.cpp
     # lib/surena/src/engines/singlethreadedmcts.cpp
     lib/surena/src/engines/uci_wrap.cpp
@@ -72,13 +82,6 @@ set(SOURCES
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/games/twixt_pp.cpp
-    lib/surena/src/util/base64.c
-    lib/surena/src/util/fast_prng.c
-    lib/surena/src/util/noise.c
-    lib/surena/src/util/raw_stream.c
-    lib/surena/src/util/semver.c
-    lib/surena/src/util/serialization.c
-    lib/surena/src/util/timestamp.c
     lib/surena/src/engine.cpp
     lib/surena/src/game.c
     lib/surena/src/move_history.c

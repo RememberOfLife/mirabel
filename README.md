@@ -10,6 +10,9 @@ General purpose board game playing GUI and server with some useful features.
   * Multithreaded asset loading.
   * Reuseable resources available.
 
+Don't forget to clone submodules too by using:  
+`git clone --recurse-submodules `
+
 Future features:
 * History Manager for game state tracking and analysis.
 * Support for games using random moves, hidden information and simultaneous moves.
@@ -22,6 +25,7 @@ All dependencies marked `[system]` are system packages/dependencies from your di
 * OpenSSL [system]
 * nanovg (+ stb)
 * imgui
+* rosalia
 * surena
 
 import blocks style:

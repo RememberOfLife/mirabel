@@ -6,7 +6,7 @@
 #include <SDL2/SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "surena/util/semver.h"
+#include "rosalia/semver.h"
 #include "surena/game.h"
 
 #include "mirabel/event_queue.h"
