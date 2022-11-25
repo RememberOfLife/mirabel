@@ -11,7 +11,7 @@ General purpose board game playing GUI and server with some useful features.
   * Reuseable resources available.
 
 Don't forget to clone submodules too by using:  
-`git clone --recurse-submodules `
+`git clone --recurse-submodules https://github.com/RememberOfLife/mirabel.git`
 
 Future features:
 * History Manager for game state tracking and analysis.
