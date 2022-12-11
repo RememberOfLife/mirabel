@@ -398,6 +398,11 @@ namespace Control {
                 mirabel_log("#W plugin surena game: \"plugin_get_game_methods\" symbol not found\n", NULL);
                 return;
             }
+            void (*gm_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_game");
+            if (gm_cleanup == NULL) {
+                mirabel_log("#W plugin surena game: \"plugin_cleanup_game\" symbol not found\n", NULL);
+                return;
+            }
             uint32_t method_cnt;
             get_methods(&method_cnt, NULL);
             if (method_cnt == 0) {
@@ -431,6 +436,11 @@ namespace Control {
             plugin_get_game_wrap_methods_t get_methods = (plugin_get_game_wrap_methods_t)dlsym(dll_handle, "plugin_get_game_wrap_methods");
             if (get_methods == NULL) {
                 mirabel_log("#W plugin mirabel game wrap: \"plugin_get_game_wrap_methods\" symbol not found\n", NULL);
+                return;
+            }
+            void (*gw_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_game_wrap");
+            if (gw_cleanup == NULL) {
+                mirabel_log("#W plugin mirabel game wrap: \"plugin_cleanup_game_wrap\" symbol not found\n", NULL);
                 return;
             }
             uint32_t method_cnt;
@@ -469,6 +479,11 @@ namespace Control {
                 mirabel_log("#W plugin mirabel frontend: \"plugin_get_frontend_methods\" symbol not found\n", NULL);
                 return;
             }
+            void (*fe_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_frontend");
+            if (fe_cleanup == NULL) {
+                mirabel_log("#W plugin mirabel frontend: \"plugin_cleanup_frontend\" symbol not found\n", NULL);
+                return;
+            }
             uint32_t method_cnt;
             get_methods(&method_cnt, NULL);
             if (method_cnt == 0) {
@@ -504,6 +519,11 @@ namespace Control {
                 mirabel_log("#W plugin surena engine: \"plugin_get_engine_methods\" symbol not found\n", NULL);
                 return;
             }
+            void (*em_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine");
+            if (em_cleanup == NULL) {
+                mirabel_log("#W plugin surena engine: \"plugin_cleanup_engine\" symbol not found\n", NULL);
+                return;
+            }
             uint32_t method_cnt;
             get_methods(&method_cnt, NULL);
             if (method_cnt == 0) {
@@ -537,6 +557,11 @@ namespace Control {
             plugin_get_engine_wrap_methods_t get_methods = (plugin_get_engine_wrap_methods_t)dlsym(dll_handle, "plugin_get_engine_wrap_methods");
             if (get_methods == NULL) {
                 mirabel_log("#W plugin mirabel engine wrap: \"plugin_get_engine_wrap_methods\" symbol not found\n", NULL);
+                return;
+            }
+            void (*ew_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine_wrap");
+            if (ew_cleanup == NULL) {
+                mirabel_log("#W plugin mirabel engine wrap: \"plugin_cleanup_engine_wrap\" symbol not found\n", NULL);
                 return;
             }
             uint32_t method_cnt;
@@ -617,35 +642,26 @@ namespace Control {
 
         void* dll_handle = the_plugin.dll_handle;
 
-        void (*em_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine");
-        if (em_cleanup == NULL) {
-            return;
-        }
-        em_cleanup();
-
         void (*gm_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_game");
-        if (gm_cleanup == NULL) {
-            return;
+        if (gm_cleanup != NULL) {
+            gm_cleanup();
         }
-        gm_cleanup();
-
-        void (*ew_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine_wrap");
-        if (ew_cleanup == NULL) {
-            return;
-        }
-        ew_cleanup();
-
-        void (*fe_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_frontend");
-        if (fe_cleanup == NULL) {
-            return;
-        }
-        fe_cleanup();
-
         void (*gw_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_game_wrap");
-        if (gw_cleanup == NULL) {
-            return;
+        if (gw_cleanup != NULL) {
+            gw_cleanup();
         }
-        gw_cleanup();
+        void (*fe_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_frontend");
+        if (fe_cleanup != NULL) {
+            fe_cleanup();
+        }
+        void (*em_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine");
+        if (em_cleanup != NULL) {
+            em_cleanup();
+        }
+        void (*ew_cleanup)() = (void (*)())dlsym(dll_handle, "plugin_cleanup_engine_wrap");
+        if (ew_cleanup != NULL) {
+            ew_cleanup();
+        }
 
         dlclose(dll_handle);
 
