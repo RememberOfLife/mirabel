@@ -67,7 +67,7 @@ set(SOURCES
     lib/imgui/imgui.cpp 
 
     lib/surena/lib/rosalia/src/impl/base64.c
-    lib/surena/lib/rosalia/src/impl/config.cpp
+    lib/surena/lib/rosalia/src/impl/config.c
     lib/surena/lib/rosalia/src/impl/jobs.cpp
     lib/surena/lib/rosalia/src/impl/noise.c
     lib/surena/lib/rosalia/src/impl/rand.c

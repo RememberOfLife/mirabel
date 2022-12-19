@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 10};
+    const semver client_version = semver{0, 3, 11};
 
     Client* main_client = NULL;
 
@@ -324,6 +324,10 @@ namespace Control {
                         MetaGui::game_impl_idx = impl_idx;
                         // actually load the game
                         the_game = plugin_mgr.impl_lookup[impl_idx]->new_game(e.game_load.init_info);
+                        if (the_game == NULL) {
+                            MetaGui::logf("#W guithread: failed to create game: %s.%s.%s\n", base_name, variant_name, impl_name);
+                            break;
+                        }
                         // create runtime opts for metagui
                         plugin_mgr.impl_lookup[impl_idx]->create_runtime(the_game, &MetaGui::game_runtime_options);
                         game_step++;

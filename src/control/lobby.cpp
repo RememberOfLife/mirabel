@@ -116,6 +116,15 @@ namespace Control {
                     break;
                 }
                 the_game = plugin_mgr->impl_lookup[impl_idx]->new_game(e.game_load.init_info);
+                if (the_game == NULL) {
+                    printf("[WARN] failed to create game: %s.%s.%s\n", base_name, variant_name, impl_name);
+                    // as server, need to inform of failed create, unload all clients games
+                    event_any s1;
+                    event_create_type(&s1, EVENT_TYPE_GAME_UNLOAD);
+                    SendToAllButOne(s1, EVENT_CLIENT_NONE);
+                    event_destroy(&s1);
+                    break;
+                }
                 // export opts from the loaded game
                 game_options = NULL;
                 if (the_game->methods->features.options) {

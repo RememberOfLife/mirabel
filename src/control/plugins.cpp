@@ -52,7 +52,15 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        new_game->methods->create(new_game, &init_info); //TODO want to be able to null init_info?
+        //HACK to ensure that "" is given as NULL to the game, //TODO in truth would want to whitespace strip this
+        if (init_info.source_type == GAME_INIT_SOURCE_TYPE_STANDARD && init_info.source.standard.opts != NULL && strlen(init_info.source.standard.opts) == 0) {
+            init_info.source.standard.opts = NULL;
+        }
+        error_code ec = new_game->methods->create(new_game, &init_info); //TODO want to be able to null init_info?
+        if (ec != ERR_OK) {
+            //TODO  use proper shared log once it exists to show detailed error, or pass it outwards
+            return NULL;
+        }
         return new_game;
     }
 
@@ -368,7 +376,8 @@ namespace Control {
             return;
         }
 
-        //TODO handle partial abort cases where some provided methods might already be filled, for now just clear any remaining provided methods
+        // clear any remaining provided methods
+        // partial abort cases where some provided methods might already be filled are cared for because we just filled the vectors, sets are untouched
         the_plugin.provided_game_methods.clear();
         the_plugin.provided_game_wraps.clear();
         the_plugin.provided_frontends.clear();
@@ -447,7 +456,6 @@ namespace Control {
             get_methods(&method_cnt, NULL);
             if (method_cnt == 0) {
                 break;
-                ;
             }
             the_plugin.provided_game_wraps.resize(method_cnt, NULL);
             get_methods(&method_cnt, &the_plugin.provided_game_wraps.front());
@@ -580,7 +588,6 @@ namespace Control {
 
         // insert provided methods in to the catalogues
         // if the name exists already then skip it and remove it from the provided list so it doesnt get removed on unloading later on
-        //TODO remove reuse
         for (int i = the_plugin.provided_game_methods.size() - 1; i >= 0; i--) {
             if (add_game_methods(the_plugin.provided_game_methods[i]) == false) {
                 the_plugin.provided_game_methods.erase(the_plugin.provided_game_methods.begin() + i);
@@ -616,8 +623,6 @@ namespace Control {
             return;
         }
         plugin_file& the_plugin = plugins[idx];
-
-        // again, much reuse
 
         for (const game_methods* el : the_plugin.provided_game_methods) {
             remove_game_methods(el);
