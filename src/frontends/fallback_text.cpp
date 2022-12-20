@@ -21,6 +21,7 @@ namespace {
         game g;
         bool dirty;
         char* g_name;
+        char* g_fflags;
         char* g_opts;
         //TODO legacy
         char* g_state;
@@ -58,6 +59,8 @@ namespace {
                 .methods = NULL,
             },
             .dirty = false,
+            .g_name = NULL,
+            .g_fflags = NULL,
             .g_opts = NULL,
             .g_state = NULL,
             .g_print = NULL,
@@ -77,6 +80,10 @@ namespace {
         if (data.g.methods) {
             data.g.methods->destroy(&data.g);
         }
+        free(data.g_name);
+        data.g_name = NULL;
+        free(data.g_fflags);
+        data.g_fflags = NULL;
         free(data.g_opts);
         data.g_opts = NULL;
         free(data.g_state);
@@ -88,10 +95,10 @@ namespace {
         data.g_ptm_c = 0;
         free(data.g_res);
         data.g_res = NULL;
-        data.g_res = 0;
+        data.g_res_c = 0;
         free(data.g_moves);
         data.g_moves = NULL;
-        data.g_moves = 0;
+        data.g_moves_c = 0;
         free(self->data1);
         return ERR_OK;
     }
@@ -117,6 +124,28 @@ namespace {
                 data.g.data2 = NULL;
                 data.g_name = (char*)malloc(strlen(data.g.methods->game_name) + strlen(data.g.methods->variant_name) + strlen(data.g.methods->impl_name) + 64);
                 sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", data.g.methods->game_name, data.g.methods->variant_name, data.g.methods->impl_name, data.g.methods->version.major, data.g.methods->version.minor, data.g.methods->version.patch);
+                {
+                    data.g_fflags = (char*)malloc(32); // 20
+                    sprintf(
+                        data.g_fflags,
+                        "%c%c%c%c%c%c%c %s %s %s %s %s %s",
+                        data.g.methods->features.error_strings ? 'E' : '-',
+                        data.g.methods->features.options ? 'O' : '-',
+                        data.g.methods->features.serializable ? 'S' : '-',
+                        data.g.methods->features.legacy ? 'L' : '-',
+                        data.g.methods->features.random_moves ? 'R' : '-',
+                        data.g.methods->features.hidden_information ? 'H' : '-',
+                        data.g.methods->features.simultaneous_moves ? 'M' : '-',
+                        // data.g.methods->features.big_moves ? "BM" : "--", //TODO add format string arg
+                        data.g.methods->features.move_ordering ? "MO" : "--",
+                        data.g.methods->features.scores ? "SC" : "--",
+                        data.g.methods->features.id ? "ID" : "--",
+                        data.g.methods->features.eval ? "EV" : "--",
+                        data.g.methods->features.playout ? "PO" : "--",
+                        data.g.methods->features.print ? "PR" : "--"
+                        // data.g.methods->features.time ? "T" : "-" //TODO add format string arg
+                    );
+                }
                 data.g.methods->create(&data.g, &event.game_load_methods.init_info);
                 if (data.g.methods->features.options) {
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
@@ -131,9 +160,9 @@ namespace {
                 data.g_ptm = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_players_to_move);
                 data.g_ptm_c = 0;
                 data.g_res = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_results);
-                data.g_res = 0;
+                data.g_res_c = 0;
                 data.g_moves = (move_code*)malloc(sizeof(move_code) * data.g.sizer.max_moves);
-                data.g_moves = 0;
+                data.g_moves_c = 0;
                 data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
@@ -144,6 +173,8 @@ namespace {
                 data.dirty = false;
                 free(data.g_name);
                 data.g_name = NULL;
+                free(data.g_fflags);
+                data.g_fflags = NULL;
                 free(data.g_opts);
                 data.g_opts = NULL;
                 free(data.g_state);
@@ -155,10 +186,10 @@ namespace {
                 data.g_ptm_c = 0;
                 free(data.g_res);
                 data.g_res = NULL;
-                data.g_res = 0;
+                data.g_res_c = 0;
                 free(data.g_moves);
                 data.g_moves = NULL;
-                data.g_moves = 0;
+                data.g_moves_c = 0;
             } break;
             case EVENT_TYPE_GAME_STATE: {
                 data.g.methods->import_state(&data.g, event.game_state.state);
@@ -218,7 +249,7 @@ namespace {
         //TODO
         const float xcol_offset = 100;
         const float xcol_spacing = 20;
-        const float yrow_spacing = 50;
+        const float yrow_spacing = 25;
         const float yline_spacing = 20;
         int yrow = 1;
 
@@ -242,20 +273,25 @@ namespace {
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
             nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "NAME", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow++, data.g_name, NULL);
+            nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_name, NULL);
+            yrow += 1;
+            nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_fflags, NULL); //TODO show disabled flags in light gray or strikethrough
+            yrow += 2;
 
             if (data.g.methods->features.options) {
                 nvgBeginPath(dc);
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
                 nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "OPTS", NULL);
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-                nvgText(dc, xcol_offset, yrow_spacing * yrow++, data.g_opts, NULL);
+                nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_opts, NULL);
+                yrow += 2;
             }
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
             nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "STATE", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow++, data.g_state, NULL); //TODO make sure this wraps if it goes on too long
+            nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_state, NULL); //TODO make sure this wraps if it goes on too long
+            yrow += 2;
             if (data.g.methods->features.id) {
                 char id_str[20];
                 sprintf(id_str, "0x%016lx", data.g_id);
@@ -263,7 +299,8 @@ namespace {
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
                 nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "ID", NULL);
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-                nvgText(dc, xcol_offset, yrow_spacing * yrow++, id_str, NULL);
+                nvgText(dc, xcol_offset, yrow_spacing * yrow, id_str, NULL);
+                yrow += 2;
             }
             if (data.g.methods->features.print) {
                 nvgBeginPath(dc);
@@ -301,7 +338,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 1, 0},
+    .version = semver{1, 2, 0},
     .features = frontend_feature_flags{
         .options = false,
     },
