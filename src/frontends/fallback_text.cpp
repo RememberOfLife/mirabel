@@ -15,14 +15,6 @@
 
 namespace {
 
-    //TODO these should be imgui graphical vars
-    const float font_size = 20;
-    const float xcol_offset = 100;
-    const float xcol_spacing = 20;
-    const float yrow_spacing = 25;
-    const float btn_padding = 2;
-    const float button_hmargin = 4;
-
     struct sbtn {
         float x;
         float y;
@@ -46,8 +38,17 @@ namespace {
     struct data_repr {
         NVGcontext* dc;
         frontend_display_data* dd;
+
         int mx;
         int my;
+
+        float font_size;
+        float xcol_offset;
+        float xcol_spacing;
+        float yrow_spacing;
+        float btn_padding;
+        float button_hmargin;
+
         game g;
         bool dirty;
         char* g_name;
@@ -89,6 +90,14 @@ namespace {
         data = (data_repr){
             .dc = Control::main_client->nanovg_ctx,
             .dd = display_data,
+            .mx = 0,
+            .my = 0,
+            .font_size = 20,
+            .xcol_offset = 100,
+            .xcol_spacing = 20,
+            .yrow_spacing = 25,
+            .btn_padding = 2,
+            .button_hmargin = 4,
             .g = (game){
                 .methods = NULL,
             },
@@ -129,6 +138,14 @@ namespace {
     error_code runtime_opts_display(frontend* self)
     {
         data_repr& data = _get_repr(self);
+        ImGui::BeginDisabled();
+        ImGui::SliderFloat("font size", &data.font_size, 10, 40); //TODO this doesnt actually work right now
+        ImGui::EndDisabled();
+        ImGui::SliderFloat("xcol offset", &data.xcol_offset, 50, 200);
+        ImGui::SliderFloat("xcol spacing", &data.xcol_spacing, 10, 40);
+        ImGui::SliderFloat("yrow spacing", &data.yrow_spacing, 10, 60);
+        ImGui::SliderFloat("btn padding", &data.btn_padding, 0, 8);
+        ImGui::SliderFloat("btn hmargin", &data.button_hmargin, 0, 10);
         //TODO offer color options
         //TODO offer imgui move making
         return ERR_OK;
@@ -148,24 +165,24 @@ namespace {
                 data.g_name = (char*)malloc(strlen(data.g.methods->game_name) + strlen(data.g.methods->variant_name) + strlen(data.g.methods->impl_name) + 64);
                 sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", data.g.methods->game_name, data.g.methods->variant_name, data.g.methods->impl_name, data.g.methods->version.major, data.g.methods->version.minor, data.g.methods->version.patch);
                 {
-                    data.g_fflags = (char*)malloc(32); // 20
+                    data.g_fflags = (char*)malloc(32); // 21
                     sprintf(
                         data.g_fflags,
-                        "%c%c%c%c%c%c%c %s %s %s %s %s %s",
+                        "%c%c%c%c%c%c%s %s %s %s %s %s %s",
                         data.g.methods->features.error_strings ? 'E' : '-',
                         data.g.methods->features.options ? 'O' : '-',
                         data.g.methods->features.serializable ? 'S' : '-',
                         data.g.methods->features.legacy ? 'L' : '-',
                         data.g.methods->features.random_moves ? 'R' : '-',
                         data.g.methods->features.hidden_information ? 'H' : '-',
-                        data.g.methods->features.simultaneous_moves ? 'M' : '-',
-                        // data.g.methods->features.big_moves ? "BM" : "--", //TODO add format string arg
-                        data.g.methods->features.move_ordering ? "MO" : "--",
-                        data.g.methods->features.scores ? "SC" : "--",
-                        data.g.methods->features.id ? "ID" : "--",
-                        data.g.methods->features.eval ? "EV" : "--",
-                        data.g.methods->features.playout ? "PO" : "--",
-                        data.g.methods->features.print ? "PR" : "--"
+                        data.g.methods->features.simultaneous_moves ? "Sm" : "--",
+                        // data.g.methods->features.big_moves ? "Bm" : "--", //TODO add format string arg
+                        data.g.methods->features.move_ordering ? "Om" : "--",
+                        data.g.methods->features.scores ? "Sc" : "--",
+                        data.g.methods->features.id ? "Id" : "--",
+                        data.g.methods->features.eval ? "Ev" : "--",
+                        data.g.methods->features.playout ? "Rp" : "--",
+                        data.g.methods->features.print ? "Pr" : "--"
                         // data.g.methods->features.time ? "T" : "-" //TODO add format string arg
                     );
                 }
@@ -253,7 +270,7 @@ namespace {
                 data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, data.g_ptm[0], event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                data.g.methods->make_move(&data.g, event.game_move.player, event.game_move.code);
                 data.dirty = true;
             } break;
             default: {
@@ -337,7 +354,7 @@ namespace {
         float cumX = 0;
         nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
         nvgSave(dc);
-        nvgFontSize(dc, font_size);
+        nvgFontSize(dc, data.font_size);
         nvgFontFace(dc, "mf");
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
         for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
@@ -349,25 +366,26 @@ namespace {
             const int I_YMAX = 3;
             float label_bounds[4]; // [xmin,ymin, xmax,ymax]
             nvgTextBounds(dc, 0, 0, btn.label, NULL, label_bounds); //TODO fix buttons height extending too low
-            btn.x = xcol_offset + cumX - btn_padding;
-            btn.y = yrow_spacing * yrow - btn_padding;
-            btn.w = label_bounds[I_XMAX] - label_bounds[I_XMIN] + btn_padding * 2;
-            btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + btn_padding * 2;
+            btn.x = data.xcol_offset + cumX - data.btn_padding;
+            btn.y = data.yrow_spacing * yrow - data.btn_padding;
+            btn.w = label_bounds[I_XMAX] - label_bounds[I_XMIN] + data.btn_padding * 2;
+            btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + data.btn_padding * 2;
             btn.update(data.mx, data.my);
-            cumX += btn.w + button_hmargin;
+            cumX += btn.w + data.button_hmargin;
         }
         nvgRestore(dc);
         nvgEndFrame(dc);
         return ERR_OK;
     }
 
-    void internal_draw_segment_liner(NVGcontext* dc, int yrow_prev, int yrow)
+    void internal_draw_segment_liner(frontend* self, NVGcontext* dc, int yrow_prev, int yrow)
     {
+        data_repr& data = _get_repr(self);
         nvgBeginPath(dc);
-        nvgMoveTo(dc, xcol_offset - xcol_spacing / 2, yrow_spacing * yrow_prev - btn_padding);
-        nvgLineTo(dc, xcol_offset - xcol_spacing / 2, yrow_spacing * (yrow - 2) + font_size + btn_padding);
+        nvgMoveTo(dc, data.xcol_offset - data.xcol_spacing / 2, data.yrow_spacing * yrow_prev - data.btn_padding);
+        nvgLineTo(dc, data.xcol_offset - data.xcol_spacing / 2, data.yrow_spacing * (yrow - 2) + data.font_size + data.btn_padding);
         nvgStrokeColor(dc, nvgRGB(25, 25, 25));
-        nvgStrokeWidth(dc, font_size * 0.1);
+        nvgStrokeWidth(dc, data.font_size * 0.1);
         nvgStroke(dc);
     }
 
@@ -403,7 +421,7 @@ namespace {
         yrow_prev = yrow;
         nvgBeginPath(dc);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-        nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "PPSEL", NULL);
+        nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "PPSEL", NULL);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
         // render the ppsel buttons
         for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
@@ -423,41 +441,41 @@ namespace {
 
             nvgFillColor(dc, nvgRGB(25, 25, 25));
             nvgBeginPath(dc);
-            nvgText(dc, btn.x + btn_padding, btn.y + btn_padding, btn.label, NULL);
+            nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
         }
         yrow += 2;
-        internal_draw_segment_liner(dc, yrow_prev, yrow);
+        internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
         yrow_prev = yrow;
         nvgBeginPath(dc);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-        nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "NAME", NULL);
+        nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "NAME", NULL);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_name, NULL);
+        nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, data.g_name, NULL);
         yrow += 1;
-        nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_fflags, NULL); //TODO show disabled flags in light gray or strikethrough
+        nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, data.g_fflags, NULL); //TODO show disabled flags in light gray or strikethrough
         yrow += 2;
-        internal_draw_segment_liner(dc, yrow_prev, yrow);
+        internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
         if (data.g.methods->features.options) {
             yrow_prev = yrow;
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-            nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "OPTS", NULL);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "OPTS", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_opts, NULL);
+            nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, data.g_opts, NULL);
             yrow += 2;
-            internal_draw_segment_liner(dc, yrow_prev, yrow);
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
         yrow_prev = yrow;
         nvgBeginPath(dc);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-        nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "STATE", NULL);
+        nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "STATE", NULL);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_state, NULL); //TODO make sure this wraps if it goes on too long
+        nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, data.g_state, NULL); //TODO make sure this wraps if it goes on too long
         yrow += 2;
-        internal_draw_segment_liner(dc, yrow_prev, yrow);
+        internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
         if (data.g.methods->features.id) {
             yrow_prev = yrow;
@@ -465,11 +483,11 @@ namespace {
             sprintf(id_str, "0x%016lx", data.g_id);
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-            nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "ID", NULL);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "ID", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow, id_str, NULL);
+            nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, id_str, NULL);
             yrow += 2;
-            internal_draw_segment_liner(dc, yrow_prev, yrow);
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
         if (data.g.methods->features.print) {
@@ -478,17 +496,17 @@ namespace {
             char* strstart = data.g_print;
             char* strend = strchr(strstart, '\n');
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-            nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "PRINT", NULL);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "PRINT", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow, strstart, strend);
+            nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, strstart, strend);
             while (strend != NULL) {
-                nvgText(dc, xcol_offset, yrow_spacing * yrow, strstart, strend);
+                nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, strstart, strend);
                 yrow += 1;
                 strstart = strend + 1;
                 strend = strchr(strstart, '\n');
             }
             yrow += 1;
-            internal_draw_segment_liner(dc, yrow_prev, yrow);
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
         //TODO ptm and selectable
@@ -498,11 +516,11 @@ namespace {
             yrow_prev = yrow;
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-            nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "RES", NULL);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "RES", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_res_str, NULL);
+            nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, data.g_res_str, NULL);
             yrow += 2;
-            internal_draw_segment_liner(dc, yrow_prev, yrow);
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
         nvgRestore(dc);
@@ -519,7 +537,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 4, 0},
+    .version = semver{1, 5, 0},
     .features = frontend_feature_flags{
         .options = false,
     },
