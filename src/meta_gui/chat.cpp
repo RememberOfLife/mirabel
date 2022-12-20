@@ -34,6 +34,8 @@ namespace MetaGui {
     uint64_t local_msg_id_ctr = 1;
     char* popup_str_id_buf = (char*)malloc(9);
 
+    void chat_process_cmd(const char* msg); // forward decl because we dont want this public in metagui
+
     void chat_window(bool* p_open)
     {
         ImGui::SetNextWindowPos(ImVec2(50, 500), ImGuiCond_FirstUseEver);
@@ -134,12 +136,18 @@ namespace MetaGui {
                 msg_start++;
             }
             if (strlen(msg_start) > 0) {
-                if (Control::main_client->network_send_queue) {
-                    event_any es;
-                    event_create_chat_msg(&es, 0, 0, 0, msg_start);
-                    event_queue_push(Control::main_client->network_send_queue, &es);
+                if (msg_start[0] == '/') {
+                    // try as command and log to local
+                    chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), msg_start);
+                    chat_process_cmd(msg_start);
                 } else {
-                    chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), msg_start);
+                    if (Control::main_client->network_send_queue) {
+                        event_any es;
+                        event_create_chat_msg(&es, 0, 0, 0, msg_start);
+                        event_queue_push(Control::main_client->network_send_queue, &es);
+                    } else {
+                        chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), msg_start);
+                    }
                 }
             }
             input_buf[0] = '\0';
@@ -181,6 +189,48 @@ namespace MetaGui {
             free(chat_log[i].text);
         }
         chat_log.clear();
+    }
+
+    void chat_process_cmd(const char* msg)
+    {
+        size_t msg_len = strlen(msg);
+        if (msg_len < 1 || msg[0] != '/') {
+            return;
+        }
+        const char* cmsg = msg + 1;
+        if (strncmp(cmsg, "move", 4) == 0) {
+            if (msg_len <= 6) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ usage: /move <move_str>");
+                return;
+            }
+            cmsg = msg + 6;
+            game* tg = Control::main_client->the_game;
+            if (tg == NULL || tg->methods == NULL) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ illegal move attempt on null game");
+                return;
+            }
+            uint8_t ptm_c;
+            player_id ptm[254];
+            tg->methods->players_to_move(tg, &ptm_c, ptm);
+            if (ptm_c == 0) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ illegal move attempt on finished game");
+                return;
+            }
+            move_code mc;
+            error_code ec = tg->methods->get_move_code(tg, ptm[0], cmsg, &mc); //HACK //BUG use correct player
+            if (ec != ERR_OK) {
+                char err_msg[64];
+                sprintf(err_msg, "~ illegal move attempt, error: (%d) %s\n", ec, tg->methods->features.error_strings ? tg->methods->get_last_error(tg) : "");
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), err_msg);
+                return;
+            }
+            event_any es;
+            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, ptm[0], mc); //HACK //BUG use correct player
+            event_queue_push(&Control::main_client->inbox, &es);
+            return;
+        }
+        chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ unknown command\n");
+        return;
     }
 
 } // namespace MetaGui

@@ -94,7 +94,6 @@ Collect more general resources:
 * upgrade to openssl 3 (until then, there might be lots of issues with the network adapters)
 
 ## todo
-* the most basic and super simple direct move command handler in the chat, so the default fallback text frontend ist "fully usable"
 * change up main menu bar and introduce some more categories (and placeholders for future features)
   * change window titles?
 * config:
