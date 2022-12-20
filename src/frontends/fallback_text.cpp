@@ -35,6 +35,7 @@ namespace {
         uint8_t g_res_c;
         move_code* g_moves;
         uint32_t g_moves_c;
+        char* g_res_str;
     };
 
     data_repr& _get_repr(frontend* self)
@@ -70,6 +71,7 @@ namespace {
             .g_res_c = 0,
             .g_moves = NULL,
             .g_moves_c = 0,
+            .g_res_str = NULL,
         };
         return ERR_OK;
     }
@@ -99,6 +101,8 @@ namespace {
         free(data.g_moves);
         data.g_moves = NULL;
         data.g_moves_c = 0;
+        free(data.g_res_str);
+        data.g_res_str = NULL;
         free(self->data1);
         return ERR_OK;
     }
@@ -163,6 +167,10 @@ namespace {
                 data.g_res_c = 0;
                 data.g_moves = (move_code*)malloc(sizeof(move_code) * data.g.sizer.max_moves);
                 data.g_moves_c = 0;
+                {
+                    data.g_res_str = (char*)malloc(data.g.sizer.max_results * 4);
+                    data.g_res_str[0] = '\0';
+                }
                 data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
@@ -190,6 +198,8 @@ namespace {
                 free(data.g_moves);
                 data.g_moves = NULL;
                 data.g_moves_c = 0;
+                free(data.g_res_str);
+                data.g_res_str = NULL;
             } break;
             case EVENT_TYPE_GAME_STATE: {
                 data.g.methods->import_state(&data.g, event.game_state.state);
@@ -233,6 +243,15 @@ namespace {
         data.g.methods->get_results(&data.g, &data.g_res_c, data.g_res);
         if (data.g_ptm_c > 0) {
             data.g.methods->get_concrete_moves(&data.g, data.g_ptm[0], &data.g_moves_c, data.g_moves); //HACK //BUG use proper ptm
+        }
+        if (data.g_res_c > 0) {
+            char* res_str = data.g_res_str;
+            for (uint8_t i = 0; i < data.g_res_c; i++) {
+                res_str += sprintf(res_str, "%03hhu", data.g_res[i]);
+                if (i < data.g_res_c - 1) {
+                    res_str += sprintf(res_str, " ");
+                }
+            }
         }
         data.dirty = false;
         return ERR_OK;
@@ -304,22 +323,32 @@ namespace {
             }
             if (data.g.methods->features.print) {
                 nvgBeginPath(dc);
-                float lineoffset = 0;
                 char* strstart = data.g_print;
                 char* strend = strchr(strstart, '\n');
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
                 nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "PRINT", NULL);
                 nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-                nvgText(dc, xcol_offset, yrow_spacing * yrow + lineoffset, strstart, strend);
+                nvgText(dc, xcol_offset, yrow_spacing * yrow, strstart, strend);
                 while (strend != NULL) {
-                    nvgText(dc, xcol_offset, yrow_spacing * yrow + lineoffset, strstart, strend);
-                    lineoffset += 25;
+                    nvgText(dc, xcol_offset, yrow_spacing * yrow, strstart, strend);
+                    yrow += 1;
                     strstart = strend + 1;
                     strend = strchr(strstart, '\n');
                 }
             }
+            yrow += 1;
 
-            //TODO render all available moves and ptm and make them clickable
+            //TODO ptm and selectable
+            //TODO render all available moves for the selected ptm, or none at all if not selected
+
+            if (data.g_res_c > 0) {
+                nvgBeginPath(dc);
+                nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
+                nvgText(dc, xcol_offset - xcol_spacing, yrow_spacing * yrow, "RES", NULL);
+                nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+                nvgText(dc, xcol_offset, yrow_spacing * yrow, data.g_res_str, NULL);
+                yrow += 2;
+            }
         }
 
         nvgRestore(dc);
@@ -338,7 +367,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 2, 0},
+    .version = semver{1, 3, 0},
     .features = frontend_feature_flags{
         .options = false,
     },
