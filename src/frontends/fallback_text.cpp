@@ -53,9 +53,9 @@ namespace {
         bool dirty;
         char* g_name;
         char* g_fflags;
-        uint8_t g_ppsel_c;
-        sbtn* g_ppsel; // perspective player sel //TODO offer way to also use redact information to just show what this player would know if wanted
-        uint8_t g_ppsel_i;
+        uint8_t g_pov_c;
+        sbtn* g_pov_btns; // perspective player sel //TODO offer way to also use redact information to just show what this player would know if wanted
+        uint8_t g_pov_id;
         char* g_opts;
         //TODO legacy
         char* g_state;
@@ -63,11 +63,12 @@ namespace {
         uint64_t g_id;
         // float* g_eval_f;
         // player_id* g_eval_p;
-        player_id* g_ptm;
+        player_id* g_ptm_buf;
         uint8_t g_ptm_c;
-        player_id* g_res;
+        sbtn* g_ptm_btns;
+        player_id* g_res_buf;
         uint8_t g_res_c;
-        move_code* g_moves;
+        move_code* g_moves_buf;
         uint32_t g_moves_c;
         char* g_res_str;
     };
@@ -104,17 +105,18 @@ namespace {
             .dirty = false,
             .g_name = NULL,
             .g_fflags = NULL,
-            .g_ppsel_c = 0,
-            .g_ppsel = NULL,
-            .g_ppsel_i = PLAYER_NONE,
+            .g_pov_c = 0,
+            .g_pov_btns = NULL,
+            .g_pov_id = PLAYER_NONE,
             .g_opts = NULL,
             .g_state = NULL,
             .g_print = NULL,
-            .g_ptm = NULL,
+            .g_ptm_buf = NULL,
             .g_ptm_c = 0,
-            .g_res = NULL,
+            .g_ptm_btns = NULL,
+            .g_res_buf = NULL,
             .g_res_c = 0,
-            .g_moves = NULL,
+            .g_moves_buf = NULL,
             .g_moves_c = 0,
             .g_res_str = NULL,
         };
@@ -188,23 +190,23 @@ namespace {
                 }
                 data.g.methods->create(&data.g, &event.game_load_methods.init_info);
                 {
-                    data.g_ppsel_c = (data.g.sizer.player_count + 1 + (data.g.methods->features.random_moves ? 1 : 0));
-                    data.g_ppsel = (sbtn*)malloc(sizeof(sbtn) * data.g_ppsel_c);
-                    for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
-                        data.g_ppsel[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
-                        data.g_ppsel[i].label = (char*)malloc(8);
+                    data.g_pov_c = (data.g.sizer.player_count + 1 + (data.g.methods->features.random_moves ? 1 : 0));
+                    data.g_pov_btns = (sbtn*)malloc(sizeof(sbtn) * data.g_pov_c);
+                    for (uint8_t i = 0; i < data.g_pov_c; i++) {
+                        data.g_pov_btns[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
+                        data.g_pov_btns[i].label = (char*)malloc(8);
                         if (i == 0) {
-                            sprintf(data.g_ppsel[i].label, "NONE");
-                            data.g_ppsel[i].v.p = PLAYER_NONE;
-                        } else if (!data.g.methods->features.random_moves || i < data.g_ppsel_c - 1) {
-                            sprintf(data.g_ppsel[i].label, "%03hhu", i);
-                            data.g_ppsel[i].v.p = i;
+                            sprintf(data.g_pov_btns[i].label, "NONE");
+                            data.g_pov_btns[i].v.p = PLAYER_NONE;
+                        } else if (!data.g.methods->features.random_moves || i < data.g_pov_c - 1) {
+                            sprintf(data.g_pov_btns[i].label, "%03hhu", i);
+                            data.g_pov_btns[i].v.p = i;
                         } else {
-                            sprintf(data.g_ppsel[i].label, "RAND");
-                            data.g_ppsel[i].v.p = PLAYER_RAND;
+                            sprintf(data.g_pov_btns[i].label, "RAND");
+                            data.g_pov_btns[i].v.p = PLAYER_RAND;
                         }
                     }
-                    data.g_ppsel_i = PLAYER_NONE;
+                    data.g_pov_id = PLAYER_NONE;
                 }
                 if (data.g.methods->features.options) {
                     data.g_opts = (char*)malloc(data.g.sizer.options_str);
@@ -216,11 +218,18 @@ namespace {
                 if (data.g.methods->features.print) {
                     data.g_print = (char*)malloc(data.g.sizer.print_str);
                 }
-                data.g_ptm = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_players_to_move);
-                data.g_ptm_c = 0;
-                data.g_res = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_results);
+                {
+                    data.g_ptm_buf = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_players_to_move);
+                    data.g_ptm_c = 0;
+                    data.g_ptm_btns = (sbtn*)malloc(sizeof(sbtn) * data.g.sizer.max_players_to_move);
+                    for (uint8_t i = 0; i < data.g.sizer.max_players_to_move; i++) {
+                        data.g_ptm_btns[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
+                        data.g_ptm_btns[i].label = (char*)malloc(8);
+                    }
+                }
+                data.g_res_buf = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_results);
                 data.g_res_c = 0;
-                data.g_moves = (move_code*)malloc(sizeof(move_code) * data.g.sizer.max_moves);
+                data.g_moves_buf = (move_code*)malloc(sizeof(move_code) * data.g.sizer.max_moves);
                 data.g_moves_c = 0;
                 {
                     data.g_res_str = (char*)malloc(data.g.sizer.max_results * 4);
@@ -239,13 +248,13 @@ namespace {
                 free(data.g_fflags);
                 data.g_fflags = NULL;
                 {
-                    for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
-                        free(data.g_ppsel[i].label);
+                    for (uint8_t i = 0; i < data.g_pov_c; i++) {
+                        free(data.g_pov_btns[i].label);
                     }
-                    free(data.g_ppsel);
-                    data.g_ppsel = NULL;
-                    data.g_ppsel_c = 0;
-                    data.g_ppsel_i = PLAYER_NONE;
+                    free(data.g_pov_btns);
+                    data.g_pov_btns = NULL;
+                    data.g_pov_c = 0;
+                    data.g_pov_id = PLAYER_NONE;
                 }
                 free(data.g_opts);
                 data.g_opts = NULL;
@@ -253,14 +262,21 @@ namespace {
                 data.g_state = NULL;
                 free(data.g_print);
                 data.g_print = NULL;
-                free(data.g_ptm);
-                data.g_ptm = NULL;
-                data.g_ptm_c = 0;
-                free(data.g_res);
-                data.g_res = NULL;
+                {
+                    for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                        free(data.g_ptm_btns[i].label);
+                    }
+                    free(data.g_ptm_buf);
+                    free(data.g_ptm_btns);
+                    data.g_ptm_buf = NULL;
+                    data.g_ptm_c = 0;
+                    data.g_ptm_btns = NULL;
+                }
+                free(data.g_res_buf);
+                data.g_res_buf = NULL;
                 data.g_res_c = 0;
-                free(data.g_moves);
-                data.g_moves = NULL;
+                free(data.g_moves_buf);
+                data.g_moves_buf = NULL;
                 data.g_moves_c = 0;
                 free(data.g_res_str);
                 data.g_res_str = NULL;
@@ -299,15 +315,27 @@ namespace {
                     // is proper left mouse button down event, find where it clicked and if applicable push the appropriate event
                     int mX = event.button.x - data.dd->x;
                     int mY = event.button.y - data.dd->y;
-                    for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
-                        data.g_ppsel[i].update(mX, mY);
+                    // pov btns
+                    for (uint8_t i = 0; i < data.g_pov_c; i++) {
+                        data.g_pov_btns[i].update(mX, mY);
                         if (event.type == SDL_MOUSEBUTTONUP) {
-                            if (data.g_ppsel[i].hovered && data.g_ppsel[i].mousedown) {
-                                data.g_ppsel_i = i;
+                            if (data.g_pov_btns[i].hovered && data.g_pov_btns[i].mousedown) {
+                                data.g_pov_id = i;
                             }
-                            data.g_ppsel[i].mousedown = false;
+                            data.g_pov_btns[i].mousedown = false;
                         }
-                        data.g_ppsel[i].mousedown |= (data.g_ppsel[i].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                        data.g_pov_btns[i].mousedown |= (data.g_pov_btns[i].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                    }
+                    // ptm btns
+                    for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                        data.g_ptm_btns[i].update(mX, mY);
+                        if (event.type == SDL_MOUSEBUTTONUP) {
+                            if (data.g_ptm_btns[i].hovered && data.g_ptm_btns[i].mousedown) {
+                                data.g_pov_id = data.g_ptm_btns[i].v.p;
+                            }
+                            data.g_ptm_btns[i].mousedown = false;
+                        }
+                        data.g_ptm_btns[i].mousedown |= (data.g_ptm_btns[i].hovered && event.type == SDL_MOUSEBUTTONDOWN);
                     }
                 }
             } break;
@@ -331,15 +359,28 @@ namespace {
                 data.g.methods->id(&data.g, &data.g_id);
             }
             //TODO eval
-            data.g.methods->players_to_move(&data.g, &data.g_ptm_c, data.g_ptm);
-            data.g.methods->get_results(&data.g, &data.g_res_c, data.g_res);
+            data.g.methods->players_to_move(&data.g, &data.g_ptm_c, data.g_ptm_buf);
+            data.g.methods->get_results(&data.g, &data.g_res_c, data.g_res_buf);
             if (data.g_ptm_c > 0) {
-                data.g.methods->get_concrete_moves(&data.g, data.g_ppsel_i, &data.g_moves_c, data.g_moves);
+                // update ptm soft buttons
+                for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                    sprintf(data.g_ptm_btns[i].label, "%03hhu", data.g_ptm_buf[i]);
+                    data.g_ptm_btns[i].v.p = data.g_ptm_buf[i];
+                }
+                // generate moves if pov is to move
+                if (data.g_pov_id != PLAYER_NONE) {
+                    // check if pov is actually to move
+                    for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                        if (data.g_ptm_buf[i] == data.g_pov_id) {
+                            data.g.methods->get_concrete_moves(&data.g, data.g_pov_id, &data.g_moves_c, data.g_moves_buf);
+                        }
+                    }
+                }
             }
             if (data.g_res_c > 0) {
                 char* res_str = data.g_res_str;
                 for (uint8_t i = 0; i < data.g_res_c; i++) {
-                    res_str += sprintf(res_str, "%03hhu", data.g_res[i]);
+                    res_str += sprintf(res_str, "%03hhu", data.g_res_buf[i]);
                     if (i < data.g_res_c - 1) {
                         res_str += sprintf(res_str, " ");
                     }
@@ -350,21 +391,55 @@ namespace {
         // simulate button placements to update positions
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
-        const int yrow = 1; // this is where the ppsel btns start
-        float cumX = 0;
+        const int I_XMIN = 0;
+        const int I_YMIN = 1;
+        const int I_XMAX = 2;
+        const int I_YMAX = 3;
+        float label_bounds[4]; // [xmin,ymin, xmax,ymax]
+        int yrow = 1; // this is where the pov btns start
+        float cumX;
         nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
         nvgSave(dc);
         nvgFontSize(dc, data.font_size);
         nvgFontFace(dc, "mf");
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
-            sbtn& btn = data.g_ppsel[i];
+        // pov buttons
+        cumX = 0;
+        for (uint8_t i = 0; i < data.g_pov_c; i++) {
+            sbtn& btn = data.g_pov_btns[i];
             // set button hovered
-            const int I_XMIN = 0;
-            const int I_YMIN = 1;
-            const int I_XMAX = 2;
-            const int I_YMAX = 3;
-            float label_bounds[4]; // [xmin,ymin, xmax,ymax]
+            nvgTextBounds(dc, 0, 0, btn.label, NULL, label_bounds); //TODO fix buttons height extending too low
+            btn.x = data.xcol_offset + cumX - data.btn_padding;
+            btn.y = data.yrow_spacing * yrow - data.btn_padding;
+            btn.w = label_bounds[I_XMAX] - label_bounds[I_XMIN] + data.btn_padding * 2;
+            btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + data.btn_padding * 2;
+            btn.update(data.mx, data.my);
+            cumX += btn.w + data.button_hmargin;
+        }
+        yrow += 5;
+        if (data.g.methods->features.options) {
+            yrow += 2;
+        }
+        yrow += 2;
+        if (data.g.methods->features.id) {
+            yrow += 2;
+        }
+        // simulate multiline print
+        if (data.g.methods->features.print) {
+            char* strstart = data.g_print;
+            char* strend = strchr(strstart, '\n');
+            while (strend != NULL) {
+                yrow += 1;
+                strstart = strend + 1;
+                strend = strchr(strstart, '\n');
+            }
+            yrow += 1;
+        }
+        // ptm soft buttons
+        cumX = 0;
+        for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+            sbtn& btn = data.g_ptm_btns[i];
+            // set button hovered
             nvgTextBounds(dc, 0, 0, btn.label, NULL, label_bounds); //TODO fix buttons height extending too low
             btn.x = data.xcol_offset + cumX - data.btn_padding;
             btn.y = data.yrow_spacing * yrow - data.btn_padding;
@@ -421,14 +496,14 @@ namespace {
         yrow_prev = yrow;
         nvgBeginPath(dc);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
-        nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "PPSEL", NULL);
+        nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "POV", NULL);
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-        // render the ppsel buttons
-        for (uint8_t i = 0; i < data.g_ppsel_c; i++) {
-            sbtn& btn = data.g_ppsel[i];
+        // render the pov buttons
+        for (uint8_t i = 0; i < data.g_pov_c; i++) {
+            sbtn& btn = data.g_pov_btns[i];
             nvgBeginPath(dc);
             nvgRect(dc, btn.x, btn.y, btn.w, btn.h);
-            if (btn.v.p == data.g_ppsel_i) {
+            if (btn.v.p == data.g_pov_id) {
                 nvgFillColor(dc, nvgRGB(119, 160, 213));
             } else if (btn.mousedown) {
                 nvgFillColor(dc, nvgRGB(130, 130, 130));
@@ -439,6 +514,7 @@ namespace {
             }
             nvgFill(dc);
 
+            //TODO some indicator on wether or not the POV is among the ptm or not
             nvgFillColor(dc, nvgRGB(25, 25, 25));
             nvgBeginPath(dc);
             nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
@@ -509,7 +585,37 @@ namespace {
             internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
-        //TODO ptm and selectable
+        // ptm and soft buttons that update pov on click
+        if (data.g_ptm_c > 0) {
+            yrow_prev = yrow;
+            nvgBeginPath(dc);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "PTM", NULL);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+            // render the ptm buttons
+            for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                sbtn& btn = data.g_ptm_btns[i];
+                nvgBeginPath(dc);
+                nvgRect(dc, btn.x, btn.y, btn.w, btn.h);
+                if (btn.v.p == data.g_pov_id) {
+                    nvgFillColor(dc, nvgRGB(156, 193, 241));
+                } else if (btn.mousedown) {
+                    nvgFillColor(dc, nvgRGB(130, 130, 130));
+                } else if (btn.hovered) {
+                    nvgFillColor(dc, nvgRGB(160, 160, 160));
+                } else {
+                    nvgFillColor(dc, nvgRGB(210, 210, 210));
+                }
+                nvgFill(dc);
+
+                nvgFillColor(dc, nvgRGB(25, 25, 25));
+                nvgBeginPath(dc);
+                nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
+            }
+            yrow += 2;
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
+        }
+
         //TODO render all available moves for the selected ptm, or none at all if not selected
 
         if (data.g_res_c > 0) {
@@ -537,7 +643,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 5, 0},
+    .version = semver{1, 6, 0},
     .features = frontend_feature_flags{
         .options = false,
     },
