@@ -52,10 +52,6 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        //HACK to ensure that "" is given as NULL to the game, //TODO in truth would want to whitespace strip this
-        if (init_info.source_type == GAME_INIT_SOURCE_TYPE_STANDARD && init_info.source.standard.opts != NULL && strlen(init_info.source.standard.opts) == 0) {
-            init_info.source.standard.opts = NULL;
-        }
         error_code ec = new_game->methods->create(new_game, &init_info); //TODO want to be able to null init_info?
         if (ec != ERR_OK) {
             //TODO  use proper shared log once it exists to show detailed error, or pass it outwards

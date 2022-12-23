@@ -90,6 +90,10 @@ namespace MetaGui {
                     load_impl->u.wrap->opts_bin_to_str(game_load_options, NULL, &opts_str_len);
                     effective_opts_string = (char*)malloc(opts_str_len);
                     load_impl->u.wrap->opts_bin_to_str(game_load_options, effective_opts_string, &opts_str_len);
+                } else if (effective_opts_string != NULL && strlen(effective_opts_string) == 0) {
+                    //HACK "" gets passed as NULL, do not do this, instead use a struct
+                    //TODO make proper with struct and find solution for wrap that allows NULL opts
+                    effective_opts_string = NULL;
                 }
                 init_info.source.standard = {
                     .opts = effective_opts_string,
