@@ -369,6 +369,8 @@ namespace Control {
 
         void* dll_handle = dlopen(pluginpath, RTLD_LAZY);
         if (dll_handle == NULL) {
+            const char* err = dlerror();
+            printf("[ERROR] failed to load plugin: %s\n", err ? err : "<unknown error>");
             return;
         }
 
