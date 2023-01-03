@@ -370,7 +370,9 @@ namespace Control {
         void* dll_handle = dlopen(pluginpath, RTLD_LAZY);
         if (dll_handle == NULL) {
             const char* err = dlerror();
-            printf("[ERROR] failed to load plugin: %s\n", err ? err : "<unknown error>");
+            char err_str[128];
+            sprintf(err_str, "#W plugin failed to load: %s\n", err ? err : "<unknown error>");
+            mirabel_log(err_str, NULL);
             return;
         }
 

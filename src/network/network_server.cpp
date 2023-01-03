@@ -156,7 +156,7 @@ namespace Network {
                 util_ssl_session_init(ssl_ctx, connection_slot, UTIL_SSL_CTX_TYPE_SERVER);
                 SDLNet_TCP_AddSocket(client_socketset, connection_slot->socket);
                 printf("[INFO] = new connection initializing, client id %d\n", connection_id);
-                SSL_do_handshake(connection_slot->ssl_session);
+                SSL_accept(connection_slot->ssl_session); //TODO error check but ignore SSL_ERROR_WANT_READ
                 //TODO better error handling and at more places
                 unsigned long ev = ERR_get_error();
                 while (ev != 0) {
@@ -394,7 +394,7 @@ namespace Network {
                     event_any recv_event;
                     uint8_t size_peek[sizeof(size_t)];
                     int im_rd = SSL_peek(ready_client->ssl_session, size_peek, sizeof(size_t));
-                    if (im_rd == 0) {
+                    if (im_rd < 1) { // -1 if ssl swallowed it all, 0 if empty read
                         // empty ssl read do nothing
                         break;
                     }
@@ -416,7 +416,7 @@ namespace Network {
                             // need to do multiple reads, to catch multiple potential ssl records (16kB)
                             im_rd = SSL_read(ready_client->ssl_session, (char*)ready_client->fragment_buf + ready_client->fragment_size, ready_client->fragment_size_target - ready_client->fragment_size);
                             printf("[----] < ssl outputs %i bytes, client id %d\n", im_rd, ready_client->client_id);
-                            if (im_rd == 0) {
+                            if (im_rd == 0) { //TODO does this get the same < 1 as the peek?
                                 break;
                             }
                             ready_client->fragment_size += im_rd;
@@ -439,7 +439,7 @@ namespace Network {
                             // need to do multiple reads, to catch multiple potential ssl records (16kB)
                             im_rd = SSL_read(ready_client->ssl_session, data_buffer + buffer_fill, event_size - buffer_fill);
                             printf("[----] < ssl outputs %i bytes, client id %d\n", im_rd, ready_client->client_id);
-                            if (im_rd == 0) {
+                            if (im_rd == 0) { //TODO does this get the same < 1 as the peek?
                                 break;
                             }
                             buffer_fill += im_rd;

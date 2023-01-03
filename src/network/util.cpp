@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -54,12 +55,17 @@ namespace Network {
                 ctx_method = TLS_server_method();
             } break;
             default: {
+                assert(0);
                 return NULL;
             } break;
         }
 
+        if (ctx_method == NULL) {
+            return NULL;
+        }
+
         ctx = SSL_CTX_new(ctx_method);
-        if (!ctx) {
+        if (ctx == NULL) {
             return NULL;
         }
 
@@ -77,7 +83,11 @@ namespace Network {
         SSL_CTX_set_verify_depth(ctx, 8); // allow longer verification chains
 
         // load ca cert stores as default root of trust
-        SSL_CTX_set_default_verify_paths(ctx);
+        r = SSL_CTX_set_default_verify_paths(ctx);
+        if (r != 1) {
+            util_ssl_ctx_free(ctx);
+            return NULL;
+        }
 
         // when using a NULL verify callback, everything just goes bad if the cert isnt verified correctly, i.e. manage error in own callback
         switch (type) {
@@ -125,25 +135,28 @@ namespace Network {
     bool util_ssl_session_init(SSL_CTX* ctx, connection* conn, UTIL_SSL_CTX_TYPE type)
     {
         conn->ssl_session = SSL_new(ctx);
-        if (!conn->ssl_session) {
+        if (conn->ssl_session == NULL) {
             return false;
         }
+
         conn->send_bio = BIO_new(BIO_s_mem());
-        if (!conn->send_bio) {
+        if (conn->send_bio == NULL) {
             BIO_free(conn->send_bio);
             util_ssl_session_free(conn);
             return false;
         }
-        // use 0 instead of -1 to get proper behaviour on empty bios, see: https://www.openssl.org/docs/crypto/BIO_s_mem.html
-        BIO_set_mem_eof_return(conn->send_bio, 0);
+        // sadly 0 doesn't work anymore here, so we have to use -1 and respect SSL_ERROR_WANT_* all the time
+        BIO_set_mem_eof_return(conn->send_bio, -1);
+
         conn->recv_bio = BIO_new(BIO_s_mem());
-        if (!conn->recv_bio) {
+        if (conn->recv_bio == NULL) {
             BIO_free(conn->send_bio);
             BIO_free(conn->recv_bio);
             util_ssl_session_free(conn);
             return false;
         }
-        BIO_set_mem_eof_return(conn->recv_bio, 0);
+        BIO_set_mem_eof_return(conn->recv_bio, -1);
+
         SSL_set_bio(conn->ssl_session, conn->recv_bio, conn->send_bio);
         switch (type) {
             case UTIL_SSL_CTX_TYPE_CLIENT: {

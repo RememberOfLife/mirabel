@@ -90,8 +90,8 @@ Collect more general resources:
   * rdynamic not working
 * network: event deserialize has to check that received strings are valid utf-8
   * check for unicode in cmdline args aswell (same for surena)
-* networkserver client segfaults when server alt name is empty
-* upgrade to openssl 3 (until then, there might be lots of issues with the network adapters)
+* networkserver client segfaults when server alt name is empty (does X509_V_ERR_EMPTY_SUBJECT_ALT_NAME help to find this early?)
+* network open on "localhost" crashes on sdl poll??
 
 ## todo
 * change up main menu bar and introduce some more categories (and placeholders for future features)
@@ -131,6 +131,7 @@ Collect more general resources:
 * closing the network adapter should be asynchronous, we send it a shutdown event, it sends us back when its ready for collection / joining
   * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
+* network and especially openssl error checking and proper handling!
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs

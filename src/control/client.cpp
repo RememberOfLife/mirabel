@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 18};
+    const semver client_version = semver{0, 3, 19};
 
     Client* main_client = NULL;
 
