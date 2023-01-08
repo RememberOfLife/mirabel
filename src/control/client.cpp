@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 3, 19};
+    const semver client_version = semver{0, 4, 0};
 
     Client* main_client = NULL;
 
@@ -196,7 +196,7 @@ namespace Control {
         the_frontend = empty_fe;
 
         // init engine manager with a context queue to our inbox
-        engine_mgr = new Engines::EngineManager(&inbox);
+        // engine_mgr = new Engines::EngineManager(&inbox); //TODO REENABLE engine
     }
 
     Client::~Client()
@@ -208,7 +208,7 @@ namespace Control {
             delete t_network;
         }
 
-        delete engine_mgr;
+        // delete engine_mgr; //TODO REENABLE engine
 
         if (the_frontend && the_frontend != empty_fe) {
             the_frontend->methods->destroy(the_frontend);
@@ -307,7 +307,7 @@ namespace Control {
                         event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
                         the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
-                            the_game->methods->destroy(the_game);
+                            game_destroy(the_game);
                             free(the_game);
                         }
                         the_game = NULL;
@@ -331,7 +331,7 @@ namespace Control {
                         // create runtime opts for metagui
                         plugin_mgr.impl_lookup[impl_idx]->create_runtime(the_game, &MetaGui::game_runtime_options);
                         game_step++;
-                        engine_mgr->game_load(the_game);
+                        // engine_mgr->game_load(the_game); //TODO REENABLE engine
                         if (the_frontend->methods->is_game_compatible(the_game->methods) != ERR_OK) {
                             // unload frontend if it isnt compatible anymore
                             event_create_type(&se, EVENT_TYPE_FRONTEND_UNLOAD);
@@ -351,12 +351,12 @@ namespace Control {
                             plugin_mgr.impl_lookup[MetaGui::game_impl_idx]->destroy_runtime(MetaGui::game_runtime_options); //HACK dont use metagui game impl idx here for game unloading
                             MetaGui::game_runtime_options = NULL;
                         }
-                        engine_mgr->game_load(NULL);
+                        // engine_mgr->game_load(NULL); //TODO REENABLE engine
                         event_any se;
                         event_create_type(&se, EVENT_TYPE_GAME_UNLOAD);
                         the_frontend->methods->process_event(the_frontend, se);
                         if (the_game) {
-                            the_game->methods->destroy(the_game);
+                            game_destroy(the_game);
                             free(the_game);
                         }
                         the_game = NULL;
@@ -371,12 +371,12 @@ namespace Control {
                             MetaGui::log("#W attempted state import on null game\n");
                             break;
                         }
-                        the_game->methods->import_state(the_game, e.game_state.state);
+                        game_import_state(the_game, e.game_state.state);
                         game_step++;
                         event_any se;
                         event_copy(&se, &e);
                         the_frontend->methods->process_event(the_frontend, se);
-                        engine_mgr->game_state(e.game_state.state);
+                        // engine_mgr->game_state(e.game_state.state); //TODO REENABLE engine
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
                             event_queue_push(network_send_queue, &e);
@@ -387,26 +387,27 @@ namespace Control {
                             MetaGui::log("#W attempted move on null game\n");
                             break;
                         }
-                        player_id pbuf[253];
-                        uint8_t pbuf_cnt = 253;
-                        the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
-                        if (the_game->methods->is_legal_move(the_game, pbuf[0], e.game_move.code) != ERR_OK) {
+                        uint8_t pbuf_cnt;
+                        const player_id* pbuf;
+                        if (game_is_legal_move(the_game, e.game_move.player, e.game_move.data) != ERR_OK) {
                             MetaGui::logf("#W illegal move on board\n");
                             break;
                         }
-                        the_game->methods->make_move(the_game, pbuf[0], e.game_move.code); //FIXME ptm
+                        game_make_move(the_game, e.game_move.player, e.game_move.data);
                         game_step++;
                         event_any se;
                         event_copy(&se, &e);
                         the_frontend->methods->process_event(the_frontend, se);
-                        engine_mgr->game_move(pbuf[0], e.game_move.code);
-                        the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
+                        // engine_mgr->game_move(pbuf[0], e.game_move.data); //TODO REENABLE engine
+                        game_players_to_move(the_game, &pbuf_cnt, &pbuf);
                         if (pbuf_cnt == 0) {
-                            the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
-                            if (pbuf_cnt == 0) {
-                                pbuf[0] = PLAYER_NONE;
+                            game_get_results(the_game, &pbuf_cnt, &pbuf);
+                            char winners_str[1024] = "000";
+                            char* winners_str_acc = winners_str;
+                            for (uint8_t pbuf_i = 0; pbuf_i < pbuf_cnt; pbuf_i++) {
+                                winners_str_acc += sprintf(winners_str_acc, "%03hhu", pbuf[pbuf_i]);
                             }
-                            MetaGui::logf("game done: winner is player %d\n", pbuf[0]);
+                            MetaGui::logf("game done: results %s\n", winners_str);
                         }
                         // everything successful, pass to server
                         if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
@@ -422,13 +423,12 @@ namespace Control {
                         if (the_game) {
                             // send frontend game load copy of running game
                             size_t size_fill;
-                            char* tg_opts = NULL;
-                            if (the_game->methods->features.options) {
-                                tg_opts = (char*)malloc(the_game->sizer.options_str);
-                                the_game->methods->export_options(the_game, &size_fill, tg_opts);
+                            const char* tg_opts = NULL;
+                            if (game_ff(the_game).options) {
+                                game_export_options(the_game, PLAYER_NONE, &size_fill, &tg_opts);
                             }
-                            char* tg_state = (char*)malloc(the_game->sizer.state_str);
-                            the_game->methods->export_state(the_game, &size_fill, tg_state);
+                            const char* tg_state;
+                            game_export_state(the_game, PLAYER_NONE, &size_fill, &tg_state);
                             game_init init_info = (game_init){
                                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                                 .source = {
@@ -442,10 +442,6 @@ namespace Control {
                             event_any se;
                             event_create_game_load_methods(&se, the_game->methods, init_info);
                             the_frontend->methods->process_event(the_frontend, se);
-                            free(tg_state);
-                            if (the_game->methods->features.options) {
-                                free(tg_opts);
-                            }
                         }
                         MetaGui::running_fem_idx = MetaGui::selected_fem_idx;
                     } break;
@@ -612,9 +608,10 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_f && (ctrl_left || ctrl_right)) {
                         MetaGui::show_frontend_config_window = !MetaGui::show_frontend_config_window;
                     }
+                    /*TODO REENABLE engine
                     if (event.key.keysym.sym == SDLK_e && (ctrl_left || ctrl_right)) {
                         MetaGui::show_engine_window = !MetaGui::show_engine_window;
-                    }
+                    } */
                     if (event.key.keysym.sym == SDLK_t && (ctrl_left || ctrl_right)) {
                         MetaGui::show_chat_window = !MetaGui::show_chat_window;
                     }
@@ -624,9 +621,10 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_u && (ctrl_left || ctrl_right)) {
                         MetaGui::show_timectl_window = !MetaGui::show_timectl_window;
                     }
+                    /*TODO REENABLE history
                     if (event.key.keysym.sym == SDLK_h && (ctrl_left || ctrl_right)) {
                         MetaGui::show_history_window = !MetaGui::show_history_window;
-                    }
+                    } */
                     if (event.key.keysym.sym == SDLK_p && (ctrl_left || ctrl_right)) {
                         MetaGui::show_plugins_window = !MetaGui::show_plugins_window;
                     }
@@ -672,13 +670,13 @@ namespace Control {
             }
 
             // update engine containers by their queues
-            engine_mgr->update();
+            // engine_mgr->update(); //TODO REENABLE engine
 
             // update window title every frame //TODO wasteful, cache this out
             char window_title[256];
             char* wtp = window_title;
             if (the_game) {
-                wtp += sprintf(wtp, "%s.%s.%s ", the_game->methods->game_name, the_game->methods->variant_name, the_game->methods->impl_name);
+                wtp += sprintf(wtp, "%s.%s.%s ", game_gname(the_game), game_vname(the_game), game_iname(the_game));
             }
             wtp += sprintf(wtp, "%s ", the_frontend->methods->frontend_name);
             if (network_send_queue) {
@@ -725,18 +723,20 @@ namespace Control {
                 if (MetaGui::show_frontend_config_window) {
                     MetaGui::frontend_config_window(&MetaGui::show_frontend_config_window);
                 }
+                /*TODO REENABLE engine
                 if (MetaGui::show_engine_window) {
                     MetaGui::engine_window(&MetaGui::show_engine_window);
-                }
+                } */
                 if (MetaGui::show_chat_window) {
                     MetaGui::chat_window(&MetaGui::show_chat_window);
                 }
                 if (MetaGui::show_timectl_window) {
                     MetaGui::timectl_window(&MetaGui::show_timectl_window);
                 }
+                /*TODO REENABLE history
                 if (MetaGui::show_history_window) {
                     MetaGui::history_window(&MetaGui::show_history_window);
-                }
+                } */
                 if (MetaGui::show_plugins_window) {
                     MetaGui::plugins_window(&MetaGui::show_plugins_window);
                 }

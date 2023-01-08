@@ -22,6 +22,7 @@ namespace Control {
         game_base(NULL),
         game_variant(NULL),
         game_impl(NULL),
+        game_options(NULL),
         max_users(max_users),
         user_client_ids(static_cast<uint32_t*>(malloc(max_users * sizeof(uint32_t))))
     {
@@ -33,6 +34,7 @@ namespace Control {
     Lobby::~Lobby()
     {
         free(user_client_ids);
+        free(game_options);
         free(game_impl);
         free(game_variant);
         free(game_base);
@@ -49,9 +51,9 @@ namespace Control {
                     // send sync info to user, load + state import
                     es.base.client_id = client_id;
                     event_queue_push(send_queue, &es);
-                    size_t game_state_buffer_len = the_game->sizer.state_str;
-                    char* game_state_buffer = (char*)malloc(game_state_buffer_len);
-                    the_game->methods->export_state(the_game, &game_state_buffer_len, game_state_buffer);
+                    size_t game_state_buffer_len;
+                    const char* game_state_buffer;
+                    game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
                     game_init init_info = (game_init){
                         .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                         .source = {
@@ -102,7 +104,7 @@ namespace Control {
             case EVENT_TYPE_GAME_LOAD: {
                 // reset everything in case we can't find the game later on
                 if (the_game) {
-                    the_game->methods->destroy(the_game);
+                    game_destroy(the_game);
                     free(the_game);
                 }
                 the_game = NULL;
@@ -127,10 +129,11 @@ namespace Control {
                 }
                 // export opts from the loaded game
                 game_options = NULL;
-                if (the_game->methods->features.options) {
+                if (game_ff(the_game).options) {
                     size_t size_fill;
-                    game_options = (char*)malloc(the_game->sizer.options_str);
-                    the_game->methods->export_options(the_game, &size_fill, game_options);
+                    const char* game_options_local;
+                    game_export_options(the_game, PLAYER_NONE, &size_fill, &game_options_local);
+                    game_options = strdup(game_options_local);
                 }
                 // update game name strings
                 game_base = strdup(base_name);
@@ -147,7 +150,7 @@ namespace Control {
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (the_game) {
-                    the_game->methods->destroy(the_game);
+                    game_destroy(the_game);
                     free(the_game);
                 }
                 the_game = NULL;
@@ -166,7 +169,7 @@ namespace Control {
                     printf("[WARN] attempted state import on null game\n");
                     break;
                 }
-                the_game->methods->import_state(the_game, e.game_state.state);
+                game_import_state(the_game, e.game_state.state);
                 printf("[INFO] game state imported: %s\n", e.game_state.state);
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.base.client_id);
@@ -176,18 +179,19 @@ namespace Control {
                     printf("[WARN] attempted move on null game\n");
                     break;
                 }
-                player_id pbuf[253];
-                uint8_t pbuf_cnt = 253;
-                the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf); //FIXME ptm
-                the_game->methods->make_move(the_game, pbuf[0], e.game_move.code);
-                the_game->methods->players_to_move(the_game, &pbuf_cnt, pbuf);
+                uint8_t pbuf_cnt;
+                const player_id* pbuf;
+                game_make_move(the_game, e.game_move.player, e.game_move.data);
+                game_players_to_move(the_game, &pbuf_cnt, &pbuf);
                 printf("[INFO] game move made\n");
                 if (pbuf_cnt == 0) {
-                    the_game->methods->get_results(the_game, &pbuf_cnt, pbuf);
-                    if (pbuf_cnt == 0) {
-                        pbuf[0] = PLAYER_NONE;
+                    game_get_results(the_game, &pbuf_cnt, &pbuf);
+                    char winners_str[1024] = "000";
+                    char* winners_str_acc = winners_str;
+                    for (uint8_t pbuf_i = 0; pbuf_i < pbuf_cnt; pbuf_i++) {
+                        winners_str_acc += sprintf(winners_str_acc, "%03hhu", pbuf[pbuf_i]);
                     }
-                    printf("[INFO] game done: winner is player %d\n", pbuf[0]);
+                    printf("game done: results %s\n", winners_str);
                 }
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.base.client_id);

@@ -76,17 +76,17 @@ set(SOURCES
     lib/surena/lib/rosalia/src/impl/serialization.c
     lib/surena/lib/rosalia/src/impl/timestamp.c
 
-    lib/surena/src/engines/randomengine.cpp
+    # lib/surena/src/engines/randomengine.cpp
     # lib/surena/src/engines/singlethreadedmcts.cpp
-    lib/surena/src/engines/uci_wrap.cpp
+    # lib/surena/src/engines/uci_wrap.cpp
     lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/games/twixt_pp.cpp
-    lib/surena/src/engine.cpp
+    # lib/surena/src/engine.cpp
     lib/surena/src/game.c
-    lib/surena/src/move_history.c
+    # lib/surena/src/move_history.c
 
     src/control/auth_manager.cpp
     src/control/client.cpp
@@ -100,7 +100,7 @@ set(SOURCES
     src/control/user_manager.cpp
 
     # src/engines/builtin_surena.cpp
-    src/engines/engine_manager.cpp
+    # src/engines/engine_manager.cpp //TODO REENABLE engine
 
     src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp
@@ -121,11 +121,11 @@ set(SOURCES
     src/meta_gui/config.cpp
     src/meta_gui/confirm_exit.cpp
     src/meta_gui/connection.cpp
-    src/meta_gui/engine.cpp
+    # src/meta_gui/engine.cpp //TODO REENABLE engine
     src/meta_gui/frontend_config.cpp
     src/meta_gui/game_config.cpp
     src/meta_gui/global_dockspace.cpp
-    src/meta_gui/history.cpp
+    # src/meta_gui/history.cpp //TODO REENABLE history
     src/meta_gui/lobby.cpp
     src/meta_gui/logs.cpp
     src/meta_gui/main_menu.cpp

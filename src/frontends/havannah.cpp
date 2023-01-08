@@ -58,8 +58,8 @@ namespace {
             .methods = NULL};
         const havannah_internal_methods* gi = NULL;
 
-        uint8_t pbuf_c = 0;
-        player_id pbuf = PLAYER_NONE;
+        player_id ptm = PLAYER_NONE;
+        player_id res = PLAYER_NONE;
 
         int size = 10;
 
@@ -129,19 +129,19 @@ namespace {
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
+                game_create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const havannah_internal_methods*)data.g.methods->internal_methods;
                 data.gi->get_size(&data.g, &data.size);
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
                 data.gi = NULL;
@@ -149,11 +149,11 @@ namespace {
                 dirty = false;
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                data.g.methods->import_state(&data.g, event.game_state.state);
+                game_import_state(&data.g, event.game_state.state);
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, data.pbuf, event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                game_make_move(&data.g, event.game_move.player, event.game_move.data);
                 dirty = true;
             } break;
             default: {
@@ -162,10 +162,18 @@ namespace {
         }
         event_destroy(&event);
         if (dirty) {
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
-            if (data.pbuf_c == 0) {
-                uint8_t pres;
-                data.g.methods->get_results(&data.g, &pres, &data.pbuf);
+            data.ptm = PLAYER_NONE;
+            data.res = PLAYER_NONE;
+            uint8_t pbuf_c;
+            const player_id* pbuf;
+            game_players_to_move(&data.g, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                game_get_results(&data.g, &pbuf_c, &pbuf);
+                if (pbuf_c > 0) {
+                    data.res = pbuf[0];
+                }
+            } else {
+                data.ptm = pbuf[0];
             }
         }
         return ERR_OK;
@@ -175,7 +183,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         //BUG this can perform a click after previous window resizing in the same loop, while operating on the not yet updated button positions/sizes
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         switch (event.type) {
@@ -210,7 +218,7 @@ namespace {
                                 if (data.board_buttons[y * board_sizer + x].hovered && data.board_buttons[y * board_sizer + x].mousedown && cp == 0) {
                                     uint64_t move_code = y | (x << 8);
                                     event_any es;
-                                    event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, move_code);
+                                    event_create_game_move(&es, data.ptm, game_e_create_move_sync_small(&data.g, move_code));
                                     event_queue_push(data.dd->outbox, &es);
                                 }
                                 data.board_buttons[y * board_sizer + x].mousedown = false;
@@ -229,7 +237,7 @@ namespace {
         data_repr& data = _get_repr(self);
         //TODO put button pos/size recalc into sdl resize event
         //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         // set button hovered
@@ -293,16 +301,16 @@ namespace {
             nvgRotate(dc, hex_angle / 2);
         }
         // colored board border for current/winning player
-        data.pbuf = HAVANNAH_PLAYER_NONE;
         nvgBeginPath(dc);
         if (data.g.methods == NULL) {
             nvgStrokeColor(dc, nvgRGB(161, 119, 67));
         } else {
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
-            if (data.pbuf_c == 0) {
-                data.g.methods->get_results(&data.g, &data.pbuf_c, &data.pbuf);
+            HAVANNAH_PLAYER color_player = (HAVANNAH_PLAYER)data.ptm;
+            if (data.ptm == PLAYER_NONE) {
+                color_player = (HAVANNAH_PLAYER)data.res;
+                //TODO second border around it to signify game is over
             }
-            switch (data.pbuf) {
+            switch (color_player) {
                 default:
                 case HAVANNAH_PLAYER_NONE: {
                     nvgStrokeColor(dc, nvgRGB(128, 128, 128));
@@ -314,8 +322,6 @@ namespace {
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                 } break;
             }
-            // actually we just want the ptm in there, so reste it back to that
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
         }
         nvgStrokeWidth(dc, flat_radius * 0.5);
         nvgMoveTo(dc, static_cast<float>(data.size * 2) * flat_radius, 0);
@@ -338,7 +344,7 @@ namespace {
                 }
                 float base_y = y * (fitting_hex_radius * 1.5);
                 nvgBeginPath(dc);
-                if (data.g.methods == NULL || data.pbuf_c == 0) {
+                if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
                     nvgFillColor(dc, nvgRGB(161, 119, 67));
                 } else {
                     nvgFillColor(dc, nvgRGB(240, 217, 181));
@@ -360,7 +366,7 @@ namespace {
                 data.gi->get_cell(&data.g, x, y, &cell_color);
                 switch (cell_color) {
                     case HAVANNAH_PLAYER_NONE: {
-                        if (data.board_buttons[y * board_sizer + x].hovered && data.pbuf > HAVANNAH_PLAYER_NONE) {
+                        if (data.board_buttons[y * board_sizer + x].hovered && data.ptm > HAVANNAH_PLAYER_NONE) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
                             nvgMoveTo(dc, data.button_size * 0.9, 0);

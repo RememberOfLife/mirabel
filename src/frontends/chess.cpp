@@ -42,8 +42,8 @@ namespace {
             .methods = NULL};
         const chess_internal_methods* gi = NULL;
 
-        uint8_t pbuf_c = 0;
-        player_id pbuf = PLAYER_NONE;
+        player_id ptm = PLAYER_NONE;
+        player_id res = PLAYER_NONE;
         uint32_t move_cnt = 0;
         move_code moves[CHESS_MAX_MOVES];
         player_id check = PLAYER_NONE;
@@ -162,29 +162,29 @@ namespace {
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
+                game_create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const chess_internal_methods*)data.g.methods->internal_methods;
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
                 dirty = false;
                 data.gi = NULL;
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                data.g.methods->import_state(&data.g, event.game_state.state);
+                game_import_state(&data.g, event.game_state.state);
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, data.pbuf, event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                game_make_move(&data.g, event.game_move.player, event.game_move.data);
                 dirty = true;
             } break;
             default: {
@@ -193,14 +193,23 @@ namespace {
         }
         event_destroy(&event);
         if (dirty) {
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
+            data.ptm = PLAYER_NONE;
+            data.res = PLAYER_NONE;
+            uint8_t pbuf_c;
+            const player_id* pbuf;
+            game_players_to_move(&data.g, &pbuf_c, &pbuf);
             data.move_map.clear();
-            if (data.pbuf_c == 0) {
-                uint8_t pres;
-                data.g.methods->get_results(&data.g, &pres, &data.pbuf);
+            if (pbuf_c == 0) {
+                game_get_results(&data.g, &pbuf_c, &pbuf);
+                if (pbuf_c > 0) {
+                    data.res = pbuf[0];
+                }
             } else {
-                data.g.methods->get_concrete_moves(&data.g, data.pbuf, &data.move_cnt, data.moves);
+                data.ptm = pbuf[0];
+                const move_data* mbuf;
+                game_get_concrete_moves(&data.g, data.ptm, &data.move_cnt, &mbuf);
                 for (int i = 0; i < data.move_cnt; i++) {
+                    data.moves[i] = mbuf[i].cl.code;
                     uint8_t m_from = (data.moves[i] >> 8) & 0xFF;
                     if (data.move_map.find(m_from) == data.move_map.end()) {
                         data.move_map.emplace(m_from, std::vector<uint8_t>{});
@@ -217,7 +226,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         //BUG this can perform a click after previous window resizing in the same loop, while operating on the not yet updated button positions/sizes
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         switch (event.type) {
@@ -271,7 +280,7 @@ namespace {
                                     CHESS_piece sp;
                                     data.gi->get_cell(&data.g, x, y, &sp);
                                     if (data.passive_pin && data.board_buttons[y][x].hovered) {
-                                        if (sp.player == data.pbuf) {
+                                        if (sp.player == data.ptm) {
                                             // if this pin was already pinned, then assume we hovered outside, so we can put it down on mouse up again
                                             data.hover_outside_of_pin = (data.mouse_pindx_x == x && data.mouse_pindx_y == y);
                                             // new pickup, drop old piece that was passive pinned
@@ -284,7 +293,7 @@ namespace {
                                             target_move = (data.mouse_pindx_x << 12) | (data.mouse_pindx_y << 8) | (x << 4) | (y);
                                             // do not set new pickup here, so that the pin gets cleared automatically
                                         }
-                                    } else if (data.board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == data.pbuf) {
+                                    } else if (data.board_buttons[y][x].hovered && sp.type != CHESS_PIECE_TYPE_NONE && sp.player == data.ptm) {
                                         // new pickup
                                         data.hover_outside_of_pin = false;
                                         new_pickup = true;
@@ -345,7 +354,11 @@ namespace {
                             } else {
                                 // open promotion menu on the target square, only if the move would be legal
                                 bool open_promotion = false;
-                                data.g.methods->get_concrete_moves(&data.g, data.pbuf, &data.move_cnt, data.moves);
+                                const move_data* mbuf;
+                                game_get_concrete_moves(&data.g, data.ptm, &data.move_cnt, &mbuf);
+                                for (int i = 0; i < data.move_cnt; i++) {
+                                    data.moves[i] = mbuf[i].cl.code;
+                                }
                                 for (int i = 0; i < data.move_cnt; i++) {
                                     if ((data.moves[i] & 0xFFFF) == target_move) {
                                         open_promotion = true;
@@ -364,7 +377,7 @@ namespace {
                         for (int i = 0; i < data.move_cnt; i++) {
                             if (data.moves[i] == target_move) {
                                 event_any es;
-                                event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, target_move);
+                                event_create_game_move(&es, data.ptm, game_e_create_move_sync_small(&data.g, target_move));
                                 event_queue_push(data.dd->outbox, &es);
                                 break;
                             }
@@ -384,7 +397,7 @@ namespace {
         }
         //TODO put button pos/size recalc into sdl resize event
         //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         // set button hovered
@@ -439,13 +452,11 @@ namespace {
         if (data.g.methods == NULL) {
             nvgStrokeColor(dc, nvgRGB(128, 128, 128));
         } else {
-            CHESS_PLAYER color_player = CHESS_PLAYER_NONE;
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
-            if (data.pbuf_c == 0) {
-                data.g.methods->get_results(&data.g, &data.pbuf_c, &data.pbuf);
+            CHESS_PLAYER color_player = (CHESS_PLAYER)data.ptm;
+            if (data.ptm == PLAYER_NONE) {
+                color_player = (CHESS_PLAYER)data.res;
                 nvgRect(dc, -2.5 * border_size, -2.5 * border_size, 8 * data.square_size + 5 * border_size, 8 * data.square_size + 5 * border_size);
             }
-            color_player = (CHESS_PLAYER)data.pbuf;
             switch (color_player) {
                 case CHESS_PLAYER_NONE: {
                     nvgStrokeColor(dc, nvgRGB(128, 128, 128));
@@ -456,9 +467,10 @@ namespace {
                 case CHESS_PLAYER_BLACK: {
                     nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                 } break;
+                case CHESS_PLAYER_COUNT: {
+                    assert(0);
+                } break;
             }
-            // actually we just want the ptm in there, so reste it back to that
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
         }
         nvgStroke(dc);
         for (int y = 0; y < 8; y++) {
@@ -479,7 +491,7 @@ namespace {
                             nvgBeginPath(dc);
                             nvgRect(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize);
                             int promotion_type = py * 2 + px + 2;
-                            int promotion_sprite_idx = data.pbuf * 6 - 6 + promotion_type - 1;
+                            int promotion_sprite_idx = data.ptm * 6 - 6 + promotion_type - 1;
                             NVGpaint promotion_sprite_paint = nvgImagePattern(dc, base_x + px * half_sqsize, base_y + py * half_sqsize, half_sqsize, half_sqsize, 0, data.sprites[promotion_sprite_idx], 0.5);
                             nvgFillPaint(dc, promotion_sprite_paint);
                             nvgFill(dc);

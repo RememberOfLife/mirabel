@@ -19,7 +19,7 @@
 #include "mirabel/game_wrap_plugin.h"
 #include "mirabel/game_wrap.h"
 #include "mirabel/log.h"
-#include "engines/engine_catalogue.hpp"
+// #include "engines/engine_catalogue.hpp" //TODO REENABLE engine
 #include "frontends/frontend_catalogue.hpp"
 #include "games/game_catalogue.hpp"
 
@@ -52,7 +52,7 @@ namespace Control {
             .data1 = NULL,
             .data2 = NULL,
         };
-        error_code ec = new_game->methods->create(new_game, &init_info); //TODO want to be able to null init_info?
+        error_code ec = game_create(new_game, &init_info); //TODO want to be able to null init_info?
         if (ec != ERR_OK) {
             //TODO  use proper shared log once it exists to show detailed error, or pass it outwards
             return NULL;
@@ -294,8 +294,8 @@ namespace Control {
             add_frontend(&tictactoe_fem);
             add_frontend(&twixt_pp_fem);
 
-            add_engine_methods(&randomengine_ebe);
-            add_engine_methods(&uci_wrap_ebe);
+            // add_engine_methods(&randomengine_ebe); //TODO REENABLE engine
+            // add_engine_methods(&uci_wrap_ebe); //TODO REENABLE engine
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist

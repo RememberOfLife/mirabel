@@ -34,8 +34,11 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Frontend Config", "CTRL + F", show_frontend_config_window)) {
                     show_frontend_config_window = !show_frontend_config_window;
                 }
-                if (ImGui::MenuItem("Engine", "CTRL + E", show_engine_window)) {
-                    show_engine_window = !show_engine_window;
+                { //TODO REENABLE engine
+                    // if (ImGui::MenuItem("Engine", "CTRL + E", show_engine_window)) {
+                    // show_engine_window = !show_engine_window;
+                    // }
+                    ImGui::MenuItem("Engine", "CTRL + E", false, false);
                 }
                 if (ImGui::MenuItem("Chat", "CTRL + T", show_chat_window)) {
                     show_chat_window = !show_chat_window;
@@ -43,8 +46,11 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Time Control", "CTRL + U", show_timectl_window)) {
                     show_timectl_window = !show_timectl_window;
                 }
-                if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
-                    show_history_window = !show_history_window;
+                { //TODO REENABLE history
+                    // if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
+                    //     show_history_window = !show_history_window;
+                    // }
+                    ImGui::MenuItem("History", "CTRL + H", false, false);
                 }
                 if (ImGui::MenuItem("Lobby", "CTRL + L", show_lobby_window)) {
                     show_lobby_window = !show_lobby_window;

@@ -89,7 +89,7 @@ namespace Engines {
 
         void game_load(game* target_game); // clones the game, unload is just game == NULL
         void game_state(const char* state);
-        void game_move(player_id player, move_code code);
+        void game_move(player_id player, move_data_sync data);
         void game_sync(void* data_start, void* data_end);
 
         void update();

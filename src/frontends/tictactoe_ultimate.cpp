@@ -34,8 +34,8 @@ namespace {
         frontend_display_data* dd;
         game g;
         const tictactoe_ultimate_internal_methods* gi;
-        uint8_t pbuf_c;
-        player_id pbuf;
+        player_id ptm = PLAYER_NONE;
+        player_id res = PLAYER_NONE;
         float button_size;
         float local_padding;
         float global_padding;
@@ -59,21 +59,19 @@ namespace {
     {
         self->data1 = malloc(sizeof(data_repr));
         data_repr& data = _get_repr(self);
-        data = (data_repr){
-            .dc = Control::main_client->nanovg_ctx,
-            .dd = display_data,
-            .g = (game){
-                .methods = NULL,
-            },
-            .gi = NULL,
-            .pbuf_c = 0,
-            .pbuf = PLAYER_NONE,
-            .button_size = 65,
-            .local_padding = 3,
-            .global_padding = 20,
-            .mx = 0,
-            .my = 0,
+        data.dc = Control::main_client->nanovg_ctx;
+        data.dd = display_data;
+        data.g = (game){
+            .methods = NULL,
         };
+        data.gi = NULL;
+        data.ptm = PLAYER_NONE;
+        data.res = PLAYER_NONE;
+        data.button_size = 65;
+        data.local_padding = 3;
+        data.global_padding = 20;
+        data.mx = 0;
+        data.my = 0;
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
                 for (int ly = 0; ly < 3; ly++) {
@@ -119,29 +117,29 @@ namespace {
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
+                game_create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const tictactoe_ultimate_internal_methods*)data.g.methods->internal_methods;
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
                 dirty = false;
                 data.gi = NULL;
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                data.g.methods->import_state(&data.g, event.game_state.state);
+                game_import_state(&data.g, event.game_state.state);
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, data.pbuf, event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                game_make_move(&data.g, event.game_move.player, event.game_move.data);
                 dirty = true;
             } break;
             default: {
@@ -150,10 +148,18 @@ namespace {
         }
         event_destroy(&event);
         if (dirty) {
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
-            if (data.pbuf_c == 0) {
-                uint8_t pres;
-                data.g.methods->get_results(&data.g, &pres, &data.pbuf);
+            data.ptm = PLAYER_NONE;
+            data.res = PLAYER_NONE;
+            uint8_t pbuf_c;
+            const player_id* pbuf;
+            game_players_to_move(&data.g, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                game_get_results(&data.g, &pbuf_c, &pbuf);
+                if (pbuf_c > 0) {
+                    data.res = pbuf[0];
+                }
+            } else {
+                data.ptm = pbuf[0];
             }
         }
         return ERR_OK;
@@ -163,7 +169,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         //TODO
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         switch (event.type) {
@@ -197,7 +203,7 @@ namespace {
                                         if (data.board_buttons[iy][ix].hovered && data.board_buttons[iy][ix].mousedown && cell_local == 0) {
                                             uint64_t move_code = ix | (iy << 4);
                                             event_any es;
-                                            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, move_code);
+                                            event_create_game_move(&es, data.ptm, game_e_create_move_sync_small(&data.g, move_code));
                                             event_queue_push(data.dd->outbox, &es);
                                         }
                                         data.board_buttons[iy][ix].mousedown = false;
@@ -218,7 +224,7 @@ namespace {
         data_repr& data = _get_repr(self);
         //TODO put button pos/size recalc into sdl resize event
         //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         // set button hovered
@@ -312,7 +318,7 @@ namespace {
                         nvgStrokeWidth(dc, data.button_size * 0.175);
                         nvgBeginPath(dc);
                         nvgRect(dc, base_x, base_y, data.button_size, data.button_size);
-                        if (data.g.methods != NULL && data.pbuf_c != 0 && (global_target == (((2 - gy) << 2) | gx) || global_target == ((3 << 2) | 3))) {
+                        if (data.g.methods != NULL && data.ptm != PLAYER_NONE && (global_target == (((2 - gy) << 2) | gx) || global_target == ((3 << 2) | 3))) {
                             nvgFillColor(dc, nvgRGB(240, 217, 181));
                         } else {
                             nvgFillColor(dc, nvgRGB(161, 119, 67));
@@ -340,7 +346,7 @@ namespace {
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
                             nvgCircle(dc, base_x + data.button_size / 2, base_y + data.button_size / 2, data.button_size * 0.3);
                             nvgStroke(dc);
-                        } else if (data.board_buttons[iy][ix].hovered && data.pbuf_c > 0) {
+                        } else if (data.board_buttons[iy][ix].hovered && data.ptm > PLAYER_NONE) {
                             nvgBeginPath(dc);
                             nvgFillColor(dc, nvgRGB(220, 197, 161));
                             nvgRect(dc, data.board_buttons[iy][ix].x + data.button_size * 0.05, data.board_buttons[iy][ix].y + data.button_size * 0.05, data.board_buttons[iy][ix].w - data.button_size * 0.1, data.board_buttons[iy][ix].h - data.button_size * 0.1);

@@ -54,7 +54,7 @@ namespace {
         char* g_name;
         char* g_fflags;
         uint8_t g_pov_c;
-        sbtn* g_pov_btns; // perspective player sel //TODO offer way to also use redact information to just show what this player would know if wanted
+        sbtn* g_pov_btns; //TODO offer way to also use redact information to just show what this player would know if wanted
         uint8_t g_pov_id;
         char* g_opts;
         //TODO legacy
@@ -63,13 +63,10 @@ namespace {
         uint64_t g_id;
         // float* g_eval_f;
         // player_id* g_eval_p;
-        player_id* g_ptm_buf;
         uint8_t g_ptm_c;
         sbtn* g_ptm_btns;
-        player_id* g_res_buf;
-        uint8_t g_res_c;
-        move_code* g_moves_buf;
         uint32_t g_moves_c;
+        move_code* g_moves_buf;
         char* g_res_str;
     };
 
@@ -111,13 +108,10 @@ namespace {
             .g_opts = NULL,
             .g_state = NULL,
             .g_print = NULL,
-            .g_ptm_buf = NULL,
             .g_ptm_c = 0,
             .g_ptm_btns = NULL,
-            .g_res_buf = NULL,
-            .g_res_c = 0,
-            .g_moves_buf = NULL,
             .g_moves_c = 0,
+            .g_moves_buf = NULL,
             .g_res_str = NULL,
         };
         return ERR_OK;
@@ -131,7 +125,7 @@ namespace {
         self->methods->process_event(self, e1);
         event_destroy(&e1);
         if (data.g.methods) {
-            data.g.methods->destroy(&data.g);
+            game_destroy(&data.g);
         }
         free(self->data1);
         return ERR_OK;
@@ -164,33 +158,34 @@ namespace {
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g_name = (char*)malloc(strlen(data.g.methods->game_name) + strlen(data.g.methods->variant_name) + strlen(data.g.methods->impl_name) + 64);
-                sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", data.g.methods->game_name, data.g.methods->variant_name, data.g.methods->impl_name, data.g.methods->version.major, data.g.methods->version.minor, data.g.methods->version.patch);
+                data.g_name = (char*)malloc(strlen(game_gname(&data.g)) + strlen(game_vname(&data.g)) + strlen(game_iname(&data.g)) + 64);
+                sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", game_gname(&data.g), game_vname(&data.g), game_iname(&data.g), game_version(&data.g).major, game_version(&data.g).minor, game_version(&data.g).patch);
                 {
-                    data.g_fflags = (char*)malloc(32); // 21
+                    data.g_fflags = (char*)malloc(32); // 23
                     sprintf(
                         data.g_fflags,
-                        "%c%c%c%c%c%c%s %s %s %s %s %s %s",
-                        data.g.methods->features.error_strings ? 'E' : '-',
-                        data.g.methods->features.options ? 'O' : '-',
-                        data.g.methods->features.serializable ? 'S' : '-',
-                        data.g.methods->features.legacy ? 'L' : '-',
-                        data.g.methods->features.random_moves ? 'R' : '-',
-                        data.g.methods->features.hidden_information ? 'H' : '-',
-                        data.g.methods->features.simultaneous_moves ? "Sm" : "--",
-                        // data.g.methods->features.big_moves ? "Bm" : "--", //TODO add format string arg
-                        data.g.methods->features.move_ordering ? "Om" : "--",
-                        data.g.methods->features.scores ? "Sc" : "--",
-                        data.g.methods->features.id ? "Id" : "--",
-                        data.g.methods->features.eval ? "Ev" : "--",
-                        data.g.methods->features.playout ? "Rp" : "--",
-                        data.g.methods->features.print ? "Pr" : "--"
-                        // data.g.methods->features.time ? "T" : "-" //TODO add format string arg
+                        "%c%c%c%c%c%c%s %s %s %s %s %s %s %s",
+                        game_ff(&data.g).error_strings ? 'E' : '-',
+                        game_ff(&data.g).options ? 'O' : '-',
+                        game_ff(&data.g).serializable ? 'S' : '-',
+                        game_ff(&data.g).legacy ? 'L' : '-',
+                        game_ff(&data.g).random_moves ? 'R' : '-',
+                        game_ff(&data.g).hidden_information ? 'H' : '-',
+                        game_ff(&data.g).simultaneous_moves ? "Sm" : "--",
+                        game_ff(&data.g).big_moves ? "Bm" : "--",
+                        game_ff(&data.g).move_ordering ? "Om" : "--",
+                        game_ff(&data.g).scores ? "Sc" : "--",
+                        game_ff(&data.g).id ? "Id" : "--",
+                        game_ff(&data.g).eval ? "Ev" : "--",
+                        game_ff(&data.g).playout ? "Rp" : "--",
+                        game_ff(&data.g).print ? "Pr" : "--"
+                        // game_ff(&data.g).time ? "T" : "-" //TODO add format string arg
                     );
                 }
-                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
+                game_create(&data.g, &event.game_load_methods.init_info);
                 {
-                    data.g_pov_c = (data.g.sizer.player_count + 1 + (data.g.methods->features.random_moves ? 1 : 0));
+                    game_player_count(&data.g, &data.g_pov_c);
+                    data.g_pov_c = 1;
                     data.g_pov_btns = (sbtn*)malloc(sizeof(sbtn) * data.g_pov_c);
                     for (uint8_t i = 0; i < data.g_pov_c; i++) {
                         data.g_pov_btns[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
@@ -198,48 +193,39 @@ namespace {
                         if (i == 0) {
                             sprintf(data.g_pov_btns[i].label, "NONE");
                             data.g_pov_btns[i].v.p = PLAYER_NONE;
-                        } else if (!data.g.methods->features.random_moves || i < data.g_pov_c - 1) {
+                        } else {
                             sprintf(data.g_pov_btns[i].label, "%03hhu", i);
                             data.g_pov_btns[i].v.p = i;
-                        } else {
-                            sprintf(data.g_pov_btns[i].label, "RAND");
-                            data.g_pov_btns[i].v.p = PLAYER_RAND;
                         }
                     }
                     data.g_pov_id = PLAYER_NONE;
                 }
-                if (data.g.methods->features.options) {
-                    data.g_opts = (char*)malloc(data.g.sizer.options_str);
+                data.g_opts = NULL;
+                if (game_ff(&data.g).options) {
                     size_t size_fill;
-                    data.g.methods->export_options(&data.g, &size_fill, data.g_opts);
+                    const char* gopts_local;
+                    game_export_options(&data.g, PLAYER_NONE, &size_fill, &gopts_local);
+                    data.g_opts = strdup(gopts_local);
                 }
-                // allocate buffers
-                data.g_state = (char*)malloc(data.g.sizer.state_str);
-                if (data.g.methods->features.print) {
-                    data.g_print = (char*)malloc(data.g.sizer.print_str);
-                }
+                data.g_state = NULL;
+                data.g_print = NULL;
                 {
-                    data.g_ptm_buf = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_players_to_move);
+                    // because pov_c already includes +1 for the NONE pov, we optionally reuse it later for the RAND ptm
                     data.g_ptm_c = 0;
-                    data.g_ptm_btns = (sbtn*)malloc(sizeof(sbtn) * data.g.sizer.max_players_to_move);
-                    for (uint8_t i = 0; i < data.g.sizer.max_players_to_move; i++) {
+                    data.g_ptm_btns = (sbtn*)malloc(sizeof(sbtn) * data.g_pov_c);
+                    for (uint8_t i = 0; i < data.g_pov_c; i++) {
                         data.g_ptm_btns[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
                         data.g_ptm_btns[i].label = (char*)malloc(8);
                     }
                 }
-                data.g_res_buf = (player_id*)malloc(sizeof(player_id) * data.g.sizer.max_results);
-                data.g_res_c = 0;
-                data.g_moves_buf = (move_code*)malloc(sizeof(move_code) * data.g.sizer.max_moves);
                 data.g_moves_c = 0;
-                {
-                    data.g_res_str = (char*)malloc(data.g.sizer.max_results * 4);
-                    data.g_res_str[0] = '\0';
-                }
+                data.g_moves_buf = NULL;
+                data.g_res_str = NULL;
                 data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
                 data.dirty = false;
@@ -266,27 +252,22 @@ namespace {
                     for (uint8_t i = 0; i < data.g_ptm_c; i++) {
                         free(data.g_ptm_btns[i].label);
                     }
-                    free(data.g_ptm_buf);
                     free(data.g_ptm_btns);
-                    data.g_ptm_buf = NULL;
                     data.g_ptm_c = 0;
                     data.g_ptm_btns = NULL;
                 }
-                free(data.g_res_buf);
-                data.g_res_buf = NULL;
-                data.g_res_c = 0;
+                data.g_moves_c = 0;
                 free(data.g_moves_buf);
                 data.g_moves_buf = NULL;
-                data.g_moves_c = 0;
                 free(data.g_res_str);
                 data.g_res_str = NULL;
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                data.g.methods->import_state(&data.g, event.game_state.state);
+                game_import_state(&data.g, event.game_state.state);
                 data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, event.game_move.player, event.game_move.code);
+                game_make_move(&data.g, event.game_move.player, event.game_move.data);
                 data.dirty = true;
             } break;
             default: {
@@ -351,37 +332,52 @@ namespace {
         }
         if (data.dirty) {
             size_t size_fill;
-            data.g.methods->export_state(&data.g, &size_fill, data.g_state);
-            if (data.g.methods->features.print) {
-                data.g.methods->print(&data.g, &size_fill, data.g_print);
+            const char* str_buf;
+            game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
+            free(data.g_state);
+            data.g_state = strdup(str_buf);
+            if (game_ff(&data.g).print) {
+                game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
+                free(data.g_print);
+                data.g_print = strdup(str_buf);
             }
-            if (data.g.methods->features.id) {
-                data.g.methods->id(&data.g, &data.g_id);
+            if (game_ff(&data.g).id) {
+                game_id(&data.g, &data.g_id);
             }
             //TODO eval
-            data.g.methods->players_to_move(&data.g, &data.g_ptm_c, data.g_ptm_buf);
-            data.g.methods->get_results(&data.g, &data.g_res_c, data.g_res_buf);
+            const player_id* player_buf;
+            game_players_to_move(&data.g, &data.g_ptm_c, &player_buf);
             if (data.g_ptm_c > 0) {
                 // update ptm soft buttons
                 for (uint8_t i = 0; i < data.g_ptm_c; i++) {
-                    sprintf(data.g_ptm_btns[i].label, "%03hhu", data.g_ptm_buf[i]);
-                    data.g_ptm_btns[i].v.p = data.g_ptm_buf[i];
+                    if (player_buf[i] == PLAYER_RAND) {
+                        sprintf(data.g_ptm_btns[i].label, "RAND");
+                    } else {
+                        sprintf(data.g_ptm_btns[i].label, "%03hhu", player_buf[i]);
+                    }
+                    data.g_ptm_btns[i].v.p = player_buf[i];
                 }
                 // generate moves if pov is to move
                 if (data.g_pov_id != PLAYER_NONE) {
                     // check if pov is actually to move
                     for (uint8_t i = 0; i < data.g_ptm_c; i++) {
-                        if (data.g_ptm_buf[i] == data.g_pov_id) {
-                            data.g.methods->get_concrete_moves(&data.g, data.g_pov_id, &data.g_moves_c, data.g_moves_buf);
+                        if (player_buf[i] == data.g_pov_id) {
+                            //TODO generate moves for the player, need buf?
+                            // game_get_concrete_moves(&data.g, data.g_pov_id, &data.g_moves_c, data.g_moves_buf);
                         }
                     }
                 }
             }
-            if (data.g_res_c > 0) {
+            uint8_t u8_fill;
+            game_get_results(&data.g, &u8_fill, &player_buf);
+            free(data.g_res_str);
+            data.g_res_str = NULL;
+            if (u8_fill > 0) {
+                data.g_res_str = (char*)malloc(u8_fill * 4);
                 char* res_str = data.g_res_str;
-                for (uint8_t i = 0; i < data.g_res_c; i++) {
-                    res_str += sprintf(res_str, "%03hhu", data.g_res_buf[i]);
-                    if (i < data.g_res_c - 1) {
+                for (uint8_t i = 0; i < u8_fill; i++) {
+                    res_str += sprintf(res_str, "%03hhu", player_buf[i]);
+                    if (i < u8_fill - 1) {
                         res_str += sprintf(res_str, " ");
                     }
                 }
@@ -417,15 +413,15 @@ namespace {
             cumX += btn.w + data.button_hmargin;
         }
         yrow += 5;
-        if (data.g.methods->features.options) {
+        if (game_ff(&data.g).options) {
             yrow += 2;
         }
         yrow += 2;
-        if (data.g.methods->features.id) {
+        if (game_ff(&data.g).id) {
             yrow += 2;
         }
         // simulate multiline print
-        if (data.g.methods->features.print) {
+        if (game_ff(&data.g).print) {
             char* strstart = data.g_print;
             char* strend = strchr(strstart, '\n');
             while (strend != NULL) {
@@ -533,7 +529,7 @@ namespace {
         yrow += 2;
         internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
-        if (data.g.methods->features.options) {
+        if (game_ff(&data.g).options) {
             yrow_prev = yrow;
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
@@ -553,7 +549,7 @@ namespace {
         yrow += 2;
         internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
-        if (data.g.methods->features.id) {
+        if (game_ff(&data.g).id) {
             yrow_prev = yrow;
             char id_str[20];
             sprintf(id_str, "0x%016lx", data.g_id);
@@ -566,7 +562,7 @@ namespace {
             internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
-        if (data.g.methods->features.print) {
+        if (game_ff(&data.g).print) {
             yrow_prev = yrow;
             nvgBeginPath(dc);
             char* strstart = data.g_print;
@@ -618,7 +614,7 @@ namespace {
 
         //TODO render all available moves for the selected ptm, or none at all if not selected
 
-        if (data.g_res_c > 0) {
+        if (data.g_res_str != NULL) {
             yrow_prev = yrow;
             nvgBeginPath(dc);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);

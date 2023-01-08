@@ -85,19 +85,21 @@ namespace {
         //TODO proper state editor
         // temporary state str display
         //TODO expose state string in a proper way
-        static char* state_str = NULL;
+        const size_t state_size = 1024; //TODO remover overflow danger
+        static char* state_str = (char*)malloc(state_size);
         static uint64_t state_step = 0;
         static bool changed = false;
         if (state_step != Control::main_client->game_step) {
             free(state_str);
-            state_str = (char*)malloc(rgame->sizer.state_str);
-            size_t _len;
-            rgame->methods->export_state(rgame, &_len, state_str);
+            size_t size_fill;
+            const char* state_str_local;
+            game_export_state(rgame, PLAYER_NONE, &size_fill, &state_str_local);
+            state_str = strdup(state_str_local);
             state_step = Control::main_client->game_step;
             changed = false;
         }
         if (state_str) {
-            if (ImGui::InputText("state", state_str, rgame->sizer.state_str)) {
+            if (ImGui::InputText("state", state_str, state_size)) {
                 changed |= true;
             }
             if (changed) {
@@ -122,18 +124,23 @@ namespace {
 
         const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
         const char* result_options[4] = {"DRAW", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
-        player_id pbuf;
         uint8_t pbuf_c;
-        rgame->methods->players_to_move(rgame, &pbuf_c, &pbuf);
+        const player_id* pbuf;
+        player_id player_out;
+        game_players_to_move(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = TWIXT_PP_PLAYER_NONE;
+            player_out = TWIXT_PP_PLAYER_NONE;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("player to move: %s", move_options[pbuf]);
-        rgame->methods->get_results(rgame, &pbuf_c, &pbuf);
+        ImGui::Text("player to move: %s", move_options[player_out]);
+        game_get_results(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = TWIXT_PP_PLAYER_INVALID;
+            player_out = TWIXT_PP_PLAYER_INVALID;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("result: %s", result_options[pbuf]);
+        ImGui::Text("result: %s", result_options[player_out]);
         return ERR_OK;
     }
 

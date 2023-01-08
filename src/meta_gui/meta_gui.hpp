@@ -82,8 +82,8 @@ namespace MetaGui {
     extern uint32_t running_fem_idx;
     extern void* frontend_load_options;
 
-    extern bool show_engine_window;
-    void engine_window(bool* p_open);
+    // extern bool show_engine_window; //TODO REENABLE engine
+    // void engine_window(bool* p_open); //TODO REENABLE engine
 
     extern bool show_chat_window;
     void chat_window(bool* p_open);
@@ -95,8 +95,8 @@ namespace MetaGui {
     extern bool show_timectl_window;
     void timectl_window(bool* p_open);
 
-    extern bool show_history_window;
-    void history_window(bool* p_open);
+    // extern bool show_history_window; //TODO REENABLE history
+    // void history_window(bool* p_open); //TODO REENABLE history
 
     extern bool show_plugins_window;
     void plugins_window(bool* p_open);

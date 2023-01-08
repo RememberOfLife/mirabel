@@ -163,13 +163,11 @@ void event_create_game_state(event_any* e, uint32_t client_id, const char* state
 
 typedef struct event_game_move_s {
     event base;
-    uint32_t sync;
     player_id player;
-    move_code code;
-    //TODO use move string instead?
+    move_data_sync data;
 } event_game_move;
 
-void event_create_game_move(event_any* e, uint32_t sync, player_id player, move_code code);
+void event_create_game_move(event_any* e, player_id player, move_data_sync data);
 
 typedef struct event_frontend_load_s {
     event base;

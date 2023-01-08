@@ -210,23 +210,24 @@ namespace MetaGui {
                 return;
             }
             uint8_t ptm_c;
-            player_id ptm[254];
-            tg->methods->players_to_move(tg, &ptm_c, ptm);
+            const player_id* ptm;
+            game_players_to_move(tg, &ptm_c, &ptm);
             if (ptm_c == 0) {
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ illegal move attempt on finished game");
                 return;
             }
-            move_code mc;
-            error_code ec = tg->methods->get_move_code(tg, ptm[0], cmsg, &mc); //HACK //BUG use correct player
+            move_data_sync mc;
+            error_code ec = game_get_move_data(tg, ptm[0], cmsg, &mc); //HACK //BUG use correct player
             if (ec != ERR_OK) {
                 char err_msg[64];
-                sprintf(err_msg, "~ illegal move attempt, error: (%d) %s\n", ec, tg->methods->features.error_strings ? tg->methods->get_last_error(tg) : "");
+                sprintf(err_msg, "~ illegal move attempt, error: (%d) %s\n", ec, game_ff(tg).error_strings ? game_get_last_error(tg) : "");
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), err_msg);
                 return;
             }
             event_any es;
-            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, ptm[0], mc); //HACK //BUG use correct player
+            event_create_game_move(&es, ptm[0], mc); //HACK //BUG use correct player
             event_queue_push(&Control::main_client->inbox, &es);
+            game_e_move_sync_destroy(tg, mc);
             return;
         }
         chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ unknown command\n");

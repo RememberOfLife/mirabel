@@ -41,7 +41,7 @@ const serialization_layout sl_game_load[] = {
     {SL_TYPE_STRING, offsetof(event_game_load, base_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, variant_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, impl_name)},
-    {SL_TYPE_CUSTOM, offsetof(event_game_load, init_info), .ext.serializer = sl_game_init_info_serializer},
+    {SL_TYPE_COMPLEX, offsetof(event_game_load, init_info), .ext.layout = sl_game_init_info},
     {SL_TYPE_STOP},
 };
 
@@ -51,9 +51,8 @@ const serialization_layout sl_game_state[] = {
 };
 
 const serialization_layout sl_game_move[] = {
-    {SL_TYPE_U32, offsetof(event_game_move, sync)},
     {SL_TYPE_U8, offsetof(event_game_move, player)},
-    {SL_TYPE_U64, offsetof(event_game_move, code)},
+    {SL_TYPE_COMPLEX, offsetof(event_game_move, data), .ext.layout = sl_move_data_sync},
     {SL_TYPE_STOP},
 };
 
@@ -306,14 +305,14 @@ void event_create_game_load(event_any* e, const char* base_name, const char* var
     e->game_load.base_name = base_name ? strdup(base_name) : NULL;
     e->game_load.variant_name = variant_name ? strdup(variant_name) : NULL;
     e->game_load.impl_name = impl_name ? strdup(impl_name) : NULL;
-    sl_game_init_info_serializer(GSIT_COPY, &init_info, &e->game_load.init_info, NULL, NULL);
+    layout_serializer(GSIT_COPY, sl_game_init_info, &init_info, &e->game_load.init_info, NULL, NULL);
 }
 
 void event_create_game_load_methods(event_any* e, const game_methods* methods, game_init init_info)
 {
     event_create_type(e, EVENT_TYPE_GAME_LOAD_METHODS);
     e->game_load_methods.methods = methods;
-    sl_game_init_info_serializer(GSIT_COPY, &init_info, &e->game_load_methods.init_info, NULL, NULL);
+    layout_serializer(GSIT_COPY, sl_game_init_info, &init_info, &e->game_load_methods.init_info, NULL, NULL);
 }
 
 void event_create_game_state(event_any* e, uint32_t client_id, const char* state)
@@ -322,12 +321,11 @@ void event_create_game_state(event_any* e, uint32_t client_id, const char* state
     e->game_state.state = state ? strdup(state) : NULL;
 }
 
-void event_create_game_move(event_any* e, uint32_t sync, player_id player, move_code code)
+void event_create_game_move(event_any* e, player_id player, move_data_sync data)
 {
     event_create_type(e, EVENT_TYPE_GAME_MOVE);
-    e->game_move.sync = sync;
     e->game_move.player = player;
-    e->game_move.code = code;
+    layout_serializer(GSIT_COPY, sl_move_data_sync, &data, &e->game_move.data, NULL, NULL);
 }
 
 void event_create_frontend_load(event_any* e, void* frontend)

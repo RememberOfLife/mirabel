@@ -23,18 +23,23 @@ namespace {
         //TODO expose state string
         //TODO proper state editor
         const char* check_options[4] = {"-", "WHITE", "BLACK"};
-        player_id pbuf;
         uint8_t pbuf_c;
-        rgame->methods->players_to_move(rgame, &pbuf_c, &pbuf);
+        const player_id* pbuf;
+        player_id player_out;
+        game_players_to_move(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = PLAYER_NONE;
+            player_out = PLAYER_NONE;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("player to move: %s", check_options[pbuf]);
-        rgame->methods->get_results(rgame, &pbuf_c, &pbuf);
+        ImGui::Text("player to move: %s", check_options[player_out]);
+        game_get_results(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = PLAYER_NONE;
+            player_out = PLAYER_NONE;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("result: %s", check_options[pbuf]);
+        ImGui::Text("result: %s", check_options[player_out]);
         //TODO expose winningcondition
         return ERR_OK;
     }
@@ -49,7 +54,7 @@ namespace {
 
 const game_wrap chess_gw{
     .game_api_version = SURENA_GAME_API_VERSION,
-    .backend = &chess_gbe,
+    .backend = &chess_standard_gbe,
     .features = (game_wrap_feature_flags){
         .options = false,
         .runtime = true,

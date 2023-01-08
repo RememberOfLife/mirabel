@@ -201,7 +201,7 @@ namespace Engines {
         }
     }
 
-    void EngineManager::game_move(player_id player, move_code code)
+    void EngineManager::game_move(player_id player, move_data_sync data)
     {
         engine_event e;
         for (int i = 0; i < engines.size(); i++) {

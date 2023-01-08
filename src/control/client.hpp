@@ -13,7 +13,7 @@
 #include "mirabel/frontend.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
-#include "engines/engine_manager.hpp"
+// #include "engines/engine_manager.hpp" //TODO REENABLE engine
 #include "network/network_client.hpp"
 
 namespace Control {
@@ -49,7 +49,7 @@ namespace Control {
         frontend_display_data dd;
         frontend* the_frontend;
         frontend* empty_fe;
-        Engines::EngineManager* engine_mgr;
+        // Engines::EngineManager* engine_mgr; //TODO REENABLE engine
 
         float dpi_scale;
 

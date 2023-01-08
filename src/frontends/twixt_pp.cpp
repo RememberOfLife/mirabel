@@ -40,8 +40,8 @@ namespace {
             .wy = 24,
         };
 
-        uint8_t pbuf_c = 0;
-        player_id pbuf = PLAYER_NONE;
+        player_id ptm = PLAYER_NONE;
+        player_id res = PLAYER_NONE;
 
         float padding = 38;
         float button_size = 10;
@@ -134,7 +134,7 @@ namespace {
         if (tp != TWIXT_PP_PLAYER_NONE && tp != TWIXT_PP_PLAYER_INVALID) {
             np = tp;
         }
-        if (np == TWIXT_PP_PLAYER_NONE || np == TWIXT_PP_PLAYER_INVALID || np != data.pbuf) {
+        if (np == TWIXT_PP_PLAYER_NONE || np == TWIXT_PP_PLAYER_INVALID || np != data.ptm) {
             return;
         }
         uint8_t collisions;
@@ -223,21 +223,21 @@ namespace {
             } break;
             case EVENT_TYPE_GAME_LOAD_METHODS: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = event.game_load_methods.methods;
                 data.g.data1 = NULL;
                 data.g.data2 = NULL;
-                data.g.methods->create(&data.g, &event.game_load_methods.init_info);
+                game_create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const twixt_pp_internal_methods*)data.g.methods->internal_methods;
                 //TODO could use internal method for this
                 size_t size_fill;
-                char* opts_export = (char*)malloc(data.g.sizer.options_str);
-                data.g.methods->export_options(&data.g, &size_fill, opts_export);
+                const char* opts_export;
+                game_export_options(&data.g, PLAYER_NONE, &size_fill, &opts_export);
                 {
                     // parse twixt opts: format y/x+ or s+
                     data.opts.wy = 0;
-                    char* wp = opts_export;
+                    const char* wp = opts_export;
                     while (*wp != '\0' && *wp != '/' && *wp != '+') {
                         data.opts.wy *= 10;
                         data.opts.wy += (*wp - '0');
@@ -263,7 +263,7 @@ namespace {
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
-                    data.g.methods->destroy(&data.g);
+                    game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
                 data.gi = NULL;
@@ -277,11 +277,11 @@ namespace {
                 dirty = false;
             } break;
             case EVENT_TYPE_GAME_STATE: {
-                data.g.methods->import_state(&data.g, event.game_state.state);
+                game_import_state(&data.g, event.game_state.state);
                 dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
-                data.g.methods->make_move(&data.g, data.pbuf, event.game_move.code); //HACK //BUG need to use proper player to move, put it into move event
+                game_make_move(&data.g, event.game_move.player, event.game_move.data);
                 dirty = true;
             } break;
             default: {
@@ -290,10 +290,18 @@ namespace {
         }
         event_destroy(&event);
         if (dirty) {
-            data.g.methods->players_to_move(&data.g, &data.pbuf_c, &data.pbuf);
-            if (data.pbuf_c == 0) {
-                uint8_t pres;
-                data.g.methods->get_results(&data.g, &pres, &data.pbuf);
+            data.ptm = PLAYER_NONE;
+            data.res = PLAYER_NONE;
+            uint8_t pbuf_c;
+            const player_id* pbuf;
+            game_players_to_move(&data.g, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                game_get_results(&data.g, &pbuf_c, &pbuf);
+                if (pbuf_c > 0) {
+                    data.res = pbuf[0];
+                }
+            } else {
+                data.ptm = pbuf[0];
             }
         }
         return ERR_OK;
@@ -303,7 +311,7 @@ namespace {
     {
         data_repr& data = _get_repr(self);
         //BUG this can perform a click after previous window resizing in the same loop, while operating on the not yet updated button positions/sizes
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         switch (event.type) {
@@ -332,7 +340,7 @@ namespace {
                         data.gi->can_swap(&data.g, &data.swap_hover);
                         if (data.swap_hover && data.swap_down && event.type == SDL_MOUSEBUTTONUP) {
                             event_any es;
-                            event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, TWIXT_PP_MOVE_SWAP);
+                            event_create_game_move(&es, data.ptm, game_e_create_move_sync_small(&data.g, TWIXT_PP_MOVE_SWAP));
                             event_queue_push(data.dd->outbox, &es);
                             data.swap_down = false;
                         }
@@ -344,7 +352,7 @@ namespace {
                             if ((x == 0 && y == 0) || (x == data.opts.wx - 1 && y == 0) || (x == 0 && y == data.opts.wy - 1) || (x == data.opts.wx - 1 && y == data.opts.wy - 1)) {
                                 data.board_buttons[y * data.opts.wx + x].hovered = false;
                             }
-                            if (((x == 0 || x == data.opts.wx - 1) && data.pbuf == TWIXT_PP_PLAYER_WHITE) || (y == 0 || y == data.opts.wy - 1) && data.pbuf == TWIXT_PP_PLAYER_BLACK) {
+                            if (((x == 0 || x == data.opts.wx - 1) && data.ptm == TWIXT_PP_PLAYER_WHITE) || (y == 0 || y == data.opts.wy - 1) && data.ptm == TWIXT_PP_PLAYER_BLACK) {
                                 data.board_buttons[y * data.opts.wx + x].hovered = false;
                             }
                             if (event.type == SDL_MOUSEBUTTONUP) {
@@ -353,7 +361,7 @@ namespace {
                                 if (data.board_buttons[y * data.opts.wx + x].hovered && data.board_buttons[y * data.opts.wx + x].mousedown && node_player == TWIXT_PP_PLAYER_NONE) {
                                     uint64_t move_code = (x << 8) | y;
                                     event_any es;
-                                    event_create_game_move(&es, EVENT_GAME_SYNC_DEFAULT, data.pbuf, move_code);
+                                    event_create_game_move(&es, data.ptm, game_e_create_move_sync_small(&data.g, move_code));
                                     event_queue_push(data.dd->outbox, &es);
                                 }
                                 data.board_buttons[y * data.opts.wx + x].mousedown = false;
@@ -408,7 +416,7 @@ namespace {
 
         //TODO put button pos/size recalc into sdl resize event
         //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.pbuf_c == 0) {
+        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
         for (int y = 0; y < data.opts.wy; y++) {
@@ -421,7 +429,7 @@ namespace {
                 if ((x == 0 && y == 0) || (x == data.opts.wx - 1 && y == 0) || (x == 0 && y == data.opts.wy - 1) || (x == data.opts.wx - 1 && y == data.opts.wy - 1)) {
                     data.board_buttons[y * data.opts.wx + x].hovered = false;
                 }
-                if (((x == 0 || x == data.opts.wx - 1) && data.pbuf == TWIXT_PP_PLAYER_WHITE) || (y == 0 || y == data.opts.wy - 1) && data.pbuf == TWIXT_PP_PLAYER_BLACK) {
+                if (((x == 0 || x == data.opts.wx - 1) && data.ptm == TWIXT_PP_PLAYER_WHITE) || (y == 0 || y == data.opts.wy - 1) && data.ptm == TWIXT_PP_PLAYER_BLACK) {
                     data.board_buttons[y * data.opts.wx + x].hovered = false;
                 }
             }
@@ -738,7 +746,7 @@ namespace {
                 }
                 if (data.board_buttons[y * data.opts.wx + x].hovered == true && np == TWIXT_PP_PLAYER_NONE) {
                     if (data.board_buttons[y * data.opts.wx + x].mousedown) {
-                        if (data.pbuf == TWIXT_PP_PLAYER_WHITE) {
+                        if (data.ptm == TWIXT_PP_PLAYER_WHITE) {
                             nvgBeginPath(dc);
                             nvgCircle(dc, base_x, base_y, data.button_size - data.button_size * 0.1);
                             nvgFillColor(dc, nvgRGBA(236, 236, 236, 150));
@@ -764,7 +772,7 @@ namespace {
 
                         nvgBeginPath(dc);
                         nvgStrokeWidth(dc, data.button_size * 0.3);
-                        if (data.pbuf == TWIXT_PP_PLAYER_WHITE) {
+                        if (data.ptm == TWIXT_PP_PLAYER_WHITE) {
                             nvgStrokeColor(dc, nvgRGB(236, 236, 236));
                         } else {
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));
@@ -784,7 +792,7 @@ namespace {
                         nvgBeginPath(dc);
                         nvgCircle(dc, base_x, base_y, data.button_size - data.button_size * 0.1);
                         nvgStrokeWidth(dc, data.button_size * 0.15); // TODO maybe this thinner to increase contrast for white backline hovers
-                        if (data.pbuf == TWIXT_PP_PLAYER_WHITE) {
+                        if (data.ptm == TWIXT_PP_PLAYER_WHITE) {
                             nvgStrokeColor(dc, nvgRGB(236, 236, 236));
                         } else {
                             nvgStrokeColor(dc, nvgRGB(25, 25, 25));

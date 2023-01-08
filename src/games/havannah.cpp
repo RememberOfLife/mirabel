@@ -62,18 +62,23 @@ namespace {
         // white is actually displayed red per default, but because that might be configurable it is kept uniform here
         const char* move_options[4] = {"-", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
         const char* result_options[4] = {"DRAW", "WHITE", "BLACK", "-"}; // needs 2 dashes for none AND invalid
-        player_id pbuf;
         uint8_t pbuf_c;
-        rgame->methods->players_to_move(rgame, &pbuf_c, &pbuf);
+        const player_id* pbuf;
+        player_id player_out;
+        game_players_to_move(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = HAVANNAH_PLAYER_NONE;
+            player_out = HAVANNAH_PLAYER_NONE;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("player to move: %s", move_options[pbuf]);
-        rgame->methods->get_results(rgame, &pbuf_c, &pbuf);
+        ImGui::Text("player to move: %s", move_options[player_out]);
+        game_get_results(rgame, &pbuf_c, &pbuf);
         if (pbuf_c == 0) {
-            pbuf = HAVANNAH_PLAYER_INVALID;
+            player_out = HAVANNAH_PLAYER_INVALID;
+        } else {
+            player_out = pbuf[0];
         }
-        ImGui::Text("result: %s", result_options[pbuf]);
+        ImGui::Text("result: %s", result_options[player_out]);
         //TODO expose winningcondition
         return ERR_OK;
     }
@@ -88,7 +93,7 @@ namespace {
 
 const game_wrap havannah_gw{
     .game_api_version = SURENA_GAME_API_VERSION,
-    .backend = &havannah_gbe,
+    .backend = &havannah_standard_gbe,
     .features = (game_wrap_feature_flags){
         .options = true,
         .runtime = true,

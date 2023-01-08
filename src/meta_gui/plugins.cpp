@@ -57,7 +57,7 @@ namespace MetaGui {
                             }
                             ImGui::PopStyleColor(3);
                         } else {
-                            bool unload_disabled = (Control::main_client->the_game != NULL || Control::main_client->engine_mgr->engines.size() > 0 || Control::main_client->the_frontend != Control::main_client->empty_fe || MetaGui::game_base_idx > 0 || MetaGui::fe_selection_idx != UINT32_MAX);
+                            bool unload_disabled = (Control::main_client->the_game != NULL || /* //TODO REENABLE engine Control::main_client->engine_mgr->engines.size() > 0 ||*/ Control::main_client->the_frontend != Control::main_client->empty_fe || MetaGui::game_base_idx > 0 || MetaGui::fe_selection_idx != UINT32_MAX);
                             if (unload_disabled) {
                                 ImGui::BeginDisabled();
                             }
