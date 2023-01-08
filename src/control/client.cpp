@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 4, 0};
+    const semver client_version = semver{0, 4, 1};
 
     Client* main_client = NULL;
 
@@ -436,6 +436,7 @@ namespace Control {
                                         .opts = tg_opts,
                                         .legacy = NULL,
                                         .state = tg_state,
+                                        .sync_ctr = the_game->sync_ctr,
                                     },
                                 },
                             };

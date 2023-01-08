@@ -49,8 +49,6 @@ namespace Control {
                 event_any es;
                 if (the_game) {
                     // send sync info to user, load + state import
-                    es.base.client_id = client_id;
-                    event_queue_push(send_queue, &es);
                     size_t game_state_buffer_len;
                     const char* game_state_buffer;
                     game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
@@ -61,14 +59,16 @@ namespace Control {
                                 .opts = game_options,
                                 .legacy = NULL,
                                 .state = game_state_buffer,
+                                .sync_ctr = the_game->sync_ctr,
                             },
                         },
                     };
                     event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
+                    es.base.client_id = client_id;
                 } else {
                     event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
-                    event_queue_push(send_queue, &es);
                 }
+                event_queue_push(send_queue, &es);
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
                 event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);

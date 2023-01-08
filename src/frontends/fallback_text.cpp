@@ -185,7 +185,7 @@ namespace {
                 game_create(&data.g, &event.game_load_methods.init_info);
                 {
                     game_player_count(&data.g, &data.g_pov_c);
-                    data.g_pov_c = 1;
+                    data.g_pov_c += 1; // for PLAYER_NONE
                     data.g_pov_btns = (sbtn*)malloc(sizeof(sbtn) * data.g_pov_c);
                     for (uint8_t i = 0; i < data.g_pov_c; i++) {
                         data.g_pov_btns[i] = (sbtn){.x = -100, .y = -100, .w = 0, .h = 0, .hovered = false, .mousedown = false};
