@@ -37,7 +37,7 @@ typedef struct /*grand_unified_*/ frontend_display_data_s {
 
     uint64_t ms_tick; // updated at the beginning of the frame before supplying events/inputs, and again before update
 
-    // privacy view information
+    // privacy view information; use for displaying pov and which player to use to make moves
     player_id view;
     // framebuffer height and width
     float fbw;

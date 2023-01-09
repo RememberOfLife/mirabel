@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 4, 1};
+    const semver client_version = semver{0, 4, 2};
 
     Client* main_client = NULL;
 
@@ -261,7 +261,7 @@ namespace Control {
         float fh_px = h_px;
 
         //TODO somehow needs to be initialized to a sane value before event loops on frontend, but not here?
-        dd.view = PLAYER_NONE; //TODO use correct view
+        dd.view = PLAYER_NONE;
         dd.fbw = imgui_viewport->Size.x;
         dd.fbh = imgui_viewport->Size.y;
         dd.x = fx_px - x_px;
@@ -344,6 +344,7 @@ namespace Control {
                         if (network_send_queue && e.base.client_id == EVENT_CLIENT_NONE) {
                             event_queue_push(network_send_queue, &e);
                         }
+                        dd.view = PLAYER_NONE;
                     } break;
                     case EVENT_TYPE_GAME_UNLOAD: {
                         if (MetaGui::game_impl_idx > 0) {
@@ -757,7 +758,6 @@ namespace Control {
             w_px = imgui_viewport->WorkSize.x;
             h_px = imgui_viewport->WorkSize.y;
 
-            dd.view = PLAYER_NONE; //TODO use correct view
             dd.fbw = imgui_viewport->Size.x;
             dd.fbh = imgui_viewport->Size.y;
             // frontend only gets the frontend metagui dockspace

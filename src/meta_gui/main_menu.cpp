@@ -1,10 +1,13 @@
 #include <cstdint>
+#include <cstdio>
 
 #include "imgui.h"
+#include "surena/game.h"
 
 #include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/frontend.h"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -78,6 +81,51 @@ namespace MetaGui {
                 }
                 ImGui::EndMenu();
             }
+
+            char pov_str[12];
+            if (Control::main_client->dd.view == PLAYER_NONE) {
+                sprintf(pov_str, "POV NONE");
+            } else if (Control::main_client->dd.view == PLAYER_RAND) {
+                sprintf(pov_str, "POV RAND");
+            } else {
+                sprintf(pov_str, "POV %03hhu", Control::main_client->dd.view);
+            }
+            ImVec2 size = ImGui::CalcTextSize(pov_str);
+            ImGui::SameLine();
+            ImGuiStyle& style = ImGui::GetStyle();
+            size.x += style.FramePadding.x * 2 + style.ItemSpacing.x;
+            ImGui::SetCursorPos(ImVec2(ImGui::GetIO().DisplaySize.x - size.x, 0));
+            bool enable_switch = Control::main_client->the_game == NULL;
+            if (enable_switch) {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::BeginMenu(pov_str) && !enable_switch) {
+                uint8_t pc;
+                game_player_count(Control::main_client->the_game, &pc);
+                for (uint8_t i = 0; i < pc + 1 + (game_ff(Control::main_client->the_game).random_moves ? 1 : 0); i++) {
+                    //TODO the selection here should probably be an event and not directly set
+                    //TODO also the available selectables, and if they are actually available, should be controlled by the lobby, otherwise disabled
+                    if (i == 0) {
+                        if (ImGui::MenuItem("NONE")) {
+                            Control::main_client->dd.view = PLAYER_NONE;
+                        }
+                    } else if (i == pc && game_ff(Control::main_client->the_game).random_moves) {
+                        if (ImGui::MenuItem("RAND")) {
+                            Control::main_client->dd.view = PLAYER_RAND;
+                        }
+                    } else {
+                        sprintf(pov_str, "%03hhu", i);
+                        if (ImGui::MenuItem(pov_str)) {
+                            Control::main_client->dd.view = i;
+                        }
+                    }
+                }
+                ImGui::EndMenu();
+            }
+            if (enable_switch) {
+                ImGui::EndDisabled();
+            }
+
             ImGui::EndMainMenuBar();
         }
     }
