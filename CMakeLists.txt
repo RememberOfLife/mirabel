@@ -66,15 +66,8 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
-    lib/surena/lib/rosalia/src/impl/base64.c
     lib/surena/lib/rosalia/src/impl/config.c
     lib/surena/lib/rosalia/src/impl/jobs.cpp
-    lib/surena/lib/rosalia/src/impl/noise.c
-    lib/surena/lib/rosalia/src/impl/rand.c
-    lib/surena/lib/rosalia/src/impl/raw_stream.c
-    lib/surena/lib/rosalia/src/impl/semver.c
-    lib/surena/lib/rosalia/src/impl/serialization.c
-    lib/surena/lib/rosalia/src/impl/timestamp.c
 
     # lib/surena/src/engines/randomengine.cpp
     # lib/surena/src/engines/singlethreadedmcts.cpp
@@ -87,6 +80,13 @@ set(SOURCES
     # lib/surena/src/engine.cpp
     lib/surena/src/game.c
     # lib/surena/src/move_history.c
+
+    lib/surena/src/rosa_impl/base64.c
+    lib/surena/src/rosa_impl/noise.c
+    lib/surena/src/rosa_impl/rand.c
+    lib/surena/src/rosa_impl/semver.c
+    lib/surena/src/rosa_impl/serialization.c
+    lib/surena/src/rosa_impl/timestamp.c
 
     src/control/auth_manager.cpp
     src/control/client.cpp

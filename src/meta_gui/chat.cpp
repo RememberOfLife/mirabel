@@ -216,7 +216,7 @@ namespace MetaGui {
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ illegal move attempt on finished game");
                 return;
             }
-            move_data_sync mc;
+            move_data_sync* mc;
             error_code ec = game_get_move_data(tg, ptm[0], cmsg, &mc); //HACK //BUG use correct player
             if (ec != ERR_OK) {
                 char err_msg[64];
@@ -225,9 +225,8 @@ namespace MetaGui {
                 return;
             }
             event_any es;
-            event_create_game_move(&es, ptm[0], mc); //HACK //BUG use correct player
+            event_create_game_move(&es, ptm[0], *mc); //HACK //BUG use correct player
             event_queue_push(&Control::main_client->inbox, &es);
-            game_e_move_sync_destroy(tg, mc);
             return;
         }
         chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ unknown command\n");

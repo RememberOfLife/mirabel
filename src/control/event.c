@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "rosalia/config.h"
-#include "rosalia/raw_stream.h"
 #include "rosalia/serialization.h"
 #include "surena/game.h"
 
