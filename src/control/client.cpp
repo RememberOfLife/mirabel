@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 4, 3};
+    const semver client_version = semver{0, 4, 4};
 
     Client* main_client = NULL;
 
@@ -427,9 +427,11 @@ namespace Control {
                             const char* tg_opts = NULL;
                             if (game_ff(the_game).options) {
                                 game_export_options(the_game, PLAYER_NONE, &size_fill, &tg_opts);
+                                tg_opts = strdup(tg_opts);
                             }
                             const char* tg_state;
                             game_export_state(the_game, PLAYER_NONE, &size_fill, &tg_state);
+                            tg_state = strdup(tg_state);
                             game_init init_info = (game_init){
                                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                                 .source = {
