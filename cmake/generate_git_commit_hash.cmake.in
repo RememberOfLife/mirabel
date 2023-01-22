@@ -1,10 +1,18 @@
 file(TOUCH "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash")
 file(READ "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash" present_commit_hash)
 string(STRIP "${dollar}{present_commit_hash}" present_commit_hash)
-if("${GIT_FOUND}" STREQUAL "TRUE") # Policy CMP0012 confusion
-    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD OUTPUT_VARIABLE commit_hash OUTPUT_STRIP_TRAILING_WHITESPACE)
-    execute_process(COMMAND "${GIT_EXECUTABLE}" diff-index --quiet --cached HEAD -- RESULT_VARIABLE dirty_status OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if("${dollar}{dirty_status}" STREQUAL "0")
+execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse --is-inside-work-tree RESULT_VARIABLE is_repo OUTPUT_QUIET ERROR_QUIET)
+set(valid_repo "FALSE")
+if("${GIT_FOUND}" STREQUAL "TRUE" AND "${dollar}{is_repo}" STREQUAL "0") # Policy CMP0012 confusion
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD OUTPUT_VARIABLE commit_hash RESULT_VARIABLE no_commits OUTPUT_STRIP_TRAILING_WHITESPACE  ERROR_QUIET)
+    if("${dollar}{no_commits}" STREQUAL "0")
+        set(valid_repo "TRUE")
+    endif()
+endif()
+if("${dollar}{valid_repo}" STREQUAL "TRUE")
+    execute_process(COMMAND "${GIT_EXECUTABLE}" status --porcelain OUTPUT_VARIABLE dirty_status OUTPUT_STRIP_TRAILING_WHITESPACE)
+    #execute_process(COMMAND "${GIT_EXECUTABLE}" diff-index --quiet --cached HEAD -- RESULT_VARIABLE dirty_status OUTPUT_STRIP_TRAILING_WHITESPACE) # this doesnt notice new files or unstaged dirty changes, porcelain does
+    if("${dollar}{dirty_status}" STREQUAL "")
         set(dirty_status "false")
     else()
         set(dirty_status "true")
@@ -16,11 +24,16 @@ if("${GIT_FOUND}" STREQUAL "TRUE") # Policy CMP0012 confusion
         "#define GIT_COMMIT_HASH \"${dollar}{commit_hash}\"\n"
         "#define GIT_COMMIT_DIRTY ${dollar}{dirty_status}\n"
     )
-    list(JOIN git_commit_hash_header "" git_commit_hash_header)
 else()
-    set(raw_commit_hash "emptiness")
-    set(git_commit_hash_header "#define GIT_COMMIT_HASH NULL")
+    set(raw_commit_hash "null")
+    set(git_commit_hash_header
+        "#pragma once\n"
+        "#include <stdbool.h>\n"
+        "#define GIT_COMMIT_HASH NULL\n"
+        "#define GIT_COMMIT_DIRTY true\n"
+    )
 endif()
+list(JOIN git_commit_hash_header "" git_commit_hash_header)
 if(NOT "${dollar}{raw_commit_hash}" STREQUAL "${dollar}{present_commit_hash}")
     file(WRITE "${CMAKE_BINARY_DIR}/build_generated/raw_git_commit_hash" "${dollar}{raw_commit_hash}\n")
     file(WRITE "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h" "${dollar}{git_commit_hash_header}")
