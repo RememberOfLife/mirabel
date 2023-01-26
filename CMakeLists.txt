@@ -74,6 +74,7 @@ set(SOURCES
     # lib/surena/src/engines/uci_wrap.cpp
     lib/surena/src/games/chess.cpp
     lib/surena/src/games/havannah.cpp
+    lib/surena/src/games/quasar.cpp
     lib/surena/src/games/tictactoe_ultimate.cpp
     lib/surena/src/games/tictactoe.cpp
     lib/surena/src/games/twixt_pp.cpp
@@ -106,6 +107,7 @@ set(SOURCES
     src/frontends/empty_frontend.cpp
     src/frontends/fallback_text.cpp
     src/frontends/havannah.cpp
+    src/frontends/quasar.cpp
     src/frontends/tictactoe_ultimate.cpp
     src/frontends/tictactoe.cpp
     src/frontends/twixt_pp.cpp

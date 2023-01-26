@@ -109,7 +109,7 @@ namespace MetaGui {
                         if (ImGui::MenuItem("NONE")) {
                             Control::main_client->dd.view = PLAYER_NONE;
                         }
-                    } else if (i == pc && game_ff(Control::main_client->the_game).random_moves) {
+                    } else if (i == pc + 1 && game_ff(Control::main_client->the_game).random_moves) {
                         if (ImGui::MenuItem("RAND")) {
                             Control::main_client->dd.view = PLAYER_RAND;
                         }
