@@ -24,12 +24,6 @@ namespace {
         return *((data_repr*)(self->data1));
     }
 
-    const char* get_last_error(frontend* self)
-    {
-        //TODO
-        return NULL;
-    }
-
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
         self->data1 = malloc(sizeof(data_repr));
@@ -106,8 +100,9 @@ namespace {
 
 const frontend_methods empty_fem{
     .frontend_name = "<empty>", // violates naming convention, but this one is special
-    .version = semver{0, 1, 1},
+    .version = semver{1, 0, 0},
     .features = frontend_feature_flags{
+        .error_strings = false,
         .options = false,
     },
 
@@ -117,7 +112,7 @@ const frontend_methods empty_fem{
     .opts_display = NULL,
     .opts_destroy = NULL,
 
-    .get_last_error = get_last_error,
+    .get_last_error = NULL,
 
     .create = create,
     .destroy = destroy,

@@ -53,12 +53,6 @@ namespace {
         return *((data_repr*)(self->data1));
     }
 
-    const char* get_last_error(frontend* self)
-    {
-        //TODO
-        return NULL;
-    }
-
     error_code create(frontend* self, frontend_display_data* display_data, void* options_struct)
     {
         self->data1 = malloc(sizeof(data_repr));
@@ -145,7 +139,7 @@ namespace {
             } break;
         }
         event_destroy(&event);
-        if (dirty) {
+        if (dirty) { //TODO move dirty into update and give game a perspective player then if dd.view changes game is dirty..
             data.done = true;
             data.res = PLAYER_NONE;
             uint8_t pbuf_c;
@@ -160,7 +154,7 @@ namespace {
                 data.done = false;
             }
             bool can_play = false;
-            if (data.dd->view == 1 || data.dd->view == 2) {
+            if (data.done == false && (data.dd->view == 1 || data.dd->view == 2)) {
                 uint8_t played;
                 data.gi->get_played(&data.g, data.dd->view, &played);
                 if (played == ROCKPAPERSCISSORS_NONE) {
@@ -273,6 +267,7 @@ namespace {
                 data.gi->get_played(&data.g, i + 1, &played[i]);
             }
         }
+        //TODO depending on dd.view hide other players played thing if we shouldnt be able to see it
         char played_lut[] = "-?RPS";
         char num_label[4];
         num_label[0] = played_lut[played[0]];
@@ -351,8 +346,9 @@ namespace {
 
 const frontend_methods rockpaperscissors_fem{
     .frontend_name = "rockpaperscissors_fem",
-    .version = semver{0, 1, 0},
+    .version = semver{0, 2, 0},
     .features = frontend_feature_flags{
+        .error_strings = false,
         .options = false,
     },
 
@@ -362,7 +358,7 @@ const frontend_methods rockpaperscissors_fem{
     .opts_display = NULL,
     .opts_destroy = NULL,
 
-    .get_last_error = get_last_error,
+    .get_last_error = NULL,
 
     .create = create,
     .destroy = destroy,

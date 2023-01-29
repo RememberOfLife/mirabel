@@ -55,6 +55,11 @@ const serialization_layout sl_game_move[] = {
     {SL_TYPE_STOP},
 };
 
+const serialization_layout sl_game_sync[] = {
+    {SL_TYPE_BLOB, offsetof(event_game_move, data)},
+    {SL_TYPE_STOP},
+};
+
 //BUG currently this just leaks memory
 const serialization_layout sl_ssl_thumbprint[] = {
     // {SL_TYPE_SIZE, offsetof(event_ssl_thumbprint, thumbprint_len)},
@@ -148,6 +153,7 @@ const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_GAME_UNLOAD] = sl_baseonly,
     [EVENT_TYPE_GAME_STATE] = sl_game_state,
     [EVENT_TYPE_GAME_MOVE] = sl_game_move,
+    [EVENT_TYPE_GAME_SYNC] = sl_game_sync,
 
     [EVENT_TYPE_FRONTEND_LOAD] = sl_baseonly,
     [EVENT_TYPE_FRONTEND_UNLOAD] = sl_baseonly,
@@ -325,6 +331,12 @@ void event_create_game_move(event_any* e, player_id player, move_data_sync data)
     event_create_type(e, EVENT_TYPE_GAME_MOVE);
     e->game_move.player = player;
     layout_serializer(GSIT_COPY, sl_move_data_sync, &data, &e->game_move.data, NULL, NULL);
+}
+
+void event_create_game_sync(event_any* e, blob* data)
+{
+    event_create_type(e, EVENT_TYPE_GAME_SYNC);
+    ls_primitive_blob_serializer(GSIT_COPY, data, &e->game_sync.data, NULL, NULL);
 }
 
 void event_create_frontend_load(event_any* e, void* frontend)

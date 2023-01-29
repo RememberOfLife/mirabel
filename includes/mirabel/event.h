@@ -34,7 +34,7 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     EVENT_TYPE_GAME_UNLOAD,
     EVENT_TYPE_GAME_STATE,
     EVENT_TYPE_GAME_MOVE,
-    //TODO EVENT_TYPE_GAME_SYNC,
+    EVENT_TYPE_GAME_SYNC,
     // client only events
     EVENT_TYPE_FRONTEND_LOAD,
     EVENT_TYPE_FRONTEND_UNLOAD,
@@ -169,6 +169,13 @@ typedef struct event_game_move_s {
 
 void event_create_game_move(event_any* e, player_id player, move_data_sync data);
 
+typedef struct event_game_sync_s {
+    event base;
+    blob data;
+} event_game_sync;
+
+void event_create_game_sync(event_any* e, blob* data);
+
 typedef struct event_frontend_load_s {
     event base;
     void* frontend;
@@ -239,6 +246,7 @@ typedef union event_any_u {
     event_game_load_methods game_load_methods;
     event_game_state game_state;
     event_game_move game_move;
+    event_game_sync game_sync;
     event_frontend_load frontend_load;
     event_ssl_thumbprint ssl_thumbprint;
     event_auth auth;
