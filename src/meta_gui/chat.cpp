@@ -216,8 +216,18 @@ namespace MetaGui {
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ illegal move attempt on finished game");
                 return;
             }
+            //TODO offer positional arg for player id instead of just using dd.view always
+            player_id the_ptm = Control::main_client->dd.view;
+            if (the_ptm == PLAYER_NONE) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not move as PLAYER_NONE");
+                return;
+            }
+            if (the_ptm == PLAYER_RAND && game_ff(Control::main_client->the_game).random_moves == false) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not move as PLAYER_RAND on game without random moves");
+                return;
+            }
             move_data_sync* mc;
-            error_code ec = game_get_move_data(tg, ptm[0], cmsg, &mc); //HACK //BUG use correct player
+            error_code ec = game_get_move_data(tg, the_ptm, cmsg, &mc);
             if (ec != ERR_OK) {
                 char err_msg[64];
                 sprintf(err_msg, "~ illegal move attempt, error: (%d) %s\n", ec, game_ff(tg).error_strings ? game_get_last_error(tg) : "");
@@ -225,7 +235,7 @@ namespace MetaGui {
                 return;
             }
             event_any es;
-            event_create_game_move(&es, ptm[0], *mc); //HACK //BUG use correct player
+            event_create_game_move(&es, the_ptm, *mc);
             event_queue_push(&Control::main_client->inbox, &es);
             return;
         }

@@ -302,6 +302,7 @@ namespace {
                         if (event.type == SDL_MOUSEBUTTONUP) {
                             if (data.g_pov_btns[i].hovered && data.g_pov_btns[i].mousedown) {
                                 data.g_pov_id = i;
+                                data.dirty = true;
                             }
                             data.g_pov_btns[i].mousedown = false;
                         }
@@ -313,6 +314,7 @@ namespace {
                         if (event.type == SDL_MOUSEBUTTONUP) {
                             if (data.g_ptm_btns[i].hovered && data.g_ptm_btns[i].mousedown) {
                                 data.g_pov_id = data.g_ptm_btns[i].v.p;
+                                data.dirty = true;
                             }
                             data.g_ptm_btns[i].mousedown = false;
                         }
@@ -639,7 +641,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 6, 0},
+    .version = semver{1, 6, 1},
     .features = frontend_feature_flags{
         .options = false,
     },

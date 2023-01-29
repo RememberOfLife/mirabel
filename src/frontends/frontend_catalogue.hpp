@@ -12,6 +12,8 @@ extern const frontend_methods havannah_fem;
 
 extern const frontend_methods quasar_fem;
 
+extern const frontend_methods rockpaperscissors_fem;
+
 extern const frontend_methods tictactoe_ultimate_fem;
 extern const frontend_methods tictactoe_fem;
 

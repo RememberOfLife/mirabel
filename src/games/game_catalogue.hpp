@@ -8,6 +8,8 @@ extern const game_wrap havannah_gw;
 
 #include "surena/games/quasar.h"
 
+#include "surena/games/rockpaperscissors.h"
+
 extern const game_wrap tictactoe_ultimate_gw;
 extern const game_wrap tictactoe_gw;
 
