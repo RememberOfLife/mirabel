@@ -6,6 +6,7 @@
 
 #include <SDL2/SDL.h>
 #include "imgui.h"
+#include "rosalia/noise.h"
 
 #include "control/client.hpp"
 #include "mirabel/event_queue.h"
@@ -191,6 +192,7 @@ namespace MetaGui {
         chat_log.clear();
     }
 
+    //TODO coin and roll and others should really be handles by the server and not here
     void chat_process_cmd(const char* msg)
     {
         size_t msg_len = strlen(msg);
@@ -198,6 +200,19 @@ namespace MetaGui {
             return;
         }
         const char* cmsg = msg + 1;
+        if (strncmp(cmsg, "coin", 4) == 0) {
+            const char* coin_result = squirrelnoise5(Control::main_client->dd.ms_tick, 0) % 2 == 0 ? "HEADS" : "TAILS";
+            char coin_msg[100];
+            sprintf(coin_msg, "coin flipped: %s\n", coin_result);
+            if (Control::main_client->network_send_queue) {
+                event_any es;
+                event_create_chat_msg(&es, 0, 0, 0, coin_msg);
+                event_queue_push(Control::main_client->network_send_queue, &es);
+            } else {
+                chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), coin_msg);
+            }
+            return;
+        }
         if (strncmp(cmsg, "move", 4) == 0) {
             if (msg_len <= 6) {
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ usage: /move <move_str>");
@@ -237,6 +252,54 @@ namespace MetaGui {
             event_any es;
             event_create_game_move(&es, the_ptm, *mc);
             event_queue_push(&Control::main_client->inbox, &es);
+            return;
+        }
+        if (strncmp(cmsg, "roll", 4) == 0) {
+            // roll n
+            // roll ndm
+            // to roll 1 die [1,n] or n dice [1,m] and print individual results as well as point sum
+            if (msg_len <= 6) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ usage: /roll <n> or /roll <n>d<m>");
+                return;
+            }
+            cmsg = msg + 6; //TODO why is this 6 and not 5???
+            uint32_t die_count;
+            uint32_t die_faces;
+            int rc = sscanf(cmsg, "%ud%u", &die_count, &die_faces);
+            if (rc != 2) {
+                die_count = 1;
+                rc = sscanf(cmsg, "%u", &die_faces);
+                if (rc != 1) {
+                    chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not parse die face count as u32");
+                    return;
+                }
+            }
+            if (die_count == 0 || die_faces == 0 || die_faces > 100) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ die count and faces must be > 0 and die count <= 100");
+                return;
+            }
+
+            char* roll_msg = (char*)malloc(die_count * 12 + 20);
+            uint32_t sum = 0;
+            char* roll_cbuf = roll_msg;
+            for (uint32_t i = 0; i < die_count; i++) {
+                uint32_t part = squirrelnoise5(i, Control::main_client->dd.ms_tick) % die_faces + 1; //TODO //BUG //HACK this has modulo bias
+                roll_cbuf += sprintf(roll_cbuf, "%u", part);
+                sum += part;
+                if (i < die_count - 1) {
+                    roll_cbuf += sprintf(roll_cbuf, "+");
+                }
+            }
+            roll_cbuf += sprintf(roll_cbuf, "=%u", sum);
+
+            if (Control::main_client->network_send_queue) {
+                event_any es;
+                event_create_chat_msg(&es, 0, 0, 0, roll_msg);
+                event_queue_push(Control::main_client->network_send_queue, &es);
+            } else {
+                chat_msg_add(local_msg_id_ctr++, 0, SDL_GetTicks64(), roll_msg);
+            }
+            free(roll_msg);
             return;
         }
         chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ unknown command\n");
