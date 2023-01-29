@@ -39,6 +39,8 @@ namespace {
         frontend_display_data* dd;
         game g;
         const rockpaperscissors_internal_methods* gi;
+        bool dirty = true;
+        player_id view = PLAYER_NONE;
         bool done = false;
         player_id res = PLAYER_NONE;
         float btn_size;
@@ -63,6 +65,8 @@ namespace {
             .methods = NULL,
         };
         data.gi = NULL;
+        data.dirty = true;
+        data.view = data.dd->view;
         data.done = false;
         data.res = PLAYER_NONE;
         data.btn_size = 150;
@@ -115,56 +119,33 @@ namespace {
                 data.g.data2 = NULL;
                 game_create(&data.g, &event.game_load_methods.init_info);
                 data.gi = (const rockpaperscissors_internal_methods*)data.g.methods->internal_methods;
-                dirty = true;
+                data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_UNLOAD: {
                 if (data.g.methods) {
                     game_destroy(&data.g);
                 }
                 data.g.methods = NULL;
-                dirty = false;
+                data.dirty = false;
                 data.gi = NULL;
             } break;
             case EVENT_TYPE_GAME_STATE: {
                 game_import_state(&data.g, event.game_state.state);
-                dirty = true;
+                data.dirty = true;
             } break;
             case EVENT_TYPE_GAME_MOVE: {
                 game_make_move(&data.g, event.game_move.player, event.game_move.data);
-                dirty = true;
+                data.dirty = true;
             } break;
-            //TODO SYNC DATA event and processing
+            case EVENT_TYPE_GAME_SYNC: {
+                game_import_sync_data(&data.g, event.game_sync.data);
+                data.dirty = true;
+            };
             default: {
                 // pass
             } break;
         }
         event_destroy(&event);
-        if (dirty) { //TODO move dirty into update and give game a perspective player then if dd.view changes game is dirty..
-            data.done = true;
-            data.res = PLAYER_NONE;
-            uint8_t pbuf_c;
-            const player_id* pbuf;
-            game_players_to_move(&data.g, &pbuf_c, &pbuf);
-            if (pbuf_c == 0) {
-                game_get_results(&data.g, &pbuf_c, &pbuf);
-                if (pbuf_c > 0) {
-                    data.res = pbuf[0];
-                }
-            } else {
-                data.done = false;
-            }
-            bool can_play = false;
-            if (data.done == false && (data.dd->view == 1 || data.dd->view == 2)) {
-                uint8_t played;
-                data.gi->get_played(&data.g, data.dd->view, &played);
-                if (played == ROCKPAPERSCISSORS_NONE) {
-                    can_play = true;
-                }
-            }
-            for (int i = 0; i < 3; i++) {
-                data.btns[i].visible = can_play;
-            }
-        }
         return ERR_OK;
     }
 
@@ -225,6 +206,37 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
+        if (data.dd->view != data.view) {
+            data.dirty = true;
+            data.view = data.dd->view;
+        }
+        if (data.dirty == true && data.g.methods != NULL) {
+            data.done = true;
+            data.res = PLAYER_NONE;
+            uint8_t pbuf_c;
+            const player_id* pbuf;
+            game_players_to_move(&data.g, &pbuf_c, &pbuf);
+            if (pbuf_c == 0) {
+                game_get_results(&data.g, &pbuf_c, &pbuf);
+                if (pbuf_c > 0) {
+                    data.res = pbuf[0];
+                }
+            } else {
+                data.done = false;
+            }
+            bool can_play = false;
+            if (data.done == false && (data.dd->view == 1 || data.dd->view == 2)) {
+                uint8_t played;
+                data.gi->get_played(&data.g, data.dd->view, &played);
+                if (played == ROCKPAPERSCISSORS_NONE) {
+                    can_play = true;
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                data.btns[i].visible = can_play;
+            }
+            data.dirty = false;
+        }
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
@@ -265,9 +277,11 @@ namespace {
         if (data.g.methods != NULL) {
             for (int i = 0; i < 2; i++) {
                 data.gi->get_played(&data.g, i + 1, &played[i]);
+                if (data.done == false && played[i] != ROCKPAPERSCISSORS_NONE && (data.dd->view != (i + 1) && data.dd->view != PLAYER_NONE)) {
+                    played[i] = ROCKPAPERSCISSORS_ANY;
+                }
             }
         }
-        //TODO depending on dd.view hide other players played thing if we shouldnt be able to see it
         char played_lut[] = "-?RPS";
         char num_label[4];
         num_label[0] = played_lut[played[0]];
@@ -346,7 +360,7 @@ namespace {
 
 const frontend_methods rockpaperscissors_fem{
     .frontend_name = "rockpaperscissors_fem",
-    .version = semver{0, 2, 0},
+    .version = semver{0, 3, 0},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

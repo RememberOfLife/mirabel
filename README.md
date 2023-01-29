@@ -94,6 +94,7 @@ Collect more general resources:
 * network open on "localhost" crashes on sdl poll??
 
 ## todo
+* game sync data event processing in client and server
 * make sure all moves are properly deleted everywhere
 * change up main menu bar and introduce some more categories (and placeholders for future features)
   * change window titles?

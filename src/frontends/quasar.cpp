@@ -217,8 +217,6 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
-        //TODO put button pos/size recalc into sdl resize event
-        //TODO when reloading the game after a game is done, the hover does not reset
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
@@ -231,6 +229,7 @@ namespace {
             if (data.g.methods == 0 || data.ptm == PLAYER_NONE) {
                 data.btns[i].hovered = false;
                 data.btns[i].mousedown = false;
+                data.btns[i].visible = false;
             } else {
                 data.btns[i].update(mX, mY);
             }
@@ -335,7 +334,7 @@ namespace {
 
 const frontend_methods quasar_fem{
     .frontend_name = "quasar",
-    .version = semver{0, 1, 1},
+    .version = semver{0, 1, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,
