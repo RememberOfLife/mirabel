@@ -389,11 +389,6 @@ namespace {
         if (data.auto_size) {
             data.square_size = (data.dd->h < data.dd->w ? data.dd->h : data.dd->w) / 8.75;
         }
-        //TODO put button pos/size recalc into sdl resize event
-        //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
-            return ERR_OK;
-        }
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
@@ -414,7 +409,11 @@ namespace {
                 data.board_buttons[y][x].x = static_cast<float>(x) * (data.square_size);
                 data.board_buttons[y][x].y = (7 * data.square_size) - static_cast<float>(y) * (data.square_size);
                 data.board_buttons[y][x].s = data.square_size;
-                data.board_buttons[y][x].update(mX, mY);
+                if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
+                    data.board_buttons[y][x].hovered = false;
+                } else {
+                    data.board_buttons[y][x].update(mX, mY);
+                }
                 if (data.board_buttons[y][x].hovered && (data.mouse_pindx_x != x || data.mouse_pindx_y != y)) {
                     data.hover_outside_of_pin |= true;
                 }
@@ -667,7 +666,7 @@ namespace {
 
 const frontend_methods chess_fem{
     .frontend_name = "chess",
-    .version = semver{0, 2, 1},
+    .version = semver{0, 2, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

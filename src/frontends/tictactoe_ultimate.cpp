@@ -218,21 +218,17 @@ namespace {
         data_repr& data = _get_repr(self);
         //TODO put button pos/size recalc into sdl resize event
         //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
-            return ERR_OK;
-        }
         // set button hovered
         int mX = data.mx;
         int mY = data.my;
         mX -= data.dd->w / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
         mY -= data.dd->h / 2 - (9 * data.button_size + 6 * data.local_padding + 2 * data.global_padding) / 2;
-        uint8_t global_target;
-        data.gi->get_global_target(&data.g, &global_target);
+        uint8_t global_target = ((3 << 3) | 3);
+        if (data.g.methods != NULL && data.ptm != PLAYER_NONE) {
+            data.gi->get_global_target(&data.g, &global_target);
+        }
         for (int gy = 0; gy < 3; gy++) {
             for (int gx = 0; gx < 3; gx++) {
-                if (global_target != (((2 - gy) << 2) | gx) && global_target != ((3 << 2) | 3)) {
-                    continue;
-                }
                 for (int ly = 0; ly < 3; ly++) {
                     for (int lx = 0; lx < 3; lx++) {
                         int ix = gx * 3 + lx;
@@ -241,7 +237,12 @@ namespace {
                         data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].y = static_cast<float>(gy) * (3 * data.button_size + 2 * data.local_padding + data.global_padding) + static_cast<float>(ly) * (data.button_size + data.local_padding);
                         data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].w = data.button_size;
                         data.board_buttons[8 - (gy * 3 + ly)][gx * 3 + lx].h = data.button_size;
-                        data.board_buttons[iy][ix].update(mX, mY);
+                        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
+                            data.board_buttons[iy][ix].hovered = false;
+                            data.board_buttons[iy][ix].mousedown = false;
+                        } else {
+                            data.board_buttons[iy][ix].update(mX, mY);
+                        }
                     }
                 }
             }
@@ -376,7 +377,7 @@ namespace {
 
 const frontend_methods tictactoe_ultimate_fem{
     .frontend_name = "tictactoe_ultimate",
-    .version = semver{0, 2, 1},
+    .version = semver{0, 2, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

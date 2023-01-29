@@ -201,8 +201,6 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
-        //TODO put button pos/size recalc into sdl resize event
-        //TODO when reloading the game after a game is done, the hover does not reset
         if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
             return ERR_OK;
         }
@@ -217,7 +215,12 @@ namespace {
                 data.board_buttons[y][x].y = (2 * data.button_size + 2 * data.padding) - static_cast<float>(y) * (data.button_size + data.padding);
                 data.board_buttons[y][x].w = data.button_size;
                 data.board_buttons[y][x].h = data.button_size;
-                data.board_buttons[y][x].update(mX, mY);
+                if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
+                    data.board_buttons[y][x].hovered = false;
+                    data.board_buttons[y][x].mousedown = false;
+                } else {
+                    data.board_buttons[y][x].update(mX, mY);
+                }
             }
         }
         return ERR_OK;
@@ -305,7 +308,7 @@ namespace {
 
 const frontend_methods tictactoe_fem{
     .frontend_name = "tictactoe",
-    .version = semver{0, 2, 1},
+    .version = semver{0, 2, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

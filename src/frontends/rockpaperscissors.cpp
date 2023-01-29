@@ -246,12 +246,12 @@ namespace {
             data.btns[i].x = (-(3 * data.btn_size + 2 * data.btn_padding) / 2) + i * data.btn_size + i * data.btn_padding;
             data.btns[i].w = data.btn_size;
             data.btns[i].h = data.btn_size;
-            if (data.g.methods == 0 || data.done == true) {
+            if (data.g.methods == NULL || data.done == true) {
                 data.btns[i].hovered = false;
                 data.btns[i].mousedown = false;
                 data.btns[i].visible = false;
             } else {
-                data.btns[i].update(mX, mY); //TODO port this reset to the other frontends so they work properly too
+                data.btns[i].update(mX, mY);
             }
         }
         return ERR_OK;
@@ -273,6 +273,7 @@ namespace {
         nvgFill(dc);
         nvgTranslate(dc, data.dd->w / 2, data.dd->h / 2);
 
+        //TODO space so symbols dont move when updated, and maybe dont just use chars but some graphics?
         uint8_t played[2] = {ROCKPAPERSCISSORS_NONE, ROCKPAPERSCISSORS_NONE};
         if (data.g.methods != NULL) {
             for (int i = 0; i < 2; i++) {
@@ -360,7 +361,7 @@ namespace {
 
 const frontend_methods rockpaperscissors_fem{
     .frontend_name = "rockpaperscissors_fem",
-    .version = semver{0, 3, 0},
+    .version = semver{0, 3, 1},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

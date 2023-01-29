@@ -226,7 +226,7 @@ namespace {
             data.btns[i].x = (-(3 * data.btn_size + 2 * data.btn_padding) / 2) + i * data.btn_size + i * data.btn_padding;
             data.btns[i].w = data.btn_size;
             data.btns[i].h = data.btn_size;
-            if (data.g.methods == 0 || data.ptm == PLAYER_NONE) {
+            if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
                 data.btns[i].hovered = false;
                 data.btns[i].mousedown = false;
                 data.btns[i].visible = false;
@@ -334,7 +334,7 @@ namespace {
 
 const frontend_methods quasar_fem{
     .frontend_name = "quasar",
-    .version = semver{0, 1, 2},
+    .version = semver{0, 1, 3},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

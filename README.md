@@ -77,7 +77,6 @@ Collect more general resources:
 * security: incoming packets from the user on the server need to be sanitized
   * e.g. currently user can make server run out of memory and even just ouright force exit it
 * usability: when connecting to an invalid host address/port combination the connecting timeout can be ridiculously long
-* graphics: when havannah game ends by network the hovered tile does not reset, probably goes for other games too
 * network: if we try to send data on a client connection that just closed, segfault
   * could send an event to the send queue to make it deconstruct and release a closed connection, just as in the network client the sendqueue should be the only one editing that info
   * in both client and server watch out that the recv client isnt using the sock while send queue deconstructs it
@@ -92,6 +91,7 @@ Collect more general resources:
   * check for unicode in cmdline args aswell (same for surena)
 * networkserver client segfaults when server alt name is empty (does X509_V_ERR_EMPTY_SUBJECT_ALT_NAME help to find this early?)
 * network open on "localhost" crashes on sdl poll??
+* quasar and rockpaperscissors buttons sometimes dont show
 
 ## todo
 * game sync data event processing in client and server

@@ -408,17 +408,17 @@ namespace {
             data.hover_file = -1;
         }
 
-        //TODO put button pos/size recalc into sdl resize event
-        //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
-            return ERR_OK;
-        }
         for (int y = 0; y < data.opts.wy; y++) {
             for (int x = 0; x < data.opts.wx; x++) {
                 data.board_buttons[y * data.opts.wx + x].x = static_cast<float>(x) * (data.padding);
                 data.board_buttons[y * data.opts.wx + x].y = static_cast<float>(y) * (data.padding);
                 data.board_buttons[y * data.opts.wx + x].r = data.button_size;
-                data.board_buttons[y * data.opts.wx + x].update(mX, mY);
+                if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
+                    data.board_buttons[y * data.opts.wx + x].hovered = false;
+                    data.board_buttons[y * data.opts.wx + x].mousedown = false;
+                } else {
+                    data.board_buttons[y * data.opts.wx + x].update(mX, mY);
+                }
                 //BUG why is it not a potential problem that the button mousedown is never initialized?
                 if ((x == 0 && y == 0) || (x == data.opts.wx - 1 && y == 0) || (x == 0 && y == data.opts.wy - 1) || (x == data.opts.wx - 1 && y == data.opts.wy - 1)) {
                     data.board_buttons[y * data.opts.wx + x].hovered = false;
@@ -815,7 +815,7 @@ namespace {
 
 const frontend_methods twixt_pp_fem{
     .frontend_name = "twixt_pp",
-    .version = semver{0, 2, 1},
+    .version = semver{0, 2, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,

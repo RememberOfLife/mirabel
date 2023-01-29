@@ -229,11 +229,6 @@ namespace {
     error_code update(frontend* self)
     {
         data_repr& data = _get_repr(self);
-        //TODO put button pos/size recalc into sdl resize event
-        //TODO when reloading the game after a game is done, the hover does not reset
-        if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
-            return ERR_OK;
-        }
         // set button hovered
         const float hex_angle = 2 * M_PI / 6;
         const float fitting_hex_radius = data.button_size + data.padding;
@@ -265,7 +260,12 @@ namespace {
                 data.board_buttons[y * board_sizer + x].r = data.button_size;
                 data.board_buttons[y * board_sizer + x].ix = x;
                 data.board_buttons[y * board_sizer + x].iy = y;
-                data.board_buttons[y * board_sizer + x].update(mX, mY);
+                if (data.g.methods == NULL || data.ptm == PLAYER_NONE) {
+                    data.board_buttons[y * board_sizer + x].hovered = false;
+                    data.board_buttons[y * board_sizer + x].mousedown = false;
+                } else {
+                    data.board_buttons[y * board_sizer + x].update(mX, mY);
+                }
             }
         }
         return ERR_OK;
@@ -482,7 +482,7 @@ namespace {
 
 const frontend_methods havannah_fem{
     .frontend_name = "havannah",
-    .version = semver{0, 2, 1},
+    .version = semver{0, 2, 2},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,
