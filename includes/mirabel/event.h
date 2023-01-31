@@ -62,7 +62,12 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     EVENT_TYPE_USER_AUTHINFO,
     EVENT_TYPE_USER_AUTHN,
     EVENT_TYPE_USER_AUTHFAIL,
+    // EVENT_TYPE_USER_INFO, //TODO for profiles
     // lobby events: deal with client/server communication
+    // EVENT_TYPE_LOBBY_CREATE,
+    // EVENT_TYPE_LOBBY_DESTROY,
+    // EVENT_TYPE_LOBBY_JOIN,
+    // EVENT_TYPE_LOBBY_INFO,
     EVENT_TYPE_LOBBY_CHAT_MSG,
     EVENT_TYPE_LOBBY_CHAT_DEL,
 
@@ -75,6 +80,7 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
 static const uint32_t EVENT_CLIENT_NONE = 0; // none / local
 static const uint32_t EVENT_CLIENT_SERVER = UINT32_MAX;
 static const uint32_t EVENT_LOBBY_NONE = 0;
+// static const uint32_t EVENT_LOBBY_SPEC = UINT32_MAX; //TODO use special case
 static const uint32_t EVENT_GAME_SYNC_DEFAULT = 0;
 
 typedef struct event_s {
@@ -124,9 +130,9 @@ typedef struct event_log_s {
     char* str;
 } event_log;
 
-void event_create_log(event_any* e, const char* str);
-
-//TODO logf
+void event_create_log(event_any* e, const char* str, const char* str_end);
+void event_create_logf(event_any* e, const char* fmt, ...);
+void event_create_logfv(event_any* e, const char* fmt, va_list args);
 
 typedef struct event_heartbeat_s {
     event base;

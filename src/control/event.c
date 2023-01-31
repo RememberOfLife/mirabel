@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -291,10 +292,32 @@ void event_destroy(event_any* e)
 /////
 // event specific constructors
 
-void event_create_log(event_any* e, const char* log)
+void event_create_log(event_any* e, const char* str, const char* str_end)
+{
+    if (str_end == NULL) {
+        return event_create_logf(e, "%s", str);
+    } else {
+        return event_create_logf(e, "%.*s", str_end - str, str);
+    }
+}
+
+void event_create_logf(event_any* e, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    event_create_logfv(e, fmt, args);
+    va_end(args);
+}
+
+void event_create_logfv(event_any* e, const char* fmt, va_list args)
 {
     event_create_type(e, EVENT_TYPE_LOG);
-    e->log.str = log ? strdup(log) : NULL;
+    e->log.str = NULL;
+    if (fmt != NULL) {
+        size_t len = vsnprintf(NULL, 0, fmt, args) + 1;
+        e->log.str = (char*)malloc(len); // OOM not handled here
+        vsnprintf(e->log.str, len, fmt, args);
+    }
 }
 
 void event_create_heartbeat(event_any* e, EVENT_TYPE type, uint32_t id, uint32_t time)
