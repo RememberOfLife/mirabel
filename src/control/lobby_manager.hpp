@@ -14,7 +14,7 @@ namespace Control {
     class LobbyManager {
       private:
 
-        std::unordered_map<uint32_t, Lobby> lobbies;
+        std::unordered_map<uint32_t, Lobby*> lobbies;
 
       public:
 

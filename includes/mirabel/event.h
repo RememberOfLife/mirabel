@@ -81,8 +81,7 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
 static const uint32_t EVENT_CLIENT_NONE = 0; // none / local
 static const uint32_t EVENT_CLIENT_SERVER = UINT32_MAX;
 static const uint32_t EVENT_LOBBY_NONE = 0;
-
-// static const uint32_t EVENT_LOBBY_SPEC = UINT32_MAX; //TODO use special case
+static const uint32_t EVENT_LOBBY_SPEC = UINT32_MAX; //TODO use special case
 
 typedef struct event_s {
     EVENT_TYPE type;

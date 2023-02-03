@@ -107,6 +107,15 @@ namespace MetaGui {
     extern bool show_lobby_window;
     void lobby_window(bool* p_open);
 
+    struct lobby_info {
+        uint32_t id;
+        char name[64];
+        char password[64];
+        uint16_t max_users;
+    };
+
+    extern lobby_info the_lobby_info;
+
     //##############################
     // format for windows is:
     // extern bool show_NAME_windowtype;

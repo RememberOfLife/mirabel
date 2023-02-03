@@ -73,6 +73,7 @@ namespace Control {
                 } else {
                     event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
                 }
+                es.base.lobby_id = id;
                 event_queue_push(send_queue, &es);
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client joined: %d\n", client_id);
@@ -204,6 +205,7 @@ namespace Control {
                 event_any se;
                 event_create_log(&se, "game sync event is server to client only\n", NULL);
                 se.base.client_id = e.base.client_id;
+                se.base.lobby_id = id;
                 event_queue_push(send_queue, &se);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_MSG: {
@@ -232,6 +234,7 @@ namespace Control {
             e.base.client_id = user_client_ids[i];
             event_any es;
             event_copy(&es, &e);
+            es.base.lobby_id = id;
             event_queue_push(send_queue, &es);
         }
     }

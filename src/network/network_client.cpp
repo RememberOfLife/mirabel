@@ -173,6 +173,7 @@ namespace Network {
                     // universal event->packet encoding
                     uint8_t* data_buffer = data_buffer_base;
                     e.base.client_id = conn.client_id;
+                    e.base.lobby_id = MetaGui::the_lobby_info.id; //TODO //HACK client should be able to multi lobby, dont take id from there
                     int write_len = event_size(&e);
                     if (write_len > base_buffer_size) {
                         data_buffer = (uint8_t*)malloc(write_len);

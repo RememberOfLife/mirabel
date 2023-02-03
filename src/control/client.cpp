@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 4, 12};
+    const semver client_version = semver{0, 5, 0};
 
     Client* main_client = NULL;
 
@@ -456,6 +456,17 @@ namespace Control {
                         }
                         the_frontend = empty_fe;
                         MetaGui::running_fem_idx = 0;
+                    } break;
+                    case EVENT_TYPE_LOBBY_JOIN: {
+                        MetaGui::the_lobby_info.id = e.lobby_join.base.lobby_id;
+                        snprintf(MetaGui::the_lobby_info.name, sizeof(MetaGui::lobby_info::name), "%s", e.lobby_join.lobby_name);
+                    } break;
+                    case EVENT_TYPE_LOBBY_LEAVE: {
+                        MetaGui::the_lobby_info.id = EVENT_LOBBY_NONE;
+                        MetaGui::the_lobby_info.name[0] = '\0';
+                    } break;
+                    case EVENT_TYPE_LOBBY_INFO: {
+
                     } break;
                     case EVENT_TYPE_LOBBY_CHAT_MSG: {
                         MetaGui::chat_msg_add(e.chat_msg.msg_id, e.chat_msg.author_client_id, e.chat_msg.timestamp, e.chat_msg.text);

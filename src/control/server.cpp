@@ -19,7 +19,7 @@
 
 namespace Control {
 
-    const semver server_version = semver{0, 1, 2};
+    const semver server_version = semver{0, 2, 0};
 
     Server::Server():
         plugin_mgr(true, false)

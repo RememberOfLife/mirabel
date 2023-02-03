@@ -1,6 +1,7 @@
 #include <chrono>
 #include <cstdint>
 
+#include "mirabel/event.h"
 #include "meta_gui/meta_gui.hpp"
 
 namespace MetaGui {
@@ -54,5 +55,10 @@ namespace MetaGui {
     bool show_about_window = false;
 
     bool show_lobby_window = false;
+
+    lobby_info the_lobby_info = lobby_info{
+        .id = EVENT_LOBBY_NONE,
+        .max_users = 8, //TODO remove and replace into lobby info
+    };
 
 } // namespace MetaGui
