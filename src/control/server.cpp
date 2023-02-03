@@ -19,7 +19,7 @@
 
 namespace Control {
 
-    const semver server_version = semver{0, 1, 1};
+    const semver server_version = semver{0, 1, 2};
 
     Server::Server():
         plugin_mgr(true, false)
@@ -62,6 +62,7 @@ namespace Control {
             plugin_mgr.load_plugin(i);
         }
 
+        lobby_mgr.plugin_mgr = &plugin_mgr;
         lobby_mgr.send_queue = network_send_queue;
         auth_mgr.send_queue = network_send_queue;
     }
@@ -71,7 +72,6 @@ namespace Control {
         tc_info.pre_quit(2000);
 
         printf("[INFO] server shutting down\n");
-        delete lobby;
         if (t_network) {
             t_network->close();
             delete t_network;
@@ -102,31 +102,31 @@ namespace Control {
                     quit = true;
                     break;
                 } break;
+                case EVENT_TYPE_LOG: {
+                    printf("%s", e.log.str);
+                } break;
                 case EVENT_TYPE_HEARTBEAT: {
                     tc_info.send_heartbeat();
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED: {
-                    // we only have one lobby for now
-                    if (lobby) {
-                        lobby->AddUser(e.base.client_id);
-                    }
+                    //TODO usermgr
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED: {
-                    // we only have one lobby for now
-                    if (lobby) {
-                        lobby->RemoveUser(e.base.client_id);
-                    }
+                    //TODO usermgr
                 } break;
                 case EVENT_TYPE_GAME_LOAD:
                 case EVENT_TYPE_GAME_UNLOAD:
                 case EVENT_TYPE_GAME_STATE:
                 case EVENT_TYPE_GAME_MOVE:
+                case EVENT_TYPE_GAME_SYNC:
+                case EVENT_TYPE_LOBBY_CREATE:
+                case EVENT_TYPE_LOBBY_DESTROY:
+                case EVENT_TYPE_LOBBY_JOIN:
+                case EVENT_TYPE_LOBBY_LEAVE:
+                case EVENT_TYPE_LOBBY_INFO:
                 case EVENT_TYPE_LOBBY_CHAT_MSG:
                 case EVENT_TYPE_LOBBY_CHAT_DEL: {
-                    // we only have one lobby for now
-                    if (lobby) {
-                        lobby->HandleEvent(e);
-                    }
+                    lobby_mgr.HandleEvent(e);
                 } break;
                 case EVENT_TYPE_USER_AUTHINFO: {
                     // client wants to have the authinfo, serve it
@@ -189,9 +189,8 @@ namespace Control {
                     if (t_network != NULL) {
                         network_send_queue = &(t_network->send_queue);
                         printf("[INFO] networkserver adapter loaded\n");
-                        //TODO creating the lobby here is very ugly
-                        lobby = new Lobby(&plugin_mgr, network_send_queue, 8);
-                        printf("[INFO] lobby created\n");
+                        lobby_mgr.send_queue = network_send_queue; //TODO is this refresh actually required?
+                        auth_mgr.send_queue = network_send_queue;
                     }
                 } break;
                 case EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED: {

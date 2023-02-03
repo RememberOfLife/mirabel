@@ -15,7 +15,11 @@
 
 namespace Control {
 
-    Lobby::Lobby(PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users):
+    Lobby::Lobby(uint32_t id, const char* name, bool usepw, uint32_t pwhash, PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users):
+        id(id),
+        name(strdup(name)),
+        usepw(usepw),
+        pwhash(pwhash),
         plugin_mgr(plugin_mgr),
         send_queue(send_queue),
         the_game(NULL),
@@ -39,6 +43,7 @@ namespace Control {
         free(game_variant);
         free(game_base);
         delete the_game;
+        free(name);
     }
 
     void Lobby::AddUser(uint32_t client_id)
@@ -100,7 +105,6 @@ namespace Control {
     void Lobby::HandleEvent(event_any e)
     {
         switch (e.base.type) {
-            //TODO code for LOAD+UNLOAD+IMPORT_STATE+MOVE is ripped from client, so comments may not match for now
             case EVENT_TYPE_GAME_LOAD: {
                 // reset everything in case we can't find the game later on
                 if (the_game) {
@@ -195,6 +199,12 @@ namespace Control {
                 }
                 // pass event to other clients in lobby
                 SendToAllButOne(e, e.base.client_id);
+            } break;
+            case EVENT_TYPE_GAME_SYNC: {
+                event_any se;
+                event_create_log(&se, "game sync event is server to client only\n", NULL);
+                se.base.client_id = e.base.client_id;
+                event_queue_push(send_queue, &se);
             } break;
             case EVENT_TYPE_LOBBY_CHAT_MSG: {
                 printf("[INFO] chat message received from %d, broadcasting: %s\n", e.base.client_id, e.chat_msg.text);

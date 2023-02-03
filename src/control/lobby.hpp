@@ -17,7 +17,12 @@ namespace Control {
         PluginManager* plugin_mgr;
         event_queue* send_queue;
 
-        // uint64_t id;
+        uint32_t id;
+        char* name;
+        bool usepw;
+        uint32_t pwhash; //TODO obviously not secure, replace with more proper hashing when lobby prototypes are done
+        //TODO lobby owner client id for admin actions
+
         char* game_base;
         char* game_variant;
         char* game_impl;
@@ -29,7 +34,7 @@ namespace Control {
 
         uint32_t lobby_msg_id_ctr = 1;
 
-        Lobby(PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users);
+        Lobby(uint32_t id, const char* name, bool usepw, uint32_t pwhash, PluginManager* plugin_mgr, event_queue* send_queue, uint16_t max_users);
         ~Lobby();
 
         void AddUser(uint32_t client_id);

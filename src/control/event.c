@@ -80,6 +80,24 @@ const serialization_layout sl_auth_fail[] = {
     {SL_TYPE_STOP},
 };
 
+const serialization_layout sl_lobby_create[] = {
+    {SL_TYPE_STRING, offsetof(event_lobby_create, lobby_name)},
+    {SL_TYPE_STRING, offsetof(event_lobby_create, password)},
+    {SL_TYPE_U32, offsetof(event_lobby_create, max_users)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_lobby_join[] = {
+    {SL_TYPE_STRING, offsetof(event_lobby_join, lobby_name)},
+    {SL_TYPE_STRING, offsetof(event_lobby_join, password)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_lobby_info[] = {
+    //TODO
+    {SL_TYPE_STOP},
+};
+
 const serialization_layout sl_chat_msg[] = {
     {SL_TYPE_U32, offsetof(event_chat_msg, msg_id)},
     {SL_TYPE_U32, offsetof(event_chat_msg, author_client_id)},
@@ -181,6 +199,11 @@ const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_USER_AUTHN] = sl_auth,
     [EVENT_TYPE_USER_AUTHFAIL] = sl_auth_fail,
 
+    [EVENT_TYPE_LOBBY_CREATE] = sl_lobby_create,
+    [EVENT_TYPE_LOBBY_DESTROY] = sl_baseonly,
+    [EVENT_TYPE_LOBBY_JOIN] = sl_lobby_join,
+    [EVENT_TYPE_LOBBY_LEAVE] = sl_baseonly,
+    [EVENT_TYPE_LOBBY_INFO] = sl_lobby_info,
     [EVENT_TYPE_LOBBY_CHAT_MSG] = sl_chat_msg,
     [EVENT_TYPE_LOBBY_CHAT_DEL] = sl_chat_del,
 
@@ -387,6 +410,21 @@ void event_create_auth_fail(event_any* e, uint32_t client_id, const char* reason
 {
     event_create_type_client(e, EVENT_TYPE_USER_AUTHFAIL, client_id);
     e->auth_fail.reason = reason ? strdup(reason) : NULL;
+}
+
+void event_create_lobby_create(event_any* e, const char* lobby_name, const char* password, uint16_t max_users)
+{
+    event_create_type(e, EVENT_TYPE_LOBBY_CREATE);
+    e->lobby_create.lobby_name = lobby_name ? strdup(lobby_name) : NULL;
+    e->lobby_create.password = password ? strdup(password) : NULL;
+    e->lobby_create.max_users = max_users;
+}
+
+void event_create_lobby_join(event_any* e, const char* lobby_name, const char* password)
+{
+    event_create_type(e, EVENT_TYPE_LOBBY_JOIN);
+    e->lobby_join.lobby_name = lobby_name ? strdup(lobby_name) : NULL;
+    e->lobby_join.password = password ? strdup(password) : NULL;
 }
 
 void event_create_chat_msg(event_any* e, uint32_t msg_id, uint32_t author_client_id, uint64_t timestamp, const char* text)

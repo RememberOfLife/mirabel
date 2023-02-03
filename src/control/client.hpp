@@ -29,6 +29,7 @@ namespace Control {
 
         Network::NetworkClient* t_network = NULL;
         event_queue* network_send_queue = NULL;
+        uint32_t lobby_id = EVENT_LOBBY_NONE;
         // offline server likely somewhere here
 
         SDL_Window* sdl_window;

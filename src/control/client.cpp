@@ -18,11 +18,11 @@
 #include "rosalia/semver.h"
 #include "rosalia/timestamp.h"
 #include "surena/game.h"
+#include "surena/move_history.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
-#include "surena/move_history.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "frontends/frontend_catalogue.hpp"
@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 4, 11};
+    const semver client_version = semver{0, 4, 12};
 
     Client* main_client = NULL;
 
@@ -296,7 +296,7 @@ namespace Control {
                         break;
                     } break;
                     case EVENT_TYPE_LOG: {
-                        MetaGui::log(e.log.str);
+                        MetaGui::log(e.log.str); //TODO text getting cut of and not properly newlined
                     } break;
                     case EVENT_TYPE_HEARTBEAT: {
                         tc_info.send_heartbeat();

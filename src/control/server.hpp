@@ -29,8 +29,6 @@ namespace Control {
 
         event_queue inbox;
 
-        Lobby* lobby = NULL;
-
         PluginManager plugin_mgr;
         LobbyManager lobby_mgr;
         UserManager user_mgr;

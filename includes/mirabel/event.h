@@ -64,10 +64,11 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
     EVENT_TYPE_USER_AUTHFAIL,
     // EVENT_TYPE_USER_INFO, //TODO for profiles
     // lobby events: deal with client/server communication
-    // EVENT_TYPE_LOBBY_CREATE,
-    // EVENT_TYPE_LOBBY_DESTROY,
-    // EVENT_TYPE_LOBBY_JOIN,
-    // EVENT_TYPE_LOBBY_INFO,
+    EVENT_TYPE_LOBBY_CREATE,
+    EVENT_TYPE_LOBBY_DESTROY,
+    EVENT_TYPE_LOBBY_JOIN,
+    EVENT_TYPE_LOBBY_LEAVE,
+    EVENT_TYPE_LOBBY_INFO,
     EVENT_TYPE_LOBBY_CHAT_MSG,
     EVENT_TYPE_LOBBY_CHAT_DEL,
 
@@ -80,8 +81,8 @@ typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
 static const uint32_t EVENT_CLIENT_NONE = 0; // none / local
 static const uint32_t EVENT_CLIENT_SERVER = UINT32_MAX;
 static const uint32_t EVENT_LOBBY_NONE = 0;
+
 // static const uint32_t EVENT_LOBBY_SPEC = UINT32_MAX; //TODO use special case
-static const uint32_t EVENT_GAME_SYNC_DEFAULT = 0;
 
 typedef struct event_s {
     EVENT_TYPE type;
@@ -130,6 +131,7 @@ typedef struct event_log_s {
     char* str;
 } event_log;
 
+//TODO log messaged getting cut of e.g. server lobby not exists
 void event_create_log(event_any* e, const char* str, const char* str_end);
 void event_create_logf(event_any* e, const char* fmt, ...);
 void event_create_logfv(event_any* e, const char* fmt, va_list args);
@@ -216,6 +218,28 @@ typedef struct event_auth_fail_s {
 
 void event_create_auth_fail(event_any* e, uint32_t client_id, const char* reason);
 
+typedef struct event_lobby_create_s {
+    event base;
+    char* lobby_name;
+    char* password;
+    uint32_t max_users; //TODO should be u16
+} event_lobby_create;
+
+void event_create_lobby_create(event_any* e, const char* lobby_name, const char* password, uint16_t max_users);
+
+typedef struct event_lobby_join_s {
+    event base;
+    char* lobby_name;
+    char* password;
+} event_lobby_join;
+
+void event_create_lobby_join(event_any* e, const char* lobby_name, const char* password);
+
+typedef struct event_lobby_info_s {
+    event base;
+    //TODO
+} event_lobby_info;
+
 typedef struct event_chat_msg_s {
     event base;
     uint32_t msg_id;
@@ -257,6 +281,9 @@ typedef union event_any_u {
     event_ssl_thumbprint ssl_thumbprint;
     event_auth auth;
     event_auth_fail auth_fail;
+    event_lobby_create lobby_create;
+    event_lobby_join lobby_join;
+    event_lobby_info lobby_info;
     event_chat_msg chat_msg;
     event_chat_del chat_del;
     event_dynamic dynamic;
