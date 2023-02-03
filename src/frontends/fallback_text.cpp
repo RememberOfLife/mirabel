@@ -193,6 +193,7 @@ namespace {
                         }
                     }
                     data.g_pov_id = PLAYER_NONE;
+                    data.dd->view = data.g_pov_id;
                 }
                 data.g_opts = NULL;
                 if (game_ff(&data.g).options) {
@@ -235,6 +236,7 @@ namespace {
                     data.g_pov_btns = NULL;
                     data.g_pov_c = 0;
                     data.g_pov_id = PLAYER_NONE;
+                    data.dd->view = data.g_pov_id;
                 }
                 free(data.g_opts);
                 data.g_opts = NULL;
@@ -296,6 +298,7 @@ namespace {
                         if (event.type == SDL_MOUSEBUTTONUP) {
                             if (data.g_pov_btns[i].hovered && data.g_pov_btns[i].mousedown) {
                                 data.g_pov_id = i;
+                                data.dd->view = data.g_pov_id;
                                 data.dirty = true;
                             }
                             data.g_pov_btns[i].mousedown = false;
@@ -308,6 +311,7 @@ namespace {
                         if (event.type == SDL_MOUSEBUTTONUP) {
                             if (data.g_ptm_btns[i].hovered && data.g_ptm_btns[i].mousedown) {
                                 data.g_pov_id = data.g_ptm_btns[i].v.p;
+                                data.dd->view = data.g_pov_id;
                                 data.dirty = true;
                             }
                             data.g_ptm_btns[i].mousedown = false;
@@ -635,7 +639,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 6, 2},
+    .version = semver{1, 6, 3},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,
