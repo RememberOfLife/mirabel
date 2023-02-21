@@ -28,16 +28,12 @@ namespace Control {
         game_impl(NULL),
         game_options(NULL),
         max_users(max_users),
-        user_client_ids(static_cast<uint32_t*>(malloc(max_users * sizeof(uint32_t))))
+        users(max_users)
     {
-        for (uint32_t i = 0; i < max_users; i++) {
-            user_client_ids[i] = EVENT_CLIENT_NONE;
-        }
     }
 
     Lobby::~Lobby()
     {
-        free(user_client_ids);
         free(game_options);
         free(game_impl);
         free(game_variant);
@@ -48,55 +44,53 @@ namespace Control {
 
     void Lobby::AddUser(uint32_t client_id)
     {
-        for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == EVENT_CLIENT_NONE) {
-                user_client_ids[i] = client_id;
-                event_any es;
-                if (the_game) {
-                    // send sync info to user, load + state import
-                    size_t game_state_buffer_len;
-                    const char* game_state_buffer;
-                    game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
-                    game_init init_info = (game_init){
-                        .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                        .source = {
-                            .standard{
-                                .opts = game_options,
-                                .legacy = NULL,
-                                .state = game_state_buffer,
-                                .sync_ctr = the_game->sync_ctr,
-                            },
-                        },
-                    };
-                    event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
-                    es.base.client_id = client_id;
-                } else {
-                    event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
-                }
-                es.base.lobby_id = id;
-                event_queue_push(send_queue, &es);
-                char* msg_buf = (char*)malloc(32);
-                sprintf(msg_buf, "client joined: %d\n", client_id);
-                event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
-                SendToAllButOne(es, EVENT_CLIENT_NONE);
-                free(msg_buf);
-                return;
-            }
+        if (users.size() >= max_users) {
+            printf("[ERROR] could not add user to lobby, full\n");
+            return;
         }
-        printf("[ERROR] could not add user to lobby\n");
+        users.push_back((lobby_user){.client_id = client_id});
+        event_any es;
+        if (the_game) {
+            // send sync info to user, load + state import
+            size_t game_state_buffer_len;
+            const char* game_state_buffer;
+            game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
+            game_init init_info = (game_init){
+                .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+                .source = {
+                    .standard{
+                        .opts = game_options,
+                        .legacy = NULL,
+                        .state = game_state_buffer,
+                        .sync_ctr = the_game->sync_ctr,
+                    },
+                },
+            };
+            event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
+            es.base.client_id = client_id;
+        } else {
+            event_create_type_client(&es, EVENT_TYPE_GAME_UNLOAD, client_id);
+        }
+        es.base.lobby_id = id;
+        event_queue_push(send_queue, &es);
+        char* msg_buf = (char*)malloc(32);
+        sprintf(msg_buf, "client joined: %d\n", client_id);
+        event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
+        SendToAllButOne(es, EVENT_CLIENT_NONE);
+        free(msg_buf);
     }
 
     void Lobby::RemoveUser(uint32_t client_id)
     {
-        for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == client_id) {
-                user_client_ids[i] = EVENT_CLIENT_NONE;
+        for (size_t i = 0; i < users.size(); i++) {
+            if (users[i].client_id == client_id) {
                 char* msg_buf = (char*)malloc(32);
                 sprintf(msg_buf, "client left: %d\n", client_id);
                 event_any es;
                 event_create_chat_msg(&es, lobby_msg_id_ctr++, EVENT_CLIENT_SERVER, SDL_GetTicks64(), msg_buf);
                 SendToAllButOne(es, EVENT_CLIENT_NONE);
                 free(msg_buf);
+                users.erase(users.begin() + i);
                 return;
             }
         }
@@ -227,11 +221,11 @@ namespace Control {
 
     void Lobby::SendToAllButOne(event_any e, uint32_t excluded_client_id)
     {
-        for (uint32_t i = 0; i < max_users; i++) {
-            if (user_client_ids[i] == EVENT_CLIENT_NONE || user_client_ids[i] == excluded_client_id) {
+        for (size_t i = 0; i < users.size(); i++) {
+            if (users[i].client_id == EVENT_CLIENT_NONE || users[i].client_id == excluded_client_id) {
                 continue;
             }
-            e.base.client_id = user_client_ids[i];
+            e.base.client_id = users[i].client_id;
             event_any es;
             event_copy(&es, &e);
             es.base.lobby_id = id;

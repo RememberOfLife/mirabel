@@ -83,7 +83,12 @@ namespace MetaGui {
             }
         }
 
+        ImGui::Separator();
+
         if (the_lobby_info.id != EVENT_LOBBY_NONE) {
+            //TODO lobby settings, client kinda needs offline lobby for that to work properly.. //TODO offline server :/
+            //TODO game config
+            //TODO client<->playerid mappings
         }
 
         ImGui::End();

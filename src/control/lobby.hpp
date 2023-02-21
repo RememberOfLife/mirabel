@@ -30,7 +30,13 @@ namespace Control {
         game* the_game;
         // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user
         uint16_t max_users;
-        uint32_t* user_client_ids; //TODO should use some user struct, for now just stores client ids of connected clients
+
+        struct lobby_user {
+            uint32_t client_id;
+            std::vector<player_id> plays_for;
+        };
+
+        std::vector<lobby_user> users; //TODO should use some user struct, for now just stores client ids of connected clients
 
         uint32_t lobby_msg_id_ctr = 1;
 

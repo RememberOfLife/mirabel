@@ -134,6 +134,11 @@ Collect more general resources:
   * closing status line in the connection window
 * there is a lot of reuse in the networking code, maybe reduce it through some event methods
 * network and especially openssl error checking and proper handling!
+  * https://www.openssl.org/docs/man3.1/man3/BIO_s_mem.html
+  * https://www.openssl.org/docs/man3.1/man3/SSL_do_handshake.html
+  * https://www.openssl.org/docs/man3.1/man3/SSL_accept.html
+  * https://www.openssl.org/docs/man3.1/man3/SSL_get_error.html
+  * https://www.openssl.org/docs/man3.1/man3/SSL_connect.html
 * add option to disable timeoutcrash thread for debugging (maybe disable by default, look at diy signal handlers)
 * server should be seperate executable, use temp server lib for building both client and server, make sure server runs headless
   * server already has dependencies on code that also does graphics, i.e. the game catalogue also serves imgui game configs

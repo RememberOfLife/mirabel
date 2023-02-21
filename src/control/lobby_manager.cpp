@@ -89,7 +89,13 @@ namespace Control {
                     event_queue_push(send_queue, &se);
                     break;
                 }
-                //TODO send leave events to all members
+                Lobby& target_lobby = *lobby_it->second;
+                event_any se;
+                for (size_t i = 0; i < target_lobby.users.size(); i++) {
+                    event_create_type_client(&se, EVENT_TYPE_LOBBY_LEAVE, target_lobby.users[i].client_id);
+                    se.base.lobby_id = target_lobby.id;
+                    event_queue_push(send_queue, &se);
+                }
                 lobbies.erase(lobby_it);
             } break;
             case EVENT_TYPE_LOBBY_JOIN: {
