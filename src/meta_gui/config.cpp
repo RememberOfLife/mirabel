@@ -2,6 +2,7 @@
 
 #include "imgui.h"
 #include "rosalia/config.h"
+#include "rosalia/json.h"
 
 #include "control/client.hpp"
 

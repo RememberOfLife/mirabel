@@ -147,6 +147,8 @@ set(SOURCES
     src/prototype_util/imgui_c_thin.cpp
     src/prototype_util/log.cpp
     src/prototype_util/st_gui.cpp
+
+    src/rosa_impl/json.c
     
     src/main.cpp
 )

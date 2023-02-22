@@ -28,6 +28,7 @@ namespace Control {
         char* game_impl;
         char* game_options;
         game* the_game;
+        // move_history* history; //TODO use this to send new players the game if it does not support serialization
         // bool game_trusted; // true if full game has only ever been on the server, i.e. no hidden state leaked, false if game is loaded from a user
         uint16_t max_users;
 

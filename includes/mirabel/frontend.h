@@ -5,8 +5,8 @@
 #include <stdint.h>
 
 #include <SDL2/SDL.h>
-#include "rosalia/config.h"
 #include "rosalia/jobs.h"
+#include "rosalia/json.h"
 #include "rosalia/semver.h"
 #include "surena/engine.h"
 #include "surena/game.h"
@@ -20,7 +20,7 @@ extern "C" {
 #endif
 
 //NOTE: updates to {config, event_queue, event, frontend, imgui_c_thin, job_queue, log, sound} will incur a version increase here
-static const uint64_t MIRABEL_FRONTEND_API_VERSION = 17;
+static const uint64_t MIRABEL_FRONTEND_API_VERSION = 18;
 
 //TODO this mirrors a lot of the info that will be stored in the client lobby
 typedef struct /*grand_unified_*/ frontend_display_data_s {
@@ -56,6 +56,7 @@ typedef struct /*grand_unified_*/ frontend_display_data_s {
     time_control_player* time_ctl_player;
 
     move_history* history;
+    move_history* history_head;
 
     //TODO engine info
 } frontend_display_data;

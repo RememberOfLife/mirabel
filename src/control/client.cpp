@@ -15,6 +15,7 @@
 #include "imgui_impl_opengl3.h"
 #include "rosalia/config.h"
 #include "rosalia/jobs.h"
+#include "rosalia/json.h"
 #include "rosalia/semver.h"
 #include "rosalia/timestamp.h"
 #include "surena/game.h"
@@ -34,7 +35,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 5, 1};
+    const semver client_version = semver{0, 5, 2};
 
     Client* main_client = NULL;
 
@@ -65,6 +66,7 @@ namespace Control {
             .time_ctl_player_count = 0,
             .time_ctl_player = NULL,
             .history = NULL,
+            .history_head = NULL,
         };
         dd.cfg_lock = cfg_lock_create();
         dd.cfg = cj_create_object(0); //TODO load from config file
