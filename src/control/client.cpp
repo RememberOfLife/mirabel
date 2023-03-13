@@ -11,7 +11,7 @@
 #include "SDL_net.h"
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "imgui_impl_sdl.h"
+#include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include "rosalia/config.h"
 #include "rosalia/jobs.h"
@@ -35,7 +35,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 5, 3};
+    const semver client_version = semver{0, 5, 4};
 
     Client* main_client = NULL;
 

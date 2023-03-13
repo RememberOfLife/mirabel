@@ -86,6 +86,7 @@ namespace MetaGui {
         ImGui::Separator();
 
         if (the_lobby_info.id != EVENT_LOBBY_NONE) {
+            //TODO this is a table, on the right side 1/4 is the user list, everthing following is on the left:
             //TODO lobby settings, client kinda needs offline lobby for that to work properly.. //TODO offline server :/
             //TODO game config
             //TODO client<->playerid mappings

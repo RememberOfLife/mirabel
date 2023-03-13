@@ -59,7 +59,7 @@ set(SOURCES
     lib/SDL_net/SDLnetUDP.c
 
     lib/imgui/backends/imgui_impl_opengl3.cpp
-    lib/imgui/backends/imgui_impl_sdl.cpp
+    lib/imgui/backends/imgui_impl_sdl2.cpp
     lib/imgui/imgui_demo.cpp
     lib/imgui/imgui_draw.cpp
     lib/imgui/imgui_tables.cpp

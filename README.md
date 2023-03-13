@@ -94,6 +94,7 @@ Collect more general resources:
 * quasar and rockpaperscissors buttons sometimes dont show
 
 ## todo
+* move to SDL3
 * game sync data event processing in client and server
 * make sure all moves are properly deleted everywhere
 * change up main menu bar and introduce some more categories (and placeholders for future features)
