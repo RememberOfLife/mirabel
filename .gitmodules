@@ -5,6 +5,10 @@
 [submodule "lib/nanovg"]
 	path = lib/nanovg
 	url = https://github.com/inniyah/nanovg
+[submodule "lib/SDL"]
+	path = lib/SDL
+	url = https://github.com/libsdl-org/SDL.git
+    branch = SDL2
 [submodule "lib/SDL_net"]
 	path = lib/SDL_net
 	url = https://github.com/libsdl-org/SDL_net

@@ -22,7 +22,10 @@ find_package(Threads REQUIRED)
 
 find_package(OpenGL REQUIRED)
 
-find_package(SDL2 REQUIRED)
+set(SDL_STATIC OFF CACHE INTERNAL "")
+set(SDL_SHARED ON CACHE INTERNAL "")
+set(SDL_DISABLE_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(lib/SDL)
 
 find_package(OpenSSL 3 REQUIRED)
 
@@ -202,7 +205,7 @@ if(WIN32)
     target_link_libraries(mirabel SDL2::SDL2-static SDL2::SDL2main) # static sdl on windows
 else()
     target_link_libraries(mirabel dl)
-    target_link_libraries(mirabel SDL2::SDL2)
+    target_link_libraries(mirabel SDL2)
 endif()
 
 include_directories(mirabel ${SDL2_INCLUDE_DIRS})
@@ -210,3 +213,5 @@ include_directories(mirabel ${SDL2_INCLUDE_DIRS})
 target_link_libraries(mirabel OpenSSL::SSL)
 
 set_target_properties(mirabel PROPERTIES EXPORT_COMPILE_COMMANDS true)
+
+install(TARGETS mirabel RUNTIME DESTINATION .) #TODO only works for release build now

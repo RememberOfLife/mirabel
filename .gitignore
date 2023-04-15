@@ -1,5 +1,5 @@
 /.cache
 /.vscode
-/build
+/build*
 /plugins
 /res
