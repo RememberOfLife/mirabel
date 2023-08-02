@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 5, 4};
+    const semver client_version = semver{0, 6, 0};
 
     Client* main_client = NULL;
 
@@ -638,10 +638,9 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_u && (ctrl_left || ctrl_right)) {
                         MetaGui::show_timectl_window = !MetaGui::show_timectl_window;
                     }
-                    /*TODO REENABLE history
                     if (event.key.keysym.sym == SDLK_h && (ctrl_left || ctrl_right)) {
                         MetaGui::show_history_window = !MetaGui::show_history_window;
-                    } */
+                    }
                     if (event.key.keysym.sym == SDLK_p && (ctrl_left || ctrl_right)) {
                         MetaGui::show_plugins_window = !MetaGui::show_plugins_window;
                     }
@@ -750,10 +749,9 @@ namespace Control {
                 if (MetaGui::show_timectl_window) {
                     MetaGui::timectl_window(&MetaGui::show_timectl_window);
                 }
-                /*TODO REENABLE history
                 if (MetaGui::show_history_window) {
                     MetaGui::history_window(&MetaGui::show_history_window);
-                } */
+                }
                 if (MetaGui::show_plugins_window) {
                     MetaGui::plugins_window(&MetaGui::show_plugins_window);
                 }

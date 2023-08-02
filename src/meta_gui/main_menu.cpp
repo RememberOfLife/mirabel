@@ -49,11 +49,8 @@ namespace MetaGui {
                 if (ImGui::MenuItem("Time Control", "CTRL + U", show_timectl_window)) {
                     show_timectl_window = !show_timectl_window;
                 }
-                { //TODO REENABLE history
-                    // if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
-                    //     show_history_window = !show_history_window;
-                    // }
-                    ImGui::MenuItem("History", "CTRL + H", false, false);
+                if (ImGui::MenuItem("History", "CTRL + H", show_history_window)) {
+                    show_history_window = !show_history_window;
                 }
                 if (ImGui::MenuItem("Lobby", "CTRL + L", show_lobby_window)) {
                     show_lobby_window = !show_lobby_window;

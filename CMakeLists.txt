@@ -88,7 +88,7 @@ set(SOURCES
     src/frontends/fallback_text.cpp
 
     src/games/game.c
-    # src/games/move_history.c
+    src/games/move_history.c
 
     src/meta_gui/about.cpp
     src/meta_gui/chat.cpp
@@ -99,7 +99,7 @@ set(SOURCES
     src/meta_gui/frontend_config.cpp
     src/meta_gui/game_config.cpp
     src/meta_gui/global_dockspace.cpp
-    # src/meta_gui/history.cpp //TODO REENABLE history
+    src/meta_gui/history.cpp
     src/meta_gui/lobby.cpp
     src/meta_gui/logs.cpp
     src/meta_gui/main_menu.cpp
