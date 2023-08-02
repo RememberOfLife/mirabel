@@ -46,9 +46,7 @@ set(INCLUDES
     lib/imgui/backends
     lib/imgui
 
-    lib/surena/lib/rosalia/includes
-
-    lib/surena/includes
+    lib/rosalia/includes
 
     includes
     src
@@ -69,29 +67,8 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp 
 
-    lib/surena/lib/rosalia/src/impl/config.c
-    lib/surena/lib/rosalia/src/impl/jobs.cpp
-
-    # lib/surena/src/engines/randomengine.cpp
-    # lib/surena/src/engines/singlethreadedmcts.cpp
-    # lib/surena/src/engines/uci_wrap.cpp
-    lib/surena/src/games/chess.cpp
-    lib/surena/src/games/havannah.cpp
-    lib/surena/src/games/quasar.cpp
-    lib/surena/src/games/rockpaperscissors.cpp
-    lib/surena/src/games/tictactoe_ultimate.cpp
-    lib/surena/src/games/tictactoe.cpp
-    lib/surena/src/games/twixt_pp.cpp
-    # lib/surena/src/engine.cpp
-    lib/surena/src/game.c
-    # lib/surena/src/move_history.c
-
-    lib/surena/src/rosa_impl/base64.c
-    lib/surena/src/rosa_impl/noise.c
-    lib/surena/src/rosa_impl/rand.c
-    lib/surena/src/rosa_impl/semver.c
-    lib/surena/src/rosa_impl/serialization.c
-    lib/surena/src/rosa_impl/timestamp.c
+    lib/rosalia/src/impl/config.c
+    lib/rosalia/src/impl/jobs.cpp
 
     src/control/auth_manager.cpp
     src/control/client.cpp
@@ -104,24 +81,14 @@ set(SOURCES
     src/control/timeout_crash.cpp
     src/control/user_manager.cpp
 
-    # src/engines/builtin_surena.cpp
     # src/engines/engine_manager.cpp //TODO REENABLE engine
+    # src/engines/engine.cpp //TODO REENABLE (surena) engine
 
-    src/frontends/chess.cpp
     src/frontends/empty_frontend.cpp
     src/frontends/fallback_text.cpp
-    src/frontends/havannah.cpp
-    src/frontends/quasar.cpp
-    src/frontends/rockpaperscissors.cpp
-    src/frontends/tictactoe_ultimate.cpp
-    src/frontends/tictactoe.cpp
-    src/frontends/twixt_pp.cpp
 
-    src/games/chess.cpp
-    src/games/havannah.cpp
-    src/games/tictactoe_ultimate.cpp
-    src/games/tictactoe.cpp
-    src/games/twixt_pp.cpp
+    src/games/game.c
+    # src/games/move_history.c
 
     src/meta_gui/about.cpp
     src/meta_gui/chat.cpp
@@ -151,8 +118,17 @@ set(SOURCES
     src/prototype_util/log.cpp
     src/prototype_util/st_gui.cpp
 
+    #TODO src/repl/repl.c
+
+    src/rosa_impl/base64.c
     src/rosa_impl/json.c
-    
+    src/rosa_impl/noise.c
+    src/rosa_impl/rand.c
+    src/rosa_impl/semver.c
+    src/rosa_impl/serialization.c
+    src/rosa_impl/timestamp.c
+    src/rosa_impl/vector.c
+
     src/main.cpp
 )
 
