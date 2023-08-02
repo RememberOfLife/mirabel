@@ -7,9 +7,9 @@
 
 #include "rosalia/vector.h"
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
-#include "surena/move_history.h"
+#include "mirabel/move_history.h"
 
 #ifdef __cplusplus
 extern "C" {

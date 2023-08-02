@@ -1,4 +1,4 @@
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #ifndef SURENA_GDD_BENAME
 #error "surena game decldef requires a backend name"

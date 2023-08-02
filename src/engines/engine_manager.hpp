@@ -3,12 +3,12 @@
 #include <cstdint>
 #include <vector>
 
-#include "surena/engine.h"
-#include "surena/game.h"
+#include "mirabel/engine.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 
-#include "surena/engine.h"
+#include "mirabel/engine.h"
 
 namespace Engines {
 

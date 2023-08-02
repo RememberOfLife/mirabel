@@ -6,9 +6,9 @@
 #include "nanovg.h"
 #include <openssl/ssl.h>
 #include "imgui.h"
-#include "surena/engine.h"
-#include "surena/game.h"
-#include "surena/move_history.h"
+#include "mirabel/engine.h"
+#include "mirabel/game.h"
+#include "mirabel/move_history.h"
 
 #include "mirabel/engine_wrap.h"
 #include "mirabel/frontend.h"

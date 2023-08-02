@@ -1,12 +1,11 @@
 #include <cstdint>
 
 #include "imgui.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "games/game_catalogue.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 

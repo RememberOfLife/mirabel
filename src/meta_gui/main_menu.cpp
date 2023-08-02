@@ -2,7 +2,7 @@
 #include <cstdio>
 
 #include "imgui.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "control/client.hpp"
 #include "mirabel/event_queue.h"
@@ -85,7 +85,7 @@ namespace MetaGui {
             char pov_str[12];
             if (Control::main_client->dd.view == PLAYER_NONE) {
                 sprintf(pov_str, "POV NONE");
-            } else if (Control::main_client->dd.view == PLAYER_RAND) {
+            } else if (Control::main_client->dd.view == PLAYER_ENV) {
                 sprintf(pov_str, "POV RAND");
             } else {
                 sprintf(pov_str, "POV %03hhu", Control::main_client->dd.view);
@@ -111,7 +111,7 @@ namespace MetaGui {
                         }
                     } else if (i == pc + 1 && game_ff(Control::main_client->the_game).random_moves) {
                         if (ImGui::MenuItem("RAND")) {
-                            Control::main_client->dd.view = PLAYER_RAND;
+                            Control::main_client->dd.view = PLAYER_ENV;
                         }
                     } else {
                         sprintf(pov_str, "%03hhu", i);

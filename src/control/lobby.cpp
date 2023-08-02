@@ -4,12 +4,11 @@
 
 #include <SDL2/SDL.h>
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "control/plugins.hpp"
-#include "games/game_catalogue.hpp"
 
 #include "control/lobby.hpp"
 

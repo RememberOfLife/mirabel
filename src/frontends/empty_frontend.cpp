@@ -3,7 +3,7 @@
 #include <SDL2/SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"

@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "surena/engine.h"
-#include "surena/game.h"
+#include "mirabel/engine.h"
+#include "mirabel/game.h"
 
 #include "mirabel/engine_wrap.h"
 #include "mirabel/frontend.h"

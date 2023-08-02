@@ -18,8 +18,8 @@
 #include "rosalia/json.h"
 #include "rosalia/semver.h"
 #include "rosalia/timestamp.h"
-#include "surena/game.h"
-#include "surena/move_history.h"
+#include "mirabel/game.h"
+#include "mirabel/move_history.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
@@ -27,7 +27,6 @@
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "frontends/frontend_catalogue.hpp"
-#include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "network/protocol.hpp"
 

@@ -4,7 +4,7 @@
 #include <SDL2/SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
@@ -350,7 +350,7 @@ namespace {
             if (data.g_ptm_c > 0) {
                 // update ptm soft buttons
                 for (uint8_t i = 0; i < data.g_ptm_c; i++) {
-                    if (player_buf[i] == PLAYER_RAND) {
+                    if (player_buf[i] == PLAYER_ENV) {
                         sprintf(data.g_ptm_btns[i].label, "RAND");
                     } else {
                         sprintf(data.g_ptm_btns[i].label, "%03hhu", player_buf[i]);

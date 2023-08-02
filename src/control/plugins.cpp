@@ -7,10 +7,10 @@
 #include <vector>
 
 #include "imgui.h"
-#include "surena/engine_plugin.h"
-#include "surena/engine.h"
-#include "surena/game_plugin.h"
-#include "surena/game.h"
+#include "mirabel/engine_plugin.h"
+#include "mirabel/engine.h"
+#include "mirabel/game_plugin.h"
+#include "mirabel/game.h"
 
 #include "mirabel/engine_wrap_plugin.h"
 #include "mirabel/engine_wrap.h"
@@ -21,7 +21,6 @@
 #include "mirabel/log.h"
 // #include "engines/engine_catalogue.hpp" //TODO REENABLE engine
 #include "frontends/frontend_catalogue.hpp"
-#include "games/game_catalogue.hpp"
 
 #include "control/plugins.hpp"
 

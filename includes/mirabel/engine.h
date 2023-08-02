@@ -6,7 +6,7 @@
 
 #include "rosalia/semver.h"
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -9,7 +9,7 @@
 #include "rosalia/noise.h"
 #include "rosalia/serialization.h"
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #ifdef __cplusplus
 extern "C" {

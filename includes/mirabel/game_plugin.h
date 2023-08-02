@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 // returns the capi version used to build the plugin
 typedef uint64_t (*plugin_get_game_capi_version_t)();

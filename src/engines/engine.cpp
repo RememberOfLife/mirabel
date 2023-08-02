@@ -6,8 +6,8 @@
 #include <deque>
 #include <mutex>
 
-#include "surena/engine.h"
-#include "surena/game.h"
+#include "mirabel/engine.h"
+#include "mirabel/game.h"
 
 #ifdef __cplusplus
 extern "C" {

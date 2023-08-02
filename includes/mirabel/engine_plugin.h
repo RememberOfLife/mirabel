@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#include "surena/engine.h"
+#include "mirabel/engine.h"
 
 // returns the capi version used to build the plugin
 typedef uint64_t (*plugin_get_engine_capi_version_t)();

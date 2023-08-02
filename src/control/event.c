@@ -8,7 +8,7 @@
 
 #include "rosalia/json.h"
 #include "rosalia/serialization.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event.h"
 

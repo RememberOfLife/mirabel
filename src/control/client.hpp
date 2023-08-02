@@ -7,7 +7,7 @@
 #include "nanovg_gl.h"
 #include "imgui.h"
 #include "rosalia/semver.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/frontend.h"

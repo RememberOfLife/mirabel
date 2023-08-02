@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #ifdef __cplusplus
 extern "C" {
