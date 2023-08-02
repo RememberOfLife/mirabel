@@ -94,11 +94,12 @@ namespace MetaGui {
                     //TODO make proper with struct and find solution for wrap that allows NULL opts
                     effective_opts_string = NULL;
                 }
-                init_info.source.standard = {
+                /*TODO INTEGRATIONinit_info.source.standard = {
                     .opts = effective_opts_string,
                     .legacy = NULL,
                     .state = NULL,
                 };
+                */
             }
             event_any es;
             event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), init_info);

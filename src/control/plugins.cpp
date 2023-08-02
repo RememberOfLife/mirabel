@@ -279,26 +279,7 @@ namespace Control {
 
             //TODO server doesnt load default wrappers, instead only loads default methods, what kind of switch for that?
 
-            add_game_wrap(&chess_gw);
-            add_game_wrap(&havannah_gw);
-            add_game_methods(&quasar_standard_gbe);
-            add_game_methods(&rockpaperscissors_standard_gbe);
-            add_game_wrap(&tictactoe_ultimate_gw);
-            add_game_wrap(&tictactoe_gw);
-            add_game_wrap(&twixt_pp_gw);
-
             add_frontend(&fallback_text_fem); //TODO somehow make this show last in the list?
-
-            add_frontend(&chess_fem);
-            add_frontend(&havannah_fem);
-            add_frontend(&quasar_fem);
-            add_frontend(&rockpaperscissors_fem);
-            add_frontend(&tictactoe_ultimate_fem);
-            add_frontend(&tictactoe_fem);
-            add_frontend(&twixt_pp_fem);
-
-            // add_engine_methods(&randomengine_ebe); //TODO REENABLE engine
-            // add_engine_methods(&uci_wrap_ebe); //TODO REENABLE engine
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist

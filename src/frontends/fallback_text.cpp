@@ -158,22 +158,26 @@ namespace {
                     data.g_fflags = (char*)malloc(32); // 23
                     sprintf(
                         data.g_fflags,
-                        "%c%c%c%c%c%c%s %s %s %s %s %s %s %s",
+                        "%c%c%c%c%c%c%s %s %s %s %s %s %s",
                         game_ff(&data.g).error_strings ? 'E' : '-',
                         game_ff(&data.g).options ? 'O' : '-',
                         game_ff(&data.g).serializable ? 'S' : '-',
                         game_ff(&data.g).legacy ? 'L' : '-',
                         game_ff(&data.g).random_moves ? 'R' : '-',
                         game_ff(&data.g).hidden_information ? 'H' : '-',
+                        //TODO INTEGRATION sync data
                         game_ff(&data.g).simultaneous_moves ? "Sm" : "--",
+                        //TODO INTEGRATION sync ctr
                         game_ff(&data.g).big_moves ? "Bm" : "--",
                         game_ff(&data.g).move_ordering ? "Om" : "--",
-                        game_ff(&data.g).scores ? "Sc" : "--",
                         game_ff(&data.g).id ? "Id" : "--",
                         game_ff(&data.g).eval ? "Ev" : "--",
+                        //TODO INTEGRATION action list
+                        //TODO INTEGRATION discretize
                         game_ff(&data.g).playout ? "Rp" : "--",
                         game_ff(&data.g).print ? "Pr" : "--"
                         // game_ff(&data.g).time ? "T" : "-" //TODO add format string arg
+                        //TODO INTEGRATION compare
                     );
                 }
                 game_create(&data.g, &event.game_load_methods.init_info);
@@ -199,7 +203,7 @@ namespace {
                 if (game_ff(&data.g).options) {
                     size_t size_fill;
                     const char* gopts_local;
-                    game_export_options(&data.g, PLAYER_NONE, &size_fill, &gopts_local);
+                    game_export_options(&data.g, &size_fill, &gopts_local);
                     data.g_opts = strdup(gopts_local);
                 }
                 data.g_state = NULL;
@@ -333,11 +337,13 @@ namespace {
         if (data.dirty) {
             size_t size_fill;
             const char* str_buf;
-            game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
+            //TODO INTEGRATION readct and copy <->
+            //game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
             free(data.g_state);
             data.g_state = strdup(str_buf);
             if (game_ff(&data.g).print) {
-                game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
+                //TODO INTEGRATION
+                // game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
                 free(data.g_print);
                 data.g_print = strdup(str_buf);
             }

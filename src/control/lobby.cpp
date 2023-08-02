@@ -53,10 +53,10 @@ namespace Control {
             // send sync info to user, load + state import
             size_t game_state_buffer_len;
             const char* game_state_buffer;
-            game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
+            game_export_state(the_game, &game_state_buffer_len, &game_state_buffer);
             game_init init_info = (game_init){
                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                .source = {
+                /*TODO INTEGRATION .source = {
                     .standard{
                         .opts = game_options,
                         .legacy = NULL,
@@ -64,6 +64,7 @@ namespace Control {
                         .sync_ctr = the_game->sync_ctr,
                     },
                 },
+                */
             };
             event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
             es.base.client_id = client_id;
@@ -130,7 +131,7 @@ namespace Control {
                 if (game_ff(the_game).options) {
                     size_t size_fill;
                     const char* game_options_local;
-                    game_export_options(the_game, PLAYER_NONE, &size_fill, &game_options_local);
+                    game_export_options(the_game, &size_fill, &game_options_local);
                     game_options = strdup(game_options_local);
                 }
                 // update game name strings
