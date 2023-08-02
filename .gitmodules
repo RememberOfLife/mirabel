@@ -5,6 +5,10 @@
 [submodule "lib/nanovg"]
 	path = lib/nanovg
 	url = https://github.com/inniyah/nanovg
+[submodule "lib/rosalia"]
+	path = lib/rosalia
+	url = https://github.com/RememberOfLife/rosalia.git
+    ignore = dirty
 [submodule "lib/SDL"]
 	path = lib/SDL
 	url = https://github.com/libsdl-org/SDL.git
@@ -15,7 +19,3 @@
 [submodule "lib/stb"]
 	path = lib/stb
 	url = https://github.com/nothings/stb
-[submodule "lib/surena"]
-	path = lib/surena
-	url = https://github.com/RememberOfLife/surena
-    ignore = dirty
