@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-static const uint64_t SURENA_GAME_API_VERSION = 35;
+static const uint64_t SURENA_GAME_API_VERSION = 36;
 
 typedef uint32_t error_code;
 
@@ -161,9 +161,6 @@ typedef struct game_feature_flags_s {
 
     // bool time : 1;
 
-    // DEPRECATED
-    bool compare : 1;
-
 } game_feature_flags;
 
 typedef struct sync_data_s {
@@ -264,12 +261,6 @@ typedef error_code clone_gf_t(game* self, game* clone_target);
 // other is restricted to already created games using the same options, otherwise undefined behaviour
 // undefined behaviour if self == other
 typedef error_code copy_from_gf_t(game* self, game* other);
-
-// DEPRECATED
-// FEATURE: compare
-// returns true iff self and other are in a behaviourally identical state (concerning the game methods)
-// e.g. this includes move counters (and 3fold repition histories) in e.g. chess, but not any exchangable backend data structures
-typedef error_code compare_gf_t(game* self, game* other, bool* ret_equal);
 
 // FEATURE: options
 // write this games options to a universal options string and returns a read only pointer to it
@@ -496,7 +487,6 @@ typedef struct game_methods_s {
     destroy_gf_t* destroy;
     clone_gf_t* clone;
     copy_from_gf_t* copy_from;
-    compare_gf_t* compare;
     export_options_gf_t* export_options;
     player_count_gf_t* player_count;
     export_state_gf_t* export_state;
@@ -579,7 +569,6 @@ create_gf_t game_create;
 destroy_gf_t game_destroy;
 clone_gf_t game_clone;
 copy_from_gf_t game_copy_from;
-compare_gf_t game_compare;
 export_options_gf_t game_export_options;
 player_count_gf_t game_player_count;
 export_state_gf_t game_export_state;

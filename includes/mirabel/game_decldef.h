@@ -92,10 +92,6 @@
 #error "surena gdd internal feature flag bool already defined: SURENA_GDD_FFB_PRINT"
 #endif
 
-#ifdef SURENA_GDD_FFB_COMPARE
-#error "surena gdd internal feature flag bool already defined: SURENA_GDD_FFB_COMPARE"
-#endif
-
 #ifndef SURENA_GDD_FF_ERROR_STRINGS
 #define SURENA_GDD_FFB_ERROR_STRINGS false
 #else
@@ -198,12 +194,6 @@
 #define SURENA_GDD_FFB_PRINT true
 #endif
 
-#ifndef SURENA_GDD_FF_COMPARE
-#define SURENA_GDD_FFB_COMPARE false
-#else
-#define SURENA_GDD_FFB_COMPARE true
-#endif
-
 #if SURENA_GDD_FFB_ERROR_STRINGS
 static get_last_error_gf_t get_last_error_gf;
 #endif
@@ -211,9 +201,6 @@ static create_gf_t create_gf;
 static destroy_gf_t destroy_gf;
 static clone_gf_t clone_gf;
 static copy_from_gf_t copy_from_gf;
-#if SURENA_GDD_FFB_COMPARE
-static compare_gf_t compare_gf;
-#endif
 #if SURENA_GDD_FFB_OPTIONS
 static export_options_gf_t export_options_gf;
 #endif
@@ -300,7 +287,6 @@ const game_methods SURENA_GDD_BENAME
         .discretize = SURENA_GDD_FFB_DISCRETIZE,
         .playout = SURENA_GDD_FFB_PLAYOUT,
         .print = SURENA_GDD_FFB_PRINT,
-        .compare = SURENA_GDD_FFB_COMPARE
     },
     .internal_methods = (void*)(SURENA_GDD_INTERNALS),
 #if SURENA_GDD_FFB_ERROR_STRINGS
@@ -312,11 +298,6 @@ const game_methods SURENA_GDD_BENAME
     .destroy = destroy_gf,
     .clone = clone_gf,
     .copy_from = copy_from_gf,
-#if SURENA_GDD_FFB_COMPARE
-    .compare = compare_gf,
-#else
-    .compare = NULL,
-#endif
 #if SURENA_GDD_FFB_OPTIONS
     .export_options = export_options_gf,
 #else
@@ -472,6 +453,3 @@ const game_methods SURENA_GDD_BENAME
 
 #undef SURENA_GDD_FF_PRINT
 #undef SURENA_GDD_FFB_PRINT
-
-#undef SURENA_GDD_FF_COMPARE
-#undef SURENA_GDD_FFB_COMPARE

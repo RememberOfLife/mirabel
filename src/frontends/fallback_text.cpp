@@ -155,29 +155,28 @@ namespace {
                 data.g_name = (char*)malloc(strlen(game_gname(&data.g)) + strlen(game_vname(&data.g)) + strlen(game_iname(&data.g)) + 64);
                 sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", game_gname(&data.g), game_vname(&data.g), game_iname(&data.g), game_version(&data.g).major, game_version(&data.g).minor, game_version(&data.g).patch);
                 {
-                    data.g_fflags = (char*)malloc(32); // 23
+                    data.g_fflags = (char*)malloc(64);
                     sprintf(
                         data.g_fflags,
-                        "%c%c%c%c%c%c%s %s %s %s %s %s %s",
+                        "%c%c%c%c%c%c%s %s %s %s %s %s %s %s %s %s %s",
                         game_ff(&data.g).error_strings ? 'E' : '-',
                         game_ff(&data.g).options ? 'O' : '-',
                         game_ff(&data.g).serializable ? 'S' : '-',
                         game_ff(&data.g).legacy ? 'L' : '-',
                         game_ff(&data.g).random_moves ? 'R' : '-',
                         game_ff(&data.g).hidden_information ? 'H' : '-',
-                        //TODO INTEGRATION sync data
+                        game_ff(&data.g).sync_data ? "Sd" : "--",
                         game_ff(&data.g).simultaneous_moves ? "Sm" : "--",
-                        //TODO INTEGRATION sync ctr
+                        game_ff(&data.g).sync_ctr ? "Sc" : "--",
                         game_ff(&data.g).big_moves ? "Bm" : "--",
                         game_ff(&data.g).move_ordering ? "Om" : "--",
                         game_ff(&data.g).id ? "Id" : "--",
                         game_ff(&data.g).eval ? "Ev" : "--",
-                        //TODO INTEGRATION action list
-                        //TODO INTEGRATION discretize
+                        game_ff(&data.g).action_list ? "Al" : "--",
+                        game_ff(&data.g).discretize ? "Dc" : "--",
                         game_ff(&data.g).playout ? "Rp" : "--",
                         game_ff(&data.g).print ? "Pr" : "--"
                         // game_ff(&data.g).time ? "T" : "-" //TODO add format string arg
-                        //TODO INTEGRATION compare
                     );
                 }
                 game_create(&data.g, &event.game_load_methods.init_info);

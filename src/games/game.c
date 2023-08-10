@@ -357,15 +357,6 @@ error_code game_copy_from(game* self, game* other)
     return ec;
 }
 
-error_code game_compare(game* self, game* other, bool* ret_equal)
-{
-    assert(self);
-    assert(self->methods);
-    assert(other);
-    assert(ret_equal);
-    return self->methods->compare(self, other, ret_equal);
-}
-
 error_code game_export_options(game* self, size_t* ret_size, const char** ret_str)
 {
     assert(self);
