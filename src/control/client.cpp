@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 6, 2};
+    const semver client_version = semver{0, 6, 3};
 
     Client* main_client = NULL;
 
@@ -43,6 +43,10 @@ namespace Control {
     {
         main_client = this;
         event_queue_create(&inbox);
+
+        // start watchdog so it can oversee explicit construction
+        t_tc.start();
+        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         const int initial_window_width = 1280;
         const int initial_window_height = 720;
@@ -70,10 +74,6 @@ namespace Control {
         dd.cfg_lock = cfg_lock_create();
         dd.cfg = cj_create_object(0); //TODO load from config file
         job_queue_create(&dd.jobs, 8); //TODO threads from config
-
-        // start watchdog so it can oversee explicit construction
-        t_tc.start();
-        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0) {

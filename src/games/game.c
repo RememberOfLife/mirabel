@@ -92,7 +92,7 @@ size_t ls_move_data_serializer(GSIT itype, void* obj_in, void* obj_out, void* bu
 {
     // flatten the unions, this encodes more data than required, but keeps complexity down
 
-    typedef enum __attribute__((__packed__)) FLAT_MOVE_TYPE_E {
+    typedef enum FLAT_MOVE_TYPE_E {
         FLAT_MOVE_TYPE_SMALL = 0,
         FLAT_MOVE_TYPE_BIG,
         FLAT_MOVE_TYPE_COUNT,

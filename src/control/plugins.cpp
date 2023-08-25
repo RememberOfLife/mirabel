@@ -276,10 +276,7 @@ namespace Control {
         persist_plugins(persist_plugins)
     {
         if (defaults) {
-
-            //TODO server doesnt load default wrappers, instead only loads default methods, what kind of switch for that?
-
-            add_frontend(&fallback_text_fem); //TODO somehow make this show last in the list?
+            add_frontend(&fallback_text_fem); //TODO somehow make this show last in the list? //TODO only client needs this, default category is useless now
         }
         if (persist_plugins) {
             //TODO load plugins persistently, i.e. load all that were loaded on last quit, if they still exist

@@ -171,7 +171,7 @@ typedef struct sync_data_s {
 
 extern const serialization_layout sl_sync_data[];
 
-typedef enum __attribute__((__packed__)) GAME_INIT_SOURCE_TYPE_E {
+typedef enum GAME_INIT_SOURCE_TYPE_E {
     GAME_INIT_SOURCE_TYPE_DEFAULT = 0, // create a default game with the default options and default initial state
     GAME_INIT_SOURCE_TYPE_STANDARD, // create a game from some options, legacy and initial state
     GAME_INIT_SOURCE_TYPE_SERIALIZED, // (re)create a game from a serialization buffer
@@ -191,7 +191,7 @@ typedef struct game_init_standard_s {
 } game_init_standard;
 
 typedef struct game_init_serialized_s {
-    // beware that the data given through serialized is UNTRUSTED and shoudl be thouroughly checked for consistency
+    // beware that the data given through serialized is UNTRUSTED and should be thouroughly checked for consistency
     blob b;
 } game_init_serialized;
 

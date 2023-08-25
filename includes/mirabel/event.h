@@ -20,7 +20,7 @@ extern "C" {
 // protocol ping just pings the connected network adapter, do not place in recv_queue
 // adapter ping pings into the recv_queue of the connected adapter, i.e. gets to the server main loop where protocol ping gets swallowed by the adapter
 
-typedef enum __attribute__((__packed__)) EVENT_TYPE_E {
+typedef enum EVENT_TYPE_E {
     // special events
     EVENT_TYPE_NULL = 0, // ignored event
     EVENT_TYPE_EXIT, // queueholder object stop runners and prepares itself for deconstruction by e.g. join

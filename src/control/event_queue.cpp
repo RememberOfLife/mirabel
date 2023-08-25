@@ -1,3 +1,4 @@
+#include <cassert>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
@@ -20,10 +21,9 @@ struct event_queue_impl {
     std::condition_variable cv;
 };
 
-static_assert(sizeof(event_queue) >= sizeof(event_queue_impl), "event_queue impl size missmatch");
-
 void event_queue_create(event_queue* eq)
 {
+    assert(sizeof(event_queue) >= sizeof(event_queue_impl)); //TODO remove this and force everyone to use void* for eevent_queues since we can not guarantee their size
     event_queue_impl* eqi = (event_queue_impl*)eq;
     new (eqi) event_queue_impl();
 }

@@ -2,6 +2,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <mutex>
@@ -501,10 +502,9 @@ struct eevent_queue_impl {
     std::condition_variable cv;
 };
 
-static_assert(sizeof(eevent_queue) >= sizeof(eevent_queue_impl), "eevent_queue impl size missmatch");
-
 void eevent_queue_create(eevent_queue* eq)
 {
+    assert(sizeof(eevent_queue) >= sizeof(eevent_queue_impl)); //TODO remove this and force everyone to use void* for eevent_queues since we can not guarantee their size
     eevent_queue_impl* eqi = (eevent_queue_impl*)eq;
     new (eqi) eevent_queue_impl();
 }

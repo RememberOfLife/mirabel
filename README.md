@@ -95,6 +95,7 @@ Collect more general resources:
 * quasar and rockpaperscissors buttons sometimes dont show
 
 ## todo
+* beware enums arent packed anymore in case of network issues
 * move to SDL3
 * game sync data event processing in client and server
 * make sure all moves are properly deleted everywhere
