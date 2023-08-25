@@ -56,15 +56,16 @@ namespace Control {
             game_export_state(the_game, &game_state_buffer_len, &game_state_buffer);
             game_init init_info = (game_init){
                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                /*TODO INTEGRATION .source = {
+                .source{
                     .standard{
                         .opts = game_options,
-                        .legacy = NULL,
+                        .player_count = 2, //TODO //HACK needs proper optionable
+                        .env_legacy = NULL,
+                        .player_legacies = NULL,
                         .state = game_state_buffer,
                         .sync_ctr = the_game->sync_ctr,
                     },
                 },
-                */
             };
             event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
             es.base.client_id = client_id;

@@ -34,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 6, 1};
+    const semver client_version = semver{0, 6, 2};
 
     Client* main_client = NULL;
 
@@ -436,13 +436,14 @@ namespace Control {
                             game_init init_info = (game_init){
                                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                                 .source = {
-                                    /*TODO INTEGRATION.standard{
+                                    .standard{
                                         .opts = tg_opts,
-                                        .legacy = NULL,
+                                        .player_count = 2, //TODO //HACK needs proper optionable
+                                        .env_legacy = NULL,
+                                        .player_legacies = NULL,
                                         .state = tg_state,
                                         .sync_ctr = the_game->sync_ctr,
                                     },
-                                    */
                                 },
                             };
                             event_any se;

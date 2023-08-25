@@ -94,12 +94,14 @@ namespace MetaGui {
                     //TODO make proper with struct and find solution for wrap that allows NULL opts
                     effective_opts_string = NULL;
                 }
-                /*TODO INTEGRATIONinit_info.source.standard = {
+                init_info.source.standard = {
                     .opts = effective_opts_string,
-                    .legacy = NULL,
+                    .player_count = 2, //TODO //HACK needs proper optionable
+                    .env_legacy = NULL,
+                    .player_legacies = NULL,
                     .state = NULL,
+                    .sync_ctr = SYNC_CTR_DEFAULT,
                 };
-                */
             }
             event_any es;
             event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), init_info);
