@@ -30,6 +30,7 @@ All dependencies marked `[system]` are system packages/dependencies from your di
 
 import blocks style:
 * all standard libs
+* standard libs, if any require special platform compatibility guards
 * imports from dependencies in order as listed above
 * imports from own src tree in source tree order (mirabel includes before src headers)
 * import header for things implemented in this source file

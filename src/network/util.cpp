@@ -2,8 +2,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#ifdef WIN32
+#include <io.h>
+#define R_OK 4
+#define access _access
+#else
+#include <unistd.h>
+#endif
 
 #include "SDL_net.h"
+#include <openssl/evp.h>
 #include <openssl/ssl.h>
 #include <openssl/x509v3.h> // for extensions and subj alt names
 
@@ -103,25 +111,49 @@ namespace Network {
             } break;
         }
 
-        // certificate fullchain file, also contains the public key
-        r = SSL_CTX_use_certificate_chain_file(ctx, chain_file);
-        if (r != 1) {
-            util_ssl_ctx_free(ctx);
-            return NULL;
-        }
+        // if no cert files found, initialize with ad-hoc certificates
+        //TODO in proper this should be a setting of the server config
+        if (access(chain_file, R_OK) == 0 && access(key_file, R_OK) == 0) {
+            // certificate fullchain file, also contains the public key
+            r = SSL_CTX_use_certificate_chain_file(ctx, chain_file);
+            if (r != 1) {
+                util_ssl_ctx_free(ctx);
+                return NULL;
+            }
+            // load private key
+            r = SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
+            if (r != 1) {
+                util_ssl_ctx_free(ctx);
+                return NULL;
+            }
+            // check if the private key is valid
+            r = SSL_CTX_check_private_key(ctx);
+            if (r != 1) {
+                util_ssl_ctx_free(ctx);
+                return NULL;
+            }
+        } else {
+            EVP_PKEY* cert_pkey = EVP_EC_gen("P-521"); // largest prime curve
 
-        // load private key
-        r = SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM);
-        if (r != 1) {
-            util_ssl_ctx_free(ctx);
-            return NULL;
-        }
+            X509* cert_x509 = X509_new();
+            X509_set_version(cert_x509, X509_VERSION_3);
+            ASN1_INTEGER_set(X509_get_serialNumber(cert_x509), 1);
+            X509_gmtime_adj(X509_get_notBefore(cert_x509), 0);
+            X509_gmtime_adj(X509_get_notAfter(cert_x509), 365 * 24 * 60 * 60); // valid for one year
+            X509_set_pubkey(cert_x509, cert_pkey);
 
-        // check if the private key is valid
-        r = SSL_CTX_check_private_key(ctx);
-        if (r != 1) {
-            util_ssl_ctx_free(ctx);
-            return NULL;
+            X509_NAME* cert_name = X509_get_subject_name(cert_x509);
+            X509_NAME_add_entry_by_txt(cert_name, "CN", MBSTRING_ASC, (const unsigned char*)"mirabel-debug", -1, -1, 0);
+
+            X509_set_issuer_name(cert_x509, cert_name);
+            X509_sign(cert_x509, cert_pkey, EVP_sha256());
+
+            SSL_CTX_use_certificate(ctx, cert_x509);
+            SSL_CTX_use_PrivateKey(ctx, cert_pkey);
+
+            // should be safe to free here because the ssl ctx holds copies
+            X509_free(cert_x509);
+            EVP_PKEY_free(cert_pkey);
         }
 
         return ctx;
