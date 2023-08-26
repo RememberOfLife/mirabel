@@ -176,12 +176,7 @@ static error_code copy_from_gf(game* self, game* other)
     //TODO
 }
 
-static error_code compare_gf(game* self, game* other, bool* ret_equal)
-{
-    //TODO
-}
-
-static error_code export_options_gf(game* self, player_id player, size_t* ret_size, const char** ret_str)
+static error_code export_options_gf(game* self, size_t* ret_size, const char** ret_str)
 {
     //TODO
 }
@@ -191,7 +186,7 @@ static error_code player_count_gf(game* self, uint8_t* ret_count)
     //TODO
 }
 
-static error_code export_state_gf(game* self, player_id player, size_t* ret_size, const char** ret_str)
+static error_code export_state_gf(game* self, size_t* ret_size, const char** ret_str)
 {
     //TODO
 }
@@ -201,7 +196,7 @@ static error_code import_state_gf(game* self, const char* str)
     //TODO
 }
 
-static error_code serialize_gf(game* self, player_id player, const blob** ret_blob)
+static error_code serialize_gf(game* self, const blob** ret_blob)
 {
     //TODO
 }
@@ -221,7 +216,7 @@ static error_code get_concrete_move_probabilities_gf(game* self, uint32_t* ret_c
     //TODO
 }
 
-static error_code get_random_move_gf(game* self, uint64_t seed, move_data_sync** ret_move)
+static error_code get_random_move_gf(game* self, seed128 seed, move_data_sync** ret_move)
 {
     //TODO
 }
@@ -241,7 +236,7 @@ static error_code is_legal_move_gf(game* self, player_id player, move_data_sync 
     //TODO
 }
 
-static error_code move_to_action_gf(game* self, player_id player, move_data_sync move, player_id target_player, move_data_sync** ret_action)
+static error_code move_to_action_gf(game* self, player_id player, move_data_sync move, uint8_t target_count, const player_id* target_players, move_data_sync** ret_action)
 {
     //TODO
 }
@@ -261,7 +256,7 @@ static error_code export_legacy_gf(game* self, player_id player, size_t* ret_siz
     //TODO
 }
 
-static error_code get_scores_gf(game* self, const int32_t** ret_scores)
+static error_code get_legacy_results_sgf(game_methods* methods, const char* opts_str, const char* env_legacy, uint16_t player_legacy_count, const char* const* player_legacies, uint16_t* ret_count, const uint16_t** ret_legacy_idxs)
 {
     //TODO
 }
@@ -276,12 +271,12 @@ static error_code eval_gf(game* self, player_id player, float* ret_eval)
     //TODO
 }
 
-static error_code discretize_gf(game* self, uint64_t seed)
+static error_code discretize_gf(game* self, seed128 seed)
 {
     //TODO
 }
 
-static error_code playout_gf(game* self, uint64_t seed)
+static error_code playout_gf(game* self, seed128 seed)
 {
     //TODO
 }
@@ -311,7 +306,7 @@ static error_code get_move_str_gf(game* self, player_id player, move_data_sync m
     //TODO
 }
 
-static error_code print_gf(game* self, player_id player, size_t* ret_size, const char** ret_str)
+static error_code print_gf(game* self, size_t* ret_size, const char** ret_str)
 {
     //TODO
 }
