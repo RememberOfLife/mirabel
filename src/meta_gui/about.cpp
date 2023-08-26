@@ -1,7 +1,9 @@
 #include <cstdint>
 #include <cstdio>
 
+#include <GL/glew.h>
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include "SDL_net.h"
 #include "nanovg.h"
 #include <openssl/ssl.h>
@@ -9,6 +11,12 @@
 #include "mirabel/engine.h"
 #include "mirabel/game.h"
 #include "mirabel/move_history.h"
+
+#include "prototype_util/sane_windows.h"
+#if !ISMSVC
+#include <unistd.h>
+#include <signal.h>
+#endif
 
 #include "mirabel/engine_wrap.h"
 #include "mirabel/frontend.h"
@@ -39,9 +47,23 @@ namespace MetaGui {
 
         ImGui::Text("MIRABEL"); // make bigger
         ImGui::Text("client version: %u.%u.%u", Control::client_version.major, Control::client_version.minor, Control::client_version.patch);
-        ImGui::Text("mirabel api versions: frontend(%lu) gamewrap(%lu) enginewrap(%lu)", MIRABEL_FRONTEND_API_VERSION, MIRABEL_GAME_WRAP_API_VERSION, MIRABEL_ENGINE_WRAP_API_VERSION);
         ImGui::Text("git commit hash: %s%s", GIT_COMMIT_HASH == NULL ? "<no commit info available>" : GIT_COMMIT_HASH, GIT_COMMIT_HASH != NULL && GIT_COMMIT_DIRTY ? " (dirty)" : "");
+        ImGui::Text(
+            "mirabel api versions:\n"
+            "\tgame(%lu) movehistory(%lu) engine(%lu)\n"
+            "\tfrontend(%lu) gamewrap(%lu) enginewrap(%lu)",
+            SURENA_GAME_API_VERSION,
+            SURENA_MOVE_HISTORY_API_VERSION,
+            SURENA_ENGINE_API_VERSION,
+            MIRABEL_FRONTEND_API_VERSION,
+            MIRABEL_GAME_WRAP_API_VERSION,
+            MIRABEL_ENGINE_WRAP_API_VERSION
+        );
         ImGui::Separator();
+        {
+            // GLEW
+            ImGui::Text("GLEW version: %s", glewGetString(GLEW_VERSION));
+        }
         {
             // SDL
             if (init_sdl_version == false) {
@@ -55,7 +77,14 @@ namespace MetaGui {
                 ImGui::Text("(compiled %u.%u.%u)", sdl_version_compiled.major, sdl_version_compiled.minor, sdl_version_compiled.patch);
             }
         }
-        //TODO opengl ?
+        {
+            // OpenGL
+            GLint gl_vmaj;
+            GLint gl_vmin;
+            glGetIntegerv(GL_MAJOR_VERSION, &gl_vmaj);
+            glGetIntegerv(GL_MINOR_VERSION, &gl_vmin);
+            ImGui::Text("OpenGL version: %i.%i", gl_vmaj, gl_vmin); // only works for 3 upwards //TODO require strictly >=3 in cmakelists
+        }
         {
             // SDL_net
             if (init_sdl_net_version == false) {
@@ -74,15 +103,31 @@ namespace MetaGui {
             // OpenSSL
             ImGui::Text("OpenSSL version: %s", OPENSSL_FULL_VERSION_STR);
         }
+        //TODO nanovg possible?
         {
             // dear imgui
             ImGui::Text("dear imgui version: %s", IMGUI_VERSION);
         }
         {
-            // surena
-            ImGui::Text("surena version: game(%lu) engine(%lu) movehistory(%lu)", SURENA_GAME_API_VERSION, SURENA_ENGINE_API_VERSION, SURENA_MOVE_HISTORY_API_VERSION);
+            // rosalia
+            ImGui::Text("rosalia version: ?"); //TODO theres a lot of apis there, show all or just the commit hash?
         }
-        //TODO separator and button with repo link
+        ImGui::Separator();
+        ImGui::TextUnformatted("repository: https://github.com/RememberOfLife/mirabel");
+        ImGui::SameLine();
+        if (ImGui::SmallButton("open link")) {
+#if ISMSVC
+            ShellExecuteA(NULL, "open", "https://github.com/RememberOfLife/mirabel", NULL, NULL, SW_SHOWNORMAL)
+#else
+            signal(SIGCHLD, SIG_IGN); // so we dont have to clean up the child
+            pid_t child = fork();
+            if (child == -1) {
+                //TODO fail case
+            } else if (child == 0) {
+                execlp("xdg-open", "xdg-open", "https://github.com/RememberOfLife/mirabel", NULL);
+            }
+#endif
+        }
 
         ImGui::End();
     }
