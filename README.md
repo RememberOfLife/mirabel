@@ -5,7 +5,7 @@ General purpose board game playing GUI and server with some useful features.
   * Self-hostable Server
 * Linux + Windows Builds (MSVC / MINGW at your choice)
 * Engine Integration
-* Plugin support for loading more games, frontends and engines.
+* Plugin support for loading games, frontends and engines.
   * Powerful API
   * Multithreaded asset loading.
   * Reuseable resources available.
@@ -15,9 +15,20 @@ Don't forget to clone submodules too by using:
 
 Future features:
 * History Manager for game state tracking and analysis.
-* Support for games using random moves, hidden information and simultaneous moves.
+* REPL for cli game playing.
+
+## usage
+
+Client: `mirabel`  
+Server: `mirabel server`
+
+## plugins
+
+The mirabel project provides powerful APIs and utilities for creating all kinds of board games.  
+For more details regarding the various APIs available, see the [design](./docs/design.md) document.
 
 ## dependencies
+
 All dependencies marked `[system]` are system packages/dependencies from your distributions repositories, all others come pre-bundled.
 * GLEW [system/release]
 * SDL

@@ -64,7 +64,7 @@ set(SOURCES
     src/control/user_manager.cpp
 
     # src/engines/engine_manager.cpp //TODO REENABLE engine
-    # src/engines/engine.cpp //TODO REENABLE (surena) engine
+    # src/engines/engine.cpp //TODO REENABLE engine
 
     src/frontends/empty_frontend.cpp
     src/frontends/fallback_text.cpp
@@ -167,7 +167,6 @@ target_link_libraries(mirabel ${OPENGL_LIBRARIES})
 file(GLOB GLEW_LIB_SYS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib-sys/*glew*/" "${CMAKE_CURRENT_SOURCE_DIR}/lib-sys/*GLEW*/")
 if("${GLEW_LIB_SYS_PATH}" STREQUAL "")
     find_package(GLEW REQUIRED) #TODO is this fine with all windows build combinations?
-    message(STATUS "error can not find package glew")
 else()
     list(PREPEND CMAKE_PREFIX_PATH "${GLEW_LIB_SYS_PATH}")
     list(PREPEND CMAKE_LIBRARY_PATH "${GLEW_LIB_SYS_PATH}/lib/Release/")
