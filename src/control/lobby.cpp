@@ -2,7 +2,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "mirabel/game.h"
 

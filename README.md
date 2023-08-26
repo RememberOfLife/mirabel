@@ -3,7 +3,7 @@
 General purpose board game playing GUI and server with some useful features.
 * Online/Offline Multiplayer (no account required)
   * Self-hostable Server
-* Linux + Windows Builds
+* Linux + Windows Builds (MSVC / MINGW at your choice)
 * Engine Integration
 * Plugin support for loading more games, frontends and engines.
   * Powerful API
@@ -19,14 +19,14 @@ Future features:
 
 ## dependencies
 All dependencies marked `[system]` are system packages/dependencies from your distributions repositories, all others come pre-bundled.
-* GLEW [system]
-* SDL (+ OpenGL) [system]
+* GLEW
+* SDL
+* OpenGL [system]
 * SDL_net
 * OpenSSL [system]
 * nanovg (+ stb)
 * imgui
 * rosalia
-* surena
 
 import blocks style:
 * all standard libs

@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "prototype_util/direct_draw.hpp"
 

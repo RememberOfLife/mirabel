@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cstring>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
 #include "mirabel/game.h"

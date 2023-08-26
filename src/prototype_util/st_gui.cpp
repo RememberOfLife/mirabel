@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cmath>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 #include "direct_draw.hpp"
 #include "prototype_util/direct_draw.hpp"

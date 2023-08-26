@@ -1,6 +1,6 @@
 #include <cstdint>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "imgui.h"
 
 #include "meta_gui/meta_gui.hpp"

@@ -4,7 +4,7 @@
 #include <cstring>
 #include <vector>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "imgui.h"
 #include "rosalia/noise.h"
 

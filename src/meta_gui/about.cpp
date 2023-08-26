@@ -1,7 +1,7 @@
 #include <cstdint>
 #include <cstdio>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "SDL_net.h"
 #include "nanovg.h"
 #include <openssl/ssl.h>

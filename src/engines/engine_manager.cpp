@@ -3,7 +3,7 @@
 #include <cstring>
 #include <vector>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "mirabel/engine.h"
 #include "mirabel/game.h"
 
