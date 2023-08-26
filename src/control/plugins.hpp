@@ -6,12 +6,11 @@
 #include <unordered_map>
 #include <vector>
 
-#include "mirabel/engine.h"
-#include "mirabel/game.h"
-
 #include "mirabel/engine_wrap.h"
+#include "mirabel/engine.h"
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap.h"
+#include "mirabel/game.h"
 
 namespace Control {
 

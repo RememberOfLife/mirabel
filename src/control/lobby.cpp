@@ -4,10 +4,9 @@
 
 #include <SDL.h>
 
-#include "mirabel/game.h"
-
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/game.h"
 #include "control/plugins.hpp"
 
 #include "control/lobby.hpp"

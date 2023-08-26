@@ -2,12 +2,12 @@
 #include <cstdio>
 
 #include "imgui.h"
-#include "mirabel/game.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
+#include "control/client.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 

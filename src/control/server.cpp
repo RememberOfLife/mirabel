@@ -6,9 +6,9 @@
 #include "SDL_net.h"
 #include "rosalia/rand.h"
 #include "rosalia/semver.h"
-#include "mirabel/game.h"
 
 #include "mirabel/event.h"
+#include "mirabel/game.h"
 #include "control/auth_manager.hpp"
 #include "control/lobby_manager.hpp"
 #include "control/plugins.hpp"

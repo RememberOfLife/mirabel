@@ -1,8 +1,8 @@
 #include <cstdint>
 
 #include "imgui.h"
-#include "mirabel/engine.h"
 
+#include "mirabel/engine.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "control/client.hpp"

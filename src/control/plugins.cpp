@@ -20,17 +20,17 @@
 #endif
 
 #include "imgui.h"
-#include "mirabel/engine_plugin.h"
-#include "mirabel/engine.h"
-#include "mirabel/game_plugin.h"
-#include "mirabel/game.h"
 
+#include "mirabel/engine_plugin.h"
 #include "mirabel/engine_wrap_plugin.h"
 #include "mirabel/engine_wrap.h"
+#include "mirabel/engine.h"
 #include "mirabel/frontend_plugin.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game_plugin.h"
 #include "mirabel/game_wrap_plugin.h"
 #include "mirabel/game_wrap.h"
+#include "mirabel/game.h"
 #include "mirabel/log.h"
 // #include "engines/engine_catalogue.hpp" //TODO REENABLE engine
 #include "frontends/frontend_catalogue.hpp"

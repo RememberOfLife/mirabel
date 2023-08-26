@@ -2,10 +2,10 @@
 
 #include "imgui.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/move_history.h"
+#include "control/client.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 

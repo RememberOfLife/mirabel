@@ -3,10 +3,10 @@
 #include <SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
-#include "mirabel/game.h"
 
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
 #include "control/client.hpp"
 
 #include "frontends/frontend_catalogue.hpp"

@@ -4,11 +4,8 @@
 #include <vector>
 
 #include "mirabel/engine.h"
-#include "mirabel/game.h"
-
 #include "mirabel/event_queue.h"
-
-#include "mirabel/engine.h"
+#include "mirabel/game.h"
 
 namespace Engines {
 

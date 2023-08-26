@@ -8,9 +8,6 @@
 #include "nanovg.h"
 #include <openssl/ssl.h>
 #include "imgui.h"
-#include "mirabel/engine.h"
-#include "mirabel/game.h"
-#include "mirabel/move_history.h"
 
 #include "prototype_util/sane_windows.h"
 #if !ISMSVC
@@ -19,8 +16,11 @@
 #endif
 
 #include "mirabel/engine_wrap.h"
+#include "mirabel/engine.h"
 #include "mirabel/frontend.h"
 #include "mirabel/game_wrap.h"
+#include "mirabel/game.h"
+#include "mirabel/move_history.h"
 #include "control/client.hpp"
 #include "generated/git_commit_hash.h"
 
@@ -110,7 +110,7 @@ namespace MetaGui {
         }
         {
             // rosalia
-            ImGui::Text("rosalia version: ?"); //TODO theres a lot of apis there, show all or just the commit hash?
+            // ImGui::Text("rosalia version: ?"); //TODO theres a lot of apis there, show all or just the commit hash?
         }
         ImGui::Separator();
         ImGui::TextUnformatted("repository: https://github.com/RememberOfLife/mirabel");

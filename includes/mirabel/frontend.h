@@ -8,12 +8,12 @@
 #include "rosalia/jobs.h"
 #include "rosalia/json.h"
 #include "rosalia/semver.h"
-#include "mirabel/engine.h"
-#include "mirabel/game.h"
-#include "mirabel/move_history.h"
 
+#include "mirabel/engine.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/game.h"
+#include "mirabel/move_history.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -6,6 +6,7 @@
 
 #include "rosalia/json.h"
 #include "rosalia/serialization.h"
+
 #include "mirabel/game.h"
 
 #ifdef __cplusplus
