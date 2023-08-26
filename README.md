@@ -19,7 +19,7 @@ Future features:
 
 ## dependencies
 All dependencies marked `[system]` are system packages/dependencies from your distributions repositories, all others come pre-bundled.
-* GLEW
+* GLEW [system/release]
 * SDL
 * OpenGL [system]
 * SDL_net

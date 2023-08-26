@@ -1,21 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
-set (CMAKE_C_STANDARD 11)
-set (CMAKE_CXX_STANDARD 11)
 
 project(mirabel C CXX)
-
-include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
-if(NOT CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg].*")
-    if(supported)
-        message(STATUS "IPO/LTO enabled")
-        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-    else()
-        message(STATUS "IPO/LTO not supported: <${error}>")
-    endif()
-else()
-    message(STATUS "IPO/LTO disabled in non-release build")
-endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -26,6 +11,8 @@ set(SDL_STATIC OFF CACHE INTERNAL "")
 set(SDL_SHARED ON CACHE INTERNAL "")
 set(SDL_DISABLE_INSTALL OFF CACHE BOOL "" FORCE)
 add_subdirectory(lib/SDL)
+
+add_subdirectory(lib/SDL_net)
 
 find_package(OpenSSL 3 REQUIRED)
 
@@ -54,11 +41,6 @@ set(INCLUDES
 )
 
 set(SOURCES
-    lib/SDL_net/SDLnet.c
-    lib/SDL_net/SDLnetselect.c
-    lib/SDL_net/SDLnetTCP.c
-    lib/SDL_net/SDLnetUDP.c
-
     lib/imgui/backends/imgui_impl_opengl3.cpp
     lib/imgui/backends/imgui_impl_sdl2.cpp
     lib/imgui/imgui_demo.cpp
@@ -136,6 +118,24 @@ set(SOURCES
 
 add_executable(mirabel "${SOURCES}" "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h")
 
+set_target_properties(mirabel PROPERTIES
+    C_STANDARD 11
+    CXX_STANDARD 11
+)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if(NOT CMAKE_BUILD_TYPE MATCHES "[Dd][Ee][Bb][Uu][Gg].*")
+    if(supported)
+        message(STATUS "IPO/LTO enabled")
+        set_target_properties(mirabel PROPERTIES CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    else()
+        message(STATUS "IPO/LTO not supported: <${error}>")
+    endif()
+else()
+    message(STATUS "IPO/LTO disabled in non-release build")
+endif()
+
 # export git commit hash and dirty flag to generated file in the build/build_generated/generated dir
 find_package(Git)
 set(dollar "$") # next file is processed using configure_file so we need to escape dollars to use variables
@@ -148,43 +148,69 @@ add_custom_target(add_generated_dir COMMAND "${CMAKE_COMMAND}" -E make_directory
 add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake" BYPRODUCTS "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h")
 add_dependencies(mirabel generate_git_commit_hash)
 
-add_library(nanovg ${SOURCES_NANOVG})
-target_include_directories(nanovg PRIVATE ${INCLUDES_NANOVG})
-target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
-target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
-target_link_libraries(mirabel nanovg)
-
 target_compile_options(mirabel PRIVATE
-    # "-Wall" # do after nanovg so we dont reenable warnings there
+    # "-Wall"
     # "-Wextra"
     # "-Werror" # warnings as errors
-    "-Wfatal-errors" # stop after first error
+    # "-Wfatal-errors" # stop after first error
+    #TODO pedantic and pedantic errors
 )
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
-
-target_link_options(mirabel PRIVATE -rdynamic)
 
 target_link_libraries(mirabel Threads::Threads)
 
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
 target_link_libraries(mirabel ${OPENGL_LIBRARIES})
 
-find_package(GLEW REQUIRED) # need glew for nanovg
-target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
-target_link_libraries(mirabel GLEW::GLEW)
-
-if(WIN32)
-    target_link_libraries(mirabel ws2_32 iphlpapi) # for SDL_net
-    target_link_libraries(mirabel -mwindows) # we're a gui
-    target_compile_definitions(mirabel PRIVATE SDL_MAIN_HANDLED) # stop WinMain panic
-    target_link_libraries(mirabel SDL2::SDL2-static SDL2::SDL2main) # static sdl on windows
+# prefer to use the lib sys release if it exists
+file(GLOB GLEW_LIB_SYS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib-sys/*glew*/" "${CMAKE_CURRENT_SOURCE_DIR}/lib-sys/*GLEW*/")
+if("${GLEW_LIB_SYS_PATH}" STREQUAL "")
+    find_package(GLEW REQUIRED) #TODO is this fine with all windows build combinations?
+    message(STATUS "error can not find package glew")
 else()
-    target_link_libraries(mirabel dl)
-    target_link_libraries(mirabel SDL2)
+    list(PREPEND CMAKE_PREFIX_PATH "${GLEW_LIB_SYS_PATH}")
+    list(PREPEND CMAKE_LIBRARY_PATH "${GLEW_LIB_SYS_PATH}/lib/Release/")
+    find_path(GLEW_INCLUDE_DIRS GL/glew.h REQUIRED)
+    find_library(GLEW_LIBRARIES NAMES GLEW glew32 glew glew32s PATH_SUFFIXES x64 Win32 x86 x86_64 REQUIRED)
 endif()
 
-include_directories(mirabel ${SDL2_INCLUDE_DIRS})
+add_library(nanovg STATIC ${SOURCES_NANOVG})
+target_include_directories(nanovg PRIVATE ${INCLUDES_NANOVG})
+# target_compile_options(nanovg PRIVATE "-Wno-implicit-function-declaration")
+target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
+target_include_directories(nanovg PUBLIC ${OPENGL_INCLUDE_DIR})
+target_link_libraries(nanovg ${OPENGL_LIBRARIES})
+target_link_libraries(nanovg ${GLEW_LIBRARIES})
+target_link_libraries(mirabel nanovg)
+target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
+
+target_include_directories(mirabel PRIVATE ${GLEW_INCLUDE_DIRS})
+target_include_directories(nanovg PRIVATE ${GLEW_INCLUDE_DIRS})
+target_link_libraries(mirabel ${GLEW_LIBRARIES})
+
+if(WIN32 AND (NOT (MINGW OR MSYS)))
+    # MSVC only
+    target_link_libraries(mirabel ws2_32 iphlpapi) # for SDL_net
+    target_compile_definitions(mirabel PRIVATE SDL_MAIN_HANDLED) # stop WinMain panic
+else()
+    # linux/mingw
+    target_link_libraries(mirabel dl)
+    target_link_options(mirabel PRIVATE -rdynamic)
+endif()
+
+if(MINGW OR MSYS)
+    target_link_libraries(mirabel -mwindows) # we're a gui
+endif()
+
+if(WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+endif()
+
+target_link_libraries(mirabel SDL2)
+target_link_libraries(mirabel SDL2_net)
+
+target_include_directories(mirabel PRIVATE ${SDL2_INCLUDE_DIRS})
 
 target_link_libraries(mirabel OpenSSL::SSL)
 
