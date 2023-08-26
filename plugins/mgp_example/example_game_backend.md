@@ -6,7 +6,7 @@ thegame.h
 ```cpp
 #pragma once
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,10 +35,10 @@ extern const game_methods thegame_gbe;
 //TODO namespace isn't necessary, use at your own leisure
 
 //USAGE:
-// before using `#include "surena/game_decldef.h` to declare and set the game use these macros to setup parameters
-// `SURENA_GDD_BNAME` for the name of the const game_methods struct
-// `SURENA_GDD_{GNAME,VNAME,INAME,VERSION}` for game,variant,impl,version
-// use `SURENA_GDD_FF_*` with the correct feature flag name to enable and declare this feature (order is irrelevant but readable)
+// before using `#include "mirabel/game_decldef.h` to declare and set the game use these macros to setup parameters
+// `MIRABEL_GDD_BNAME` for the name of the const game_methods struct
+// `MIRABEL_GDD_{GNAME,VNAME,INAME,VERSION}` for game,variant,impl,version
+// use `MIRABEL_GDD_FF_*` with the correct feature flag name to enable and declare this feature (order is irrelevant but readable)
 
 // in this scheme the error codes are saved in the game.data2, use grerrorf(self, .....) to use it easily
 
@@ -56,9 +56,9 @@ thegame.cpp
 
 #include "rosalia/semver.h"
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
-#include "surena/games/thegame.h" // this is your game header
+#include "mirabel/games/thegame.h" // this is your game header
 
 // general purpose helpers for opts, data, bufs
 
@@ -131,18 +131,18 @@ extern "C" {
 // };
 
 // declare and form game
-#define SURENA_GDD_BENAME thegame_standard_gbe
-#define SURENA_GDD_GNAME "TheGame"
-#define SURENA_GDD_VNAME "Standard"
-#define SURENA_GDD_INAME "surena_default"
-#define SURENA_GDD_VERSION ((semver){1, 0, 0})
-#define SURENA_GDD_INTERNALS &thegame_gbe_internal_methods
-#define SURENA_GDD_FF_ERROR_STRINGS
-#define SURENA_GDD_FF_OPTIONS
-#define SURENA_GDD_FF_SERIALIZABLE
-#define SURENA_GDD_FF_ID
-#define SURENA_GDD_FF_PRINT
-#include "surena/game_decldef.h"
+#define MIRABEL_GDD_BENAME thegame_standard_gbe
+#define MIRABEL_GDD_GNAME "TheGame"
+#define MIRABEL_GDD_VNAME "Standard"
+#define MIRABEL_GDD_INAME "mirabel_default"
+#define MIRABEL_GDD_VERSION ((semver){1, 0, 0})
+#define MIRABEL_GDD_INTERNALS &thegame_gbe_internal_methods
+#define MIRABEL_GDD_FF_ERROR_STRINGS
+#define MIRABEL_GDD_FF_OPTIONS
+#define MIRABEL_GDD_FF_SERIALIZABLE
+#define MIRABEL_GDD_FF_ID
+#define MIRABEL_GDD_FF_PRINT
+#include "mirabel/game_decldef.h"
 
 // implementation
 

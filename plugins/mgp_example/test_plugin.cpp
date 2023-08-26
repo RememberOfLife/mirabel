@@ -5,13 +5,13 @@
     unfortunately it seems that g++ currently doesn't support part of the C features used in serialization.h, so this doesn't actually work
 */
 
-#include "surena/games/tictactoe.h"
-#include "surena/game_plugin.h"
-#include "surena/game.h"
+#include "mirabel/games/tictactoe.h"
+#include "mirabel/game_plugin.h"
+#include "mirabel/game.h"
 
 uint64_t plugin_get_game_capi_version()
 {
-    return SURENA_GAME_API_VERSION;
+    return MIRABEL_GAME_API_VERSION;
 }
 
 void plugin_init_game()

@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-static const uint64_t SURENA_GAME_API_VERSION = 36;
+static const uint64_t MIRABEL_GAME_API_VERSION = 36;
 
 typedef uint32_t error_code;
 

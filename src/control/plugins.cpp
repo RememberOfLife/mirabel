@@ -407,26 +407,26 @@ namespace Control {
             if (gm_version == NULL) {
                 break;
             }
-            if (gm_version() != SURENA_GAME_API_VERSION) {
+            if (gm_version() != MIRABEL_GAME_API_VERSION) {
                 char err_str[128];
-                sprintf(err_str, "#W plugin surena game: api version mismatch: want %lu, got %lu\n", SURENA_GAME_API_VERSION, gm_version());
+                sprintf(err_str, "#W plugin mirabel game: api version mismatch: want %lu, got %lu\n", MIRABEL_GAME_API_VERSION, gm_version());
                 mirabel_log(err_str, NULL);
                 break;
             }
             void (*init)() = (void (*)())DYNA_GETSYM(dll_handle, "plugin_init_game");
             if (init == NULL) {
-                mirabel_log("#W plugin surena game: \"plugin_init_game\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel game: \"plugin_init_game\" symbol not found\n", NULL);
                 return;
             }
             init();
             plugin_get_game_methods_t get_methods = (plugin_get_game_methods_t)DYNA_GETSYM(dll_handle, "plugin_get_game_methods");
             if (get_methods == NULL) {
-                mirabel_log("#W plugin surena game: \"plugin_get_game_methods\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel game: \"plugin_get_game_methods\" symbol not found\n", NULL);
                 return;
             }
             void (*gm_cleanup)() = (void (*)())DYNA_GETSYM(dll_handle, "plugin_cleanup_game");
             if (gm_cleanup == NULL) {
-                mirabel_log("#W plugin surena game: \"plugin_cleanup_game\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel game: \"plugin_cleanup_game\" symbol not found\n", NULL);
                 return;
             }
             uint32_t method_cnt;
@@ -527,26 +527,26 @@ namespace Control {
             if (em_version == NULL) {
                 break;
             }
-            if (em_version() != SURENA_ENGINE_API_VERSION) {
+            if (em_version() != MIRABEL_ENGINE_API_VERSION) {
                 char err_str[128];
-                sprintf(err_str, "#W plugin surena engine api version mismatch: want %lu, got %lu\n", SURENA_ENGINE_API_VERSION, em_version());
+                sprintf(err_str, "#W plugin mirabel engine api version mismatch: want %lu, got %lu\n", MIRABEL_ENGINE_API_VERSION, em_version());
                 mirabel_log(err_str, NULL);
                 break;
             }
             void (*init)() = (void (*)())DYNA_GETSYM(dll_handle, "plugin_init_engine");
             if (init == NULL) {
-                mirabel_log("#W plugin surena engine: \"plugin_init_engine\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel engine: \"plugin_init_engine\" symbol not found\n", NULL);
                 return;
             }
             init();
             plugin_get_engine_methods_t get_methods = (plugin_get_engine_methods_t)DYNA_GETSYM(dll_handle, "plugin_get_engine_methods");
             if (get_methods == NULL) {
-                mirabel_log("#W plugin surena engine: \"plugin_get_engine_methods\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel engine: \"plugin_get_engine_methods\" symbol not found\n", NULL);
                 return;
             }
             void (*em_cleanup)() = (void (*)())DYNA_GETSYM(dll_handle, "plugin_cleanup_engine");
             if (em_cleanup == NULL) {
-                mirabel_log("#W plugin surena engine: \"plugin_cleanup_engine\" symbol not found\n", NULL);
+                mirabel_log("#W plugin mirabel engine: \"plugin_cleanup_engine\" symbol not found\n", NULL);
                 return;
             }
             uint32_t method_cnt;

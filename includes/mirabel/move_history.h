@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-static const uint64_t SURENA_MOVE_HISTORY_API_VERSION = 4;
+static const uint64_t MIRABEL_MOVE_HISTORY_API_VERSION = 4;
 
 typedef struct move_history_s move_history;
 

@@ -52,9 +52,9 @@ namespace MetaGui {
             "mirabel api versions:\n"
             "\tgame(%lu) movehistory(%lu) engine(%lu)\n"
             "\tfrontend(%lu) gamewrap(%lu) enginewrap(%lu)",
-            SURENA_GAME_API_VERSION,
-            SURENA_MOVE_HISTORY_API_VERSION,
-            SURENA_ENGINE_API_VERSION,
+            MIRABEL_GAME_API_VERSION,
+            MIRABEL_MOVE_HISTORY_API_VERSION,
+            MIRABEL_ENGINE_API_VERSION,
             MIRABEL_FRONTEND_API_VERSION,
             MIRABEL_GAME_WRAP_API_VERSION,
             MIRABEL_ENGINE_WRAP_API_VERSION

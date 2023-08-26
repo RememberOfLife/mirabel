@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-static const uint64_t SURENA_ENGINE_API_VERSION = 11;
+static const uint64_t MIRABEL_ENGINE_API_VERSION = 11;
 
 typedef uint32_t eevent_type;
 
