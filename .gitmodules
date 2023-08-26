@@ -1,21 +1,20 @@
 [submodule "lib/imgui"]
-	path = lib/imgui
-	url = https://github.com/ocornut/imgui
+    path = lib/imgui
+    url = https://github.com/ocornut/imgui
     branch = docking
 [submodule "lib/nanovg"]
-	path = lib/nanovg
-	url = https://github.com/inniyah/nanovg
+    path = lib/nanovg
+    url = https://github.com/inniyah/nanovg
+[submodule "lib/rosalia"]
+    path = lib/rosalia
+    url = https://github.com/RememberOfLife/rosalia.git
 [submodule "lib/SDL"]
-	path = lib/SDL
-	url = https://github.com/libsdl-org/SDL.git
+    path = lib/SDL
+    url = https://github.com/libsdl-org/SDL.git
     branch = SDL2
 [submodule "lib/SDL_net"]
-	path = lib/SDL_net
-	url = https://github.com/libsdl-org/SDL_net
+    path = lib/SDL_net
+    url = https://github.com/libsdl-org/SDL_net
 [submodule "lib/stb"]
-	path = lib/stb
-	url = https://github.com/nothings/stb
-[submodule "lib/surena"]
-	path = lib/surena
-	url = https://github.com/RememberOfLife/surena
-    ignore = dirty
+    path = lib/stb
+    url = https://github.com/nothings/stb

@@ -1,12 +1,11 @@
 #include <cstdint>
 
 #include "imgui.h"
-#include "surena/game.h"
 
-#include "control/client.hpp"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
-#include "games/game_catalogue.hpp"
+#include "mirabel/game.h"
+#include "control/client.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 
@@ -97,8 +96,11 @@ namespace MetaGui {
                 }
                 init_info.source.standard = {
                     .opts = effective_opts_string,
-                    .legacy = NULL,
+                    .player_count = 2, //TODO //HACK needs proper optionable
+                    .env_legacy = NULL,
+                    .player_legacies = NULL,
                     .state = NULL,
+                    .sync_ctr = SYNC_CTR_DEFAULT,
                 };
             }
             event_any es;

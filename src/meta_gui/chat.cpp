@@ -4,7 +4,7 @@
 #include <cstring>
 #include <vector>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "imgui.h"
 #include "rosalia/noise.h"
 
@@ -237,8 +237,8 @@ namespace MetaGui {
                 chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not move as PLAYER_NONE");
                 return;
             }
-            if (the_ptm == PLAYER_RAND && game_ff(Control::main_client->the_game).random_moves == false) {
-                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not move as PLAYER_RAND on game without random moves");
+            if (the_ptm == PLAYER_ENV && game_ff(Control::main_client->the_game).random_moves == false) {
+                chat_msg_add(UINT32_MAX, 0, SDL_GetTicks64(), "~ can not move as PLAYER_ENV on game without random moves");
                 return;
             }
             move_data_sync* mc;

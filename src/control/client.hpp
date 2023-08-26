@@ -2,12 +2,12 @@
 
 #include <thread>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
 #include "nanovg_gl.h"
 #include "imgui.h"
 #include "rosalia/semver.h"
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/frontend.h"

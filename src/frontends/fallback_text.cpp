@@ -1,14 +1,14 @@
 #include <cstdint>
 #include <cstring>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
-#include "surena/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
 #include "control/client.hpp"
 
 #include "frontends/frontend_catalogue.hpp"
@@ -155,22 +155,25 @@ namespace {
                 data.g_name = (char*)malloc(strlen(game_gname(&data.g)) + strlen(game_vname(&data.g)) + strlen(game_iname(&data.g)) + 64);
                 sprintf(data.g_name, "%s.%s.%s v%u.%u.%u", game_gname(&data.g), game_vname(&data.g), game_iname(&data.g), game_version(&data.g).major, game_version(&data.g).minor, game_version(&data.g).patch);
                 {
-                    data.g_fflags = (char*)malloc(32); // 23
+                    data.g_fflags = (char*)malloc(64);
                     sprintf(
                         data.g_fflags,
-                        "%c%c%c%c%c%c%s %s %s %s %s %s %s %s",
+                        "%c%c%c%c%c%c%s %s %s %s %s %s %s %s %s %s %s",
                         game_ff(&data.g).error_strings ? 'E' : '-',
                         game_ff(&data.g).options ? 'O' : '-',
                         game_ff(&data.g).serializable ? 'S' : '-',
                         game_ff(&data.g).legacy ? 'L' : '-',
                         game_ff(&data.g).random_moves ? 'R' : '-',
                         game_ff(&data.g).hidden_information ? 'H' : '-',
+                        game_ff(&data.g).sync_data ? "Sd" : "--",
                         game_ff(&data.g).simultaneous_moves ? "Sm" : "--",
+                        game_ff(&data.g).sync_ctr ? "Sc" : "--",
                         game_ff(&data.g).big_moves ? "Bm" : "--",
                         game_ff(&data.g).move_ordering ? "Om" : "--",
-                        game_ff(&data.g).scores ? "Sc" : "--",
                         game_ff(&data.g).id ? "Id" : "--",
                         game_ff(&data.g).eval ? "Ev" : "--",
+                        game_ff(&data.g).action_list ? "Al" : "--",
+                        game_ff(&data.g).discretize ? "Dc" : "--",
                         game_ff(&data.g).playout ? "Rp" : "--",
                         game_ff(&data.g).print ? "Pr" : "--"
                         // game_ff(&data.g).time ? "T" : "-" //TODO add format string arg
@@ -199,7 +202,7 @@ namespace {
                 if (game_ff(&data.g).options) {
                     size_t size_fill;
                     const char* gopts_local;
-                    game_export_options(&data.g, PLAYER_NONE, &size_fill, &gopts_local);
+                    game_export_options(&data.g, &size_fill, &gopts_local);
                     data.g_opts = strdup(gopts_local);
                 }
                 data.g_state = NULL;
@@ -333,11 +336,13 @@ namespace {
         if (data.dirty) {
             size_t size_fill;
             const char* str_buf;
-            game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
+            //TODO INTEGRATION readct and copy <->
+            //game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
             free(data.g_state);
             data.g_state = strdup(str_buf);
             if (game_ff(&data.g).print) {
-                game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
+                //TODO INTEGRATION
+                // game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
                 free(data.g_print);
                 data.g_print = strdup(str_buf);
             }
@@ -350,7 +355,7 @@ namespace {
             if (data.g_ptm_c > 0) {
                 // update ptm soft buttons
                 for (uint8_t i = 0; i < data.g_ptm_c; i++) {
-                    if (player_buf[i] == PLAYER_RAND) {
+                    if (player_buf[i] == PLAYER_ENV) {
                         sprintf(data.g_ptm_btns[i].label, "RAND");
                     } else {
                         sprintf(data.g_ptm_btns[i].label, "%03hhu", player_buf[i]);

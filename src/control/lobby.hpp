@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-#include "surena/game.h"
+#include "mirabel/game.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"

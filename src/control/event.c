@@ -8,7 +8,8 @@
 
 #include "rosalia/json.h"
 #include "rosalia/serialization.h"
-#include "surena/game.h"
+
+#include "mirabel/game.h"
 
 #include "mirabel/event.h"
 
@@ -318,9 +319,9 @@ void event_destroy(event_any* e)
 void event_create_log(event_any* e, const char* str, const char* str_end)
 {
     if (str_end == NULL) {
-        return event_create_logf(e, "%s", str);
+        event_create_logf(e, "%s", str);
     } else {
-        return event_create_logf(e, "%.*s", str_end - str, str);
+        event_create_logf(e, "%.*s", str_end - str, str);
     }
 }
 

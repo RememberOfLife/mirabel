@@ -6,8 +6,8 @@
 #include <unordered_map>
 
 #include <GL/glew.h>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
 #include "SDL_net.h"
 #include "nanovg_gl.h"
 #include "imgui.h"
@@ -18,16 +18,15 @@
 #include "rosalia/json.h"
 #include "rosalia/semver.h"
 #include "rosalia/timestamp.h"
-#include "surena/game.h"
-#include "surena/move_history.h"
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
+#include "mirabel/move_history.h"
 #include "control/plugins.hpp"
 #include "control/timeout_crash.hpp"
 #include "frontends/frontend_catalogue.hpp"
-#include "games/game_catalogue.hpp"
 #include "meta_gui/meta_gui.hpp"
 #include "network/protocol.hpp"
 
@@ -35,7 +34,7 @@
 
 namespace Control {
 
-    const semver client_version = semver{0, 5, 4};
+    const semver client_version = semver{0, 6, 5};
 
     Client* main_client = NULL;
 
@@ -44,6 +43,10 @@ namespace Control {
     {
         main_client = this;
         event_queue_create(&inbox);
+
+        // start watchdog so it can oversee explicit construction
+        t_tc.start();
+        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         const int initial_window_width = 1280;
         const int initial_window_height = 720;
@@ -71,10 +74,6 @@ namespace Control {
         dd.cfg_lock = cfg_lock_create();
         dd.cfg = cj_create_object(0); //TODO load from config file
         job_queue_create(&dd.jobs, 8); //TODO threads from config
-
-        // start watchdog so it can oversee explicit construction
-        t_tc.start();
-        tc_info = t_tc.register_timeout_item(&inbox, "guithread", 3000, 1000);
 
         // setup SDL
         if (SDL_Init(SDL_INIT_AUDIO | SDL_INIT_EVENTS | SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0) {
@@ -428,18 +427,20 @@ namespace Control {
                             size_t size_fill;
                             const char* tg_opts = NULL;
                             if (game_ff(the_game).options) {
-                                game_export_options(the_game, PLAYER_NONE, &size_fill, &tg_opts);
+                                game_export_options(the_game, &size_fill, &tg_opts);
                                 tg_opts = strdup(tg_opts);
                             }
                             const char* tg_state;
-                            game_export_state(the_game, PLAYER_NONE, &size_fill, &tg_state);
+                            game_export_state(the_game, &size_fill, &tg_state);
                             tg_state = strdup(tg_state);
                             game_init init_info = (game_init){
                                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
                                 .source = {
                                     .standard{
                                         .opts = tg_opts,
-                                        .legacy = NULL,
+                                        .player_count = 2, //TODO //HACK needs proper optionable
+                                        .env_legacy = NULL,
+                                        .player_legacies = NULL,
                                         .state = tg_state,
                                         .sync_ctr = the_game->sync_ctr,
                                     },
@@ -638,10 +639,9 @@ namespace Control {
                     if (event.key.keysym.sym == SDLK_u && (ctrl_left || ctrl_right)) {
                         MetaGui::show_timectl_window = !MetaGui::show_timectl_window;
                     }
-                    /*TODO REENABLE history
                     if (event.key.keysym.sym == SDLK_h && (ctrl_left || ctrl_right)) {
                         MetaGui::show_history_window = !MetaGui::show_history_window;
-                    } */
+                    }
                     if (event.key.keysym.sym == SDLK_p && (ctrl_left || ctrl_right)) {
                         MetaGui::show_plugins_window = !MetaGui::show_plugins_window;
                     }
@@ -750,10 +750,9 @@ namespace Control {
                 if (MetaGui::show_timectl_window) {
                     MetaGui::timectl_window(&MetaGui::show_timectl_window);
                 }
-                /*TODO REENABLE history
                 if (MetaGui::show_history_window) {
                     MetaGui::history_window(&MetaGui::show_history_window);
-                } */
+                }
                 if (MetaGui::show_plugins_window) {
                     MetaGui::plugins_window(&MetaGui::show_plugins_window);
                 }

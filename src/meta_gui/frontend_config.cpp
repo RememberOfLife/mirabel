@@ -9,7 +9,6 @@
 #include "control/client.hpp"
 #include "control/plugins.hpp"
 #include "frontends/frontend_catalogue.hpp"
-#include "games/game_catalogue.hpp"
 
 #include "meta_gui/meta_gui.hpp"
 

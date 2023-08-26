@@ -1,12 +1,12 @@
 #include <cstdint>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "nanovg.h"
 #include "imgui.h"
-#include "surena/game.h"
 
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
 #include "control/client.hpp"
 
 #include "frontends/frontend_catalogue.hpp"

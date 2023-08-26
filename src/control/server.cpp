@@ -2,13 +2,13 @@
 #include <cstdio>
 #include <cstring>
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include "SDL_net.h"
 #include "rosalia/rand.h"
 #include "rosalia/semver.h"
-#include "surena/game.h"
 
 #include "mirabel/event.h"
+#include "mirabel/game.h"
 #include "control/auth_manager.hpp"
 #include "control/lobby_manager.hpp"
 #include "control/plugins.hpp"
@@ -19,7 +19,7 @@
 
 namespace Control {
 
-    const semver server_version = semver{0, 2, 1};
+    const semver server_version = semver{0, 2, 2};
 
     Server::Server():
         plugin_mgr(true, false)

@@ -3,11 +3,11 @@
 #include <cstring>
 #include <vector>
 
-#include <SDL2/SDL.h>
-#include "surena/engine.h"
-#include "surena/game.h"
+#include <SDL.h>
 
+#include "mirabel/engine.h"
 #include "mirabel/event_queue.h"
+#include "mirabel/game.h"
 #include "control/client.hpp"
 #include "control/plugins.hpp"
 #include "meta_gui/meta_gui.hpp"

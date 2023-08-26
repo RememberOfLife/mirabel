@@ -3,12 +3,12 @@
 #include <vector>
 
 #include "imgui.h"
-#include "surena/engine.h"
-#include "surena/game.h"
 
+#include "mirabel/engine.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/frontend.h"
+#include "mirabel/game.h"
 #include "control/client.hpp"
 #include "control/plugins.hpp"
 

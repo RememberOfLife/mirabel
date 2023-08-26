@@ -18,7 +18,7 @@ namespace MetaGui {
         ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_None;
         host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
         host_window_flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
-        host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+        host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
         host_window_flags |= ImGuiWindowFlags_NoBackground;
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);

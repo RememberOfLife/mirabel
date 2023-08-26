@@ -2,14 +2,12 @@
 #include <cstdio>
 #include <cstring>
 
-#include <SDL2/SDL.h>
-
-#include "surena/game.h"
+#include <SDL.h>
 
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
+#include "mirabel/game.h"
 #include "control/plugins.hpp"
-#include "games/game_catalogue.hpp"
 
 #include "control/lobby.hpp"
 
@@ -54,13 +52,15 @@ namespace Control {
             // send sync info to user, load + state import
             size_t game_state_buffer_len;
             const char* game_state_buffer;
-            game_export_state(the_game, PLAYER_NONE, &game_state_buffer_len, &game_state_buffer);
+            game_export_state(the_game, &game_state_buffer_len, &game_state_buffer);
             game_init init_info = (game_init){
                 .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                .source = {
+                .source{
                     .standard{
                         .opts = game_options,
-                        .legacy = NULL,
+                        .player_count = 2, //TODO //HACK needs proper optionable
+                        .env_legacy = NULL,
+                        .player_legacies = NULL,
                         .state = game_state_buffer,
                         .sync_ctr = the_game->sync_ctr,
                     },
@@ -131,7 +131,7 @@ namespace Control {
                 if (game_ff(the_game).options) {
                     size_t size_fill;
                     const char* game_options_local;
-                    game_export_options(the_game, PLAYER_NONE, &size_fill, &game_options_local);
+                    game_export_options(the_game, &size_fill, &game_options_local);
                     game_options = strdup(game_options_local);
                 }
                 // update game name strings
