@@ -25,8 +25,7 @@ namespace Control {
         game_variant(NULL),
         game_impl(NULL),
         game_options(NULL),
-        max_users(max_users),
-        users(max_users)
+        max_users(max_users)
     {
     }
 
@@ -43,7 +42,7 @@ namespace Control {
     void Lobby::AddUser(uint32_t client_id)
     {
         if (users.size() >= max_users) {
-            printf("[ERROR] could not add user to lobby, full\n");
+            printf("[ERROR] could not add user to lobby, full\n"); //TODO return failure and success to lobby manager
             return;
         }
         users.push_back((lobby_user){.client_id = client_id});

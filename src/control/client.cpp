@@ -467,6 +467,7 @@ namespace Control {
                     case EVENT_TYPE_LOBBY_LEAVE: {
                         MetaGui::the_lobby_info.id = EVENT_LOBBY_NONE;
                         MetaGui::the_lobby_info.name[0] = '\0';
+                        MetaGui::the_lobby_info.password[0] = '\0';
                     } break;
                     case EVENT_TYPE_LOBBY_INFO: {
 

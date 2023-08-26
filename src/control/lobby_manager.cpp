@@ -61,7 +61,7 @@ namespace Control {
                     break;
                 }
                 uint32_t new_id = strhash(e.lobby_create.lobby_name, NULL);
-                std::unordered_map<uint32_t, Lobby*>::iterator lobby_it = lobbies.find(e.base.lobby_id);
+                std::unordered_map<uint32_t, Lobby*>::iterator lobby_it = lobbies.find(new_id);
                 if (lobby_it != lobbies.end() || new_id == EVENT_LOBBY_NONE || new_id == EVENT_LOBBY_SPEC) {
                     event_any se;
                     event_create_logf(&se, "lobby name collision\n");
