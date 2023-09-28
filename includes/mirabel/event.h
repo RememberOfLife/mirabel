@@ -120,9 +120,6 @@ void event_destroy(event_any* e);
 void event_write_size(void* buf, size_t v);
 size_t event_read_size(void* buf);
 
-// this does not write, and never assumes, the serialization size which should be present just before the event packet
-size_t event_general_serializer(GSIT itype, event_any* in, event_any* out, void* buf, void* buf_end);
-
 /////
 // specific event types
 

@@ -16,10 +16,6 @@
 /////
 // event serialization layouts
 
-const serialization_layout sl_baseonly[] = {
-    {SL_TYPE_STOP},
-};
-
 const serialization_layout sl_base[] = {
     {SL_TYPE_U32, offsetof(event, type)},
     {SL_TYPE_U32, offsetof(event, client_id)},
@@ -28,17 +24,20 @@ const serialization_layout sl_base[] = {
 };
 
 const serialization_layout sl_log[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_log, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_log, str)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_heartbeat[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_heartbeat, base), .ext.layout = sl_base},
     {SL_TYPE_U32, offsetof(event_heartbeat, id)},
     {SL_TYPE_U32, offsetof(event_heartbeat, time)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_load[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_game_load, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_game_load, base_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, variant_name)},
     {SL_TYPE_STRING, offsetof(event_game_load, impl_name)},
@@ -47,29 +46,34 @@ const serialization_layout sl_game_load[] = {
 };
 
 const serialization_layout sl_game_state[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_game_state, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_game_state, state)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_move[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_game_move, base), .ext.layout = sl_base},
     {SL_TYPE_U8, offsetof(event_game_move, player)},
     {SL_TYPE_COMPLEX, offsetof(event_game_move, data), .ext.layout = sl_move_data_sync},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_game_sync[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_game_move, base), .ext.layout = sl_base},
     {SL_TYPE_BLOB, offsetof(event_game_move, data)},
     {SL_TYPE_STOP},
 };
 
 //BUG currently this just leaks memory
 const serialization_layout sl_ssl_thumbprint[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_ssl_thumbprint, base), .ext.layout = sl_base},
     // {SL_TYPE_SIZE, offsetof(event_ssl_thumbprint, thumbprint_len)},
     // {SL_TYPE_BLOB, offsetof(event_ssl_thumbprint, thumbprint)}, //TODO split into str and thumbprint blob
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_auth[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_auth, base), .ext.layout = sl_base},
     {SL_TYPE_BOOL, offsetof(event_auth, is_guest)},
     {SL_TYPE_STRING, offsetof(event_auth, username)},
     {SL_TYPE_STRING, offsetof(event_auth, password)},
@@ -77,11 +81,13 @@ const serialization_layout sl_auth[] = {
 };
 
 const serialization_layout sl_auth_fail[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_auth_fail, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_auth_fail, reason)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_lobby_create[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_create, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_lobby_create, lobby_name)},
     {SL_TYPE_STRING, offsetof(event_lobby_create, password)},
     {SL_TYPE_U32, offsetof(event_lobby_create, max_users)},
@@ -89,17 +95,20 @@ const serialization_layout sl_lobby_create[] = {
 };
 
 const serialization_layout sl_lobby_join[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_join, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_lobby_join, lobby_name)},
     {SL_TYPE_STRING, offsetof(event_lobby_join, password)},
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_lobby_info[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_info, base), .ext.layout = sl_base},
     //TODO
     {SL_TYPE_STOP},
 };
 
 const serialization_layout sl_chat_msg[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_chat_msg, base), .ext.layout = sl_base},
     {SL_TYPE_U32, offsetof(event_chat_msg, msg_id)},
     {SL_TYPE_U32, offsetof(event_chat_msg, author_client_id)},
     {SL_TYPE_U64, offsetof(event_chat_msg, timestamp)},
@@ -108,6 +117,7 @@ const serialization_layout sl_chat_msg[] = {
 };
 
 const serialization_layout sl_chat_del[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_chat_del, base), .ext.layout = sl_base},
     {SL_TYPE_U32, offsetof(event_chat_del, msg_id)},
     {SL_TYPE_STOP},
 };
@@ -159,56 +169,66 @@ const serialization_layout sl_dynamic[] = {
     {SL_TYPE_STOP},
 };
 
-const serialization_layout* event_serialization_layouts[EVENT_TYPE_COUNT] = {
-    [EVENT_TYPE_NULL] = sl_baseonly,
+const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
+    [EVENT_TYPE_NULL] = sl_base,
 
     [EVENT_TYPE_LOG] = sl_log,
     [EVENT_TYPE_HEARTBEAT] = sl_heartbeat,
     [EVENT_TYPE_HEARTBEAT_PREQUIT] = sl_heartbeat,
     [EVENT_TYPE_HEARTBEAT_RESET] = sl_heartbeat,
-    [EVENT_TYPE_EXIT] = sl_baseonly,
+    [EVENT_TYPE_EXIT] = sl_base,
 
     [EVENT_TYPE_GAME_LOAD] = sl_game_load,
-    [EVENT_TYPE_GAME_LOAD_METHODS] = sl_baseonly,
-    [EVENT_TYPE_GAME_UNLOAD] = sl_baseonly,
+    [EVENT_TYPE_GAME_LOAD_METHODS] = sl_base,
+    [EVENT_TYPE_GAME_UNLOAD] = sl_base,
     [EVENT_TYPE_GAME_STATE] = sl_game_state,
     [EVENT_TYPE_GAME_MOVE] = sl_game_move,
     [EVENT_TYPE_GAME_SYNC] = sl_game_sync,
 
-    [EVENT_TYPE_FRONTEND_LOAD] = sl_baseonly,
-    [EVENT_TYPE_FRONTEND_UNLOAD] = sl_baseonly,
+    [EVENT_TYPE_FRONTEND_LOAD] = sl_base,
+    [EVENT_TYPE_FRONTEND_UNLOAD] = sl_base,
 
-    [EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE] = sl_baseonly,
+    [EVENT_TYPE_NETWORK_INTERNAL_SSL_WRITE] = sl_base,
 
-    [EVENT_TYPE_NETWORK_ADAPTER_LOAD] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_ADAPTER_UNLOAD] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED] = sl_baseonly,
+    [EVENT_TYPE_NETWORK_ADAPTER_LOAD] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_UNLOAD] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_SOCKET_OPENED] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_SOCKET_CLOSED] = sl_base,
     [EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_ACCEPT] = sl_ssl_thumbprint,
     [EVENT_TYPE_NETWORK_ADAPTER_CONNECTION_VERIFAIL] = sl_ssl_thumbprint,
-    [EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED] = sl_baseonly,
+    [EVENT_TYPE_NETWORK_ADAPTER_CLIENT_CONNECTED] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_CLIENT_DISCONNECTED] = sl_base,
 
-    [EVENT_TYPE_NETWORK_PROTOCOL_OK] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_PROTOCOL_NOK] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_PROTOCOL_PING] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_PROTOCOL_PONG] = sl_baseonly,
-    [EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET] = sl_baseonly,
+    [EVENT_TYPE_NETWORK_PROTOCOL_OK] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_NOK] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_DISCONNECT] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_PING] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_PONG] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_CLIENT_ID_SET] = sl_base,
 
     [EVENT_TYPE_USER_AUTHINFO] = sl_auth,
     [EVENT_TYPE_USER_AUTHN] = sl_auth,
     [EVENT_TYPE_USER_AUTHFAIL] = sl_auth_fail,
 
     [EVENT_TYPE_LOBBY_CREATE] = sl_lobby_create,
-    [EVENT_TYPE_LOBBY_DESTROY] = sl_baseonly,
+    [EVENT_TYPE_LOBBY_DESTROY] = sl_base,
     [EVENT_TYPE_LOBBY_JOIN] = sl_lobby_join,
-    [EVENT_TYPE_LOBBY_LEAVE] = sl_baseonly,
+    [EVENT_TYPE_LOBBY_LEAVE] = sl_base,
     [EVENT_TYPE_LOBBY_INFO] = sl_lobby_info,
     [EVENT_TYPE_LOBBY_CHAT_MSG] = sl_chat_msg,
     [EVENT_TYPE_LOBBY_CHAT_DEL] = sl_chat_del,
 
     [EVENT_TYPE_DYNAMIC] = sl_dynamic,
+};
+
+const serialization_layout sl_event_any[] = {
+    {
+        SL_TYPE_UNION_INTERNALLY_TAGGED,
+        .ext.un.tag_size = sizeof(EVENT_TYPE),
+        .ext.un.tag_max = EVENT_TYPE_COUNT,
+        .ext.un.tag_map = sl_event_map,
+    },
+    {SL_TYPE_STOP},
 };
 
 /////
@@ -224,28 +244,6 @@ size_t event_read_size(void* buf)
 {
     raw_stream rs = rs_init(buf);
     return rs_r_size(&rs);
-}
-
-size_t event_general_serializer(GSIT itype, event_any* in, event_any* out, void* buf, void* buf_end)
-{
-    size_t rsize = 0;
-    size_t csize;
-    csize = layout_serializer(itype, sl_base, in, out, buf, buf_end);
-    if (csize == LS_ERR) {
-        return LS_ERR;
-    }
-    EVENT_TYPE etype = (itype == GSIT_DESERIALIZE ? out->base.type : in->base.type);
-    const serialization_layout* layout = event_serialization_layouts[etype];
-    assert(layout != NULL);
-    rsize += csize;
-    if (layout->type != SL_TYPE_STOP) {
-        csize = layout_serializer(itype, layout, in, out, (char*)buf + rsize, buf_end);
-        if (csize == LS_ERR) {
-            return LS_ERR;
-        }
-        rsize += csize;
-    }
-    return rsize;
 }
 
 /////
@@ -280,13 +278,13 @@ void event_zero(event_any* e)
 
 size_t event_size(event_any* e)
 {
-    return 8 + event_general_serializer(GSIT_SIZE, e, NULL, NULL, NULL);
+    return 8 + layout_serializer(GSIT_SIZE, sl_event_any, e, NULL, NULL, NULL);
 }
 
 void event_serialize(event_any* e, void* buf)
 {
     event_write_size(buf, event_size(e)); //TODO take some size hint to skip redundant size calculation
-    event_general_serializer(GSIT_SERIALIZE, e, NULL, (size_t*)buf + 1, NULL);
+    layout_serializer(GSIT_SERIALIZE, sl_event_any, e, NULL, (size_t*)buf + 1, NULL);
 }
 
 void event_deserialize(event_any* e, void* buf, void* buf_end)
@@ -296,7 +294,7 @@ void event_deserialize(event_any* e, void* buf, void* buf_end)
         event_create_zero(e);
         return;
     }
-    size_t ec = event_general_serializer(GSIT_DESERIALIZE, NULL, e, (size_t*)buf + 1, buf_end);
+    size_t ec = layout_serializer(GSIT_DESERIALIZE, sl_event_any, NULL, e, (size_t*)buf + 1, buf_end);
     if (ec == LS_ERR) {
         event_create_zero(e);
         return;
@@ -305,12 +303,12 @@ void event_deserialize(event_any* e, void* buf, void* buf_end)
 
 void event_copy(event_any* to, event_any* from)
 {
-    event_general_serializer(GSIT_COPY, from, to, NULL, NULL);
+    layout_serializer(GSIT_COPY, sl_event_any, from, to, NULL, NULL);
 }
 
 void event_destroy(event_any* e)
 {
-    event_general_serializer(GSIT_DESTROY, e, NULL, NULL, NULL);
+    layout_serializer(GSIT_DESTROY, sl_event_any, e, NULL, NULL, NULL);
 }
 
 /////
