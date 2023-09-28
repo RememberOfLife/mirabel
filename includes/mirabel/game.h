@@ -164,7 +164,7 @@ typedef struct game_feature_flags_s {
 } game_feature_flags;
 
 typedef struct sync_data_s {
-    uint8_t player_c;
+    uint64_t player_c;
     uint8_t* players;
     blob b;
 } sync_data;
@@ -182,11 +182,11 @@ typedef enum GAME_INIT_SOURCE_TYPE_E {
 //TODO here, and in general, might want to remove some consts so a game_init can be kept in memory for editing, even through all the const-ness?
 
 typedef struct game_init_standard_s {
-    const char* opts; // FEATURE: options ; may be NULL to use default
-    uint8_t player_count; // use 0 to let the game initialize to default
-    const char* env_legacy; // FEATURE: legacy ; may be NULL to use default
-    const char** player_legacies; // FEATURE: legacy ; this has len of player_count, each legacy can be NULL to use default, legacies are supplied in order for player ids 1 to player_count, is player_legacies is NULL then all players are assumed to have a NULL legacy used here
-    const char* state; // may be null to use default
+    char* opts; // FEATURE: options ; may be NULL to use default
+    uint64_t player_count; // use 0 to let the game initialize to default
+    char* env_legacy; // FEATURE: legacy ; may be NULL to use default
+    char** player_legacies; // FEATURE: legacy ; this has len of player_count, each legacy can be NULL to use default, legacies are supplied in order for player ids 1 to player_count, is player_legacies is NULL then all players are assumed to have a NULL legacy used here
+    char* state; // may be null to use default
     uint64_t sync_ctr; // ignore this if you don't need it, otherwise this is used by the wrapper to set the initial sync ctr
 } game_init_standard;
 

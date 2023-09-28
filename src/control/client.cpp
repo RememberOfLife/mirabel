@@ -433,19 +433,8 @@ namespace Control {
                             const char* tg_state;
                             game_export_state(the_game, &size_fill, &tg_state);
                             tg_state = strdup(tg_state);
-                            game_init init_info = (game_init){
-                                .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                                .source = {
-                                    .standard{
-                                        .opts = tg_opts,
-                                        .player_count = 2, //TODO //HACK needs proper optionable
-                                        .env_legacy = NULL,
-                                        .player_legacies = NULL,
-                                        .state = tg_state,
-                                        .sync_ctr = the_game->sync_ctr,
-                                    },
-                                },
-                            };
+                            game_init init_info;
+                            game_init_create_standard(&init_info, tg_opts, 2 /*TODO //HACK needs proper optionable*/, NULL, NULL, tg_state, the_game->sync_ctr);
                             event_any se;
                             event_create_game_load_methods(&se, the_game->methods, init_info);
                             the_frontend->methods->process_event(the_frontend, se);

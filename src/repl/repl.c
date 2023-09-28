@@ -621,7 +621,7 @@ void repl_cmd_handle_g_create(repl_state* rs, int argc, char** argv)
         game_init_info.source_type = GAME_INIT_SOURCE_TYPE_DEFAULT;
     } else if (strcmp(source_type, "std") == 0) {
         game_init_info = (game_init){
-            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
+            .source_type = GAME_INIT_SOURCE_TYPE_STANDARD, //TODO use proper init function!
             .source = {
                 .standard = {
                     .opts = NULL,

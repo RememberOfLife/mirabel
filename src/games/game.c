@@ -105,7 +105,7 @@ size_t ls_move_data_serializer(GSIT itype, void* obj_in, void* obj_out, void* bu
     } flat_move_data_union;
 
     typedef struct flat_move_data_s {
-        uint8_t tag;
+        FLAT_MOVE_TYPE tag;
         flat_move_data_union u;
     } flat_move_data;
 
@@ -124,12 +124,12 @@ size_t ls_move_data_serializer(GSIT itype, void* obj_in, void* obj_out, void* bu
     };
 
     const serialization_layout sl_flat_move_data[] = {
-        {SL_TYPE_U8, offsetof(flat_move_data, tag)},
+        {SL_TYPE_UAUTOP2(flat_move_data, tag), offsetof(flat_move_data, tag)},
         {
             SL_TYPE_UNION_EXTERNALLY_TAGGED,
             offsetof(flat_move_data, u),
             .ext.un = {
-                .tag_size = sizeof(FLAT_MOVE_TYPE),
+                .tag_size = SIZEOF_MEMBER(flat_move_data, tag),
                 .tag_offset = offsetof(flat_move_data, tag),
                 .tag_max = FLAT_MOVE_TYPE_COUNT,
                 .tag_map = sl_flat_move_data_map,
@@ -189,7 +189,7 @@ const serialization_layout sl_move_data_sync[] = {
 };
 
 const serialization_layout sl_sync_data[] = {
-    {SL_TYPE_U8, offsetof(sync_data, player_c)},
+    {SL_TYPE_U64, offsetof(sync_data, player_c)},
     {SL_TYPE_U8 | SL_TYPE_PTRARRAY, offsetof(sync_data, players), .len.offset = offsetof(sync_data, player_c)},
     {SL_TYPE_BLOB, offsetof(sync_data, b)},
     {SL_TYPE_STOP},
@@ -197,9 +197,9 @@ const serialization_layout sl_sync_data[] = {
 
 const serialization_layout sl_game_init_info_standard[] = {
     {SL_TYPE_STRING, offsetof(game_init_standard, opts)},
-    {SL_TYPE_U8, offsetof(game_init_standard, player_count)},
+    {SL_TYPE_U64, offsetof(game_init_standard, player_count)},
     {SL_TYPE_STRING, offsetof(game_init_standard, env_legacy)},
-    {SL_TYPE_STRING | SL_TYPE_PTRARRAY, offsetof(game_init_standard, player_legacies), .len.offset = offsetof(game_init_standard, player_count)},
+    {SL_TYPE_STRING | SL_TYPE_PTRARRAY, offsetof(game_init_standard, player_legacies), .len.offset = offsetof(game_init_standard, player_count)}, //TODO the player count is always non zero, but the legacies are often NULL, probably add another type: standard_legacy and omit it here
     {SL_TYPE_STRING, offsetof(game_init_standard, state)},
     {SL_TYPE_U64, offsetof(game_init_standard, sync_ctr)},
     {SL_TYPE_STOP},
@@ -217,12 +217,12 @@ const serialization_layout* sl_game_init_info_map[GAME_INIT_SOURCE_TYPE_COUNT] =
 };
 
 const serialization_layout sl_game_init_info[] = {
-    {SL_TYPE_U8, offsetof(game_init, source_type)},
+    {SL_TYPE_UAUTOP2(game_init, source_type), offsetof(game_init, source_type)},
     {
         SL_TYPE_UNION_EXTERNALLY_TAGGED,
         offsetof(game_init, source),
         .ext.un = {
-            .tag_size = sizeof(GAME_INIT_SOURCE_TYPE),
+            .tag_size = SIZEOF_MEMBER(game_init, source_type),
             .tag_offset = offsetof(game_init, source_type),
             .tag_max = GAME_INIT_SOURCE_TYPE_COUNT,
             .tag_map = sl_game_init_info_map,
@@ -246,10 +246,12 @@ void game_init_create_standard(game_init* init_info, const char* opts, uint8_t p
             },
         },
     };
-    if (player_legacies != NULL) {
-        init_info->source.standard.player_legacies = (const char**)malloc(sizeof(const char*) * player_count);
-        for (uint8_t pi = 0; pi < player_count; pi++) {
+    init_info->source.standard.player_legacies = malloc(sizeof(const char*) * player_count);
+    for (uint8_t pi = 0; pi < player_count; pi++) {
+        if (player_legacies != NULL) {
             init_info->source.standard.player_legacies[pi] = (player_legacies[pi] == NULL ? NULL : strdup(player_legacies[pi]));
+        } else {
+            init_info->source.standard.player_legacies[pi] = NULL;
         }
     }
 }

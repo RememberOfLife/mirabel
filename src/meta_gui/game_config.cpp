@@ -82,7 +82,6 @@ namespace MetaGui {
             if (load_methods->features.options == false) {
                 init_info = (game_init){.source_type = GAME_INIT_SOURCE_TYPE_DEFAULT};
             } else {
-                init_info.source_type = GAME_INIT_SOURCE_TYPE_STANDARD;
                 if (load_impl->wrapped && load_impl->u.wrap->features.options) {
                     // for wrappers with options use wrapper opts_bin_to_str
                     size_t opts_str_len;
@@ -94,14 +93,7 @@ namespace MetaGui {
                     //TODO make proper with struct and find solution for wrap that allows NULL opts
                     effective_opts_string = NULL;
                 }
-                init_info.source.standard = {
-                    .opts = effective_opts_string,
-                    .player_count = 2, //TODO //HACK needs proper optionable
-                    .env_legacy = NULL,
-                    .player_legacies = NULL,
-                    .state = NULL,
-                    .sync_ctr = SYNC_CTR_DEFAULT,
-                };
+                game_init_create_standard(&init_info, effective_opts_string, 2 /*TODO //HACK needs proper optionable*/, NULL, NULL, NULL, SYNC_CTR_DEFAULT);
             }
             event_any es;
             event_create_game_load(&es, plugin_mgr.game_lookup[game_base_idx]->name.c_str(), plugin_mgr.variant_lookup[game_variant_idx]->name.c_str(), plugin_mgr.impl_lookup[game_impl_idx]->get_name(), init_info);

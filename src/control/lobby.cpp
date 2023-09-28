@@ -52,19 +52,8 @@ namespace Control {
             size_t game_state_buffer_len;
             const char* game_state_buffer;
             game_export_state(the_game, &game_state_buffer_len, &game_state_buffer);
-            game_init init_info = (game_init){
-                .source_type = GAME_INIT_SOURCE_TYPE_STANDARD,
-                .source{
-                    .standard{
-                        .opts = game_options,
-                        .player_count = 2, //TODO //HACK needs proper optionable
-                        .env_legacy = NULL,
-                        .player_legacies = NULL,
-                        .state = game_state_buffer,
-                        .sync_ctr = the_game->sync_ctr,
-                    },
-                },
-            };
+            game_init init_info;
+            game_init_create_standard(&init_info, game_options, 2 /*TODO //HACK needs proper optionable*/, NULL, NULL, game_state_buffer, the_game->sync_ctr);
             event_create_game_load(&es, game_base, game_variant, game_impl, init_info);
             es.base.client_id = client_id;
         } else {
