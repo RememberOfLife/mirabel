@@ -148,14 +148,6 @@ add_custom_target(add_generated_dir COMMAND "${CMAKE_COMMAND}" -E make_directory
 add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/generate_git_commit_hash.cmake" BYPRODUCTS "${CMAKE_BINARY_DIR}/build_generated/generated/git_commit_hash.h")
 add_dependencies(mirabel generate_git_commit_hash)
 
-target_compile_options(mirabel PRIVATE
-    # "-Wall"
-    # "-Wextra"
-    # "-Werror" # warnings as errors
-    # "-Wfatal-errors" # stop after first error
-    #TODO pedantic and pedantic errors
-)
-
 target_include_directories(mirabel PRIVATE ${INCLUDES})
 
 target_link_libraries(mirabel Threads::Threads)
@@ -196,6 +188,15 @@ else()
     # linux/mingw
     target_link_libraries(mirabel dl)
     target_link_options(mirabel PRIVATE -rdynamic)
+
+    target_compile_options(mirabel PRIVATE
+        # "-Wall"
+        # "-Wextra"
+        "-Werror" # warnings as errors
+        "-Wfatal-errors" # stop after first error
+        #TODO pedantic and pedantic errors
+    )
+
 endif()
 
 if(MINGW OR MSYS)

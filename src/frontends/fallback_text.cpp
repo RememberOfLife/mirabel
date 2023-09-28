@@ -334,17 +334,28 @@ namespace {
             return ERR_OK;
         }
         if (data.dirty) {
+            game game_redaction_copy;
+            game* export_game_p = &data.g;
+            if ((game_ff(export_game_p).random_moves ||
+                 game_ff(export_game_p).hidden_information ||
+                 game_ff(export_game_p).simultaneous_moves) &&
+                data.g_pov_id != PLAYER_NONE) {
+                game_clone(&data.g, &game_redaction_copy);
+                export_game_p = &game_redaction_copy;
+                game_redact_keep_state(export_game_p, 1, &data.g_pov_id);
+            }
             size_t size_fill;
             const char* str_buf;
-            //TODO INTEGRATION readct and copy <->
-            //game_export_state(&data.g, data.g_pov_id, &size_fill, &str_buf);
+            game_export_state(export_game_p, &size_fill, &str_buf);
             free(data.g_state);
             data.g_state = strdup(str_buf);
             if (game_ff(&data.g).print) {
-                //TODO INTEGRATION
-                // game_print(&data.g, data.g_pov_id, &size_fill, &str_buf);
+                game_print(export_game_p, &size_fill, &str_buf);
                 free(data.g_print);
                 data.g_print = strdup(str_buf);
+            }
+            if (export_game_p != &data.g) {
+                game_destroy(&game_redaction_copy);
             }
             if (game_ff(&data.g).id) {
                 game_id(&data.g, &data.g_id);
