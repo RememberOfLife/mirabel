@@ -25,9 +25,9 @@ namespace {
         char* label; //TODO this might benefit from SSO
 
         union {
-            player_id p;
-            move_code m; //TODO will become big move later
-        } v;
+            player_id player;
+            move_data_sync move_sync;
+        } value;
 
         void update(float mx, float my)
         {
@@ -54,7 +54,8 @@ namespace {
         char* g_name;
         char* g_fflags;
         uint8_t g_pov_c;
-        sbtn* g_pov_btns; //TODO offer way to also use redact information to just show what this player would know if wanted
+        sbtn* g_pov_btns;
+        uint32_t pov_btn_rows;
         uint8_t g_pov_id;
         char* g_opts;
         //TODO legacy
@@ -65,8 +66,10 @@ namespace {
         // player_id* g_eval_p;
         uint8_t g_ptm_c;
         sbtn* g_ptm_btns;
+        uint32_t ptm_btn_rows;
         uint32_t g_moves_c;
-        move_code* g_moves_buf;
+        sbtn* g_moves_btns;
+        uint32_t moves_btn_rows;
         char* g_res_str;
     };
 
@@ -98,14 +101,17 @@ namespace {
             .g_fflags = NULL,
             .g_pov_c = 0,
             .g_pov_btns = NULL,
+            .pov_btn_rows = 0,
             .g_pov_id = PLAYER_NONE,
             .g_opts = NULL,
             .g_state = NULL,
             .g_print = NULL,
             .g_ptm_c = 0,
             .g_ptm_btns = NULL,
+            .ptm_btn_rows = 0,
             .g_moves_c = 0,
-            .g_moves_buf = NULL,
+            .g_moves_btns = NULL,
+            .moves_btn_rows = 0,
             .g_res_str = NULL,
         };
         return ERR_OK;
@@ -189,10 +195,10 @@ namespace {
                         data.g_pov_btns[i].label = (char*)malloc(8);
                         if (i == 0) {
                             sprintf(data.g_pov_btns[i].label, "NONE");
-                            data.g_pov_btns[i].v.p = PLAYER_NONE;
+                            data.g_pov_btns[i].value.player = PLAYER_NONE;
                         } else {
                             sprintf(data.g_pov_btns[i].label, "%03hhu", i);
-                            data.g_pov_btns[i].v.p = i;
+                            data.g_pov_btns[i].value.player = i;
                         }
                     }
                     data.g_pov_id = PLAYER_NONE;
@@ -217,7 +223,7 @@ namespace {
                     }
                 }
                 data.g_moves_c = 0;
-                data.g_moves_buf = NULL;
+                data.g_moves_btns = NULL;
                 data.g_res_str = NULL;
                 data.dirty = true;
             } break;
@@ -255,9 +261,15 @@ namespace {
                     data.g_ptm_c = 0;
                     data.g_ptm_btns = NULL;
                 }
-                data.g_moves_c = 0;
-                free(data.g_moves_buf);
-                data.g_moves_buf = NULL;
+                {
+                    for (uint32_t i = 0; i < data.g_moves_c; i++) {
+                        game_e_move_sync_destroy(data.g_moves_btns[i].value.move_sync);
+                        free(data.g_moves_btns[i].label);
+                    }
+                    free(data.g_moves_btns);
+                    data.g_moves_c = 0;
+                    data.g_moves_btns = NULL;
+                }
                 free(data.g_res_str);
                 data.g_res_str = NULL;
             } break;
@@ -313,13 +325,26 @@ namespace {
                         data.g_ptm_btns[i].update(mX, mY);
                         if (event.type == SDL_MOUSEBUTTONUP) {
                             if (data.g_ptm_btns[i].hovered && data.g_ptm_btns[i].mousedown) {
-                                data.g_pov_id = data.g_ptm_btns[i].v.p;
+                                data.g_pov_id = data.g_ptm_btns[i].value.player;
                                 data.dd->view = data.g_pov_id;
                                 data.dirty = true;
                             }
                             data.g_ptm_btns[i].mousedown = false;
                         }
                         data.g_ptm_btns[i].mousedown |= (data.g_ptm_btns[i].hovered && event.type == SDL_MOUSEBUTTONDOWN);
+                    }
+                    // move btns
+                    for (uint8_t i = 0; i < data.g_moves_c; i++) {
+                        data.g_moves_btns[i].update(mX, mY);
+                        if (event.type == SDL_MOUSEBUTTONUP) {
+                            if (data.g_moves_btns[i].hovered && data.g_moves_btns[i].mousedown) {
+                                event_any move_event;
+                                event_create_game_move(&move_event, data.g_pov_id, data.g_moves_btns[i].value.move_sync);
+                                event_queue_push(data.dd->outbox, &move_event);
+                            }
+                            data.g_moves_btns[i].mousedown = false;
+                        }
+                        data.g_moves_btns[i].mousedown |= (data.g_moves_btns[i].hovered && event.type == SDL_MOUSEBUTTONDOWN);
                     }
                 }
             } break;
@@ -367,23 +392,47 @@ namespace {
                 // update ptm soft buttons
                 for (uint8_t i = 0; i < data.g_ptm_c; i++) {
                     if (player_buf[i] == PLAYER_ENV) {
-                        sprintf(data.g_ptm_btns[i].label, "RAND");
+                        sprintf(data.g_ptm_btns[i].label, "ENV");
                     } else {
                         sprintf(data.g_ptm_btns[i].label, "%03hhu", player_buf[i]);
                     }
-                    data.g_ptm_btns[i].v.p = player_buf[i];
-                }
-                // generate moves if pov is to move
-                if (data.g_pov_id != PLAYER_NONE) {
-                    // check if pov is actually to move
-                    for (uint8_t i = 0; i < data.g_ptm_c; i++) {
-                        if (player_buf[i] == data.g_pov_id) {
-                            //TODO generate moves for the player, need buf?
-                            // game_get_concrete_moves(&data.g, data.g_pov_id, &data.g_moves_c, data.g_moves_buf);
-                        }
-                    }
+                    data.g_ptm_btns[i].value.player = player_buf[i];
                 }
             }
+
+            // generate moves if pov is to move
+            bool generate_moves = false;
+            for (uint8_t i = 0; i < data.g_ptm_c; i++) {
+                generate_moves |= (player_buf[i] == data.g_pov_id);
+            }
+            // release old move btn infos
+            for (uint32_t i = 0; i < data.g_moves_c; i++) {
+                game_e_move_sync_destroy(data.g_moves_btns[i].value.move_sync);
+                free(data.g_moves_btns[i].label);
+            }
+            free(data.g_moves_btns);
+            data.g_moves_c = 0;
+            data.g_moves_btns = NULL;
+            if (generate_moves == true) {
+                // get moves from game
+                const move_data* moves_out;
+                game_get_concrete_moves(&data.g, data.g_pov_id, &data.g_moves_c, &moves_out);
+                data.g_moves_btns = (sbtn*)malloc(sizeof(sbtn) * data.g_moves_c);
+                for (uint32_t i = 0; i < data.g_moves_c; i++) {
+                    move_data tmp_move;
+                    game_e_move_copy(&tmp_move, &moves_out[i]);
+                    data.g_moves_btns[i].value.move_sync = game_e_move_make_sync(&data.g, tmp_move);
+                }
+                for (uint32_t i = 0; i < data.g_moves_c; i++) {
+                    size_t str_size_fill;
+                    const char* move_str;
+                    game_get_move_str(&data.g, data.g_pov_id, data.g_moves_btns[i].value.move_sync, &str_size_fill, &move_str);
+                    data.g_moves_btns[i].label = strdup(move_str);
+                    data.g_moves_btns[i].hovered = false;
+                    data.g_moves_btns[i].mousedown = false;
+                }
+            }
+
             uint8_t u8_fill;
             game_get_results(&data.g, &u8_fill, &player_buf);
             free(data.g_res_str);
@@ -400,6 +449,7 @@ namespace {
             }
             data.dirty = false;
         }
+
         // simulate button placements to update positions
         NVGcontext* dc = data.dc;
         frontend_display_data& dd = *data.dd;
@@ -410,6 +460,7 @@ namespace {
         float label_bounds[4]; // [xmin,ymin, xmax,ymax]
         int yrow = 1; // this is where the pov btns start
         float cumX;
+        bool row_placed;
         nvgBeginFrame(dc, dd.fbw, dd.fbh, 2); //TODO use proper devicePixelRatio
         nvgSave(dc);
         nvgFontSize(dc, data.font_size);
@@ -417,6 +468,8 @@ namespace {
         nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
         // pov buttons
         cumX = 0;
+        row_placed = false;
+        data.pov_btn_rows = 0;
         for (uint8_t i = 0; i < data.g_pov_c; i++) {
             sbtn& btn = data.g_pov_btns[i];
             // set button hovered
@@ -427,6 +480,21 @@ namespace {
             btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + data.btn_padding * 2;
             btn.update(data.mx, data.my);
             cumX += btn.w + data.button_hmargin;
+            if (cumX > (data.dd->w - data.xcol_offset - 0.5 * data.xcol_spacing)) {
+                cumX = 0;
+                yrow += 1;
+                data.pov_btn_rows += 1;
+                if (row_placed == true) {
+                    i--;
+                }
+                row_placed = false;
+            } else {
+                row_placed = true;
+            }
+        }
+        if (row_placed == false) {
+            yrow -= 1;
+            data.pov_btn_rows -= 1;
         }
         yrow += 5;
         if (game_ff(&data.g).options) {
@@ -449,6 +517,8 @@ namespace {
         }
         // ptm soft buttons
         cumX = 0;
+        row_placed = false;
+        data.ptm_btn_rows = 0;
         for (uint8_t i = 0; i < data.g_ptm_c; i++) {
             sbtn& btn = data.g_ptm_btns[i];
             // set button hovered
@@ -459,6 +529,52 @@ namespace {
             btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + data.btn_padding * 2;
             btn.update(data.mx, data.my);
             cumX += btn.w + data.button_hmargin;
+            if (cumX > (data.dd->w - data.xcol_offset - 0.5 * data.xcol_spacing)) {
+                cumX = 0;
+                yrow += 1;
+                data.ptm_btn_rows += 1;
+                if (row_placed == true) {
+                    i--;
+                }
+                row_placed = false;
+            } else {
+                row_placed = true;
+            }
+        }
+        if (row_placed == false) {
+            yrow -= 1;
+            data.ptm_btn_rows -= 1;
+        }
+        yrow += 2;
+        // moves buttons
+        cumX = 0;
+        row_placed = false;
+        data.moves_btn_rows = 0;
+        for (uint32_t i = 0; i < data.g_moves_c; i++) {
+            sbtn& btn = data.g_moves_btns[i];
+            // set button hovered
+            nvgTextBounds(dc, 0, 0, btn.label, NULL, label_bounds); //TODO fix buttons height extending too low
+            btn.x = data.xcol_offset + cumX - data.btn_padding;
+            btn.y = data.yrow_spacing * yrow - data.btn_padding;
+            btn.w = label_bounds[I_XMAX] - label_bounds[I_XMIN] + data.btn_padding * 2;
+            btn.h = label_bounds[I_YMAX] - label_bounds[I_YMIN] + data.btn_padding * 2;
+            btn.update(data.mx, data.my);
+            cumX += btn.w + data.button_hmargin;
+            if (cumX > (data.dd->w - data.xcol_offset - 0.5 * data.xcol_spacing)) {
+                cumX = 0;
+                yrow += 1;
+                data.moves_btn_rows += 1;
+                if (row_placed == true) {
+                    i--;
+                }
+                row_placed = false;
+            } else {
+                row_placed = true;
+            }
+        }
+        if (row_placed == false) {
+            yrow -= 1;
+            data.moves_btn_rows -= 1;
         }
         nvgRestore(dc);
         nvgEndFrame(dc);
@@ -515,7 +631,7 @@ namespace {
             sbtn& btn = data.g_pov_btns[i];
             nvgBeginPath(dc);
             nvgRect(dc, btn.x, btn.y, btn.w, btn.h);
-            if (btn.v.p == data.g_pov_id) {
+            if (btn.value.player == data.g_pov_id) {
                 nvgFillColor(dc, nvgRGB(119, 160, 213));
             } else if (btn.mousedown) {
                 nvgFillColor(dc, nvgRGB(130, 130, 130));
@@ -531,6 +647,7 @@ namespace {
             nvgBeginPath(dc);
             nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
         }
+        yrow += data.pov_btn_rows;
         yrow += 2;
         internal_draw_segment_liner(self, dc, yrow_prev, yrow);
 
@@ -609,7 +726,7 @@ namespace {
                 sbtn& btn = data.g_ptm_btns[i];
                 nvgBeginPath(dc);
                 nvgRect(dc, btn.x, btn.y, btn.w, btn.h);
-                if (btn.v.p == data.g_pov_id) {
+                if (btn.value.player == data.g_pov_id) {
                     nvgFillColor(dc, nvgRGB(156, 193, 241));
                 } else if (btn.mousedown) {
                     nvgFillColor(dc, nvgRGB(130, 130, 130));
@@ -624,11 +741,40 @@ namespace {
                 nvgBeginPath(dc);
                 nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
             }
+            yrow += data.ptm_btn_rows;
             yrow += 2;
             internal_draw_segment_liner(self, dc, yrow_prev, yrow);
         }
 
-        //TODO render all available moves for the selected ptm, or none at all if not selected
+        // render available moves for the selected ptm, or none at all if not selected
+        if (data.g_moves_c > 0) {
+            yrow_prev = yrow;
+            nvgBeginPath(dc);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
+            nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "MOVES", NULL);
+            nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
+            // render the move buttons
+            for (uint32_t i = 0; i < data.g_moves_c; i++) {
+                sbtn& btn = data.g_moves_btns[i];
+                nvgBeginPath(dc);
+                nvgRect(dc, btn.x, btn.y, btn.w, btn.h);
+                if (btn.mousedown) {
+                    nvgFillColor(dc, nvgRGB(130, 130, 130));
+                } else if (btn.hovered) {
+                    nvgFillColor(dc, nvgRGB(160, 160, 160));
+                } else {
+                    nvgFillColor(dc, nvgRGB(210, 210, 210));
+                }
+                nvgFill(dc);
+
+                nvgFillColor(dc, nvgRGB(25, 25, 25));
+                nvgBeginPath(dc);
+                nvgText(dc, btn.x + data.btn_padding, btn.y + data.btn_padding, btn.label, NULL);
+            }
+            yrow += data.moves_btn_rows;
+            yrow += 2;
+            internal_draw_segment_liner(self, dc, yrow_prev, yrow);
+        }
 
         if (data.g_res_str != NULL) {
             yrow_prev = yrow;

@@ -321,9 +321,10 @@ namespace Control {
 
     PluginManager::~PluginManager()
     {
-        //TODO unload all plugins
         for (int i = 0; i < plugins.size(); i++) {
-            unload_plugin(i);
+            if (plugins[i].loaded) {
+                unload_plugin(i);
+            }
         }
     }
 
