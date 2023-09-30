@@ -216,7 +216,7 @@ static error_code get_concrete_move_probabilities_gf(game* self, uint32_t* ret_c
     //TODO
 }
 
-static error_code get_random_move_gf(game* self, seed128 seed, move_data_sync** ret_move)
+static error_code get_random_move_gf(game* self, seed128 seed, const move_data_sync** ret_move)
 {
     //TODO
 }

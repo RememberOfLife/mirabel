@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-static const uint64_t MIRABEL_GAME_API_VERSION = 36;
+static const uint64_t MIRABEL_GAME_API_VERSION = 37;
 
 typedef uint32_t error_code;
 
@@ -318,7 +318,7 @@ typedef error_code get_concrete_move_probabilities_gf_t(game* self, uint32_t* re
 // the move will always be chosen deterministically from the supplied seed
 // SEED_NONE is a valid seed here and behaves just like all other possible values that a u64 can take
 // the returned ptr is valid until the next call on this game, undefined behaviour if used after; it is still owned by the game
-typedef error_code get_random_move_gf_t(game* self, seed128 seed, move_data_sync** ret_move);
+typedef error_code get_random_move_gf_t(game* self, seed128 seed, const move_data_sync** ret_move);
 
 // FEATURE: move_ordering
 // writes the available moves for the player from this position and returns a read only pointer to them

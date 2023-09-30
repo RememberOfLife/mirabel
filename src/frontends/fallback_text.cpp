@@ -698,12 +698,14 @@ namespace {
         if (game_ff(&data.g).print) {
             yrow_prev = yrow;
             nvgBeginPath(dc);
-            char* strstart = data.g_print;
-            char* strend = strchr(strstart, '\n');
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_RIGHT);
             nvgText(dc, data.xcol_offset - data.xcol_spacing, data.yrow_spacing * yrow, "PRINT", NULL);
             nvgTextAlign(dc, NVG_ALIGN_TOP | NVG_ALIGN_LEFT);
-            nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, strstart, strend);
+            char* strstart = data.g_print;
+            char* strend = strchr(strstart, '\n');
+            if (strend == NULL) {
+                nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, strstart, strend);
+            }
             while (strend != NULL) {
                 nvgText(dc, data.xcol_offset, data.yrow_spacing * yrow, strstart, strend);
                 yrow += 1;
@@ -801,7 +803,7 @@ namespace {
 
 const frontend_methods fallback_text_fem{
     .frontend_name = "fallback_text",
-    .version = semver{1, 6, 3},
+    .version = semver{1, 7, 1},
     .features = frontend_feature_flags{
         .error_strings = false,
         .options = false,
