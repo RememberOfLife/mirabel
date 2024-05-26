@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>mirabel-web</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                margin: 0;
+                padding: none;
+            }
+
+            /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
+            #canvas {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                margin: 0px;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                display: block;
+
+                image-rendering: optimizeSpeed;
+                image-rendering: crisp-edges;
+                image-rendering: pixelated;
+
+                border: 0px none;
+                background-color: black;
+            }
+
+            /* our own styles */
+
+            #log {
+                margin: 1em;
+                line-height: 1.5em;
+                border-top: 1px dashed lightgray;
+                font-family: monospace;
+            }
+
+            #log .log-line {
+                display: flex;
+                align-items: flex-start;
+                border-bottom: 1px dashed lightgray;
+                color: black;
+            }
+            
+            #log .log-line.log-bold {
+                font-weight: bold;
+            }
+
+            #log .log-line .log-status {
+                flex: 0 0 4em;
+                display: flex;
+                display: inline-block;
+                width: 4em;
+                text-align: right;
+                margin-right: 0.5em;
+            }
+
+            #log .log-line .log-message {
+                flex: 1;
+            }
+
+            #log .log-line .log-lesser {
+                color: gray;
+            }
+            #log .log-line .log-ok {
+                color: forestgreen;
+            }
+            #log .log-line .log-info {
+                color: royalblue;
+            }
+            #log .log-line .log-warning {
+                color: orangered;
+            }
+            #log .log-line .log-error {
+                color: crimson;
+            }
+            #log .log-line.log-fatal {
+                color: crimson;
+                border-bottom: 2px dotted crimson;
+            }
+            
+            /* #log .log.line.log-highlight {
+                
+            } */
+
+        </style>
+    </head>
+    <body>
+
+        <!-- TODO make it so the first logline is always visible at the very top, and with a button it can be expanded and the canvas gets hidden or smaller? -->
+
+        <div id="log">
+            <!-- TODO placeholder element to mark empty log ? -->
+        </div>
+        <template id="template_log-line">
+            <div class="log-line">
+                <!-- <div class="time"></div> -->
+                <!-- <div class="origin"></div> -->
+                <div class="log-status"></div>
+                <div class="log-message"></div>
+            </div>
+        </template>
+        <script type="text/javascript">
+            const LOGS = {
+                LESS: "LESS",
+                NORM: "NORM",
+                OK: "OK",
+                INFO: "INFO",
+                WARN: "WARN",
+                ERR: "ERR",
+                FATAL: "FATAL",
+            };
+            function log(status, text, bold = null, line_colored = null, highlight = null) {
+                if (bold === null) {
+                    bold = (status === LOGS.FATAL);
+                }
+                if (line_colored === null) {
+                    line_colored = (status === LOGS.FATAL);
+                }
+                if (highlight === null) {
+                    highlight = (status === LOGS.FATAL); //TODO implement this, inverts the line, e.g. fatal has red background and white text
+                }
+                let new_template = document.querySelector("#template_log-line").content.cloneNode(true);
+                let new_log_line = new_template.querySelector(".log-line");
+                let new_status = new_template.querySelector(".log-status");
+                let new_message = new_template.querySelector(".log-message");
+                new_message.textContent = text;
+                if (!LOGS.hasOwnProperty(status)) {
+                    status = LOGS.WARN;
+                    new_message.innerHTML = "&lt;unknown log status&gt;<br>" + new_message.innerHTML;
+                }
+                switch (status) {
+                    case LOGS.LESS: {
+                        new_message.className += " log-lesser";
+                        new_status.textContent = "";
+                        console.log(text)
+                    } break;
+                    case LOGS.NORM: {
+                        new_status.textContent = ">";
+                        console.log(text)
+                    } break;
+                    case LOGS.OK: {
+                        new_status.className += " log-ok";
+                        new_status.textContent = "OK";
+                        if (line_colored) {
+                            new_message.className += " log-ok";
+                        }
+                        console.log(text)
+                    } break;
+                    case LOGS.INFO: {
+                        new_status.className += " log-info";
+                        new_status.textContent = "INFO";
+                        if (line_colored) {
+                            new_message.className += " log-info";
+                        }
+                        console.info(text)
+                    } break;
+                    case LOGS.WARN: {
+                        new_status.className += " log-warning";
+                        new_status.textContent = "WARN";
+                        if (line_colored) {
+                            new_message.className += " log-warning";
+                        }
+                        console.warn(text)
+                    } break;
+                    case LOGS.ERR: {
+                        new_status.className += " log-error";
+                        new_status.textContent = "ERROR";
+                        if (line_colored) {
+                            new_message.className += " log-error";
+                        }
+                        console.error(text)
+                    } break;
+                    case LOGS.FATAL: {
+                        bold = true;
+                        line_colored = true;
+                        new_log_line.className += " log-fatal";
+                        new_status.textContent = "FATAL";
+                        if (line_colored) {
+                            new_message.className += " log-fatal";
+                        }
+                        console.error("FATAL: " + text)
+                    } break;
+                }
+                if (bold === true) {
+                    new_log_line.className += " log-bold";
+                }
+                // TODO status brackets here or style them in css as centered
+                document.querySelector("#log").appendChild(new_template);
+            }
+        </script>
+
+        <div id="run">
+
+            <!-- Module.requestFullscreen(bool lock_hide_mouse_pointer, bool resize) -->
+            <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+
+        </div>
+
+        <script type="text/javascript">
+            function getQueryParams() {
+                const params = {};
+                const queryString = window.location.search;
+                const urlParams = new URLSearchParams(queryString);
+                urlParams.forEach((value, key) => {
+                    params[key] = value;
+                });
+                return params;
+            }
+
+            function paramsToCLIArgs(params) {
+                const args = [];
+                for (const [key, value] of Object.entries(params)) {
+                    if (value === "") {
+                        args.push(key);
+                    } else {
+                        args.push(key.concat("=", value));
+                    }
+                }
+                // replace 0th argument with: location.protocol + location.hostname + location.pathname;
+                return args;
+            }
+            const params = getQueryParams();
+            const cli_args = paramsToCLIArgs(params);
+        </script>
+        <script type="text/javascript">
+            var Module = {
+                arguments: cli_args,
+                print: (function() {
+                    return (...args) => {
+                        var text = args.join(" ");
+                        // These replacements are necessary if you render to raw HTML
+                        //text = text.replace(/&/g, "&amp;");
+                        //text = text.replace(/</g, "&lt;");
+                        //text = text.replace(/>/g, "&gt;");
+                        //text = text.replace("\n", "<br>", "g");
+                        log(LOGS.NORM, text);
+                        // element.scrollTop = element.scrollHeight; // focus on bottom
+                    };
+                })(),
+                printErr: (function() {
+                    return (...args) => {
+                        var text = args.join(" ");
+                        // These replacements are necessary if you render to raw HTML
+                        //text = text.replace(/&/g, "&amp;");
+                        //text = text.replace(/</g, "&lt;");
+                        //text = text.replace(/>/g, "&gt;");
+                        //text = text.replace("\n", "<br>", "g");
+                        log(LOGS.WARN, text);
+                        // element.scrollTop = element.scrollHeight; // focus on bottom
+                    };
+                })(),
+                canvas: (() => {
+                    var canvas = document.getElementById("canvas");
+                    // As a default initial behavior, pop up an alert when webgl context is lost. To make your
+                    // application robust, you may want to override this behavior before shipping!
+                    // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+                    canvas.addEventListener("webglcontextlost", (e) => {
+                        alert("WebGL context lost. You will need to reload the page.");
+                        e.preventDefault();
+                    }, false);
+                    return canvas;
+                })(),
+                setStatus: (text) => {
+                    if (!Module.setStatus.last) Module.setStatus.last = {
+                        time: Date.now(),
+                        text: ""
+                    };
+                    if (text === Module.setStatus.last.text) return;
+                    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    var now = Date.now();
+                    if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+                    Module.setStatus.last.time = now;
+                    Module.setStatus.last.text = text;
+                    log(LOGS.LESS, "Module.setStatus: " + text);
+                },
+                totalDependencies: 0,
+                monitorRunDependencies: (left) => {
+                    this.totalDependencies = Math.max(this.totalDependencies, left);
+                    Module.setStatus(left ? "Preparing... (" + (this.totalDependencies - left) + "/" + this.totalDependencies + ")" : "All downloads complete.");
+                }
+            };
+            Module.setStatus("Downloading...");
+            window.onerror = (event) => {
+                // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
+                Module.setStatus("Exception thrown, see JavaScript console");
+                Module.setStatus = (text) => {
+                    if (text) log(LOGS.ERR, "[post-exception status] " + text);
+                };
+            };
+        </script>
+        <script async type="text/javascript" src="mirabel.js"></script>
+    </body>
+</html>
