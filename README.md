@@ -3,33 +3,36 @@
 General purpose board game playing GUI and server with some useful features.
 * Online/Offline Multiplayer (no account required)
   * Self-hostable Server
-* Linux + Windows Builds (MSVC / MINGW at your choice)
-* Engine Integration
+* Linux + Web + Windows Builds (MSVC / MINGW at your choice)
 * Plugin support for loading games, frontends and engines.
-  * Powerful API
+  * Powerful API, games as rule engines.
   * Multithreaded asset loading.
   * Reuseable resources available.
 
 Don't forget to clone submodules too by using:  
 `git clone --recurse-submodules https://github.com/RememberOfLife/mirabel.git`
 
-Future features:
+Future core features:
 * History Manager for game state tracking and analysis.
-* REPL for cli game playing.
+* REPL for cli game playing and testing.
+* Engine Integration (needs to be updated to reflect newer project developments)
 
 ## usage
 
-Client: `mirabel`  
-Server: `mirabel server`
+<!-- TODO provide mirabel web host: Web Client: [mirabel]()   -->
+Native Client: `mirabel`  
+<!-- TODO proper server syntax, own target or cli arg?: Server: `mirabel server`   -->
+<!-- TODO: Test Suite -->
 
 ## plugins
 
 The mirabel project provides powerful APIs and utilities for creating all kinds of board games.  
-For more details regarding the various APIs available, see the [design](./docs/design.md) document.
+For more details regarding the various APIs available, see the [`mirabel/game.h`](./includes/mirabel/game.h) API [design](./docs/game_api_design.md) document.
 
 ## dependencies
 
 All dependencies marked `[system]` are system packages/dependencies from your distributions repositories, all others come pre-bundled.
+<!-- TODO where does emscripten fit, and libwebsocket later on -->
 * GLEW [system/release]
 * SDL
 * OpenGL [system]
