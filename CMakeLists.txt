@@ -100,7 +100,6 @@ add_custom_target(generate_git_commit_hash DEPENDS add_generated_dir COMMAND "${
 add_dependencies(mirabel generate_git_commit_hash)
 
 target_include_directories(mirabel PRIVATE ${INCLUDES})
-
 target_link_libraries(mirabel Threads::Threads)
 
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
@@ -164,25 +163,26 @@ if(WIN32)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 endif()
 
+target_include_directories(mirabel PRIVATE ${SDL2_INCLUDE_DIRS})
+
 if(NOT DEFINED EMSCRIPTEN)
     target_link_libraries(mirabel SDL2_net)
 
     target_link_libraries(mirabel OpenSSL::SSL)
 endif()
 
-target_include_directories(mirabel PRIVATE ${SDL2_INCLUDE_DIRS})
-
 if(DEFINED EMSCRIPTEN)
     # -s USE_PTHREADS=1
     # --embed-file /home/urs/projects/mirabel-rv2/plugins/example/build-web/example_client.wasm@/example_client.wasm
     set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-O3 -fPIC")
     set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-O2 -s USE_SDL=2 -fPIC")
-    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1")
+    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/src/mirabel.html -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1")
+    set_target_properties(mirabel PROPERTIES SUFFIX ".html")
 else()
     target_link_libraries(mirabel SDL2::SDL2)
 endif()
 
 set_target_properties(mirabel PROPERTIES EXPORT_COMPILE_COMMANDS true)
 
-#TODO enable later, for windows?
+#TODO enable later, for windows? and only for non web
 # install(TARGETS mirabel RUNTIME DESTINATION .) #TODO only works for release build now

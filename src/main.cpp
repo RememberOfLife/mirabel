@@ -18,7 +18,16 @@ void app_info::new_app(int argc, char** argv)
         exit(1);
     }
     //TODO check platform registrations for sanity, i.e. non null etc..
+
+    //TODO REMOVE debug args printing
+    printf("ARGS/BEGIN\n");
+    for (int i = 0; i < argc; i++) {
+        printf("%s\n", argv[i]);
+    }
+    printf("ARGS/END\n");
+
     instance = (app_info*)malloc(sizeof(app_info));
+    //TODO use proper argparser from rosalia
     if (argc == 1) {
         instance->ui = new GraphicalImmediateMode();
     } else if (argc == 2) {
