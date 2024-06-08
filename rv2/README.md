@@ -43,9 +43,12 @@ build options:
     * [ ] fullscreen mode
   * [ ] performance: why is sokol so fast and we aren't?
   * [ ] multiline and complex log objects, e.g. start log line end log line and so on? gathers into threadlocal or so
-    * start offers bool wether to register time and ordering directly or later
+    * start offers bool whether to register time and ordering directly or later
 
 * [ ] proper dev environment sets the correct macros and enables clang auto complete by compile commands, at least for native!
+
+* [ ] mirabel html log on the right side and auto open on crash, also button from metagui log window, also button to close the html log
+* [ ] web log text select needs to be cancelable
 
 
 ### infos
