@@ -32,7 +32,7 @@ void app_info::new_app(int argc, char** argv)
         instance->ui = new GraphicalImmediateMode();
     } else if (argc == 2) {
         if (strcmp(argv[1], "crl") == 0) {
-            instance->ui = new CommandReadLine();
+            instance->ui = new CommandReadLine(); //TODO for now unsupported in the web, should be made unavailable via the registration manager
         } else if (strcmp(argv[1], "gim") == 0) {
             instance->ui = new GraphicalImmediateMode();
         } else {
