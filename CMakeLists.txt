@@ -45,8 +45,6 @@ set(INCLUDES
 )
 
 set(SOURCES
-    lib/crossline/crossline.c
-
     lib/imgui/backends/imgui_impl_opengl3.cpp
     lib/imgui/backends/imgui_impl_sdl2.cpp
     lib/imgui/imgui_demo.cpp
@@ -55,17 +53,33 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp
 
-    src/interface/crl/cli.cpp
+    src/rosa_impl/base64.c
+    src/rosa_impl/json.c
+    src/rosa_impl/noise.c
+    src/rosa_impl/rand.c
+    src/rosa_impl/semver.c
+    src/rosa_impl/serialization.c
+    src/rosa_impl/timestamp.c
+    src/rosa_impl/vector.c
+
     src/interface/gim/window.cpp
 
     src/main.cpp
 )
 
 set(SOURCES_NATIVE
+    lib/crossline/crossline.c
+
+    src/interface/crl/cli.cpp
+
     src/main-native.cpp
 )
 
 set(SOURCES_WEB
+    #TODO remove these two once the platform registerer works
+    lib/crossline/crossline.c
+    src/interface/crl/cli.cpp
+
     src/main-web.cpp
 )
 

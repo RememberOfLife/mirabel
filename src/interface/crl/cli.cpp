@@ -20,7 +20,7 @@ bool CommandReadLine::mainloop()
 
     bool quit = crossline_readline("mirabel > ", buf, sizeof(buf)) == NULL;
     if (quit || strcmp(buf, "exit") == 0 || strcmp(buf, "quit") == 0) {
-        printf("DOEN\n");
+        printf("DONE\n");
         return true;
     }
 
