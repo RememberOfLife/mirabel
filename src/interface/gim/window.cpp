@@ -1,3 +1,6 @@
+#include <ctime>
+#include <errno.h>
+
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #if defined(IMGUI_IMPL_OPENGL_ES2)
@@ -7,8 +10,10 @@
 #endif
 #include "nanovg_gl.h"
 #include "imgui.h"
+#include "imgui_internal.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "rosalia/timestamp.h"
 
 #include "mirabel/log.h"
 
@@ -16,6 +21,34 @@
 
 //HACK to get it working without proper log for now
 #define mirabel_slogf(status, fmt, ...) printf(fmt, __VA_ARGS__)
+
+void global_dockspace(float* x, float* y, float* w, float* h)
+{
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+    dockspace_flags |= ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_None;
+    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+    host_window_flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
+    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    host_window_flags |= ImGuiWindowFlags_NoBackground;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("global_dockspace_window", NULL, host_window_flags);
+    ImGui::PopStyleVar(3);
+    ImGuiID dockspace_id = ImGui::GetID("global_dockspace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    ImGuiDockNode* dn = ImGui::DockBuilderGetNode(dockspace_id);
+    *x = dn->CentralNode->Pos.x;
+    *y = dn->CentralNode->Pos.y;
+    *w = dn->CentralNode->Size.x;
+    *h = dn->CentralNode->Size.y;
+    ImGui::End();
+}
 
 GraphicalImmediateMode::GraphicalImmediateMode()
 {
@@ -139,14 +172,144 @@ bool GraphicalImmediateMode::mainloop()
 {
     bool quit = false;
 
+    //TODO move out to display data header
+    //TODO and cul for usefulness..
+    float x_px = imgui_viewport->WorkPos.x;
+    float y_px = imgui_viewport->WorkPos.y;
+    float w_px = imgui_viewport->WorkSize.x;
+    float h_px = imgui_viewport->WorkSize.y;
+    float fx_px = x_px;
+    float fy_px = y_px;
+    float fw_px = w_px;
+    float fh_px = h_px;
+    float fbw = imgui_viewport->Size.x;
+    float fbh = imgui_viewport->Size.y;
+    float fex = fx_px - x_px;
+    float fey = fy_px - y_px;
+    float few = fw_px;
+    float feh = fh_px;
+    static bool ctrl_left = false;
+    static bool ctrl_right = false;
+
+#ifndef __EMSCRIPTEN__
+    static int frame_work_ns = 0;
+    const int frame_budget_ns = (1000 * 1000 * 1000) / 60;
+    if (frame_work_ns < frame_budget_ns) {
+        struct timespec req, rem;
+        req.tv_sec = 0;
+        req.tv_nsec = frame_budget_ns - frame_work_ns;
+        while (clock_nanosleep(CLOCK_MONOTONIC, 0, &req, &rem) == EINTR) {
+            req = rem;
+        }
+    }
+    const uint64_t frame_ts_start = timestamp_get_ns64();
+#endif
+
+    // static uint64_t ms_tick = timestamp_get_ms64(); //TODO move to correct place(s)
+
+    //TODO process client internal event queue (or is that on another thread?)
+
+    // work through interface events: clicks, key presses, gui commands structs for updating interface elems
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        // pass event through imgui
+        ImGui_ImplSDL2_ProcessEvent(&event);
+        if (event.type == SDL_QUIT) {
+            quit = true;
+            break;
+        }
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdl_window)) {
+            quit = true;
+            break;
+        }
+        //TODO confirm exit modal hotkey has precedence
+        // imgui wants mouse: skip mouse events
+        if (imgui_io->WantCaptureMouse && (event.type == SDL_MOUSEMOTION || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL)) {
+            continue;
+        }
+        // imgui wants keyboard: skip keyboard events
+        if (imgui_io->WantCaptureKeyboard && (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)) {
+            continue;
+        }
+        //TODO our own inputs from here
+        if (event.type == SDL_KEYDOWN) {
+            if (event.key.keysym.sym == SDLK_LCTRL) {
+                ctrl_left = true;
+            } else if (event.key.keysym.sym == SDLK_RCTRL) {
+                ctrl_right = true;
+            }
+        }
+        if (event.type == SDL_KEYUP) {
+            if (event.key.keysym.sym == SDLK_LCTRL) {
+                ctrl_left = false;
+            } else if (event.key.keysym.sym == SDLK_RCTRL) {
+                ctrl_right = false;
+            }
+        }
+    }
+
     // start the dear imgui frame
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
+    global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
+
+    //TODO show imgui windows
+    ImGui::ShowDemoWindow();
+
+    //TODO put this in the sdl resize event, make a resize function on the context app
+    // whole workspace under the menubar, use this for frontend background if wanted
+    //TODO just need w and h of whole window, replace
+    x_px = imgui_viewport->WorkPos.x;
+    y_px = imgui_viewport->WorkPos.y;
+    w_px = imgui_viewport->WorkSize.x;
+    h_px = imgui_viewport->WorkSize.y;
+
+    fbw = imgui_viewport->Size.x;
+    fbh = imgui_viewport->Size.y;
+    // frontend only gets the frontend dockspace
+    fex = fx_px;
+    fey = fy_px;
+    few = fw_px;
+    feh = fh_px;
+
+    static int printed = 0;
+    if (printed++ < 20) {
+        // printf("%f %f %f %f // %f %f // %f %f %f %f\n", x_px, y_px, w_px, h_px, fbw, fbh, fex, fey, few, feh);
+    }
+
+    glViewport(0, 0, (int)fbw, (int)fbh);
+
+    // test nanovg
+    nvgBeginFrame(nanovg_ctx, fbw, fbh, 2);
+    nvgSave(nanovg_ctx);
+    nvgBeginPath(nanovg_ctx);
+    nvgRect(nanovg_ctx, fex, fey, few, feh);
+    nvgFillColor(nanovg_ctx, nvgRGB(114, 140, 153));
+    nvgFill(nanovg_ctx);
+    nvgBeginPath(nanovg_ctx);
+    // nvgRect(nanovg_ctx, fex + few - 40, fey + feh - 40, 30, 30);
+    nvgMoveTo(nanovg_ctx, 100, 100);
+    nvgLineTo(nanovg_ctx, 200, 200);
+    nvgStrokeWidth(nanovg_ctx, 10);
+    nvgStrokeColor(nanovg_ctx, nvgRGB(0, 0, 0));
+    nvgStroke(nanovg_ctx);
+    nvgRestore(nanovg_ctx);
+    nvgEndFrame(nanovg_ctx);
+
+    //TODO update ticks for frontend or no?
+    //TODO update frontend
+    //TODO render frontend
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(sdl_window);
+
+#ifndef __EMSCRIPTEN__
+    const uint64_t frame_ts_stop = timestamp_get_ns64();
+    frame_work_ns = frame_ts_stop - frame_ts_start;
+#endif
 
     return quit;
 }
