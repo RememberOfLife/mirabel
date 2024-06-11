@@ -40,6 +40,7 @@ All dependencies marked `[system]` are system packages/dependencies from your di
 * OpenSSL [system]
 * nanovg (+ stb)
 * imgui
+* crossline
 * rosalia
 
 import blocks style:

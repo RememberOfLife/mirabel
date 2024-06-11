@@ -13,7 +13,6 @@ void setup_platform()
 void mainloop()
 {
     if (app_info::instance->ui->mainloop()) {
-        delete app_info::instance;
         exit(0);
     }
 }

@@ -28,17 +28,25 @@ set(SOURCES_NANOVG
 )
 
 set(INCLUDES
+    lib/crossline
+
     lib/imgui/backends
     lib/imgui
 
     lib/nanovg/src
 
-    include
+    lib/rosalia/includes
+
+    lib/SDL_net
+
+    includes
     src
     "${CMAKE_BINARY_DIR}/build_generated"
 )
 
 set(SOURCES
+    lib/crossline/crossline.c
+
     lib/imgui/backends/imgui_impl_opengl3.cpp
     lib/imgui/backends/imgui_impl_sdl2.cpp
     lib/imgui/imgui_demo.cpp

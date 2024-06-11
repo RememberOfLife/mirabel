@@ -14,6 +14,5 @@ int main(int argc, char** argv)
     while (!quit) {
         quit = app_info::instance->ui->mainloop();
     }
-    delete app_info::instance;
     return 0;
 }

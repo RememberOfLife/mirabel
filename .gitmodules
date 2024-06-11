@@ -1,3 +1,6 @@
+[submodule "lib/crossline"]
+	path = lib/crossline
+	url = https://github.com/jcwangxp/Crossline
 [submodule "lib/imgui"]
     path = lib/imgui
     url = https://github.com/ocornut/imgui
@@ -15,6 +18,7 @@
 [submodule "lib/SDL_net"]
     path = lib/SDL_net
     url = https://github.com/libsdl-org/SDL_net
+    branch = SDL2
 [submodule "lib/stb"]
     path = lib/stb
     url = https://github.com/nothings/stb
