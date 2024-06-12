@@ -231,7 +231,16 @@ bool GraphicalImmediateMode::mainloop()
         if (imgui_io->WantCaptureKeyboard && (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP)) {
             continue;
         }
-        //TODO our own inputs from here
+        //TODO our own input event handling from here
+
+        //TODO use these to actually set the viewport and so on, so we dont have to check it every frame from imgui
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+            // printf("sdl size changed to %i / %i\n", event.window.data1, event.window.data2);
+        }
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            // printf("sdl resized to %i / %i\n", event.window.data1, event.window.data2);
+        }
+
         if (event.type == SDL_KEYDOWN) {
             if (event.key.keysym.sym == SDLK_LCTRL) {
                 ctrl_left = true;

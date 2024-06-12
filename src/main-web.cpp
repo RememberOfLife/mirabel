@@ -13,6 +13,7 @@ void setup_platform()
 void mainloop()
 {
     if (app_info::instance->ui->mainloop()) {
+        emscripten_cancel_main_loop();
         exit(0);
     }
 }

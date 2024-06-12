@@ -179,35 +179,22 @@
         <div id="container" class="">
 
             <div id="log-topline">
-                
                 <div class="horizontal-button-array">
-
                     <button class="flat-btn btn-blue btn-fill" onclick="switch_log_split_mode('vertical-split')">OPEN LOG</button>
-
                     <button class="flat-btn btn-red btn-minspace" onclick="switch_log_split_mode('')">CLOSE</button>
-
                 </div>
-
             </div>
 
             <div id="log-panel">
-
                 <div class="horizontal-button-array">
-
                     <button class="flat-btn btn-blue btn-fill" onclick="switch_log_split_mode('top-line-split')">HIDE</button>
-
                     <button class="flat-btn btn-red btn-minspace" onclick="switch_log_split_mode('')">CLOSE</button>
-
                 </div>
-
                 <div id="log-scroll-box">
-
                     <div id="log">
                         <!-- TODO placeholder element to mark empty log ? -->
                     </div>
-    
                 </div>
-
             </div>
     
             <div id="run">
@@ -227,17 +214,16 @@
             </div>
         </template>
 
-        <script>
+        <script type="text/javascript">
             function switch_log_split_mode(mode) {
                 let container = document.querySelector("#container");
                 container.className = "";
                 if (mode !== "") {
                     container.classList.add(mode);
                 }
+                window.dispatchEvent(new Event("resize"));
             }
-        </script>
-
-        <script type="text/javascript">
+            
             const LOGS = {
                 LESS: "LESS",
                 NORM: "NORM",
@@ -247,7 +233,8 @@
                 ERR: "ERR",
                 FATAL: "FATAL",
             };
-            function log(status, text, bold = null, line_colored = null, highlight = null) {
+            //TODO make the later args be an object so we can selectively set them!
+            function log(status, text, bold = null, line_colored = null, highlight = null, nomirror=false) {
                 if (bold === null) {
                     bold = (status === LOGS.FATAL);
                 }
@@ -261,7 +248,19 @@
                 let new_log_line = new_template.querySelector(".log-line");
                 let new_status = new_template.querySelector(".log-status");
                 let new_message = new_template.querySelector(".log-message");
-                new_message.textContent = text;
+
+                // process newlines as <br>
+                split_text = text.split("\n");
+                for (i = 0; i < split_text.length; i++) {
+                    let line = split_text[i];
+                    if (i > 0) {
+                        new_message.innerHTML += "<br>";
+                    }
+                    let div_sanit = document.createElement("div");
+                    div_sanit.textContent = line;
+                    new_message.innerHTML += div_sanit.innerHTML;
+                }
+
                 if (!LOGS.hasOwnProperty(status)) {
                     status = LOGS.WARN;
                     new_message.innerHTML = "&lt;unknown log status&gt;<br>" + new_message.innerHTML;
@@ -270,11 +269,15 @@
                     case LOGS.LESS: {
                         new_message.className += " log-lesser";
                         new_status.textContent = "";
-                        console.log(text)
+                        if (!nomirror) {
+                            console.log(text)
+                        }
                     } break;
                     case LOGS.NORM: {
                         new_status.textContent = ">";
-                        console.log(text)
+                        if (!nomirror) {
+                            console.log(text)
+                        }
                     } break;
                     case LOGS.OK: {
                         new_status.className += " log-ok";
@@ -282,7 +285,9 @@
                         if (line_colored) {
                             new_message.className += " log-ok";
                         }
-                        console.log(text)
+                        if (!nomirror) {
+                            console.log(text)
+                        }
                     } break;
                     case LOGS.INFO: {
                         new_status.className += " log-info";
@@ -290,7 +295,9 @@
                         if (line_colored) {
                             new_message.className += " log-info";
                         }
-                        console.info(text)
+                        if (!nomirror) {
+                            console.info(text)
+                        }
                     } break;
                     case LOGS.WARN: {
                         new_status.className += " log-warning";
@@ -298,7 +305,9 @@
                         if (line_colored) {
                             new_message.className += " log-warning";
                         }
-                        console.warn(text)
+                        if (!nomirror) {
+                            console.warn(text)
+                        }
                     } break;
                     case LOGS.ERR: {
                         new_status.className += " log-error";
@@ -306,7 +315,9 @@
                         if (line_colored) {
                             new_message.className += " log-error";
                         }
-                        console.error(text)
+                        if (!nomirror) {
+                            console.error(text)
+                        }
                     } break;
                     case LOGS.FATAL: {
                         bold = true;
@@ -316,7 +327,9 @@
                         if (line_colored) {
                             new_message.className += " log-fatal";
                         }
-                        console.error("FATAL: " + text)
+                        if (!nomirror) {
+                            console.error("FATAL: " + text)
+                        }
                     } break;
                 }
                 if (bold === true) {
@@ -325,13 +338,11 @@
                 // TODO status brackets here or style them in css as centered
                 document.querySelector("#log").appendChild(new_template);
             }
-        </script>
-
-        <script type="text/javascript">
+            
             function meta_arg(key, val) {
                 function assert_no_val() {
                     if (val !== "") {
-                        log(LOGS.WARN, "web wrap: arg \"" + key + "\" does not take a value");
+                        log(LOGS.WARN, "wargp: \"" + key + "\" does not take a value");
                     }
                 }
                 switch (key) {
@@ -344,7 +355,7 @@
                         switch_log_split_mode("vertical-split");
                     } break;
                     default: {
-                        log(LOGS.WARN, "web wrap: ignoring unknown arg \"" + key + "\"");
+                        log(LOGS.WARN, "wargp: ignoring unknown arg \"" + key + "\"");
                     } break;
                 }
             }
@@ -371,8 +382,7 @@
                 return args;
             }
             const cli_args = query_params_to_cli_args();
-        </script>
-        <script type="text/javascript">
+            
             var Module = {
                 arguments: cli_args,
                 print: (function() {
@@ -411,32 +421,39 @@
                     return canvas;
                 })(),
                 setStatus: (text) => {
-                    if (!Module.setStatus.last) Module.setStatus.last = {
-                        time: Date.now(),
-                        text: ""
-                    };
-                    if (text === Module.setStatus.last.text) return;
-                    var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
-                    var now = Date.now();
-                    if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
-                    Module.setStatus.last.time = now;
-                    Module.setStatus.last.text = text;
+                    // if (!Module.setStatus.last) Module.setStatus.last = {
+                    //     time: Date.now(),
+                    //     text: ""
+                    // };
+                    // if (text === Module.setStatus.last.text) return;
+                    // var m = text.match(/([^(]+)\((\d+(\.\d+)?)\/(\d+)\)/);
+                    // var now = Date.now();
+                    // if (m && now - Module.setStatus.last.time < 30) return; // if this is a progress update, skip it if too soon
+                    // Module.setStatus.last.time = now;
+                    // Module.setStatus.last.text = text;
                     log(LOGS.LESS, "Module.setStatus: " + text);
                 },
                 totalDependencies: 0,
                 monitorRunDependencies: (left) => {
                     this.totalDependencies = Math.max(this.totalDependencies, left);
                     Module.setStatus(left ? "Preparing... (" + (this.totalDependencies - left) + "/" + this.totalDependencies + ")" : "All downloads complete.");
-                }
+                },
             };
             Module.setStatus("Downloading...");
-            window.onerror = (event) => {
+            window.onerror = (msg, url, lineNo, columnNo, error) => {
                 // TODO: do not warn on ok events like simulating an infinite loop or exitStatus
-                Module.setStatus("Exception thrown, see JavaScript console");
-                Module.setStatus = (text) => {
-                    if (text) log(LOGS.ERR, "[post-exception status] " + text);
-                };
+                // Module.setStatus("Exception thrown, see JavaScript console");
+                // Module.setStatus = (text) => {
+                //     if (text) log(LOGS.ERR, "[post-exception status] " + text);
+                // };
+                log(LOGS.WARN, "window.onerror:\n" + msg);
             };
+            // can't do this, because it would infinite loop
+            // function resize_canvas() {
+            //     window.dispatchEvent(new Event("resize"));
+            // }
+            // var resize_observer = new ResizeObserver(resize_canvas);
+            // resize_observer.observe(document.getElementById("canvas"));
         </script>
         {{{ SCRIPT }}}
     </body>
