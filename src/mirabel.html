@@ -232,6 +232,17 @@
                 WARN: "WARN",
                 ERR: "ERR",
                 FATAL: "FATAL",
+                from_int: (i) => {
+                    switch (i) {
+                        case 0: return LOGS.LESS;
+                        case 1: return LOGS.NORM;
+                        case 2: return LOGS.OK;
+                        case 3: return LOGS.INFO;
+                        case 4: return LOGS.WARN;
+                        case 5: return LOGS.ERR;
+                        case 6: return LOGS.FATAL;
+                    }
+                }
             };
             //TODO make the later args be an object so we can selectively set them!
             function log(status, text, bold = null, line_colored = null, highlight = null, nomirror=false) {
@@ -446,7 +457,7 @@
                 // Module.setStatus = (text) => {
                 //     if (text) log(LOGS.ERR, "[post-exception status] " + text);
                 // };
-                log(LOGS.WARN, "window.onerror:\n" + msg);
+                log(LOGS.ERR, "window.onerror:\n" + msg);
             };
             // can't do this, because it would infinite loop
             // function resize_canvas() {

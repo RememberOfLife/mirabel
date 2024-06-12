@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "mirabel/log.h"
+
 #include "main.hpp"
 #include "interface/crl/cli.hpp"
 #include "interface/gim/window.hpp"
@@ -14,7 +16,7 @@ app_info* app_info::instance = NULL;
 void app_info::new_app(int argc, char** argv)
 {
     if (instance != NULL) {
-        printf("error: app instance already exists");
+        mirabel_slogf(LOGS_FATAL, "app instance already exists");
         exit(1);
     }
 
@@ -33,7 +35,7 @@ void app_info::new_app(int argc, char** argv)
         }
     }
     if (instance->ui == NULL) {
-        printf("error: no interface set\n");
+        mirabel_slogf(LOGS_FATAL, "no interface set");
         exit(1);
     }
 }

@@ -64,6 +64,9 @@ set(SOURCES
 
     src/interface/gim/window.cpp
 
+    src/util/alloc.c
+    src/util/log.cpp
+
     src/main.cpp
 )
 

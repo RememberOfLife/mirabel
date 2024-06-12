@@ -19,9 +19,6 @@
 
 #include "interface/gim/window.hpp"
 
-//HACK to get it working without proper log for now
-#define mirabel_slogf(status, fmt, ...) printf(fmt, __VA_ARGS__)
-
 void global_dockspace(float* x, float* y, float* w, float* h)
 {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
