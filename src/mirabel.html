@@ -176,7 +176,7 @@
 
         <!-- TODO make it so the first logline is always visible at the very top, and with a button it can be expanded and the canvas gets hidden or smaller? -->
 
-        <div id="container" class="vertical-split">
+        <div id="container" class="">
 
             <div id="log-topline">
                 
@@ -231,7 +231,9 @@
             function switch_log_split_mode(mode) {
                 let container = document.querySelector("#container");
                 container.className = "";
-                container.classList.add(mode);
+                if (mode !== "") {
+                    container.classList.add(mode);
+                }
             }
         </script>
 
@@ -326,30 +328,49 @@
         </script>
 
         <script type="text/javascript">
-            function getQueryParams() {
-                const params = {};
-                const queryString = window.location.search;
-                const urlParams = new URLSearchParams(queryString);
-                urlParams.forEach((value, key) => {
-                    params[key] = value;
-                });
-                return params;
-            }
-
-            function paramsToCLIArgs(params) {
-                const args = [];
-                for (const [key, value] of Object.entries(params)) {
-                    if (value === "") {
-                        args.push(key);
-                    } else {
-                        args.push(key.concat("=", value));
+            function meta_arg(key, val) {
+                function assert_no_val() {
+                    if (val !== "") {
+                        log(LOGS.WARN, "web wrap: arg \"" + key + "\" does not take a value");
                     }
                 }
-                // replace 0th argument with: location.protocol + location.hostname + location.pathname;
+                switch (key) {
+                    case "logh": { 
+                        assert_no_val();
+                        switch_log_split_mode("top-line-split");
+                    } break;
+                    case "log": { 
+                        assert_no_val();
+                        switch_log_split_mode("vertical-split");
+                    } break;
+                    default: {
+                        log(LOGS.WARN, "web wrap: ignoring unknown arg \"" + key + "\"");
+                    } break;
+                }
+            }
+            function query_params_to_cli_args() {
+                const escape_char = "*"
+                const args = ["web-hostname=" + location.hostname];
+                const url_params = new URLSearchParams(window.location.search);
+                for (const [ckey, cval] of url_params) {
+                    let key = ckey.trim();
+                    let val = cval.trim();
+                    if (key.startsWith(escape_char)) {
+                        key = key.substr(1);
+                        if (!key.startsWith(escape_char)) {
+                            meta_arg(key, val);
+                            continue;
+                        }
+                    }
+                    if (val === "") {
+                        args.push(key);
+                    } else {
+                        args.push(key.concat("=", val));
+                    }
+                };
                 return args;
             }
-            const params = getQueryParams();
-            const cli_args = paramsToCLIArgs(params);
+            const cli_args = query_params_to_cli_args();
         </script>
         <script type="text/javascript">
             var Module = {

@@ -17,30 +17,23 @@ void app_info::new_app(int argc, char** argv)
         printf("error: app instance already exists");
         exit(1);
     }
+
     //TODO check platform registrations for sanity, i.e. non null etc..
 
-    //TODO REMOVE debug args printing
-    printf("ARGS/BEGIN\n");
-    for (int i = 0; i < argc; i++) {
-        printf("%s\n", argv[i]);
-    }
-    printf("ARGS/END\n");
-
     instance = (app_info*)malloc(sizeof(app_info));
+
     //TODO use proper argparser from rosalia
-    if (argc == 1) {
-        instance->ui = new GraphicalImmediateMode();
-    } else if (argc == 2) {
-        if (strcmp(argv[1], "crl") == 0) {
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], "crl") == 0) {
             instance->ui = new CommandReadLine(); //TODO for now unsupported in the web, should be made unavailable via the registration manager
-        } else if (strcmp(argv[1], "gim") == 0) {
+            break;
+        } else if (strcmp(argv[i], "gim") == 0) {
             instance->ui = new GraphicalImmediateMode();
-        } else {
-            printf("error: unknown interface mode\n");
-            exit(1);
+            break;
         }
-    } else {
-        printf("error: too many args\n");
+    }
+    if (instance->ui == NULL) {
+        printf("error: no interface set\n");
         exit(1);
     }
 }
