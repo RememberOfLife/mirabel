@@ -9,13 +9,98 @@
                 font-family: sans-serif;
                 margin: 0;
                 padding: none;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            #container {
+                display: flex;
+                height: 100%;
+            }
+
+            #container.top-line-split {
+                flex-direction: column;
+            }
+
+            #log-topline {
+                display: none;
+            }
+            #log-panel {
+                display: none;
+                flex-direction: column;
+                height: 100%;
+            }
+            #run {
+                width: 100%;
+            }
+
+            .top-line-split #log-topline {
+                display: block;
+            }
+            .top-line-split #run {
+                width: 100%;
+            }
+
+            .vertical-split #log-panel {
+                display: flex;
+                width: 25%;
+            }
+            .vertical-split #run {
+                width: 75%;
+            }
+
+            #log-scroll-box {
+                overflow-y: auto;
+                height: 100%;
+            }
+
+            .horizontal-button-array {
+                display: flex;
+            }
+
+            .flat-btn {
+                text-align: center;
+                border: none;
+                cursor: pointer;
+                font-weight: bold;
+                margin: 0;
+                display: block;
+            }
+
+            .btn-fill {
+                flex-grow: 1;
+                width: 100%;
+            }
+
+            .btn-minspace {
+                flex-shrink: 0;
+            }
+
+            .btn-red {
+                background-color: lightpink;
+            }
+            .btn-red:hover {
+                background-color: lightcoral;
+            }
+            .btn-red:active {
+                background-color: indianred;
+            }
+
+            .btn-blue {
+                background-color: lightskyblue;
+            }
+            .btn-blue:hover {
+                background-color: cornflowerblue;
+            }
+            .btn-blue:active {
+                background-color: steelblue;
             }
 
             /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
             #canvas {
-                position: absolute;
-                top: 0px;
-                left: 0px;
+                /* position: absolute; */
+                /* top: 0px;
+                left: 0px; */
                 margin: 0px;
                 width: 100%;
                 height: 100%;
@@ -29,8 +114,6 @@
                 border: 0px none;
                 background-color: black;
             }
-
-            /* our own styles */
 
             #log {
                 margin: 1em;
@@ -93,9 +176,48 @@
 
         <!-- TODO make it so the first logline is always visible at the very top, and with a button it can be expanded and the canvas gets hidden or smaller? -->
 
-        <div id="log">
-            <!-- TODO placeholder element to mark empty log ? -->
+        <div id="container" class="vertical-split">
+
+            <div id="log-topline">
+                
+                <div class="horizontal-button-array">
+
+                    <button class="flat-btn btn-blue btn-fill" onclick="switch_log_split_mode('vertical-split')">OPEN LOG</button>
+
+                    <button class="flat-btn btn-red btn-minspace" onclick="switch_log_split_mode('')">CLOSE</button>
+
+                </div>
+
+            </div>
+
+            <div id="log-panel">
+
+                <div class="horizontal-button-array">
+
+                    <button class="flat-btn btn-blue btn-fill" onclick="switch_log_split_mode('top-line-split')">HIDE</button>
+
+                    <button class="flat-btn btn-red btn-minspace" onclick="switch_log_split_mode('')">CLOSE</button>
+
+                </div>
+
+                <div id="log-scroll-box">
+
+                    <div id="log">
+                        <!-- TODO placeholder element to mark empty log ? -->
+                    </div>
+    
+                </div>
+
+            </div>
+    
+            <div id="run">
+                <!-- Module.requestFullscreen(bool lock_hide_mouse_pointer, bool resize) -->
+                <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+                <!-- TODO visual downloading + compile indicator progress bar, AND placeholder for the canvas while the wasm is not yet started, then the wasm should signal to switch out the downloader for the real thing once its ready! -->
+            </div>
+
         </div>
+
         <template id="template_log-line">
             <div class="log-line">
                 <!-- <div class="time"></div> -->
@@ -104,6 +226,15 @@
                 <div class="log-message"></div>
             </div>
         </template>
+
+        <script>
+            function switch_log_split_mode(mode) {
+                let container = document.querySelector("#container");
+                container.className = "";
+                container.classList.add(mode);
+            }
+        </script>
+
         <script type="text/javascript">
             const LOGS = {
                 LESS: "LESS",
@@ -193,13 +324,6 @@
                 document.querySelector("#log").appendChild(new_template);
             }
         </script>
-
-        <div id="run">
-
-            <!-- Module.requestFullscreen(bool lock_hide_mouse_pointer, bool resize) -->
-            <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
-
-        </div>
 
         <script type="text/javascript">
             function getQueryParams() {
