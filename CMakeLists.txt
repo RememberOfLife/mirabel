@@ -35,11 +35,11 @@ set(INCLUDES
 
     lib/nanovg/src
 
-    lib/rosalia/includes
+    lib/rosalia/include
 
     lib/SDL_net
 
-    includes
+    include
     src
     "${CMAKE_BINARY_DIR}/build_generated"
 )

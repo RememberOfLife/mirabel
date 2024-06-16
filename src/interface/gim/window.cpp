@@ -144,6 +144,10 @@ GraphicalImmediateMode::GraphicalImmediateMode()
 #else
     nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #endif
+    if (nanovg_ctx == NULL) {
+        mirabel_slogf(LOGS_FATAL, "nanovg context creation failed\n");
+        exit(1);
+    }
 
     //TODO load nanovg fonts
 }
