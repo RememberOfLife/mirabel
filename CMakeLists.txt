@@ -129,7 +129,10 @@ target_include_directories(mirabel PRIVATE ${INCLUDES})
 target_link_libraries(mirabel Threads::Threads)
 
 target_include_directories(mirabel PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(mirabel ${OPENGL_LIBRARIES})
+if(NOT DEFINED EMSCRIPTEN)
+    # emscripten brings its own copy, so we don't have to link it again
+    target_link_libraries(mirabel ${OPENGL_LIBRARIES})
+endif()
 
 if(NOT DEFINED EMSCRIPTEN)
     # prefer to use the lib sys release if it exists
@@ -153,8 +156,8 @@ else()
     target_compile_definitions(nanovg PUBLIC NANOVG_GL3)
 endif()
 target_include_directories(nanovg PUBLIC ${OPENGL_INCLUDE_DIR})
-target_link_libraries(nanovg ${OPENGL_LIBRARIES})
-target_link_libraries(nanovg ${GLEW_LIBRARIES})
+# target_link_libraries(nanovg ${OPENGL_LIBRARIES}) //REMOVE if we really dont need these two but it should be fine since mirabel links these
+# target_link_libraries(nanovg ${GLEW_LIBRARIES}) //REMOVE
 target_link_libraries(mirabel nanovg)
 target_compile_definitions(nanovg PUBLIC NANOVG_USE_GLEW)
 

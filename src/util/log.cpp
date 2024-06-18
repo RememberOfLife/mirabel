@@ -40,7 +40,10 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
 {
     log_lock.lock();
     {
+        va_list args_copy;
+        va_copy(args_copy, args);
         size_t print_len = vsnprintf(log_format_buf, LOG_FORMAT_BUF_SIZE, fmt, args) + 1;
+        va_end(args_copy);
         char* target_buf = log_format_buf;
         if (print_len > LOG_FORMAT_BUF_SIZE) {
             target_buf = (char*)mirabel_malloc(print_len);
