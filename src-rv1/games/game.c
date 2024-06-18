@@ -77,7 +77,12 @@ error_code rerrorfv(char** pbuf, error_code ec, const char* fmt, va_list args)
         *pbuf = NULL;
     }
     if (fmt != NULL) {
-        size_t len = vsnprintf(NULL, 0, fmt, args) + 1;
+        // https://stackoverflow.com/a/37789384
+        // prevent args from being altered by copying it
+        va_list args_copy;
+        va_copy(args_copy, args);
+        size_t len = vsnprintf(NULL, 0, fmt, args_copy) + 1;
+        va_end(args_copy);
         *pbuf = (char*)malloc(len);
         if (*pbuf == NULL) {
             return ERR_OUT_OF_MEMORY;

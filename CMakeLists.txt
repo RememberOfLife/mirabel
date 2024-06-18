@@ -62,12 +62,13 @@ set(SOURCES
     src/rosa_impl/timestamp.c
     src/rosa_impl/vector.c
 
+    src/control/application.c
+    src/control/method_registry.c
+
     src/interface/gim/window.cpp
 
     src/util/alloc.c
     src/util/log.cpp
-
-    src/main.cpp
 )
 
 set(SOURCES_NATIVE

@@ -15,9 +15,9 @@ extern "C" {
 
 //TODO this entire impl is one big hack, in reality we'd likely route this through the client
 
-static std::mutex log_lock;
-static const size_t LOG_FORMAT_BUF_SIZE = 1024;
-static char log_format_buf[LOG_FORMAT_BUF_SIZE];
+std::mutex log_lock;
+const size_t LOG_FORMAT_BUF_SIZE = 1024;
+char log_format_buf[LOG_FORMAT_BUF_SIZE];
 
 void mirabel_slog(LOGS status, const char* str, const char* str_end)
 {
@@ -40,12 +40,12 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
 {
     log_lock.lock();
     {
-        size_t req_len = vsnprintf(NULL, 0, fmt, args) + 1;
+        size_t print_len = vsnprintf(log_format_buf, LOG_FORMAT_BUF_SIZE, fmt, args) + 1;
         char* target_buf = log_format_buf;
-        if (req_len > LOG_FORMAT_BUF_SIZE) {
-            target_buf = (char*)mirabel_malloc(req_len);
+        if (print_len > LOG_FORMAT_BUF_SIZE) {
+            target_buf = (char*)mirabel_malloc(print_len);
+            vsnprintf(target_buf, print_len, fmt, args);
         }
-        vsnprintf(target_buf, req_len, fmt, args);
 
         // process and output
         bool bold = status & LOGS_STYLE_BOLD;
@@ -65,7 +65,7 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
         };
         fprintf(stdout, "%s: %s\n", status_map[status], target_buf);
 #endif
-        // log to the web js, //TODO normally the client would do this
+        // log to the web js, //TODO normally the client_interface would do this
         // clang-format off
 #ifdef __EMSCRIPTEN__
         EM_ASM({

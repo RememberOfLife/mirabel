@@ -2,26 +2,28 @@
 
 #include <emscripten.h>
 
-#include "main.hpp"
+#include "mirabel/application.h"
 
 void setup_platform()
 {
-    // use global: app_regs
+    //TODO method_registry_add(app.registry, "client_interface", "gim", /*TODO*/);
     //TODO register web specific network manager and file-op manager
 }
 
 void mainloop()
 {
-    if (app_info::instance->ui->mainloop()) {
+    if (app_mainloop()) {
         emscripten_cancel_main_loop();
+        app_destroy();
         exit(0);
     }
 }
 
 int main(int argc, char** argv)
 {
+    app_create();
     setup_platform();
-    app_info::new_app(argc, argv);
+    app_args(argc, argv);
     emscripten_set_main_loop(mainloop, 0, true);
     //TODO cleanup not necessary for web?
 }
