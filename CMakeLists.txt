@@ -35,7 +35,7 @@ set(INCLUDES
 
     lib/nanovg/src
 
-    lib/rosalia/include
+    lib/rosalia/includes
 
     lib/SDL_net
 
