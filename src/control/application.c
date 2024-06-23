@@ -2,13 +2,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "mirabel/application.h"
-#include "mirabel/method_registry.h"
-#include "mirabel/log.h"
+#include "rosalia/argparse.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "mirabel/alloc.h"
+#include "mirabel/application.h"
+#include "mirabel/client_interface.h"
+#include "mirabel/client.h"
+#include "mirabel/log.h"
+#include "mirabel/method_registry.h"
+#include "mirabel/server.h"
 
 /////
 // internal
@@ -27,10 +29,6 @@ app appi;
 
 void app_create()
 {
-    appi = (app){
-        .registry = method_registry_create(),
-        .interface = NULL,
-    };
     // register SIGTERM handler
     struct sigaction sa;
     sa.sa_handler = handle_sigterm;
@@ -40,44 +38,107 @@ void app_create()
         mirabel_slogf(LOGS_FATAL, "failed to register SIGTERM handler");
         exit(1); //TODO fail creation gracefully or just exit?
     }
+
+    method_registry_create(&appi.registry);
+
+    appi.aserver = NULL;
+    appi.aclient = NULL;
+    appi.interface = NULL;
 }
 
 void app_destroy()
 {
-    method_registry_destroy(appi.registry);
+    if (appi.interface != NULL) {
+        appi.interface->methods->destroy(appi.interface);
+        mirabel_free(appi.interface);
+    }
+    if (appi.aclient != NULL) {
+        client_destroy(appi.aclient);
+        mirabel_free(appi.aclient);
+    }
+    if (appi.aserver != NULL) {
+        server_destroy(appi.aserver);
+        mirabel_free(appi.aserver);
+    }
+    method_registry_destroy(&appi.registry);
+    rosa_argpv_destroy(&appi.args);
 }
 
 void app_args(int argc, char** argv)
 {
-    mirabel_slogf(LOGS_INFO, "ARGS (%i)", argc);
+    rosa_argpv* ap = &appi.args;
+    rosa_argpv_create(ap, argc, argv);
+
+    //REMOVE
+    mirabel_slogf(LOGS_INFO, "ARGS: (%i)", argc);
     for (int argi = 0; argi < argc; argi++) {
-        mirabel_slogf(LOGS_NORM, "[%i]: %s", argi, argv[argi]);
+        mirabel_slogf(LOGS_NORM, "[%i] %s", argi, argv[argi]);
     }
 
-    // for (int i = 0; i < argc; i++) {
-    //     if (strcmp(argv[i], "crl") == 0) {
-    //         instance->ui = new CommandReadLine(); //TODO for now unsupported in the web, should be made unavailable via the registration manager
-    //         break;
-    //     } else if (strcmp(argv[i], "gim") == 0) {
-    //         instance->ui = new GraphicalImmediateMode();
-    //         break;
-    //     }
-    // }
-    // if (instance->ui == NULL) {
-    //     mirabel_slogf(LOGS_FATAL, "no interface set");
-    //     exit(1);
-    // }
+    mirabel_slogf(LOGS_INFO, "END");
+
+    bool want_server = rosa_argpv_exists(ap, "server");
+    bool want_client = rosa_argpv_exists(ap, "client") || !want_server;
+
+    //TODO could also replace this with a "fake" method registration, i.e. a NULL ptr for the server/hosted is registered in main-web.cpp
+#ifdef __EMSCRIPTEN__
+    if (want_server) {
+        mirabel_slogf(LOGS_WARN, "can not create hosting server in web version, using offline server instead");
+        want_server = false;
+    }
+#endif
+
+    appi.aserver = mirabel_malloc(sizeof(server));
+    if (want_server) {
+        // hosting server
+        server_create(appi.aserver, false);
+    } else {
+        // offline server
+        server_create(appi.aserver, true);
+    }
+
+    if (want_client) {
+        appi.aclient = mirabel_malloc(sizeof(client));
+        client_create(appi.aclient);
+    }
+
+    const char* requested_interface = rosa_argpv_val(ap, "interface");
+    if (requested_interface == NULL && want_client) {
+        // typical mode without args automatically spawns client and gim interface
+        requested_interface = "gim";
+    }
+    if (rosa_argpv_val_eq(ap, "interface", "none")) {
+        // explicitly requested that no interface be used
+        requested_interface = NULL;
+    }
+    if (requested_interface != NULL) {
+        client_interface_methods* found_interface_methods = method_registry_get(&appi.registry, "interface", requested_interface);
+        if (found_interface_methods == NULL) {
+            mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
+        } else {
+            appi.interface = mirabel_malloc(sizeof(client_interface));
+            appi.interface->methods = found_interface_methods;
+            appi.interface->methods->create(appi.interface);
+        }
+    }
+
+    mirabel_slogf(LOGS_NORM, "%p srv", appi.aserver);
+    mirabel_slogf(LOGS_NORM, "%p clt", appi.aclient);
+    mirabel_slogf(LOGS_NORM, "%p itf", appi.interface);
 }
 
 bool app_mainloop()
 {
-    //TODO
-    // run server update
-    // run client update
-    // run interface mainloop
-    return true;
+    bool shutdown = false;
+    shutdown |= server_update(appi.aserver);
+    if (appi.aclient != NULL) {
+        shutdown |= client_update(appi.aclient);
+    }
+    if (appi.interface != NULL) {
+        shutdown |= appi.interface->methods->mainloop(appi.interface);
+    }
+    if (shutdown) {
+        //TODO cleanup if we need to do any in the mainloop
+    }
+    return shutdown;
 }
-
-#ifdef __cplusplus
-}
-#endif

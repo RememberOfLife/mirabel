@@ -9,10 +9,6 @@
 #include "mirabel/alloc.h"
 #include "mirabel/log.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 //TODO this entire impl is one big hack, in reality we'd likely route this through the client
 
 std::mutex log_lock;
@@ -83,7 +79,3 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
     }
     log_lock.unlock();
 }
-
-#ifdef __cplusplus
-}
-#endif

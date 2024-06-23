@@ -9,10 +9,6 @@
 #include "mirabel/log.h"
 #include "mirabel/method_registry.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /////
 // internal
 
@@ -39,17 +35,14 @@ uint32_t method_registry_find_internal(method_registry* reg, const char* method_
 /////
 // public
 
-method_registry* method_registry_create()
+void method_registry_create(method_registry* reg)
 {
-    method_registry* reg = mirabel_malloc(sizeof(*reg));
     VEC_CREATE(&reg->entries, 0);
-    return reg;
 }
 
 void method_registry_destroy(method_registry* reg)
 {
     VEC_DESTROY(&reg->entries);
-    mirabel_free(reg);
 }
 
 bool method_registry_add(method_registry* reg, const char* method_type, const char* method_name, void* method)
@@ -95,7 +88,3 @@ bool method_registry_remove(method_registry* reg, const char* method_type, const
     VEC_REMOVE_SWAP(&reg->entries, idx);
     return true;
 }
-
-#ifdef __cplusplus
-}
-#endif

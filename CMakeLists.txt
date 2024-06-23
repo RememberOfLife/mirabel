@@ -35,7 +35,7 @@ set(INCLUDES
 
     lib/nanovg/src
 
-    lib/rosalia/includes
+    lib/rosalia/include
 
     lib/SDL_net
 
@@ -53,6 +53,7 @@ set(SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui.cpp
 
+    src/rosa_impl/argparse.c
     src/rosa_impl/base64.c
     src/rosa_impl/json.c
     src/rosa_impl/noise.c
@@ -62,10 +63,14 @@ set(SOURCES
     src/rosa_impl/timestamp.c
     src/rosa_impl/vector.c
 
+    src/client/client.c
+
     src/control/application.c
     src/control/method_registry.c
 
     src/interface/gim/window.cpp
+
+    src/server/server.c
 
     src/util/alloc.c
     src/util/log.cpp

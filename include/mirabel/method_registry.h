@@ -26,7 +26,7 @@ typedef struct method_registry_s {
     method_entry* entries; // rosa_vec
 } method_registry;
 
-method_registry* method_registry_create();
+void method_registry_create(method_registry* reg);
 
 void method_registry_destroy(method_registry* reg);
 

@@ -1,19 +1,25 @@
 #pragma once
 
-#include "rosalia/semver.h"
+#include <stdbool.h>
+
+#include "rosalia/argparse.h"
 
 #include "mirabel/client_interface.h"
+#include "mirabel/client.h"
 #include "mirabel/method_registry.h"
+#include "mirabel/server.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct app_s {
-    method_registry* registry;
-    // server* aserver;
-    // client* aclient;
-    client_interface* interface;
+    rosa_argpv args;
+    method_registry registry;
+    //TODO do these really need to be pointers?:
+    server* aserver;
+    client* aclient;
+    client_interface* interface; //TODO are we supporting multiple interfaces or replacing the interface after creation?
 } app;
 
 extern app appi; // global singleton instance
