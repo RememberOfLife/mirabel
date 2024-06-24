@@ -1,9 +1,13 @@
 #include "mirabel/application.h"
+#include "mirabel/method_registry.h"
+
+#include "interface/crl/cli.h"
+#include "interface/gim/window.h"
 
 void setup_platform()
 {
-    //TODO method_registry_add(app.registry, "client_interface", "crl", /*TODO*/);
-    //TODO method_registry_add(app.registry, "client_interface", "gim", /*TODO*/);
+    methods_registry_add(&appi.registry, "client_interface", "crl", &cli_client_interface);
+    methods_registry_add(&appi.registry, "client_interface", "gim", &gim_client_interface);
     //TODO register native specific network managers and file-op manager
 }
 

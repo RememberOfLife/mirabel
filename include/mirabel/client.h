@@ -11,10 +11,12 @@ typedef struct client_s {
     // workspace* workspaces; // vector
 } client;
 
+// returns true on failure
 bool client_create(client* clt);
 
 void client_destroy(client* clt);
 
+// returns true to shutdown
 bool client_update(client* clt);
 
 #ifdef __cplusplus

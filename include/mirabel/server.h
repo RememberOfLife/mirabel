@@ -16,10 +16,12 @@ typedef struct server_s {
     // session* sessions;
 } server;
 
+// returns true on failure
 bool server_create(server* srv, bool offline);
 
 void server_destroy(server* srv);
 
+// returns true to shutdown
 bool server_update(server* srv);
 
 #ifdef __cplusplus

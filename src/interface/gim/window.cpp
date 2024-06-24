@@ -13,9 +13,12 @@
 #include "imgui_internal.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
+#include "rosalia/semver.h"
 #include "rosalia/timestamp.h"
 
 #include "mirabel/log.h"
+
+#include "interface/gim/window.h"
 
 #include "interface/gim/window.hpp"
 
@@ -323,3 +326,62 @@ bool GraphicalImmediateMode::mainloop()
 
     return quit;
 }
+
+/////
+// methods wrapper
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static const char* get_last_error_cif(client_interface* self)
+{
+    return NULL;
+}
+
+static error_code create_cif(client_interface* self)
+{
+    self->data = new GraphicalImmediateMode();
+    return CLIENT_INTERFACE_ERR_OK;
+}
+
+static error_code destroy_cif(client_interface* self)
+{
+    delete (GraphicalImmediateMode*)self->data;
+    return CLIENT_INTERFACE_ERR_OK;
+}
+
+static bool mainloop_cif(client_interface* self)
+{
+    return ((GraphicalImmediateMode*)self->data)->mainloop();
+}
+
+static void log_cif(client_interface* self, LOGS status, const char* str, const char* str_end)
+{
+    //TODO
+}
+
+static const char* user_file_path_prompt_cif(client_interface* self, const char* suggested_save_name)
+{
+    //TODO
+    return NULL;
+}
+
+const client_interface_methods gim_client_interface{
+    .name = "gim",
+    .version = (semver){
+        .major = 0,
+        .minor = 0,
+        .patch = 0,
+    },
+    .get_last_error = get_last_error_cif,
+    .create = create_cif,
+    .destroy = destroy_cif,
+    .mainloop = mainloop_cif,
+    .log = log_cif,
+    .user_file_path_prompt = user_file_path_prompt_cif,
+};
+
+#ifdef __cplusplus
+}
+#endif

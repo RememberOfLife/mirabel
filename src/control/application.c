@@ -5,12 +5,14 @@
 #include "rosalia/argparse.h"
 
 #include "mirabel/alloc.h"
-#include "mirabel/application.h"
 #include "mirabel/client_interface.h"
 #include "mirabel/client.h"
+#include "mirabel/debug.h"
 #include "mirabel/log.h"
 #include "mirabel/method_registry.h"
 #include "mirabel/server.h"
+
+#include "mirabel/application.h"
 
 /////
 // internal
@@ -27,6 +29,8 @@ void handle_sigterm(int sig)
 
 app appi;
 
+bool debug_mode;
+
 void app_create()
 {
     // register SIGTERM handler
@@ -39,7 +43,7 @@ void app_create()
         exit(1); //TODO fail creation gracefully or just exit?
     }
 
-    method_registry_create(&appi.registry);
+    methods_registry_create(&appi.registry);
 
     appi.aserver = NULL;
     appi.aclient = NULL;
@@ -60,7 +64,7 @@ void app_destroy()
         server_destroy(appi.aserver);
         mirabel_free(appi.aserver);
     }
-    method_registry_destroy(&appi.registry);
+    methods_registry_destroy(&appi.registry);
     rosa_argpv_destroy(&appi.args);
 }
 
@@ -69,13 +73,17 @@ void app_args(int argc, char** argv)
     rosa_argpv* ap = &appi.args;
     rosa_argpv_create(ap, argc, argv);
 
-    //REMOVE
-    mirabel_slogf(LOGS_INFO, "ARGS: (%i)", argc);
-    for (int argi = 0; argi < argc; argi++) {
-        mirabel_slogf(LOGS_NORM, "[%i] %s", argi, argv[argi]);
+    if (rosa_argpv_exists(ap, "debug")) {
+        debug_mode = true;
     }
 
-    mirabel_slogf(LOGS_INFO, "END");
+    if (debug_mode) {
+        mirabel_slogf(LOGS_INFO, "ARGS: (%i)", argc);
+        for (int argi = 0; argi < argc; argi++) {
+            mirabel_slogf(LOGS_NORM, "[%i] %s", argi, argv[argi]);
+        }
+        mirabel_slogf(LOGS_INFO, "END");
+    }
 
     bool want_server = rosa_argpv_exists(ap, "server");
     bool want_client = rosa_argpv_exists(ap, "client") || !want_server;
@@ -112,7 +120,7 @@ void app_args(int argc, char** argv)
         requested_interface = NULL;
     }
     if (requested_interface != NULL) {
-        client_interface_methods* found_interface_methods = method_registry_get(&appi.registry, "interface", requested_interface);
+        client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "interface", requested_interface);
         if (found_interface_methods == NULL) {
             mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
         } else {
@@ -121,10 +129,6 @@ void app_args(int argc, char** argv)
             appi.interface->methods->create(appi.interface);
         }
     }
-
-    mirabel_slogf(LOGS_NORM, "%p srv", appi.aserver);
-    mirabel_slogf(LOGS_NORM, "%p clt", appi.aclient);
-    mirabel_slogf(LOGS_NORM, "%p itf", appi.interface);
 }
 
 bool app_mainloop()
