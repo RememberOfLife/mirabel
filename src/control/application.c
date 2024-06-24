@@ -9,7 +9,7 @@
 #include "mirabel/client.h"
 #include "mirabel/debug.h"
 #include "mirabel/log.h"
-#include "mirabel/method_registry.h"
+#include "mirabel/methods_registry.h"
 #include "mirabel/server.h"
 
 #include "mirabel/application.h"
@@ -120,7 +120,7 @@ void app_args(int argc, char** argv)
         requested_interface = NULL;
     }
     if (requested_interface != NULL) {
-        client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "interface", requested_interface);
+        client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "client_interface", requested_interface);
         if (found_interface_methods == NULL) {
             mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
         } else {

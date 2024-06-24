@@ -1,5 +1,5 @@
 #include "mirabel/application.h"
-#include "mirabel/method_registry.h"
+#include "mirabel/methods_registry.h"
 
 #include "interface/crl/cli.h"
 #include "interface/gim/window.h"

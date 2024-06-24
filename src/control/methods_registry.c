@@ -48,7 +48,7 @@ void methods_registry_destroy(methods_registry* reg)
 bool methods_registry_add(methods_registry* reg, const char* methods_type, const char* methods_name, const void* methods)
 {
     uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name);
-    if (idx == METHODS_REGISTRY_FIND_FAIL) {
+    if (idx != METHODS_REGISTRY_FIND_FAIL) {
         mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", already exists (current: %p, requested: %p)", methods_type, methods_name, reg->entries[idx].methods, methods);
         return false;
     }

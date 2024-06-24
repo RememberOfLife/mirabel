@@ -6,7 +6,7 @@
 
 #include "mirabel/client_interface.h"
 #include "mirabel/client.h"
-#include "mirabel/method_registry.h"
+#include "mirabel/methods_registry.h"
 #include "mirabel/server.h"
 
 #ifdef __cplusplus

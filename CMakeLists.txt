@@ -66,7 +66,7 @@ set(SOURCES
     src/client/client.c
 
     src/control/application.c
-    src/control/method_registry.c
+    src/control/methods_registry.c
 
     src/interface/gim/window.cpp
 

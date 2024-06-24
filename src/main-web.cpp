@@ -3,7 +3,7 @@
 #include <emscripten.h>
 
 #include "mirabel/application.h"
-#include "mirabel/method_registry.h"
+#include "mirabel/methods_registry.h"
 
 #include "interface/gim/window.h"
 
