@@ -53,7 +53,7 @@ void app_create()
 void app_destroy()
 {
     if (appi.interface != NULL) {
-        appi.interface->methods->destroy(appi.interface);
+        client_interface_destroy(appi.interface);
         mirabel_free(appi.interface);
     }
     if (appi.aclient != NULL) {
@@ -120,13 +120,17 @@ void app_args(int argc, char** argv)
         requested_interface = NULL;
     }
     if (requested_interface != NULL) {
-        client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "client_interface", requested_interface);
+        const client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "client_interface", requested_interface);
         if (found_interface_methods == NULL) {
             mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
         } else {
             appi.interface = mirabel_malloc(sizeof(client_interface));
             appi.interface->methods = found_interface_methods;
-            appi.interface->methods->create(appi.interface);
+            if (client_interface_create(appi.interface) != CLIENT_INTERFACE_ERR_OK) {
+                const char* err_str = client_interface_get_last_error(appi.interface);
+                mirabel_slogf(LOGS_ERR, "interface \"%s\" creation failed%s%s", err_str != NULL ? ": " : "", err_str != NULL ? err_str : "");
+                client_interface_destroy(appi.interface);
+            }
         }
     }
 }
@@ -139,7 +143,7 @@ bool app_mainloop()
         shutdown |= client_update(appi.aclient);
     }
     if (appi.interface != NULL) {
-        shutdown |= appi.interface->methods->mainloop(appi.interface);
+        shutdown |= client_interface_mainloop(appi.interface);
     }
     if (shutdown) {
         //TODO cleanup if we need to do any in the mainloop

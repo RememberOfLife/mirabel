@@ -50,10 +50,9 @@ static error_code create_cif(client_interface* self)
     return CLIENT_INTERFACE_ERR_OK;
 }
 
-static error_code destroy_cif(client_interface* self)
+static void destroy_cif(client_interface* self)
 {
     delete (CommandReadLine*)self->data;
-    return CLIENT_INTERFACE_ERR_OK;
 }
 
 static bool mainloop_cif(client_interface* self)
