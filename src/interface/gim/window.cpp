@@ -196,17 +196,26 @@ bool GraphicalImmediateMode::mainloop()
     static bool ctrl_right = false;
 
 #ifndef __EMSCRIPTEN__
-    static int frame_work_ns = 0;
-    const int frame_budget_ns = (1000 * 1000 * 1000) / 60;
-    if (frame_work_ns < frame_budget_ns) {
-        struct timespec req, rem;
-        req.tv_sec = 0;
-        req.tv_nsec = frame_budget_ns - frame_work_ns;
-        while (clock_nanosleep(CLOCK_MONOTONIC, 0, &req, &rem) == EINTR) {
-            req = rem;
+    {
+        static int frame_work_ns = 0;
+        static uint64_t frame_ts_start = 0;
+        static bool init_frame_time = false;
+        if (init_frame_time) {
+            const uint64_t frame_ts_stop = timestamp_get_ns64();
+            frame_work_ns = frame_ts_stop - frame_ts_start;
         }
+        init_frame_time = true;
+        const int frame_budget_ns = (1000 * 1000 * 1000) / 60;
+        if (frame_work_ns < frame_budget_ns) {
+            struct timespec req, rem;
+            req.tv_sec = 0;
+            req.tv_nsec = frame_budget_ns - frame_work_ns;
+            while (clock_nanosleep(CLOCK_MONOTONIC, 0, &req, &rem) == EINTR) {
+                req = rem;
+            }
+        }
+        frame_ts_start = timestamp_get_ns64();
     }
-    const uint64_t frame_ts_start = timestamp_get_ns64();
 #endif
 
     // static uint64_t ms_tick = timestamp_get_ms64(); //TODO move to correct place(s)
@@ -318,11 +327,6 @@ bool GraphicalImmediateMode::mainloop()
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     SDL_GL_SwapWindow(sdl_window);
-
-#ifndef __EMSCRIPTEN__
-    const uint64_t frame_ts_stop = timestamp_get_ns64();
-    frame_work_ns = frame_ts_stop - frame_ts_start;
-#endif
 
     return quit;
 }
