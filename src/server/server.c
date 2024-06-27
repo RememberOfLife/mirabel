@@ -15,13 +15,14 @@ void server_destroy(server* srv)
 bool server_update(server* srv)
 {
     bool exit = false;
-    uint32_t remaining_budget = 1024; // limit maximum event processing if queue is too big
+    int32_t remaining_budget = 1024; // limit maximum event processing if queue is too big
     while (remaining_budget > 0) {
+        remaining_budget--;
         event_any e;
-        event_queue_pop(&srv->inbox, &e, UINT32_MAX);
+        event_queue_pop(&srv->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this, also the crl interface is blocking..
         switch (e.base.type) {
             case EVENT_TYPE_NULL: {
-                mirabel_slogf(LOGS_LESS, "server: received unexpected null event\n");
+                remaining_budget = 0;
             } break;
             case EVENT_TYPE_EXIT: {
                 remaining_budget = 0;

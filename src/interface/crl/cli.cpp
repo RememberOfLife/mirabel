@@ -1,9 +1,14 @@
+#include <condition_variable>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <mutex>
+#include <thread>
 
 #include "crossline.h"
 #include "rosalia/semver.h"
+
+#include "mirabel/alloc.h"
 
 #include "interface/crl/cli.h"
 
@@ -11,25 +16,50 @@
 
 CommandReadLine::CommandReadLine()
 {
+    input_thread = std::thread(&CommandReadLine::input_thread_func, this);
 }
 
 CommandReadLine::~CommandReadLine()
 {
+    fclose(stdin);
+    input_thread.join();
 }
 
 bool CommandReadLine::mainloop()
 {
-    char buf[256];
-
-    bool quit = crossline_readline("mirabel > ", buf, sizeof(buf)) == NULL;
-    if (quit || strcmp(buf, "exit") == 0 || strcmp(buf, "quit") == 0) {
-        printf("DONE\n");
+    input_mut.lock();
+    if (input_buf != NULL) {
+        // process input
+        mirabel_slogf(LOGS_NORM, "crl-echo: \"%s\"\n", input_buf);
+    }
+    input_buf = NULL;
+    input_mut.unlock();
+    input_cv.notify_all();
+    //TODO after the prompt is put up we do not want to log anything else as that displaces the prompt, i.e. store the logs and push them later, or, "restore" the prompt if possible everytime in our logging function..
+    if (input_quit) {
+        mirabel_slogf(LOGS_NORM, "crl-done");
         return true;
     }
-
-    printf("echo: \"%s\"\n", buf);
-
     return false;
+}
+
+void CommandReadLine::input_thread_func()
+{
+    char* buf = (char*)mirabel_malloc(input_size);
+    while (true) {
+        char* rb = crossline_readline("mirabel > ", buf, input_size);
+        std::unique_lock<std::mutex> lock(input_mut);
+        if (rb == NULL || strcmp(rb, "exit") == 0 || strcmp(rb, "quit") == 0) {
+            input_quit = true;
+            break;
+        }
+        input_buf = buf;
+        input_cv.wait(lock);
+        if (input_quit) {
+            break;
+        }
+    }
+    mirabel_free(buf);
 }
 
 /////
