@@ -17,6 +17,12 @@
 /////
 // internal
 
+void handle_sigint(int sig)
+{
+    mirabel_slogf(LOGS_OK, "SIGINT, immediate shutdown");
+    exit(1);
+}
+
 void handle_sigterm(int sig)
 {
     mirabel_slogf(LOGS_OK, "SIGTERM, initiating graceful shutdown");
@@ -33,13 +39,21 @@ bool debug_mode;
 
 void app_create()
 {
-    // register SIGTERM handler
     struct sigaction sa;
+    // register SIGTERM handler
     sa.sa_handler = handle_sigterm;
     sa.sa_flags = 0;
     sigemptyset(&sa.sa_mask);
     if (sigaction(SIGTERM, &sa, NULL) == -1) {
         mirabel_slogf(LOGS_FATAL, "failed to register SIGTERM handler");
+        exit(1); //TODO fail creation gracefully or just exit?
+    }
+    // register SIGINT handler
+    sa.sa_handler = handle_sigint;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        mirabel_slogf(LOGS_FATAL, "failed to register SIGINT handler");
         exit(1); //TODO fail creation gracefully or just exit?
     }
 
