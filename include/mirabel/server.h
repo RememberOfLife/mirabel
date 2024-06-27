@@ -2,12 +2,17 @@
 
 #include <stdbool.h>
 
+#include "mirabel/event_queue.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct server_s {
     bool offline;
+    event_queue inbox; //TODO if the server gets multithreaded then we need some more complicated queue stealing anyway (i.e. every network adapter just enqueues in its recv_box and the threads work steal from all the adapters round robin so even if one adapter has more, we still process others faily)
+
+    //TODO
     // db connection
     // network_adapter* nets;
     // connection* connections;

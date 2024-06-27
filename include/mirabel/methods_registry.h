@@ -30,11 +30,11 @@ void methods_registry_create(methods_registry* reg);
 
 void methods_registry_destroy(methods_registry* reg);
 
-bool methods_registry_add(methods_registry* reg, const char* methods_type, const char* methods_name, const void* methods); // returns true if successfully added
+bool methods_registry_add(methods_registry* reg, const char* methods_type, const char* methods_name, const void* methods); // returns true if already exists
 
 const void* methods_registry_get(methods_registry* reg, const char* methods_type, const char* methods_name); // NULL if non-existant
 
-bool methods_registry_remove(methods_registry* reg, const char* methods_type, const char* methods_name); // returns true if successfully removed
+bool methods_registry_remove(methods_registry* reg, const char* methods_type, const char* methods_name); // returns false if it did not exist
 
 #ifdef __cplusplus
 }

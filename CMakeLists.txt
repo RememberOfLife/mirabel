@@ -66,6 +66,8 @@ set(SOURCES
     src/client/client.c
 
     src/control/application.c
+    src/control/event.c
+    src/control/event_queue.cpp
     src/control/methods_registry.c
 
     src/game/game.c
@@ -88,10 +90,6 @@ set(SOURCES_NATIVE
 )
 
 set(SOURCES_WEB
-    #TODO remove these two once the platform registerer works
-    lib/crossline/crossline.c
-    src/interface/crl/cli.cpp
-
     src/main-web.cpp
 )
 

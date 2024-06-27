@@ -7,7 +7,7 @@
 #include "rosalia/json.h"
 #include "rosalia/serialization.h"
 
-#include "mirabel/game.h"
+#include "mirabel/log.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +44,8 @@ typedef union event_any_u event_any;
 /////
 // general purpose event utils
 
+const char* event_type_str(EVENT_TYPE type);
+
 uint32_t get_new_association_id();
 
 void event_create_zero(event_any* e);
@@ -77,12 +79,13 @@ size_t event_read_size(void* buf);
 
 typedef struct event_log_s {
     event base;
+    LOGS status;
     char* str;
 } event_log;
 
-void event_create_log(event_any* e, const char* str, const char* str_end);
-void event_create_logf(event_any* e, const char* fmt, ...);
-void event_create_logfv(event_any* e, const char* fmt, va_list args);
+void event_create_log(event_any* e, LOGS status, const char* str, const char* str_end);
+void event_create_logf(event_any* e, LOGS status, const char* fmt, ...);
+void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args);
 
 // event_any is as large as the largest event
 // use for arbitrary events, event arrays and deserialization where type and size are unknown

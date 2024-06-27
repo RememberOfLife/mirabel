@@ -50,11 +50,11 @@ bool methods_registry_add(methods_registry* reg, const char* methods_type, const
     uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name);
     if (idx != METHODS_REGISTRY_FIND_FAIL) {
         mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", already exists (current: %p, requested: %p)", methods_type, methods_name, reg->entries[idx].methods, methods);
-        return false;
+        return true;
     }
     if (methods_type == NULL || methods_name == NULL || methods == NULL) {
         mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", type and name and methods may not be null");
-        return false;
+        return true;
     }
     VEC_PUSH_N(&reg->entries, 1);
     VEC_LAST(&reg->entries) = (methods_entry){
@@ -64,7 +64,7 @@ bool methods_registry_add(methods_registry* reg, const char* methods_type, const
         .methods_name = strdup(methods_name),
         .methods = methods,
     };
-    return true;
+    return false;
 }
 
 const void* methods_registry_get(methods_registry* reg, const char* methods_type, const char* methods_name)
@@ -81,10 +81,10 @@ bool methods_registry_remove(methods_registry* reg, const char* methods_type, co
     uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name);
     if (idx == METHODS_REGISTRY_FIND_FAIL) {
         mirabel_slogf(LOGS_ERR, "methods registry: remove failed, \"%s\".\"%s\" does not exist", methods_type, methods_name);
-        return false;
+        return true;
     }
     free(reg->entries[idx].methods_type);
     free(reg->entries[idx].methods_name);
     VEC_REMOVE_SWAP(&reg->entries, idx);
-    return true;
+    return false;
 }

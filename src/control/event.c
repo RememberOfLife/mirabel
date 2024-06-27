@@ -9,6 +9,7 @@
 #include "rosalia/serialization.h"
 
 #include "mirabel/alloc.h"
+#include "mirabel/log.h"
 
 #include "mirabel/event.h"
 
@@ -61,6 +62,20 @@ size_t event_read_size(void* buf)
 
 /////
 // general purpose event utils
+
+const char* event_type_strings[] = {
+    [EVENT_TYPE_NULL] = "NULL",
+    [EVENT_TYPE_EXIT] = "EXIT",
+    [EVENT_TYPE_LOG] = "LOG",
+};
+
+const char* event_type_str(EVENT_TYPE type)
+{
+    if (type < EVENT_TYPE_COUNT) {
+        return event_type_strings[type];
+    }
+    return "unknown";
+}
 
 static uint32_t next_association_id = 1;
 
@@ -141,26 +156,27 @@ void event_destroy(event_any* e)
 /////
 // event specific constructors
 
-void event_create_log(event_any* e, const char* str, const char* str_end)
+void event_create_log(event_any* e, LOGS status, const char* str, const char* str_end)
 {
     if (str_end == NULL) {
-        event_create_logf(e, "%s", str);
+        event_create_logf(e, status, "%s", str);
     } else {
-        event_create_logf(e, "%.*s", str_end - str, str);
+        event_create_logf(e, status, "%.*s", str_end - str, str);
     }
 }
 
-void event_create_logf(event_any* e, const char* fmt, ...)
+void event_create_logf(event_any* e, LOGS status, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
-    event_create_logfv(e, fmt, args);
+    event_create_logfv(e, status, fmt, args);
     va_end(args);
 }
 
-void event_create_logfv(event_any* e, const char* fmt, va_list args)
+void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args)
 {
     event_create_type(e, EVENT_TYPE_LOG);
+    e->log.status = status;
     e->log.str = NULL;
     if (fmt != NULL) {
         va_list args_copy;
