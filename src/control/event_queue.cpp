@@ -39,8 +39,8 @@ void event_queue_push(event_queue* eq, event_any* e)
     event_queue_impl* eqi = (event_queue_impl*)eq;
     eqi->m.lock();
     eqi->q.emplace_back(*e);
-    eqi->cv.notify_all();
     eqi->m.unlock();
+    eqi->cv.notify_all();
     e->base.type = EVENT_TYPE_NULL;
 }
 

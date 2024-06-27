@@ -9,7 +9,7 @@ extern "C" {
 #endif
 
 typedef struct event_queue_s {
-    char _padding[168];
+    char _padding[168]; //TODO after rosalia gains threading functionality from tau utils, make this a full c struct
 } event_queue;
 
 void event_queue_create(event_queue* eq);
