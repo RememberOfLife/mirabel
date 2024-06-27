@@ -21,7 +21,7 @@ CommandReadLine::CommandReadLine()
 
 CommandReadLine::~CommandReadLine()
 {
-    fclose(stdin);
+    //TODO somehow make the crl quit..
     input_thread.join();
 }
 

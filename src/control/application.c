@@ -109,7 +109,7 @@ void app_args(int argc, char** argv)
     if (rosa_argpv_exists(ap, "help")) {
         mirabel_slogf(LOGS_NORM, "usage: mirabel [key=value]...");
         mirabel_slogf(LOGS_NORM, "");
-        mirabel_slogf(LOGS_NORM, "//TODO");
+        mirabel_slogf(LOGS_NORM, "#TODO");
         exit(0); //TODO better exit here
     }
 
@@ -118,6 +118,8 @@ void app_args(int argc, char** argv)
         mirabel_slogf(LOGS_NORM, "mirabel version: %u.%u.%u", app_version.major, app_version.minor, app_version.patch);
         exit(0); //TODO better exit here
     }
+
+    //TODO load methods plugins if specified via args
 
     bool want_server = rosa_argpv_exists(ap, "server");
     bool want_client = rosa_argpv_exists(ap, "client") || !want_server;
