@@ -68,7 +68,10 @@ set(SOURCES
     src/control/application.c
     src/control/methods_registry.c
 
+    src/game/game.c
+
     src/interface/gim/window.cpp
+    src/interface/client_interface.c
 
     src/server/server.c
 

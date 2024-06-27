@@ -8,28 +8,29 @@ General purpose board game playing GUI and server with some useful features.
   * Powerful API, games as rule engines.
   <!-- * Multithreaded asset loading. -->
   <!-- * Reuseable resources available. -->
+* REPL interface available for cli game playing, server management and development testing.
 
 Don't forget to clone submodules too by using:  
 `git clone --recurse-submodules https://github.com/RememberOfLife/mirabel.git`
 
 Future core features:
 * History Manager for game state tracking and analysis.
-* REPL for cli game playing, server management and testing.
 * Engine Integration (needs to be updated to reflect newer project developments)
 
 ## usage
 
-<!-- TODO provide mirabel web host: Web Client: [mirabel]()   -->
-Native Client: `mirabel`  
+Public Web Client: [mirabel](https://run.mirabel.dev/)  
 Native Client (GL+imgui): `mirabel`  
-<!-- Native Client (readline repl): `mirabel crl`   -->
-<!-- TODO proper server syntax, own target or cli arg?: Server: `mirabel server`   -->
-<!-- TODO: Test Suite -->
+Native Client (readline repl): `mirabel interface=crl`  
+Server: `mirabel server`  <!-- TODO: server syntax might change or have an alternative, if it ever becomes its own target -->
+<!-- TODO: Test Suite: `mirabel-test` -->
 
 ## plugins
 
 The mirabel project provides powerful APIs and utilities for creating all kinds of board games.  
-For more details regarding the various APIs available, see the [`mirabel/game.h`](./includes/mirabel/game.h) API [design](./docs/game_api_design.md) document.
+For more details regarding the various APIs available, see the [`mirabel/game.h`](./includes/mirabel/game.h) API [design](./docs/game_api_design.md) documents.
+
+You can also create plugins for many other parts of the platform, e.g. frontends for games both GL based graphical and terminal-like, engines for automated playing bots and entire application interfaces for the platform.
 
 ## dependencies
 

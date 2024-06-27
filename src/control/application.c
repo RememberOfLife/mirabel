@@ -111,13 +111,14 @@ void app_args(int argc, char** argv)
     }
 
     const char* requested_interface = rosa_argpv_val(ap, "interface");
-    if (requested_interface == NULL && want_client) {
-        // typical mode without args automatically spawns client and gim interface
-        requested_interface = "gim";
-    }
-    if (rosa_argpv_val_eq(ap, "interface", "none")) {
-        // explicitly requested that no interface be used
-        requested_interface = NULL;
+    if (!rosa_argpv_val_eq(ap, "interface", "none") && requested_interface == NULL) {
+        if (want_client) {
+            // typical mode without args automatically spawns client and gim interface
+            requested_interface = "gim";
+        } else if (want_server) {
+            // if only server and no interface specified, put up crl interface
+            requested_interface = "crl";
+        }
     }
     if (requested_interface != NULL) {
         const client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "client_interface", requested_interface);

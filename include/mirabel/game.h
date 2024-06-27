@@ -42,10 +42,10 @@ enum ERR {
     ERR_ENUM_DEFAULT_OFFSET, // not an error, start game method specific error enums at this offset
 };
 
-// returns not_general if the err is not a general error
+// returns fallback if the err is not a general error
 const char* get_general_error_string(error_code err, const char* fallback);
-// instead of returning an error code, one can return rerror(f,vf) which automatically manages fmt string buffer allocation for the error string
-// call rerrorf or rerrorfv with fmt(or str)=NULL to free (*pbuf) (does not work on rerror)
+// instead of returning an error code, one can return rerror/rerrorf/rerrorfv which automatically manages fmt string buffer allocation for the error string
+// call rerrorf fmt=NULL to free (*pbuf)
 error_code rerror(char** pbuf, error_code ec, const char* str, const char* str_end);
 error_code rerrorf(char** pbuf, error_code ec, const char* fmt, ...);
 error_code rerrorfv(char** pbuf, error_code ec, const char* fmt, va_list args);
@@ -54,7 +54,7 @@ typedef struct seed128_s {
     uint8_t bytes[16];
 } seed128;
 
-// anywhere a rng seed is use, SEED_NONE represents not using the rng
+// anywhere an rng seed is used, SEED_NONE represents not using the rng
 static const seed128 SEED128_NONE = (seed128){.bytes = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
 
 // moves represent state transitions on the game board (and its internal state)
@@ -63,7 +63,7 @@ static const seed128 SEED128_NONE = (seed128){.bytes = {0, 0, 0, 0, 0, 0, 0, 0, 
 // a move that encodes an action is part of exactly that action set
 // every concrete move can be encoded as a move
 // every concrete move can be reduced to an action, i.e. a move
-// e.g. flipping a coin is an action (i.e. flip the coin) whereupon the PLAYER_ENV decides the outcome of the flip
+// e.g. in a state where the decision is to me made for the result of the coin flip, PLAYER_ENV decides the outcome via one of the concrete moves in the action set "decide coin flip result", using just this action set instead of the concrete move, we can encode randomness (and hidden information)
 // e.g. laying down a hidden hand card facedown (i.e. keeping it hidden) is informed to other players through the action of playing *some card* from hand facedown, but the player doing it chooses one of the concrete moves specifying which card to play (as they can see their hand)
 //TODO better name for "concrete_move"? maybe action instance / informed move
 
@@ -178,8 +178,6 @@ typedef enum GAME_INIT_SOURCE_TYPE_E {
     GAME_INIT_SOURCE_TYPE_COUNT,
     GAME_INIT_SOURCE_TYPE_SIZE_MAX = UINT8_MAX,
 } GAME_INIT_SOURCE_TYPE;
-
-//TODO here, and in general, might want to remove some consts so a game_init can be kept in memory for editing, even through all the const-ness?
 
 typedef struct game_init_standard_s {
     char* opts; // FEATURE: options ; may be NULL to use default
