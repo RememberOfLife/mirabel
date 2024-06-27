@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "rosalia/argparse.h"
+#include "rosalia/semver.h"
 
 #include "mirabel/client_interface.h"
 #include "mirabel/client.h"
@@ -12,6 +13,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern const semver app_version;
 
 typedef struct app_s {
     rosa_argpv args;

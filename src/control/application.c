@@ -33,6 +33,12 @@ void handle_sigterm(int sig)
 /////
 // public
 
+const semver app_version = (semver){
+    .major = 0,
+    .minor = 7,
+    .patch = 0,
+};
+
 app appi;
 
 bool debug_mode;
@@ -97,6 +103,20 @@ void app_args(int argc, char** argv)
             mirabel_slogf(LOGS_NORM, "[%i] %s", argi, argv[argi]);
         }
         mirabel_slogf(LOGS_INFO, "END");
+    }
+
+    // help
+    if (rosa_argpv_exists(ap, "help")) {
+        mirabel_slogf(LOGS_NORM, "usage: mirabel [key=value]...");
+        mirabel_slogf(LOGS_NORM, "");
+        mirabel_slogf(LOGS_NORM, "//TODO");
+        exit(0); //TODO better exit here
+    }
+
+    // version
+    if (rosa_argpv_exists(ap, "version")) {
+        mirabel_slogf(LOGS_NORM, "mirabel version: %u.%u.%u", app_version.major, app_version.minor, app_version.patch);
+        exit(0); //TODO better exit here
     }
 
     bool want_server = rosa_argpv_exists(ap, "server");
