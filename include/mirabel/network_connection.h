@@ -38,12 +38,12 @@ typedef struct network_connection_s {
 } network_connection;
 
 // returns true on failure
-bool network_connection_create(network_connection* netc);
+bool network_connection_create(network_connection* self);
 
-void network_connection_destroy(network_connection* netc);
+void network_connection_destroy(network_connection* self);
 
 //TODO returns true on failure
-// bool network_connection_event_send_copy(network_connection* netc, event_any* e);
+// bool network_connection_event_send_copy(network_connection* self, event_any* e);
 
 #ifdef __cplusplus
 }

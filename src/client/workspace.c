@@ -4,16 +4,16 @@
 
 #include "mirabel/workspace.h"
 
-bool workspace_create(workspace* ws)
+bool workspace_create(workspace* self)
 {
-    ws->netc = NULL;
-    event_queue_create(&ws->net_inbox);
-    event_queue_create(&ws->ifc_inbox);
+    self->netc = NULL;
+    event_queue_create(&self->net_inbox);
+    event_queue_create(&self->ifc_inbox);
     return false;
 }
 
-void workspace_destroy(workspace* ws)
+void workspace_destroy(workspace* self)
 {
-    event_queue_destroy(&ws->net_inbox);
-    event_queue_destroy(&ws->ifc_inbox);
+    event_queue_destroy(&self->net_inbox);
+    event_queue_destroy(&self->ifc_inbox);
 }

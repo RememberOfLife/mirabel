@@ -23,12 +23,12 @@ typedef struct server_s {
 } server;
 
 // returns true on failure
-bool server_create(server* srv, bool offline);
+bool server_create(server* self, bool offline);
 
-void server_destroy(server* srv);
+void server_destroy(server* self);
 
 // returns true to shutdown
-bool server_update(server* srv);
+bool server_update(server* self);
 
 #ifdef __cplusplus
 }

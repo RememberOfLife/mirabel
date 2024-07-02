@@ -1,25 +1,25 @@
 #include "mirabel/server.h"
 
-bool server_create(server* srv, bool offline)
+bool server_create(server* self, bool offline)
 {
-    srv->offline = offline;
-    event_queue_create(&srv->inbox);
+    self->offline = offline;
+    event_queue_create(&self->inbox);
     return false;
 }
 
-void server_destroy(server* srv)
+void server_destroy(server* self)
 {
-    event_queue_destroy(&srv->inbox);
+    event_queue_destroy(&self->inbox);
 }
 
-bool server_update(server* srv)
+bool server_update(server* self)
 {
     bool exit = false;
     int32_t remaining_budget = 1024; // limit maximum event processing if queue is too big
     while (remaining_budget > 0) {
         remaining_budget--;
         event_any e;
-        event_queue_pop(&srv->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this, also the crl interface is blocking..
+        event_queue_pop(&self->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this, also the crl interface is blocking..
         switch (e.base.type) {
             case EVENT_TYPE_NULL: {
                 remaining_budget = 0;

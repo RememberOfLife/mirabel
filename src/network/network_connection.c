@@ -4,18 +4,18 @@
 #include "mirabel/network_adapter.h"
 #include "mirabel/network_connection.h"
 
-bool network_connection_create(network_connection* netc)
+bool network_connection_create(network_connection* self)
 {
     //TODO
-    event_queue_create(&netc->inbox);
-    netc->neta.inbox = &netc->inbox;
-    netc->outbox = &netc->neta.outbox;
+    event_queue_create(&self->inbox);
+    self->neta.inbox = &self->inbox;
+    self->outbox = &self->neta.outbox;
     //TODO
 }
 
-void network_connection_destroy(network_connection* netc)
+void network_connection_destroy(network_connection* self)
 {
     //TODO
-    event_queue_destroy(&netc->inbox);
+    event_queue_destroy(&self->inbox);
     //TODO
 }

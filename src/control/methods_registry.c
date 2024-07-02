@@ -18,13 +18,13 @@ static const uint32_t METHODS_REGISTRY_FIND_FAIL = UINT32_MAX;
 // str, str, ignored => find that method
 // str, null, find_fail => count all of the type
 // str, null, n => find n'th method of that type
-uint32_t methods_registry_find_internal(methods_registry* reg, const char* methods_type, const char* methods_name, uint32_t skip_count)
+uint32_t methods_registry_find_internal(methods_registry* self, const char* methods_type, const char* methods_name, uint32_t skip_count)
 {
     uint32_t type_hash = strhash(methods_type, NULL);
     uint32_t name_hash = methods_name != NULL ? strhash(methods_name, NULL) : 0;
     uint32_t found_count = 0;
-    for (uint32_t i = 0; i < VEC_LEN(&reg->entries); i++) {
-        methods_entry* e = &reg->entries[i];
+    for (uint32_t i = 0; i < VEC_LEN(&self->entries); i++) {
+        methods_entry* e = &self->entries[i];
         bool found = true;
         found &= (e->type_hash == type_hash && strcmp(e->methods_type, methods_type) == 0);
         if (methods_name != NULL) {
@@ -48,29 +48,29 @@ uint32_t methods_registry_find_internal(methods_registry* reg, const char* metho
 /////
 // public
 
-void methods_registry_create(methods_registry* reg)
+void methods_registry_create(methods_registry* self)
 {
-    VEC_CREATE(&reg->entries, 0);
+    VEC_CREATE(&self->entries, 0);
 }
 
-void methods_registry_destroy(methods_registry* reg)
+void methods_registry_destroy(methods_registry* self)
 {
-    VEC_DESTROY(&reg->entries);
+    VEC_DESTROY(&self->entries);
 }
 
-bool methods_registry_add(methods_registry* reg, const char* methods_type, const char* methods_name, const void* methods)
+bool methods_registry_add(methods_registry* self, const char* methods_type, const char* methods_name, const void* methods)
 {
-    uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name, 0);
+    uint32_t idx = methods_registry_find_internal(self, methods_type, methods_name, 0);
     if (idx != METHODS_REGISTRY_FIND_FAIL) {
-        mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", already exists (current: %p, requested: %p)", methods_type, methods_name, reg->entries[idx].methods, methods);
+        mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", already exists (current: %p, requested: %p)", methods_type, methods_name, self->entries[idx].methods, methods);
         return true;
     }
     if (methods_type == NULL || methods_name == NULL || methods == NULL) {
         mirabel_slogf(LOGS_ERR, "methods registry: add failed, \"%s\".\"%s\", type and name and methods may not be null");
         return true;
     }
-    VEC_PUSH_N(&reg->entries, 1);
-    VEC_LAST(&reg->entries) = (methods_entry){
+    VEC_PUSH_N(&self->entries, 1);
+    VEC_LAST(&self->entries) = (methods_entry){
         .type_hash = strhash(methods_type, NULL),
         .name_hash = strhash(methods_name, NULL),
         .methods_type = strdup(methods_type),
@@ -80,47 +80,47 @@ bool methods_registry_add(methods_registry* reg, const char* methods_type, const
     return false;
 }
 
-bool methods_registry_remove(methods_registry* reg, const char* methods_type, const char* methods_name)
+bool methods_registry_remove(methods_registry* self, const char* methods_type, const char* methods_name)
 {
-    uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name, 0);
+    uint32_t idx = methods_registry_find_internal(self, methods_type, methods_name, 0);
     if (idx == METHODS_REGISTRY_FIND_FAIL) {
         mirabel_slogf(LOGS_ERR, "methods registry: remove failed, \"%s\".\"%s\" does not exist", methods_type, methods_name);
         return true;
     }
-    free(reg->entries[idx].methods_type);
-    free(reg->entries[idx].methods_name);
-    VEC_REMOVE_SWAP(&reg->entries, idx);
+    free(self->entries[idx].methods_type);
+    free(self->entries[idx].methods_name);
+    VEC_REMOVE_SWAP(&self->entries, idx);
     return false;
 }
 
-const void* methods_registry_get(methods_registry* reg, const char* methods_type, const char* methods_name)
+const void* methods_registry_get(methods_registry* self, const char* methods_type, const char* methods_name)
 {
-    uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name, 0);
+    uint32_t idx = methods_registry_find_internal(self, methods_type, methods_name, 0);
     if (idx == METHODS_REGISTRY_FIND_FAIL) {
         return NULL;
     }
-    return reg->entries[idx].methods;
+    return self->entries[idx].methods;
 }
 
-const methods_entry* methods_registry_get_entry(methods_registry* reg, const char* methods_type, const char* methods_name)
+const methods_entry* methods_registry_get_entry(methods_registry* self, const char* methods_type, const char* methods_name)
 {
-    uint32_t idx = methods_registry_find_internal(reg, methods_type, methods_name, 0);
+    uint32_t idx = methods_registry_find_internal(self, methods_type, methods_name, 0);
     if (idx == METHODS_REGISTRY_FIND_FAIL) {
         return NULL;
     }
-    return &reg->entries[idx];
+    return &self->entries[idx];
 }
 
-uint32_t methods_registry_get_count(methods_registry* reg, const char* method_type)
+uint32_t methods_registry_get_count(methods_registry* self, const char* method_type)
 {
-    return methods_registry_find_internal(reg, method_type, NULL, METHODS_REGISTRY_FIND_FAIL);
+    return methods_registry_find_internal(self, method_type, NULL, METHODS_REGISTRY_FIND_FAIL);
 }
 
-const methods_entry* methods_registry_get_entry_by_idx(methods_registry* reg, const char* method_type, uint32_t idx)
+const methods_entry* methods_registry_get_entry_by_idx(methods_registry* self, const char* method_type, uint32_t idx)
 {
-    uint32_t internal_idx = methods_registry_find_internal(reg, method_type, NULL, idx);
+    uint32_t internal_idx = methods_registry_find_internal(self, method_type, NULL, idx);
     if (internal_idx == METHODS_REGISTRY_FIND_FAIL) {
         return NULL;
     }
-    return &reg->entries[internal_idx];
+    return &self->entries[internal_idx];
 }
