@@ -4,11 +4,14 @@
 
 #include "rosalia/semver.h"
 
+#include "mirabel/event_queue.h"
 #include "mirabel/log.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+//TODO rename client_interface to app_interface
 
 static const uint64_t MIRABEL_CLIENT_INTERFACE_API_VERSION = 1;
 
@@ -51,6 +54,7 @@ typedef struct client_interface_methods_s {
 struct client_interface_s {
     const client_interface_methods* methods;
     void* data; // owned by the methods
+    event_queue inbox; // incoming "information edges" from the workspaces
 };
 
 client_interface_get_last_error_t client_interface_get_last_error;

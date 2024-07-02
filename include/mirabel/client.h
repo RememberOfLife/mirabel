@@ -2,13 +2,19 @@
 
 #include <stdbool.h>
 
+#include "rosalia/vector.h"
+
+#include "mirabel/network_connection.h"
+#include "mirabel/workspace.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct client_s {
-    // network_adapter* nets;
-    // workspace* workspaces; // vector
+    VECTOR(network_connection*) net_conns; // owning list of instantiated network adapters
+    VECTOR(workspace*) workspaces;
+    // own config handle for client, //TODO where do the interface configs go?
 } client;
 
 // returns true on failure

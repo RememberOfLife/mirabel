@@ -71,5 +71,6 @@ SpaceBeforeParensOptions:
   AfterOverloadedOperator: false
   BeforeNonEmptyParentheses: false
 SpacesInContainerLiterals: false
+TypenameMacros: [VECTOR] #TODO change when proper rosalia container are ready
 UseCRLF: false
 UseTab: Never

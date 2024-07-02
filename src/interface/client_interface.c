@@ -1,5 +1,6 @@
 #include <stdlib.h>
 
+#include "mirabel/event_queue.h"
 #include "mirabel/log.h"
 
 #include "mirabel/client_interface.h"
@@ -14,12 +15,14 @@ const char* client_interface_get_last_error(client_interface* self)
 
 error_code client_interface_create(client_interface* self)
 {
+    event_queue_create(&self->inbox);
     return self->methods->create(self);
 }
 
 void client_interface_destroy(client_interface* self)
 {
     self->methods->destroy(self);
+    event_queue_destroy(&self->inbox);
 }
 
 bool client_interface_mainloop(client_interface* self)

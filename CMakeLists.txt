@@ -64,6 +64,7 @@ set(SOURCES
     src/rosa_impl/vector.c
 
     src/client/client.c
+    src/client/workspace.c
 
     src/control/application.c
     src/control/event.c
@@ -74,6 +75,9 @@ set(SOURCES
 
     src/interface/gim/window.cpp
     src/interface/client_interface.c
+
+    src/network/network_adapter.c
+    src/network/network_connection.c
 
     src/server/server.c
 

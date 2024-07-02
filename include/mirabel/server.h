@@ -13,9 +13,10 @@ typedef struct server_s {
     event_queue inbox; //TODO if the server gets multithreaded then we need some more complicated queue stealing anyway (i.e. every network adapter just enqueues in its recv_box and the threads work steal from all the adapters round robin so even if one adapter has more, we still process others faily)
 
     //TODO
+    // own config handle for server
     // db connection
-    // network_adapter* nets;
-    // connection* connections;
+    // network_connection* netc; // where events come in
+    // connection* connections; // active connections to clients
     // user_info* users;
     // lobby* lobbies;
     // session* sessions;
