@@ -338,39 +338,39 @@ bool GraphicalImmediateMode::mainloop()
 extern "C" {
 #endif
 
-static const char* get_last_error_cif(client_interface* self)
+static const char* get_last_error_cif(app_interface* self)
 {
     return NULL;
 }
 
-static error_code create_cif(client_interface* self)
+static error_code create_cif(app_interface* self)
 {
     self->data = new GraphicalImmediateMode();
     return CLIENT_INTERFACE_ERR_OK;
 }
 
-static void destroy_cif(client_interface* self)
+static void destroy_cif(app_interface* self)
 {
     delete (GraphicalImmediateMode*)self->data;
 }
 
-static bool mainloop_cif(client_interface* self)
+static bool mainloop_cif(app_interface* self)
 {
     return ((GraphicalImmediateMode*)self->data)->mainloop();
 }
 
-static void log_cif(client_interface* self, LOGS status, const char* str, const char* str_end)
+static void log_cif(app_interface* self, LOGS status, const char* str, const char* str_end)
 {
     //TODO
 }
 
-static const char* user_file_path_prompt_cif(client_interface* self, const char* suggested_save_name)
+static const char* user_file_path_prompt_cif(app_interface* self, const char* suggested_save_name)
 {
     //TODO
     return NULL;
 }
 
-const client_interface_methods gim_client_interface{
+const app_interface_methods gim_app_interface{
     .name = "gim",
     .version = (semver){
         .major = 0,

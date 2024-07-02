@@ -64,7 +64,7 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
         };
         fprintf(stdout, "%s: %s\n", status_map[status], target_buf);
 #endif
-        // log to the web js, //TODO normally the client_interface would do this
+        // log to the web js, //TODO normally the app_interface would do this
         // clang-format off
 #ifdef __EMSCRIPTEN__
         EM_ASM({

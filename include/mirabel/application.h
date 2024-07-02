@@ -5,7 +5,7 @@
 #include "rosalia/argparse.h"
 #include "rosalia/semver.h"
 
-#include "mirabel/client_interface.h"
+#include "mirabel/app_interface.h"
 #include "mirabel/client.h"
 #include "mirabel/methods_registry.h"
 #include "mirabel/server.h"
@@ -22,7 +22,7 @@ typedef struct app_s {
     //TODO do these really need to be pointers?:
     server* aserver;
     client* aclient;
-    client_interface* interface; //TODO are we supporting multiple interfaces or replacing the interface after creation?
+    app_interface* interface; //TODO are we supporting multiple interfaces or replacing the interface after creation?
 } app;
 
 // global singleton instance

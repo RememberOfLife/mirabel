@@ -5,7 +5,7 @@
 #include "rosalia/argparse.h"
 
 #include "mirabel/alloc.h"
-#include "mirabel/client_interface.h"
+#include "mirabel/app_interface.h"
 #include "mirabel/client.h"
 #include "mirabel/debug.h"
 #include "mirabel/log.h"
@@ -73,7 +73,7 @@ void app_create()
 void app_destroy()
 {
     if (appi.interface != NULL) {
-        client_interface_destroy(appi.interface);
+        app_interface_destroy(appi.interface);
         mirabel_free(appi.interface);
     }
     if (appi.aclient != NULL) {
@@ -157,16 +157,16 @@ void app_args(int argc, char** argv)
         }
     }
     if (requested_interface != NULL) {
-        const client_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "client_interface", requested_interface);
+        const app_interface_methods* found_interface_methods = methods_registry_get(&appi.registry, "app_interface", requested_interface);
         if (found_interface_methods == NULL) {
             mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
         } else {
-            appi.interface = mirabel_malloc(sizeof(client_interface));
+            appi.interface = mirabel_malloc(sizeof(app_interface));
             appi.interface->methods = found_interface_methods;
-            if (client_interface_create(appi.interface) != CLIENT_INTERFACE_ERR_OK) {
-                const char* err_str = client_interface_get_last_error(appi.interface);
+            if (app_interface_create(appi.interface) != CLIENT_INTERFACE_ERR_OK) {
+                const char* err_str = app_interface_get_last_error(appi.interface);
                 mirabel_slogf(LOGS_ERR, "interface \"%s\" creation failed%s%s", err_str != NULL ? ": " : "", err_str != NULL ? err_str : "");
-                client_interface_destroy(appi.interface);
+                app_interface_destroy(appi.interface);
             }
         }
     }
@@ -180,7 +180,7 @@ bool app_mainloop()
         shutdown |= client_update(appi.aclient);
     }
     if (appi.interface != NULL) {
-        shutdown |= client_interface_mainloop(appi.interface);
+        shutdown |= app_interface_mainloop(appi.interface);
     }
     if (shutdown) {
         //TODO cleanup if we need to do any in the mainloop

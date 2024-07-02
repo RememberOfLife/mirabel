@@ -1,12 +1,12 @@
 #pragma once
 
-#include "mirabel/client_interface.h"
+#include "mirabel/app_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern const client_interface_methods gim_client_interface;
+extern const app_interface_methods gim_app_interface;
 
 #ifdef __cplusplus
 }

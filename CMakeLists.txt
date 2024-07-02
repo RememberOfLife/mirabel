@@ -74,7 +74,7 @@ set(SOURCES
     src/game/game.c
 
     src/interface/gim/window.cpp
-    src/interface/client_interface.c
+    src/interface/app_interface.c
 
     src/network/network_adapter.c
     src/network/network_connection.c

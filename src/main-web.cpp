@@ -9,7 +9,7 @@
 
 void setup_platform()
 {
-    methods_registry_add(&appi.registry, "client_interface", "gim", &gim_client_interface);
+    methods_registry_add(&appi.registry, "app_interface", "gim", &gim_app_interface);
     //TODO register web specific network manager and file-op manager
 }
 

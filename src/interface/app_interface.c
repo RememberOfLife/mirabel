@@ -3,39 +3,39 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/log.h"
 
-#include "mirabel/client_interface.h"
+#include "mirabel/app_interface.h"
 
 /////
 // public
 
-const char* client_interface_get_last_error(client_interface* self)
+const char* app_interface_get_last_error(app_interface* self)
 {
     return self->methods->get_last_error(self);
 }
 
-error_code client_interface_create(client_interface* self)
+error_code app_interface_create(app_interface* self)
 {
     event_queue_create(&self->inbox);
     return self->methods->create(self);
 }
 
-void client_interface_destroy(client_interface* self)
+void app_interface_destroy(app_interface* self)
 {
     self->methods->destroy(self);
     event_queue_destroy(&self->inbox);
 }
 
-bool client_interface_mainloop(client_interface* self)
+bool app_interface_mainloop(app_interface* self)
 {
     return self->methods->mainloop(self);
 }
 
-void client_interface_log(client_interface* self, LOGS status, const char* str, const char* str_end)
+void app_interface_log(app_interface* self, LOGS status, const char* str, const char* str_end)
 {
     self->methods->log(self, status, str, str_end);
 }
 
-const char* client_interface_user_file_path_prompt(client_interface* self, const char* suggested_save_name)
+const char* app_interface_user_file_path_prompt(app_interface* self, const char* suggested_save_name)
 {
     return self->methods->user_file_path_prompt(self, suggested_save_name);
 }
