@@ -22,6 +22,8 @@ bool workspace_create(workspace* ws);
 
 void workspace_destroy(workspace* ws);
 
+// void workspace_event_send_copy_to_netc(workspace* ws, event_any* e);
+
 // void workspace_push_event_to_interface(workspace* ws, event_any* e);
 
 #ifdef __cplusplus

@@ -29,7 +29,6 @@ typedef void app_interface_destroy_t(app_interface* self);
 // return true to request shutdown, the interface will then only be called again once, for destruction, at some arbitrary time
 typedef bool app_interface_mainloop_t(app_interface* self);
 
-//TODO log with log_id, need (un)register here too?
 typedef void app_interface_log_t(app_interface* self, LOGS status, const char* str, const char* str_end);
 
 // if suggested_save_name is NULL this is a load prompt, otherwise save prompt
@@ -52,7 +51,7 @@ typedef struct app_interface_methods_s {
 struct app_interface_s {
     const app_interface_methods* methods;
     void* data; // owned by the methods
-    event_queue inbox; // incoming "information edges" from the workspaces
+    event_queue inbox; // incoming "information edges" from the client
 };
 
 app_interface_get_last_error_t app_interface_get_last_error;
