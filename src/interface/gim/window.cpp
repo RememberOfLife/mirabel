@@ -346,7 +346,7 @@ static const char* get_last_error_cif(app_interface* self)
 static error_code create_cif(app_interface* self)
 {
     self->data = new GraphicalImmediateMode();
-    return CLIENT_INTERFACE_ERR_OK;
+    return APP_INTERFACE_ERR_OK;
 }
 
 static void destroy_cif(app_interface* self)

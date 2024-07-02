@@ -14,7 +14,7 @@ extern "C" {
 static const uint64_t MIRABEL_APP_INTERFACE_API_VERSION = 1;
 
 typedef uint32_t error_code;
-static const uint32_t app_interface_ERR_OK = 0;
+static const uint32_t APP_INTERFACE_ERR_OK = 0;
 
 typedef struct app_interface_s app_interface;
 

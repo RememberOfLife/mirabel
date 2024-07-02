@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mirabel/event.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/network_adapter.h"
 #include "mirabel/rrsi.h"
@@ -11,13 +12,15 @@
 extern "C" {
 #endif
 
-static const size_t NETWORK_CONNECTION_MAX_FIELD_SIZE = 128;
+extern const char* default_adapter_server_address;
+extern const uint16_t default_adapter_server_port;
 
 typedef struct network_connection_s {
-    char adapter_server_address[NETWORK_CONNECTION_MAX_FIELD_SIZE];
+    char adapter_server_address[128];
     uint16_t adapter_server_port;
+    //TODO adapter type selector
     RUNNING_STATE_INDICATOR adapter_state;
-    network_adapter neta;
+    network_adapter adapter;
 
     RUNNING_STATE_INDICATOR connection_state;
     uint8_t connection_cert_thumb[32]; //TODO replace with a sizer for the SHA256 thumbprint
@@ -28,8 +31,8 @@ typedef struct network_connection_s {
     bool authinfo_allow_guest;
     bool authinfo_want_guest_pw;
 
-    char authn_username[NETWORK_CONNECTION_MAX_FIELD_SIZE];
-    char authn_password[NETWORK_CONNECTION_MAX_FIELD_SIZE];
+    char authn_username[64];
+    char authn_password[128];
     req_res_tracker authn_state;
     char* authn_fail_reason;
 
@@ -41,6 +44,9 @@ typedef struct network_connection_s {
 bool network_connection_create(network_connection* self);
 
 void network_connection_destroy(network_connection* self);
+
+// returns true if the event was consumed internally
+bool network_connection_handle_internal(network_connection* self, event_any* e);
 
 //TODO returns true on failure
 // bool network_connection_event_send_copy(network_connection* self, event_any* e);

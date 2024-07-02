@@ -13,7 +13,7 @@ extern "C" {
 // NOTE: for some clarity it may be useful to layout these such that you place things you need to know before the request above the indicator/tracker, and its possible results, after the indicator
 
 typedef enum RUNNING_STATE_INDICATOR_E {
-    RUNNING_STATE_INDICATOR_NONE = 0,
+    RUNNING_STATE_INDICATOR_NONE = 0, //TODO want this?
     RUNNING_STATE_INDICATOR_IDLE,
     RUNNING_STATE_INDICATOR_WAITING,
     RUNNING_STATE_INDICATOR_DONE,
