@@ -6,11 +6,17 @@
 #include "mirabel/methods_registry.h"
 
 #include "interface/gim/window.h"
+#include "network/adapters/offline_client.h"
+#include "network/adapters/offline_server.h"
 
 void setup_platform()
 {
     methods_registry_add(&appi.registry, "app_interface", "gim", &gim_app_interface);
-    //TODO register web specific network manager and file-op manager
+
+    methods_registry_add(&appi.registry, "network_adapter_client", "offline", &offline_client_app_interface);
+    methods_registry_add(&appi.registry, "network_adapter_server", "offline", &offline_server_app_interface);
+
+    //TODO register native specific file-op manager
 }
 
 void mainloop()

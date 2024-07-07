@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.18)
 
 project(mirabel C CXX)
 
+find_program(mold "mold")
+if(NOT mold STREQUAL mold-NOTFOUND)
+    set(CMAKE_LINKER_TYPE MOLD)
+endif()
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -76,6 +81,8 @@ set(SOURCES
     src/interface/gim/window.cpp
     src/interface/app_interface.c
 
+    src/network/adapters/offline_client.c
+    src/network/adapters/offline_server.c
     src/network/network_adapter.c
     src/network/network_connection.c
 
@@ -219,6 +226,9 @@ if(DEFINED EMSCRIPTEN)
     set_target_properties(mirabel PROPERTIES SUFFIX ".html")
 else()
     target_link_libraries(mirabel SDL2::SDL2)
+    # target_link_options(SDL2 PUBLIC "-fuse-ld=mold")
+    # target_link_options(nanovg PUBLIC "-fuse-ld=mold")
+    # target_link_options(mirabel PUBLIC "-fuse-ld=mold")
 endif()
 
 set_target_properties(mirabel PROPERTIES EXPORT_COMPILE_COMMANDS true)

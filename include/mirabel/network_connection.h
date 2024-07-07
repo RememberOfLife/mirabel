@@ -16,6 +16,8 @@ extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;
 
 typedef struct network_connection_s {
+    //TODO bool deleted; // adapter is destructing itself asynchronously, will issue an event when it is ready to be destructed
+
     char adapter_server_address[128];
     uint16_t adapter_server_port;
     //TODO adapter type selector

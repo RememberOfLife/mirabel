@@ -22,6 +22,7 @@ CommandReadLine::CommandReadLine()
 CommandReadLine::~CommandReadLine()
 {
     //TODO somehow make the crl quit..
+    fclose(stdin); //TODO cant reopen this then, i.e. can not exchange interfaces at runtime this way..
     input_thread.join();
 }
 
@@ -101,7 +102,7 @@ static const char* user_file_path_prompt_cif(app_interface* self, const char* su
     return NULL;
 }
 
-const app_interface_methods cli_app_interface{
+const app_interface_methods cli_app_interface = (app_interface_methods){
     .name = "crl",
     .version = (semver){
         .major = 0,

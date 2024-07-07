@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mirabel/event_queue.h"
 #include "mirabel/network_connection.h"
 
 #ifdef __cplusplus
@@ -9,8 +8,6 @@ extern "C" {
 
 typedef struct workspace_s {
     network_connection* netc;
-    event_queue net_inbox; // incoming from network
-    event_queue ifc_inbox; // incoming from interface / other controllers
 
     // lobby lobby;
     // session gsession;
@@ -22,9 +19,13 @@ bool workspace_create(workspace* self);
 
 void workspace_destroy(workspace* self);
 
+void workspace_process_network_event(workspace* self, event_any* e);
+
 // void workspace_event_send_copy_to_netc(workspace* self, event_any* e);
 
 // void workspace_push_event_to_interface(workspace* self, event_any* e);
+
+//TODO interface interacts with the workspace through methods
 
 #ifdef __cplusplus
 }

@@ -370,7 +370,7 @@ static const char* user_file_path_prompt_cif(app_interface* self, const char* su
     return NULL;
 }
 
-const app_interface_methods gim_app_interface{
+const app_interface_methods gim_app_interface = (app_interface_methods){
     .name = "gim",
     .version = (semver){
         .major = 0,
