@@ -31,6 +31,9 @@ void event_queue_create(event_queue* eq)
 void event_queue_destroy(event_queue* eq)
 {
     event_queue_impl* eqi = (event_queue_impl*)eq;
+    for (std::deque<event_any>::iterator event_iter = eqi->q.begin(); event_iter != eqi->q.end(); event_iter++) {
+        event_destroy(&*event_iter);
+    }
     eqi->~event_queue_impl();
 }
 

@@ -11,6 +11,7 @@
 #include "mirabel/log.h"
 #include "mirabel/methods_registry.h"
 #include "mirabel/server.h"
+#include "generated/git_commit_hash.h"
 
 #include "mirabel/application.h"
 
@@ -116,12 +117,17 @@ void app_args(int argc, char** argv)
     // version
     if (rosa_argpv_exists(ap, "version")) {
         mirabel_slogf(LOGS_NORM, "mirabel version: %u.%u.%u", app_version.major, app_version.minor, app_version.patch);
+        mirabel_slogf(LOGS_NORM, "git commit hash: %s%s", GIT_COMMIT_HASH == NULL ? "<no commit info available>" : GIT_COMMIT_HASH, GIT_COMMIT_DIRTY ? " (dirty)" : "");
         exit(0); //TODO better exit here
     }
 
     //TODO load methods plugins if specified via args
 
     bool want_server = rosa_argpv_exists(ap, "server");
+    bool no_server = rosa_argpv_val_eq(ap, "server", "0");
+    if (no_server) {
+        want_server = false;
+    }
     bool want_client = rosa_argpv_exists(ap, "client") || !want_server;
 
     //TODO could also replace this with a "fake" method registration, i.e. a NULL ptr for the server/hosted is registered in main-web.cpp
@@ -136,7 +142,7 @@ void app_args(int argc, char** argv)
     if (want_server) {
         // hosting server
         server_create(appi.aserver, false);
-    } else {
+    } else if (!no_server) {
         // offline server
         server_create(appi.aserver, true);
     }

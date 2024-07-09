@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "rosalia/vector.h"
+
 #include "mirabel/event.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/network_adapter.h"
@@ -16,7 +18,7 @@ extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;
 
 typedef struct network_connection_s {
-    //TODO bool deleted; // adapter is destructing itself asynchronously, will issue an event when it is ready to be destructed
+    bool deleted; // adapter is destructing itself asynchronously, will issue an event when it is ready to be destructed
 
     char adapter_server_address[128];
     uint16_t adapter_server_port;
@@ -40,6 +42,8 @@ typedef struct network_connection_s {
 
     event_queue* outbox;
     event_queue inbox;
+
+    VECTOR(size_t) connected_workspace_idcs;
 } network_connection;
 
 // returns true on failure

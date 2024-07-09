@@ -19,6 +19,8 @@ typedef const char* network_adapter_get_last_error_t(network_adapter* self);
 // if this fails, call destroy
 typedef bool network_adapter_create_t(network_adapter* self);
 
+// we *can* but do not *need* to event destruct the adapter beforehand
+// we can either just use destroy, or even destruct and the nuse destroy, both works
 typedef void network_adapter_destroy_t(network_adapter* self);
 
 //TODO proper rest of adapter methods, or is it used singularly through the message passing events?, sounds better

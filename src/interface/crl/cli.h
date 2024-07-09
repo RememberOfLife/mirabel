@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-extern const app_interface_methods cli_app_interface;
+extern const app_interface_methods cli_app_interface_methods;
 
 #ifdef __cplusplus
 }

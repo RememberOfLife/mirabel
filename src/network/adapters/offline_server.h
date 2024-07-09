@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-extern const network_adapter_methods offline_server_app_interface;
+extern const network_adapter_methods offline_server_network_adapter_methods;
 
 #ifdef __cplusplus
 }

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.18)
 project(mirabel C CXX)
 
 find_program(mold "mold")
-if(NOT mold STREQUAL mold-NOTFOUND)
+if(NOT DEFINED EMSCRIPTEN AND NOT mold STREQUAL mold-NOTFOUND)
     set(CMAKE_LINKER_TYPE MOLD)
 endif()
 
@@ -81,8 +81,8 @@ set(SOURCES
     src/interface/gim/window.cpp
     src/interface/app_interface.c
 
-    src/network/adapters/offline_client.c
-    src/network/adapters/offline_server.c
+    src/network/adapters/offline_client.cpp
+    src/network/adapters/offline_server.cpp
     src/network/network_adapter.c
     src/network/network_connection.c
 

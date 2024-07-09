@@ -1,14 +1,29 @@
+#include "network/adapters/offline_server.h"
+
 #include "mirabel/server.h"
 
 bool server_create(server* self, bool offline)
 {
     self->offline = offline;
+
+    VEC_CREATE(&self->netas, offline ? 1 : 4);
+    network_adapter* offline_neta_server = malloc(sizeof(network_adapter));
+    offline_neta_server->methods = &offline_server_network_adapter_methods;
+    offline_neta_server->inbox = &self->inbox;
+    VEC_PUSH(&self->netas, offline_neta_server);
+    network_adapter_create(offline_neta_server);
+
     event_queue_create(&self->inbox);
     return false;
 }
 
 void server_destroy(server* self)
 {
+    for (size_t neta_idx = 0; neta_idx < VEC_LEN(&self->netas); neta_idx++) {
+        network_adapter_destroy(self->netas[neta_idx]);
+    }
+    VEC_DESTROY(&self->netas);
+
     event_queue_destroy(&self->inbox);
 }
 
@@ -19,7 +34,7 @@ bool server_update(server* self)
     while (remaining_budget > 0) {
         remaining_budget--;
         event_any e;
-        event_queue_pop(&self->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this, also the crl interface is blocking..
+        event_queue_pop(&self->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this
         switch (e.base.type) {
             case EVENT_TYPE_NULL: {
                 remaining_budget = 0;

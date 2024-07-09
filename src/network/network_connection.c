@@ -12,6 +12,8 @@ const uint16_t default_adapter_server_port = 61801;
 
 bool network_connection_create(network_connection* self)
 {
+    self->deleted = false;
+
     self->adapter_server_address[0] = '\0';
     self->adapter_server_port = default_adapter_server_port;
     self->adapter_state = RSI_IDLE;
@@ -29,13 +31,19 @@ bool network_connection_create(network_connection* self)
 
     self->outbox = &self->adapter.outbox;
     event_queue_create(&self->inbox);
+
+    VEC_CREATE(&self->connected_workspace_idcs, 0);
+
+    return false;
 }
 
 void network_connection_destroy(network_connection* self)
 {
     //TODO
+
     event_queue_destroy(&self->inbox);
-    //TODO
+
+    VEC_DESTROY(&self->connected_workspace_idcs);
 }
 
 bool network_connection_handle_internal(network_connection* self, event_any* e)
