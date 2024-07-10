@@ -40,6 +40,7 @@ typedef struct network_connection_s {
     req_res_tracker authn_state;
     char* authn_fail_reason;
 
+    // only access these through inbox_pop and outbox_push
     event_queue* outbox;
     event_queue inbox;
 
@@ -51,11 +52,11 @@ bool network_connection_create(network_connection* self);
 
 void network_connection_destroy(network_connection* self);
 
-// returns true if the event was consumed internally
-bool network_connection_handle_internal(network_connection* self, event_any* e);
+// like event_queue_push
+void network_connection_outbox_push(network_connection* self, event_any* e);
 
-//TODO returns true on failure
-// bool network_connection_event_send_copy(network_connection* self, event_any* e);
+// non blocking, like event_queue_pop
+void network_connection_inbox_pop(network_connection* self, event_any* e);
 
 #ifdef __cplusplus
 }

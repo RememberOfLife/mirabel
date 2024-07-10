@@ -13,8 +13,22 @@
 extern "C" {
 #endif
 
-//TODO this should be a ringbuffer, primary goal is reducing wait times for anyone pushing events into it as far as possible
-// make sure to move pushed and popped elements, make this a proper producer-consumer semaphore
+/*TODO timed events:
+- every queue additionally has an ordered linked list
+- every pop, after having offered all immediate events, offers times events from the front of the linked list, IF they are expired
+    - use a global timestamp from e.g. rosalia to manage realtime
+- new push_timed which takes a delay before this event will be offered
+    - but the timed item just stores the time when it will be available (maybe for tracking purposes also store enqueuement time?)
+*/
+
+/*TODO multi queue wait:
+- need to offer c compatible multi_forward_waiter
+- multi_wait function which takes vararg many queues and forwards them to the multi_forward_waiter the user has created beforehand
+    - then all the queues have a forward ptr, which effectively forwards all condition variable notifies to the multi_forward_waiter
+    - when this function returns you still have to pop all the queues yourself to find out which one was triggered
+*/
+
+//TODO ? make sure to move pushed and popped elements, make this a proper producer-consumer semaphore
 struct event_queue_impl {
     std::mutex m;
     std::deque<event_any> q;

@@ -26,15 +26,15 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
 
-static const uint32_t EVENT_CLIENT_NONE = 0; // none / local
-static const uint32_t EVENT_CLIENT_SERVER = UINT32_MAX;
+static const uint32_t EVENT_SESSION_NONE = 0; // none / local
+static const uint32_t EVENT_SESSION_SPEC = UINT32_MAX;
 
 static const uint32_t EVENT_ASSOCIATION_NONE = 0;
 static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved for now
 
 typedef struct event_s {
     EVENT_TYPE type;
-    uint32_t client_id;
+    uint32_t session_id;
     uint32_t association_id;
     uint32_t _reserved;
 } event;
@@ -52,9 +52,9 @@ void event_create_zero(event_any* e);
 
 void event_create_type(event_any* e, EVENT_TYPE type);
 
-void event_create_type_client(event_any* e, EVENT_TYPE type, uint32_t client_id);
+void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id);
 
-void event_create_type_client_assoc(event_any* e, EVENT_TYPE type, uint32_t client_id, uint32_t association_id);
+void event_create_type_session_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id);
 
 void event_zero(event_any* e);
 

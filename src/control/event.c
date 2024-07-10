@@ -18,7 +18,7 @@
 
 const serialization_layout sl_base[] = {
     {SL_TYPE_U32, offsetof(event, type)},
-    {SL_TYPE_U32, offsetof(event, client_id)},
+    {SL_TYPE_U32, offsetof(event, session_id)},
     {SL_TYPE_U32, offsetof(event, association_id)},
     {SL_TYPE_STOP},
 };
@@ -31,6 +31,8 @@ const serialization_layout sl_log[] = {
 
 const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NULL] = sl_base,
+
+    [EVENT_TYPE_EXIT] = sl_base,
 
     [EVENT_TYPE_LOG] = sl_log,
 };
@@ -87,28 +89,28 @@ uint32_t get_new_association_id()
 void event_create_zero(event_any* e)
 {
     e->base.type = EVENT_TYPE_NULL;
-    e->base.client_id = EVENT_CLIENT_NONE;
+    e->base.session_id = EVENT_SESSION_NONE;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
 void event_create_type(event_any* e, EVENT_TYPE type)
 {
     e->base.type = type;
-    e->base.client_id = EVENT_CLIENT_NONE;
+    e->base.session_id = EVENT_SESSION_NONE;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
-void event_create_type_client(event_any* e, EVENT_TYPE type, uint32_t client_id)
+void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id)
 {
     e->base.type = type;
-    e->base.client_id = client_id;
+    e->base.session_id = session_id;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
-void event_create_type_client_assoc(event_any* e, EVENT_TYPE type, uint32_t client_id, uint32_t association_id)
+void event_create_type_session_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id)
 {
     e->base.type = type;
-    e->base.client_id = client_id;
+    e->base.session_id = session_id;
     e->base.association_id = association_id;
 }
 

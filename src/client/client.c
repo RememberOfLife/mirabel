@@ -35,10 +35,7 @@ bool client_update(client* self)
         while (remaining_budget > 0) {
             remaining_budget--;
             event_any e;
-            event_queue_pop(&conn->inbox, &e, 0);
-            if (network_connection_handle_internal(conn, &e)) {
-                continue;
-            }
+            network_connection_inbox_pop(conn, &e);
             switch (e.base.type) {
                 case EVENT_TYPE_NULL: {
                     remaining_budget = 0;

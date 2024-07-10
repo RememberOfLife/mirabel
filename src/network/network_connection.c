@@ -46,7 +46,7 @@ void network_connection_destroy(network_connection* self)
     VEC_DESTROY(&self->connected_workspace_idcs);
 }
 
-bool network_connection_handle_internal(network_connection* self, event_any* e)
+void network_connection_outbox_push(network_connection* self, event_any* e)
 {
     bool consumed = true;
     switch (e->base.type) {
@@ -55,5 +55,26 @@ bool network_connection_handle_internal(network_connection* self, event_any* e)
             consumed = false;
         } break;
     }
-    return consumed;
+    if (consumed) {
+        event_destroy(e);
+    } else {
+        event_queue_push(self->outbox, e);
+    }
+}
+
+void network_connection_inbox_pop(network_connection* self, event_any* e)
+{
+    bool consumed = true;
+    while (consumed) {
+        event_queue_pop(&self->inbox, e, 0);
+        switch (e->base.type) {
+            //TODO our relevant cases..
+            default: {
+                consumed = false;
+            } break;
+        }
+        if (consumed) {
+            event_destroy(e);
+        }
+    }
 }
