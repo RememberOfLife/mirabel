@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <deque>
 #include <mutex>
+#include <queue>
+
+#include "rosalia/timestamp.h"
 
 #include "mirabel/event.h"
 
@@ -13,14 +16,6 @@
 extern "C" {
 #endif
 
-/*TODO timed events:
-- every queue additionally has an ordered linked list
-- every pop, after having offered all immediate events, offers times events from the front of the linked list, IF they are expired
-    - use a global timestamp from e.g. rosalia to manage realtime
-- new push_timed which takes a delay before this event will be offered
-    - but the timed item just stores the time when it will be available (maybe for tracking purposes also store enqueuement time?)
-*/
-
 /*TODO multi queue wait:
 - need to offer c compatible multi_forward_waiter
 - multi_wait function which takes vararg many queues and forwards them to the multi_forward_waiter the user has created beforehand
@@ -28,10 +23,27 @@ extern "C" {
     - when this function returns you still have to pop all the queues yourself to find out which one was triggered
 */
 
-//TODO ? make sure to move pushed and popped elements, make this a proper producer-consumer semaphore
+/*TODO queue multi wait: make it so that multiple people can sensibly wait on one queue?*/
+
+struct delay_event {
+    delay_event_stats stats;
+    event_any e;
+
+    ~delay_event()
+    {
+        event_destroy(&e);
+    }
+
+    friend bool operator<(const delay_event& lesser, const delay_event& greater)
+    {
+        return lesser.stats.release_ts > greater.stats.release_ts;
+    }
+};
+
 struct event_queue_impl {
     std::mutex m;
-    std::deque<event_any> q;
+    std::deque<event_any> iq;
+    std::priority_queue<delay_event> tq;
     std::condition_variable cv;
 };
 
@@ -45,39 +57,73 @@ void event_queue_create(event_queue* eq)
 void event_queue_destroy(event_queue* eq)
 {
     event_queue_impl* eqi = (event_queue_impl*)eq;
-    for (std::deque<event_any>::iterator event_iter = eqi->q.begin(); event_iter != eqi->q.end(); event_iter++) {
+    for (std::deque<event_any>::iterator event_iter = eqi->iq.begin(); event_iter != eqi->iq.end(); event_iter++) {
         event_destroy(&*event_iter);
     }
+    // tq auto destroys via timed_event destructor
     eqi->~event_queue_impl();
 }
 
 void event_queue_push(event_queue* eq, event_any* e)
 {
+    event_queue_push_delayed(eq, e, 0);
+}
+
+void event_queue_push_delayed(event_queue* eq, event_any* e, uint32_t release_delay)
+{
+    uint64_t ts_now = timestamp_get_ms64();
     event_queue_impl* eqi = (event_queue_impl*)eq;
     eqi->m.lock();
-    eqi->q.emplace_back(*e);
+    if (release_delay == 0) {
+        eqi->iq.emplace_back(*e);
+    } else {
+        eqi->tq.emplace((delay_event){
+            .stats = (delay_event_stats){
+                .enqueue_ts = ts_now,
+                .release_ts = ts_now + release_delay,
+            },
+            .e = *e,
+        });
+    }
     eqi->m.unlock();
-    eqi->cv.notify_all();
+    eqi->cv.notify_one();
     e->base.type = EVENT_TYPE_NULL;
 }
 
-void event_queue_pop(event_queue* eq, event_any* e, uint32_t t)
+bool event_queue_released_event_available(event_queue_impl* eqi, uint64_t release_up_to)
+{
+    return eqi->iq.size() > 0 || (eqi->tq.size() > 0 && eqi->tq.top().stats.release_ts <= release_up_to);
+}
+
+void event_queue_pop(event_queue* eq, event_any* e, uint32_t t_ms)
 {
     event_queue_impl* eqi = (event_queue_impl*)eq;
     std::unique_lock<std::mutex> lock(eqi->m);
-    if (eqi->q.size() == 0) {
-        if (t > 0) {
-            eqi->cv.wait_for(lock, std::chrono::milliseconds(t));
+    uint64_t now_ts = timestamp_get_ms64();
+    uint64_t maximal_timeout_ts = now_ts + t_ms;
+    // wait if still any timeout time available and there is no event available right now
+    while (!event_queue_released_event_available(eqi, now_ts) && now_ts < maximal_timeout_ts) {
+        uint64_t partial_wait_for = maximal_timeout_ts - now_ts; // per default, wait the full rest of the timeout
+        if (eqi->tq.size() > 0 && eqi->tq.top().stats.release_ts < maximal_timeout_ts) {
+            // if timed item will become available before maximal timeout, wait shorter
+            partial_wait_for = eqi->tq.top().stats.release_ts - now_ts;
         }
-        if (eqi->q.size() == 0) {
-            // queue has no available events after timeout, return null event
-            e->base.type = EVENT_TYPE_NULL;
-            return;
-        }
-        // go on to output an available event if one has become available
+        eqi->cv.wait_for(lock, std::chrono::milliseconds(partial_wait_for));
+        now_ts = timestamp_get_ms64();
     }
-    *e = eqi->q.front();
-    eqi->q.pop_front();
+    if (!event_queue_released_event_available(eqi, now_ts)) {
+        // no available events (after timeout), return null event
+        e->base.type = EVENT_TYPE_NULL;
+        return;
+    }
+    // output available event
+    if (eqi->iq.size() > 0) {
+        *e = eqi->iq.front();
+        eqi->iq.pop_front();
+    } else {
+        *e = eqi->tq.top().e;
+        eqi->tq.pop();
+    }
 }
 
 #ifdef __cplusplus
