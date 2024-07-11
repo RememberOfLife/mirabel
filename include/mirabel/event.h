@@ -27,8 +27,7 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_EXIT,
     EVENT_TYPE_LOG,
 
-    EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_REQUEST,
-    EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ACCEPT,
+    EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER,
     EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE,
 
     EVENT_TYPE_NETWORK_PROTOCOL_OK,
@@ -45,6 +44,8 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_USER_AUTH_ACCEPT,
     EVENT_TYPE_USER_AUTH_REJECT,
 
+    //TODO session open and close events
+
     EVENT_TYPE_COUNT,
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
@@ -59,9 +60,9 @@ static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved 
 
 typedef struct event_s {
     EVENT_TYPE type;
+    uint32_t connection_id;
     uint32_t session_id;
     uint32_t association_id;
-    uint32_t _reserved;
 } event;
 
 typedef union event_any_u event_any;
@@ -117,10 +118,18 @@ void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args
 
 typedef struct event_neta_offline_conn_s {
     event base;
-    event_queue* in_queue;
+    event_queue* rx_queue;
 } event_neta_offline_conn;
 
-void event_create_neta_offline_conn_data(event_any* e, EVENT_TYPE type, event_queue* in_queue);
+void event_create_neta_offline_conn_enter(event_any* e, event_queue* in_queue);
+
+typedef struct event_neta_open_s {
+    event base;
+    char* server_addr;
+    uint16_t server_port;
+} event_neta_open;
+
+void event_create_neta_open(event_any* e, const char* server_addr, uint16_t server_port);
 
 typedef struct event_neta_close_s {
     event base;
@@ -128,6 +137,14 @@ typedef struct event_neta_close_s {
 } event_neta_close;
 
 void event_create_neta_close(event_any* e, const char* reason);
+
+typedef struct event_neta_veri_s {
+    event base;
+    blob thumb;
+    char* reason;
+} event_neta_veri;
+
+void event_create_neta_veri(event_any* e, EVENT_TYPE type, blob thumb, const char* reason);
 
 typedef struct event_user_auth_info_s {
     event base;
@@ -152,7 +169,9 @@ typedef union event_any_u {
     event base;
     event_log log;
     event_neta_offline_conn neta_offline_conn;
+    event_neta_open neta_open;
     event_neta_close neta_close;
+    event_neta_veri neta_veri;
     event_user_auth_info user_auth_info;
     event_user_auth_reject user_auth_reject;
 } event_any;

@@ -19,7 +19,7 @@ namespace {
 
     struct adapter_context {
         struct connection {
-            uint32_t client_id;
+            uint32_t connection_id;
             event_queue* outq; // points to inq in offline client
             event_queue* inq; // our owned inq where this client pushes to
 
@@ -37,18 +37,7 @@ namespace {
         };
 
         std::thread worker;
-        event_queue accept;
         std::vector<connection> conns;
-
-        adapter_context()
-        {
-            event_queue_create(&accept);
-        }
-
-        ~adapter_context()
-        {
-            event_queue_destroy(&accept);
-        }
     };
 
     void adapter_worker(adapter_context* ctx, network_adapter* self)
@@ -58,29 +47,6 @@ namespace {
             // we expect low volume on the offline adapters, so just one thread does server accepting + sending + receiving
 
             bool exit;
-
-            // accepting
-            exit = false;
-            while (!exit) {
-                event_any e;
-                event_queue_pop(&ctx->accept, &e, 0);
-                switch (e.base.type) {
-                    case EVENT_TYPE_NULL: {
-                        // pass and loop
-                    } break;
-                    case EVENT_TYPE_EXIT: {
-                        exit = true;
-                        break;
-                    } break;
-                    case EVENT_TYPE_LOG: {
-                        mirabel_slogf(e.log.status, "offline neta server: queue log: %s", e.log.str);
-                    } break;
-                    default: {
-                        //TODO handle adapter event for connection accepting
-                    } break;
-                }
-                event_destroy(&e);
-            }
 
             // sending
             exit = false;
@@ -98,18 +64,21 @@ namespace {
                     case EVENT_TYPE_LOG: {
                         mirabel_slogf(e.log.status, "offline neta server: queue log: %s", e.log.str);
                     } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
+                        //TODO client requests a queue for a connection, create a new connection and send it back
+                    } break;
                     //TODO handle adapter event for disconnecting this client / shutdown?
                     default: {
                         bool found_and_sent = false;
                         for (size_t conn_idx = 0; conn_idx < ctx->conns.size(); conn_idx++) {
-                            if (conn_idx == e.base.session_id) {
+                            if (ctx->conns[conn_idx].connection_id == e.base.connection_id) {
                                 event_queue_push(ctx->conns[conn_idx].outq, &e);
                                 found_and_sent = true;
                                 break;
                             }
                         }
                         if (!found_and_sent) {
-                            mirabel_slogf(LOGS_WARN, "offline neta server: no client id %u to send event to, dropping", e.base.session_id);
+                            mirabel_slogf(LOGS_WARN, "offline neta server: no connection id %u to send event to, dropping", e.base.connection_id);
                         }
                     } break;
                 }
@@ -131,14 +100,17 @@ namespace {
                             break;
                         } break;
                         case EVENT_TYPE_LOG: {
-                            mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", ctx->conns[conn_id].client_id, e.log.str);
+                            mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", ctx->conns[conn_id].connection_id, e.log.str);
                         } break;
-                        //TODO handle adapter event for disconnecting client
+                        case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                            //TODO client is disconnecting, remove them and send close to client
+                            //TODO how to inform server of this somehow, through e.g. session close events
+                        } break;
                         default: {
-                            uint32_t true_client_id = ctx->conns[conn_id].client_id;
-                            if (e.base.session_id != true_client_id) {
-                                mirabel_slogf(LOGS_WARN, "offline neta server: client %u inq with wrong client id %u", true_client_id, e.base.session_id);
-                                e.base.session_id = true_client_id;
+                            uint32_t true_connection_id = ctx->conns[conn_id].connection_id;
+                            if (e.base.connection_id != true_connection_id) {
+                                mirabel_slogf(LOGS_WARN, "offline neta server: client %u inq with wrong connection id %u", true_connection_id, e.base.session_id);
+                                e.base.connection_id = true_connection_id;
                             }
                             event_queue_push(self->inbox, &e);
                         } break;
@@ -173,7 +145,9 @@ static bool network_adapter_create_mi(network_adapter* self)
 
 static void network_adapter_destroy_mi(network_adapter* self)
 {
-    //TODO send adapter event for shutdown to outbox
+    event_any e;
+    event_create_neta_close(&e, NULL);
+    event_queue_push(&self->outbox, &e);
     adapter_context* ctx = (adapter_context*)self->data;
     ctx->worker.join();
     delete ctx;

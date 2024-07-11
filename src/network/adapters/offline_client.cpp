@@ -3,7 +3,9 @@
 
 #include "rosalia/semver.h"
 
+#include "mirabel/application.h"
 #include "mirabel/network_adapter.h"
+#include "mirabel/server.h"
 
 #include "network/adapters/offline_client.h"
 
@@ -14,8 +16,8 @@ namespace {
 
     struct adapter_context {
         std::thread worker;
-        uint32_t client_id;
-        event_queue* outq;
+        uint32_t connection_id;
+        event_queue* outq = NULL;
         event_queue inq;
     };
 
@@ -28,6 +30,7 @@ namespace {
             bool exit;
 
             // sending
+            // get from self->outbox and push to ctx->outq
             exit = false;
             while (!exit) {
                 event_any e;
@@ -43,15 +46,31 @@ namespace {
                     case EVENT_TYPE_LOG: {
                         mirabel_slogf(e.log.status, "offline neta client: queue log: %s", e.log.str);
                     } break;
-                    //TODO handle adapter events for connecting and disconnecting
+                    case EVENT_TYPE_NETWORK_ADAPTER_OPEN: {
+                        event_queue* srv_inq = appi.aserver->netas[0]->inbox; //TODO //HACK better way of finding the server offline connector //BUG this is a race condition!
+                        event_any re;
+                        event_create_neta_offline_conn_enter(&re, &ctx->inq);
+                        event_queue_push(srv_inq, &re);
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                        event_any re;
+                        event_create_neta_close(&re, NULL);
+                        event_queue_push(ctx->outq, &re);
+                        ctx->outq = NULL;
+                    } break;
                     default: {
-                        event_queue_push(ctx->outq, &e);
+                        if (ctx->outq == NULL) {
+                            mirabel_slogf(LOGS_WARN, "offline neta client: failed to send event, missing outq");
+                        } else {
+                            event_queue_push(ctx->outq, &e);
+                        }
                     } break;
                 }
                 event_destroy(&e);
             }
 
             // receiving
+            // get from ctx->inq and push to self->inbox
             exit = false;
             while (!exit) {
                 event_any e;
@@ -67,10 +86,29 @@ namespace {
                     case EVENT_TYPE_LOG: {
                         mirabel_slogf(e.log.status, "offline neta client: queue log: %s", e.log.str);
                     } break;
-                    //TODO handle adapter event for disconnected from server
+                    case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
+                        ctx->outq = e.neta_offline_conn.rx_queue;
+                        event_any re;
+                        event_create_type(&re, EVENT_TYPE_NETWORK_ADAPTER_OPEN);
+                        event_queue_push(self->inbox, &re);
+                        event_create_neta_veri(&re, EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT, BLOB_NULL, NULL);
+                        event_queue_push(self->inbox, &re);
+                    } break;
+                    case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                        if (ctx->outq == NULL) {
+                            // client initiated disconnect
+                            event_any re;
+                            event_create_neta_close(&re, NULL);
+                            event_queue_push(self->inbox, &re);
+                            exit = true;
+                            worker_quit = true;
+                        } else {
+                            //TODO alternatively, maybe the server has initiated the drop, then do ??
+                        }
+                    } break;
                     default: {
-                        if (e.base.session_id != ctx->client_id) {
-                            mirabel_slogf(LOGS_WARN, "offline neta client: client id %u received event with wrong client id %u, dropping", ctx->client_id, e.base.session_id);
+                        if (e.base.connection_id != ctx->connection_id) {
+                            mirabel_slogf(LOGS_WARN, "offline neta client: connection id %u received event with wrong connection id %u, dropping", ctx->connection_id, e.base.connection_id);
                         } else {
                             event_queue_push(self->inbox, &e);
                         }
@@ -106,7 +144,9 @@ static bool network_adapter_create_mi(network_adapter* self)
 
 static void network_adapter_destroy_mi(network_adapter* self)
 {
-    //TODO send adapter event for shutdown to outbox
+    event_any e;
+    event_create_neta_close(&e, NULL);
+    event_queue_push(&self->outbox, &e);
     adapter_context* ctx = (adapter_context*)self->data;
     ctx->worker.join();
     free(self->data);

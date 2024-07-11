@@ -30,6 +30,13 @@ const serialization_layout sl_log[] = {
     {SL_TYPE_STOP},
 };
 
+const serialization_layout sl_neta_open[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_neta_open, base), .ext.layout = sl_base},
+    {SL_TYPE_STRING, offsetof(event_neta_open, server_addr)},
+    {SL_TYPE_U16, offsetof(event_neta_open, server_port)},
+    {SL_TYPE_STOP},
+};
+
 const serialization_layout sl_neta_close[] = {
     {SL_TYPE_COMPLEX, offsetof(event_neta_close, base), .ext.layout = sl_base},
     {SL_TYPE_STRING, offsetof(event_neta_close, reason)},
@@ -57,8 +64,7 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_LOG] = sl_log,
 
-    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_REQUEST] = sl_base,
-    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ACCEPT] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER] = sl_base,
     [EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE] = sl_base,
 
     [EVENT_TYPE_NETWORK_PROTOCOL_OK] = sl_base,
@@ -66,7 +72,7 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NETWORK_PROTOCOL_PING] = sl_base,
     [EVENT_TYPE_NETWORK_PROTOCOL_PONG] = sl_base,
 
-    [EVENT_TYPE_NETWORK_ADAPTER_OPEN] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_OPEN] = sl_neta_open,
     [EVENT_TYPE_NETWORK_ADAPTER_CLOSE] = sl_neta_close,
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT] = sl_base,
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT] = sl_base,
@@ -236,16 +242,30 @@ void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args
     }
 }
 
-void event_create_neta_offline_conn_data(event_any* e, EVENT_TYPE type, event_queue* in_queue)
+void event_create_neta_offline_conn_enter(event_any* e, event_queue* in_queue)
 {
-    event_create_type(e, type);
-    e->neta_offline_conn.in_queue = in_queue;
+    event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER);
+    e->neta_offline_conn.rx_queue = in_queue;
+}
+
+void event_create_neta_open(event_any* e, const char* server_addr, uint16_t server_port)
+{
+    event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_OPEN);
+    e->neta_open.server_addr = server_addr ? strdup(server_addr) : NULL;
+    e->neta_open.server_port = server_port;
 }
 
 void event_create_neta_close(event_any* e, const char* reason)
 {
     event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_CLOSE);
     e->neta_close.reason = reason ? strdup(reason) : NULL;
+}
+
+void event_create_neta_veri(event_any* e, EVENT_TYPE type, blob thumb, const char* reason)
+{
+    event_create_type(e, type);
+    blob_copy(&e->neta_veri.thumb, &thumb);
+    e->neta_veri.reason = reason ? strdup(reason) : NULL;
 }
 
 void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, const char* username, const char* password)
