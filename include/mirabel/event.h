@@ -14,6 +14,11 @@ extern "C" {
 #endif
 
 /////
+// fwd
+
+typedef struct event_queue_s event_queue;
+
+/////
 // event types
 
 typedef enum EVENT_TYPE_E {
@@ -22,12 +27,32 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_EXIT,
     EVENT_TYPE_LOG,
 
+    EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_REQUEST,
+    EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ACCEPT,
+    EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE,
+
+    EVENT_TYPE_NETWORK_PROTOCOL_OK,
+    EVENT_TYPE_NETWORK_PROTOCOL_NOK,
+    EVENT_TYPE_NETWORK_PROTOCOL_PING,
+    EVENT_TYPE_NETWORK_PROTOCOL_PONG,
+
+    EVENT_TYPE_NETWORK_ADAPTER_OPEN,
+    EVENT_TYPE_NETWORK_ADAPTER_CLOSE,
+    EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT,
+    EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT,
+
+    EVENT_TYPE_USER_AUTH_INFO,
+    EVENT_TYPE_USER_AUTH_ACCEPT,
+    EVENT_TYPE_USER_AUTH_REJECT,
+
     EVENT_TYPE_COUNT,
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
 
+//TODO typedefs for session and association id?
+
 static const uint32_t EVENT_SESSION_NONE = 0; // none / local
-static const uint32_t EVENT_SESSION_SPEC = UINT32_MAX;
+static const uint32_t EVENT_SESSION_SPEC = UINT32_MAX; //TODO just reserved for now
 
 static const uint32_t EVENT_ASSOCIATION_NONE = 0;
 static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved for now
@@ -51,6 +76,8 @@ uint32_t get_new_association_id();
 void event_create_zero(event_any* e);
 
 void event_create_type(event_any* e, EVENT_TYPE type);
+
+void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id);
 
 void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id);
 
@@ -83,9 +110,40 @@ typedef struct event_log_s {
     char* str;
 } event_log;
 
+//TODO allow for logging without str/fmt?
 void event_create_log(event_any* e, LOGS status, const char* str, const char* str_end);
 void event_create_logf(event_any* e, LOGS status, const char* fmt, ...);
 void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args);
+
+typedef struct event_neta_offline_conn_s {
+    event base;
+    event_queue* in_queue;
+} event_neta_offline_conn;
+
+void event_create_neta_offline_conn_data(event_any* e, EVENT_TYPE type, event_queue* in_queue);
+
+typedef struct event_neta_close_s {
+    event base;
+    char* reason;
+} event_neta_close;
+
+void event_create_neta_close(event_any* e, const char* reason);
+
+typedef struct event_user_auth_info_s {
+    event base;
+    bool is_guest;
+    char* username;
+    char* password;
+} event_user_auth_info;
+
+void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, const char* username, const char* password);
+
+typedef struct event_user_auth_reject_s {
+    event base;
+    char* reason;
+} event_user_auth_reject;
+
+void event_create_user_auth_reject(event_any* e, const char* reason);
 
 // event_any is as large as the largest event
 // use for arbitrary events, event arrays and deserialization where type and size are unknown
@@ -93,6 +151,10 @@ typedef union event_any_u {
     // list all event types here
     event base;
     event_log log;
+    event_neta_offline_conn neta_offline_conn;
+    event_neta_close neta_close;
+    event_user_auth_info user_auth_info;
+    event_user_auth_reject user_auth_reject;
 } event_any;
 
 #ifdef __cplusplus

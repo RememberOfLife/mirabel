@@ -25,7 +25,28 @@ const serialization_layout sl_base[] = {
 
 const serialization_layout sl_log[] = {
     {SL_TYPE_COMPLEX, offsetof(event_log, base), .ext.layout = sl_base},
+    {SL_TYPE_UAUTOP2(event_log, status), offsetof(event_log, status)},
     {SL_TYPE_STRING, offsetof(event_log, str)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_neta_close[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_neta_close, base), .ext.layout = sl_base},
+    {SL_TYPE_STRING, offsetof(event_neta_close, reason)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_user_auth_info[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_user_auth_info, base), .ext.layout = sl_base},
+    {SL_TYPE_BOOL, offsetof(event_user_auth_info, is_guest)},
+    {SL_TYPE_STRING, offsetof(event_user_auth_info, username)},
+    {SL_TYPE_STRING, offsetof(event_user_auth_info, password)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_user_auth_reject[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_user_auth_reject, base), .ext.layout = sl_base},
+    {SL_TYPE_STRING, offsetof(event_user_auth_reject, reason)},
     {SL_TYPE_STOP},
 };
 
@@ -35,6 +56,24 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_EXIT] = sl_base,
 
     [EVENT_TYPE_LOG] = sl_log,
+
+    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_REQUEST] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ACCEPT] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE] = sl_base,
+
+    [EVENT_TYPE_NETWORK_PROTOCOL_OK] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_NOK] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_PING] = sl_base,
+    [EVENT_TYPE_NETWORK_PROTOCOL_PONG] = sl_base,
+
+    [EVENT_TYPE_NETWORK_ADAPTER_OPEN] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_CLOSE] = sl_neta_close,
+    [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT] = sl_base,
+    [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT] = sl_base,
+
+    [EVENT_TYPE_USER_AUTH_INFO] = sl_user_auth_info,
+    [EVENT_TYPE_USER_AUTH_ACCEPT] = sl_base,
+    [EVENT_TYPE_USER_AUTH_REJECT] = sl_user_auth_reject,
 };
 
 const serialization_layout sl_event_any[] = {
@@ -98,6 +137,13 @@ void event_create_type(event_any* e, EVENT_TYPE type)
     e->base.type = type;
     e->base.session_id = EVENT_SESSION_NONE;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
+}
+
+void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id)
+{
+    e->base.type = type;
+    e->base.session_id = EVENT_SESSION_NONE;
+    e->base.association_id = association_id;
 }
 
 void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id)
@@ -188,4 +234,30 @@ void event_create_logfv(event_any* e, LOGS status, const char* fmt, va_list args
         e->log.str = (char*)mirabel_malloc(len); // OOM not handled here
         vsnprintf(e->log.str, len, fmt, args);
     }
+}
+
+void event_create_neta_offline_conn_data(event_any* e, EVENT_TYPE type, event_queue* in_queue)
+{
+    event_create_type(e, type);
+    e->neta_offline_conn.in_queue = in_queue;
+}
+
+void event_create_neta_close(event_any* e, const char* reason)
+{
+    event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_CLOSE);
+    e->neta_close.reason = reason ? strdup(reason) : NULL;
+}
+
+void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, const char* username, const char* password)
+{
+    event_create_type(e, type);
+    e->user_auth_info.is_guest = is_guest;
+    e->user_auth_info.username = username ? strdup(username) : NULL;
+    e->user_auth_info.password = password ? strdup(password) : NULL;
+}
+
+void event_create_user_auth_reject(event_any* e, const char* reason)
+{
+    event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_CLOSE);
+    e->user_auth_reject.reason = reason ? strdup(reason) : NULL;
 }

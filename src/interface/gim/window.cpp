@@ -106,7 +106,6 @@ GraphicalImmediateMode::GraphicalImmediateMode()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     imgui_io = &ImGui::GetIO();
-    (void)imgui_io;
     imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // enable gamepad controls
     // setup imgui style
@@ -338,33 +337,33 @@ bool GraphicalImmediateMode::mainloop()
 extern "C" {
 #endif
 
-static const char* get_last_error_cif(app_interface* self)
+static const char* app_interface_get_last_error_mi(app_interface* self)
 {
     return NULL;
 }
 
-static error_code create_cif(app_interface* self)
+static error_code app_interface_create_mi(app_interface* self)
 {
     self->data = new GraphicalImmediateMode();
     return APP_INTERFACE_ERR_OK;
 }
 
-static void destroy_cif(app_interface* self)
+static void app_interface_destroy_mi(app_interface* self)
 {
     delete (GraphicalImmediateMode*)self->data;
 }
 
-static bool mainloop_cif(app_interface* self)
+static bool app_interface_mainloop_mi(app_interface* self)
 {
     return ((GraphicalImmediateMode*)self->data)->mainloop();
 }
 
-static void log_cif(app_interface* self, LOGS status, const char* str, const char* str_end)
+static void app_interface_log_mi(app_interface* self, LOGS status, const char* str, const char* str_end)
 {
     //TODO
 }
 
-static const char* user_file_path_prompt_cif(app_interface* self, const char* suggested_save_name)
+static const char* app_interface_user_file_path_prompt_mi(app_interface* self, const char* suggested_save_name)
 {
     //TODO
     return NULL;
@@ -377,12 +376,12 @@ const app_interface_methods gim_app_interface_methods = (app_interface_methods){
         .minor = 0,
         .patch = 0,
     },
-    .get_last_error = get_last_error_cif,
-    .create = create_cif,
-    .destroy = destroy_cif,
-    .mainloop = mainloop_cif,
-    .log = log_cif,
-    .user_file_path_prompt = user_file_path_prompt_cif,
+    .get_last_error = app_interface_get_last_error_mi,
+    .create = app_interface_create_mi,
+    .destroy = app_interface_destroy_mi,
+    .mainloop = app_interface_mainloop_mi,
+    .log = app_interface_log_mi,
+    .user_file_path_prompt = app_interface_user_file_path_prompt_mi,
 };
 
 #ifdef __cplusplus

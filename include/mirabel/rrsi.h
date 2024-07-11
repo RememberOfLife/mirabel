@@ -20,10 +20,10 @@ typedef enum RUNNING_STATE_INDICATOR_E {
 
     RSI_NONE = RUNNING_STATE_INDICATOR_NONE, // uninitialized
     RSI_IDLE = RUNNING_STATE_INDICATOR_IDLE, // all fine
-    RSI_WAITING = RUNNING_STATE_INDICATOR_WAITING, // thing did, e.g. request sent to server
+    RSI_WAITING = RUNNING_STATE_INDICATOR_WAITING, // thing did, e.g. request sent to server, e.g. lock input fields and only show cancel button
     // response from server fills the respnse fields, //TODO and/or sets the state to idle if we can directly go again??
     RSI_DONE = RUNNING_STATE_INDICATOR_DONE, // thing finished, response exists
-} RUNNING_STATE_INDICATOR;
+} RUNNING_STATE_INDICATOR; //TODO this is so big in caps it looks weird when among other fields like req_res_tracker, rename to e.g. run_state_tracker ?
 
 typedef struct req_res_tracker_s {
     uint32_t association_id;

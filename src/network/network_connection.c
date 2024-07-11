@@ -18,6 +18,7 @@ bool network_connection_create(network_connection* self)
     self->adapter_server_port = default_adapter_server_port;
     self->adapter_state = RSI_IDLE;
     self->adapter.inbox = &self->inbox;
+    self->adapter_error = NULL; //TODO unnecessary because RSI_IDLE, want to keep it?
 
     self->connection_state = RSI_NONE;
     self->connection_verifail_reason = NULL; //TODO unnecessary because RSI_NONE, want to keep it?

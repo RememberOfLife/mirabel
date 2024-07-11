@@ -22,13 +22,14 @@ typedef struct network_connection_s {
 
     char adapter_server_address[128];
     uint16_t adapter_server_port;
-    //TODO adapter type selector
+    char* adapter_methods_name; // owning
     RUNNING_STATE_INDICATOR adapter_state;
     network_adapter adapter;
+    char* adapter_error;
 
     RUNNING_STATE_INDICATOR connection_state;
     uint8_t connection_cert_thumb[32]; //TODO replace with a sizer for the SHA256 thumbprint
-    char* connection_verifail_reason;
+    char* connection_verifail_reason; // owning
 
     RUNNING_STATE_INDICATOR authinfo_state;
     bool authinfo_allow_login;
@@ -38,8 +39,9 @@ typedef struct network_connection_s {
     char authn_username[64];
     char authn_password[128];
     req_res_tracker authn_state;
-    char* authn_fail_reason;
+    char* authn_fail_reason; // owning
 
+    //TODO need one more bool / tracker for having finished?
     // only access these through inbox_pop and outbox_push
     event_queue* outbox;
     event_queue inbox;

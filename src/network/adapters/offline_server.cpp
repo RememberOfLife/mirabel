@@ -158,12 +158,12 @@ namespace {
 extern "C" {
 #endif
 
-static const char* get_last_error(network_adapter* self)
+static const char* network_adapter_get_last_error_mi(network_adapter* self)
 {
     return NULL;
 }
 
-static bool create(network_adapter* self)
+static bool network_adapter_create_mi(network_adapter* self)
 {
     adapter_context* ctx = new adapter_context();
     ctx->worker = std::thread(adapter_worker, ctx, self);
@@ -171,7 +171,7 @@ static bool create(network_adapter* self)
     return false;
 }
 
-static void destroy(network_adapter* self)
+static void network_adapter_destroy_mi(network_adapter* self)
 {
     //TODO send adapter event for shutdown to outbox
     adapter_context* ctx = (adapter_context*)self->data;
@@ -186,9 +186,9 @@ const network_adapter_methods offline_server_network_adapter_methods = (network_
         .minor = 0,
         .patch = 0,
     },
-    .get_last_error = get_last_error,
-    .create = create,
-    .destroy = destroy,
+    .get_last_error = network_adapter_get_last_error_mi,
+    .create = network_adapter_create_mi,
+    .destroy = network_adapter_destroy_mi,
 };
 
 #ifdef __cplusplus
