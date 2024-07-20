@@ -10,7 +10,6 @@
 #endif
 #include "nanovg_gl.h"
 #include "imgui.h"
-#include "imgui_internal.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_opengl3.h"
 #include "rosalia/semver.h"
@@ -22,36 +21,10 @@
 
 #include "interface/gim/window.hpp"
 
-void global_dockspace(float* x, float* y, float* w, float* h)
+graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
 {
-    const ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-    dockspace_flags |= ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_PassthruCentralNode;
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(viewport->WorkSize);
-    ImGui::SetNextWindowViewport(viewport->ID);
-    ImGuiWindowFlags host_window_flags = ImGuiWindowFlags_None;
-    host_window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-    host_window_flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
-    host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-    host_window_flags |= ImGuiWindowFlags_NoBackground;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-    ImGui::Begin("global_dockspace_window", NULL, host_window_flags);
-    ImGui::PopStyleVar(3);
-    ImGuiID dockspace_id = ImGui::GetID("global_dockspace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
-    ImGuiDockNode* dn = ImGui::DockBuilderGetNode(dockspace_id);
-    *x = dn->CentralNode->Pos.x;
-    *y = dn->CentralNode->Pos.y;
-    *w = dn->CentralNode->Size.x;
-    *h = dn->CentralNode->Size.y;
-    ImGui::End();
-}
+    graphical_immediate_mode_interface* self = (graphical_immediate_mode_interface*)malloc(sizeof(graphical_immediate_mode_interface));
 
-GraphicalImmediateMode::GraphicalImmediateMode()
-{
     const int initial_window_width = 1280;
     const int initial_window_height = 720;
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
@@ -82,18 +55,18 @@ GraphicalImmediateMode::GraphicalImmediateMode()
     SDL_GL_SetSwapInterval(1); // vsync with 1, possibly set after window creation
 
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
-    if (sdl_window == NULL) {
+    self->sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
+    if (self->sdl_window == NULL) {
         mirabel_slogf(LOGS_FATAL, "sdl window create error: %s\n", SDL_GetError());
         exit(1);
     }
 
-    sdl_glcontext = SDL_GL_CreateContext(sdl_window);
-    if (sdl_glcontext == NULL) {
+    self->sdl_glcontext = SDL_GL_CreateContext(self->sdl_window);
+    if (self->sdl_glcontext == NULL) {
         mirabel_slogf(LOGS_FATAL, "sdl gl context create error: %s\n", SDL_GetError());
         exit(1);
     }
-    SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
+    SDL_GL_MakeCurrent(self->sdl_window, self->sdl_glcontext);
 
     // SDL_GL_SetSwapInterval(0); //TODO enable vsync?
 
@@ -105,8 +78,8 @@ GraphicalImmediateMode::GraphicalImmediateMode()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    imgui_io = &ImGui::GetIO();
-    imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
+    self->imgui_io = &ImGui::GetIO();
+    self->imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // enable gamepad controls
     // setup imgui style
     ImGui::StyleColorsDark();
@@ -115,20 +88,20 @@ GraphicalImmediateMode::GraphicalImmediateMode()
     // dpi scaling
     float dpi_scale = 1;
     float dpi;
-    if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdl_window), &dpi, NULL, NULL)) {
+    if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(self->sdl_window), &dpi, NULL, NULL)) {
         dpi_scale = dpi / 96; // 96 is the default dpi on windows
         if (dpi_scale < 1 || dpi_scale > 4) { // sanity check, would underscale < 1 on normal display (looks blurry)
             dpi_scale = 1;
         }
     }
-    imgui_io->FontGlobalScale = dpi_scale;
+    self->imgui_io->FontGlobalScale = dpi_scale;
     //TODO load font with approriate size instead of scaling it!
 
     // setup platform/renderer backends
-    ImGui_ImplSDL2_InitForOpenGL(sdl_window, sdl_glcontext);
+    ImGui_ImplSDL2_InitForOpenGL(self->sdl_window, self->sdl_glcontext);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    imgui_viewport = ImGui::GetMainViewport();
+    self->imgui_viewport = ImGui::GetMainViewport();
 
     //TODO load imgui fonts: docs/FONTS.md
 
@@ -142,19 +115,21 @@ GraphicalImmediateMode::GraphicalImmediateMode()
     glEnable(GL_BLEND);
 
 #ifdef __EMSCRIPTEN__
-    nanovg_ctx = nvgCreateGLES2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    self->nanovg_ctx = nvgCreateGLES2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #else
-    nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    self->nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #endif
-    if (nanovg_ctx == NULL) {
+    if (self->nanovg_ctx == NULL) {
         mirabel_slogf(LOGS_FATAL, "nanovg context creation failed\n");
         exit(1);
     }
 
     //TODO load nanovg fonts
+
+    return self;
 }
 
-GraphicalImmediateMode::~GraphicalImmediateMode()
+void graphical_immediate_mode_interface::destroy()
 {
 #ifdef __EMSCRIPTEN__
     nvgDeleteGLES2(nanovg_ctx);
@@ -169,9 +144,11 @@ GraphicalImmediateMode::~GraphicalImmediateMode()
     SDL_GL_DeleteContext(sdl_glcontext);
     SDL_DestroyWindow(sdl_window);
     SDL_Quit();
+
+    delete this;
 }
 
-bool GraphicalImmediateMode::mainloop()
+bool graphical_immediate_mode_interface::update_and_render()
 {
     bool quit = false;
 
@@ -219,8 +196,10 @@ bool GraphicalImmediateMode::mainloop()
 
     // static uint64_t ms_tick = timestamp_get_ms64(); //TODO move to correct place(s)
 
+    //TODO this should be a function
     //TODO process client internal event queue (or is that on another thread?)
 
+    //TODO this hsould be a function
     // work through interface events: clicks, key presses, gui commands structs for updating interface elems
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -253,6 +232,31 @@ bool GraphicalImmediateMode::mainloop()
             // printf("sdl resized to %i / %i\n", event.window.data1, event.window.data2);
         }
 
+        // global window shortcuts
+        if (event.type == SDL_KEYDOWN) {
+            if (event.key.keysym.sym == SDLK_F1) {
+                //TODO toggle hud, i.e. skipp all imgui rendering and the frontend assumes the entire framebuffer size
+            }
+            if (event.key.keysym.sym == SDLK_F3) {
+                //TODO toggle stats
+            }
+            if (event.key.keysym.sym == SDLK_F4) {
+                //TODO toggle global log, this is on the same level as the workspace tabs, can also be one of the tabs??
+            }
+            if (event.key.keysym.sym == SDLK_F5) {
+                show_imgui_demo = !show_imgui_demo;
+            }
+            if (event.key.keysym.sym == SDLK_F11) {
+#ifndef __EMSCRIPTEN__
+                fullscreen = !fullscreen;
+                // borderless fullscreen
+                SDL_SetWindowFullscreen(sdl_window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+#else
+                mirabel_slogf(LOGS_NORM, "fullscreen currently unsupported in web");
+#endif
+            }
+        }
+
         if (event.type == SDL_KEYDOWN) {
             if (event.key.keysym.sym == SDLK_LCTRL) {
                 ctrl_left = true;
@@ -274,10 +278,12 @@ bool GraphicalImmediateMode::mainloop()
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
-
-    //TODO show imgui windows
-    ImGui::ShowDemoWindow();
+    if (show_imgui_demo) {
+        ImGui::ShowDemoWindow();
+    } else {
+        //TODO show imgui windows: main bar, workspaces, current workspace opened windows
+        // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
+    }
 
     //TODO put this in the sdl resize event, make a resize function on the context app
     // whole workspace under the menubar, use this for frontend background if wanted
@@ -294,11 +300,6 @@ bool GraphicalImmediateMode::mainloop()
     fey = fy_px;
     few = fw_px;
     feh = fh_px;
-
-    static int printed = 0;
-    if (printed++ < 20) {
-        // printf("%f %f %f %f // %f %f // %f %f %f %f\n", x_px, y_px, w_px, h_px, fbw, fbh, fex, fey, few, feh);
-    }
 
     glViewport(0, 0, (int)fbw, (int)fbh);
 
@@ -344,18 +345,21 @@ static const char* app_interface_get_last_error_mi(app_interface* self)
 
 static error_code app_interface_create_mi(app_interface* self)
 {
-    self->data = new GraphicalImmediateMode();
+    self->data = graphical_immediate_mode_interface::create();
+    if (self->data == NULL) {
+        return APP_INTERFACE_ERR_NOK;
+    }
     return APP_INTERFACE_ERR_OK;
 }
 
 static void app_interface_destroy_mi(app_interface* self)
 {
-    delete (GraphicalImmediateMode*)self->data;
+    ((graphical_immediate_mode_interface*)self->data)->destroy();
 }
 
 static bool app_interface_mainloop_mi(app_interface* self)
 {
-    return ((GraphicalImmediateMode*)self->data)->mainloop();
+    return ((graphical_immediate_mode_interface*)self->data)->update_and_render();
 }
 
 static void app_interface_log_mi(app_interface* self, LOGS status, const char* str, const char* str_end)

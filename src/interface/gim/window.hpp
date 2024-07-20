@@ -7,8 +7,7 @@
 
 #include "interface/interface.hpp"
 
-class GraphicalImmediateMode : public Interface {
-  private:
+struct graphical_immediate_mode_interface {
 
     SDL_Window* sdl_window;
     SDL_GLContext sdl_glcontext;
@@ -16,11 +15,14 @@ class GraphicalImmediateMode : public Interface {
     ImGuiViewport* imgui_viewport;
     NVGcontext* nanovg_ctx;
 
-  public:
+    bool show_imgui_demo;
+    bool fullscreen;
 
-    GraphicalImmediateMode();
+    static graphical_immediate_mode_interface* create();
+    void destroy();
 
-    ~GraphicalImmediateMode();
+    bool update_and_render();
 
-    bool mainloop();
+    // metagui
+    void global_dockspace(float* x, float* y, float* w, float* h);
 };

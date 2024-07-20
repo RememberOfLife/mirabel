@@ -78,6 +78,7 @@ set(SOURCES
 
     src/game/game.c
 
+    src/interface/gim/metagui/global_dockspace.cpp
     src/interface/gim/window.cpp
     src/interface/app_interface.c
 
@@ -220,9 +221,9 @@ endif()
 if(DEFINED EMSCRIPTEN)
     # -s USE_PTHREADS=1
     # --embed-file /home/urs/projects/mirabel-rv2/plugins/example/build-web/example_client.wasm@/example_client.wasm
-    set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-O3 -fPIC")
-    set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-O2 -s USE_SDL=2 -fPIC")
-    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/src/mirabel.html -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1")
+    set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-O3 -fPIC -pthread")
+    set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-O2 -s USE_SDL=2 -fPIC -pthread")
+    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/src/mirabel.html -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1 -pthread")
     set_target_properties(mirabel PROPERTIES SUFFIX ".html")
 else()
     target_link_libraries(mirabel SDL2::SDL2)
