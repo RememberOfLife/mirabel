@@ -278,13 +278,6 @@ bool graphical_immediate_mode_interface::update_and_render()
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    if (show_imgui_demo) {
-        ImGui::ShowDemoWindow();
-    } else {
-        //TODO show imgui windows: main bar, workspaces, current workspace opened windows
-        // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
-    }
-
     //TODO put this in the sdl resize event, make a resize function on the context app
     // whole workspace under the menubar, use this for frontend background if wanted
     //TODO just need w and h of whole window, replace
@@ -303,26 +296,59 @@ bool graphical_immediate_mode_interface::update_and_render()
 
     glViewport(0, 0, (int)fbw, (int)fbh);
 
-    // test nanovg
-    nvgBeginFrame(nanovg_ctx, fbw, fbh, 2);
-    nvgSave(nanovg_ctx);
-    nvgBeginPath(nanovg_ctx);
-    nvgRect(nanovg_ctx, fex, fey, few, feh);
-    nvgFillColor(nanovg_ctx, nvgRGB(114, 140, 153));
-    nvgFill(nanovg_ctx);
-    nvgBeginPath(nanovg_ctx);
-    // nvgRect(nanovg_ctx, fex + few - 40, fey + feh - 40, 30, 30);
-    nvgMoveTo(nanovg_ctx, 100, 100);
-    nvgLineTo(nanovg_ctx, 200, 200);
-    nvgStrokeWidth(nanovg_ctx, 10);
-    nvgStrokeColor(nanovg_ctx, nvgRGB(0, 0, 0));
-    nvgStroke(nanovg_ctx);
-    nvgRestore(nanovg_ctx);
-    nvgEndFrame(nanovg_ctx);
+    if (show_imgui_demo) {
+        ImGui::ShowDemoWindow();
+    } else {
+        main_menu_bar();
+        //TODO show imgui windows: main bar, workspaces, current workspace opened windows
+        // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
 
-    //TODO update ticks for frontend or no?
-    //TODO update frontend
-    //TODO render frontend
+        //TODO update ticks for frontend or no?
+        //TODO update frontend
+        //TODO render frontend
+    }
+
+    {
+        // test nanovg
+        nvgBeginFrame(nanovg_ctx, fbw, fbh, 2);
+        nvgSave(nanovg_ctx);
+
+        nvgBeginPath(nanovg_ctx);
+        nvgRect(nanovg_ctx, fex, fey, few, feh);
+        nvgFillColor(nanovg_ctx, nvgRGB(114, 140, 153));
+        nvgFill(nanovg_ctx);
+
+        float circ_x = fex + few / 2;
+        float circ_y = fey + feh / 2;
+        float circ_r = fmin(few, feh) / 20;
+        float circ_ro = circ_r * 2;
+
+        nvgBeginPath(nanovg_ctx);
+        nvgMoveTo(nanovg_ctx, circ_x, circ_y - circ_ro);
+        nvgLineTo(nanovg_ctx, fex, fey);
+        nvgLineTo(nanovg_ctx, circ_x - circ_ro, circ_y);
+        // nvgMoveTo(nanovg_ctx, circ_x - circ_ro, circ_y);
+        nvgLineTo(nanovg_ctx, fex, fey + feh);
+        nvgLineTo(nanovg_ctx, circ_x, circ_y + circ_ro);
+        // nvgMoveTo(nanovg_ctx, circ_x, circ_y + circ_ro);
+        nvgLineTo(nanovg_ctx, fex + few, fey + feh);
+        nvgLineTo(nanovg_ctx, circ_x + circ_ro, circ_y);
+        // nvgMoveTo(nanovg_ctx, circ_x + circ_ro, circ_y);
+        nvgLineTo(nanovg_ctx, fex + few, fey);
+        // nvgLineTo(nanovg_ctx, circ_x, circ_y - circ_ro);
+        nvgClosePath(nanovg_ctx);
+        nvgFillColor(nanovg_ctx, nvgRGB(87, 122, 140));
+        nvgFill(nanovg_ctx);
+
+        nvgBeginPath(nanovg_ctx);
+        nvgCircle(nanovg_ctx, circ_x, circ_y, circ_r);
+        nvgStrokeWidth(nanovg_ctx, 10);
+        nvgStrokeColor(nanovg_ctx, nvgRGB(0, 0, 0));
+        nvgStroke(nanovg_ctx);
+
+        nvgRestore(nanovg_ctx);
+        nvgEndFrame(nanovg_ctx);
+    }
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

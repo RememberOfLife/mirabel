@@ -104,6 +104,7 @@ namespace {
                             worker_quit = true;
                         } else {
                             //TODO alternatively, maybe the server has initiated the drop, then do ??
+                            // same thing actually..
                         }
                     } break;
                     default: {

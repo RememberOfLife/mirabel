@@ -67,7 +67,11 @@ namespace {
                     case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
                         //TODO client requests a queue for a connection, create a new connection and send it back
                     } break;
-                    //TODO handle adapter event for disconnecting this client / shutdown?
+                    case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                        //TODO handle adapter event for disconnecting this client / shutdown?
+                        exit = true;
+                        worker_quit = true;
+                    } break;
                     default: {
                         bool found_and_sent = false;
                         for (size_t conn_idx = 0; conn_idx < ctx->conns.size(); conn_idx++) {
@@ -78,7 +82,7 @@ namespace {
                             }
                         }
                         if (!found_and_sent) {
-                            mirabel_slogf(LOGS_WARN, "offline neta server: no connection id %u to send event to, dropping", e.base.connection_id);
+                            mirabel_slogf(LOGS_WARN, "offline neta server: no connection id %u to send event to, dropping type %u", e.base.connection_id, e.base.type);
                         }
                     } break;
                 }

@@ -5,8 +5,6 @@
 #include "nanovg.h"
 #include "imgui.h"
 
-#include "interface/interface.hpp"
-
 struct graphical_immediate_mode_interface {
 
     SDL_Window* sdl_window;
@@ -16,6 +14,7 @@ struct graphical_immediate_mode_interface {
     NVGcontext* nanovg_ctx;
 
     bool show_imgui_demo;
+    bool show_about_info;
     bool fullscreen;
 
     static graphical_immediate_mode_interface* create();
@@ -25,4 +24,8 @@ struct graphical_immediate_mode_interface {
 
     // metagui
     void global_dockspace(float* x, float* y, float* w, float* h);
+
+    void main_menu_bar();
+
+    void about_info();
 };
