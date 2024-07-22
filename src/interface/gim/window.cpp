@@ -140,11 +140,19 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     nvgCreateFont(self->nanovg_ctx, "nanovg_bold", "../res/fonts/opensans/OpenSans-Bold.ttf");
 #endif
 
+    self->fedd.fbw = -1;
+    self->fedd.fbh = -1;
+    glGenFramebuffers(1, &self->fedd.frontend_fbo);
+    glGenTextures(1, &self->fedd.frontend_tex);
+    glGenRenderbuffers(1, &self->fedd.frontend_rbo);
+
     return self;
 }
 
 void graphical_immediate_mode_interface::destroy()
 {
+    //TODO gracefully destroy frontend fbo + rbo + tex
+
 #ifdef __EMSCRIPTEN__
     nvgDeleteGLES2(nanovg_ctx);
 #else
@@ -166,22 +174,8 @@ bool graphical_immediate_mode_interface::update_and_render()
 {
     bool quit = false;
 
-    //TODO move out to display data header
-    //TODO and cul for usefulness..
-    float x_px = imgui_viewport->WorkPos.x;
-    float y_px = imgui_viewport->WorkPos.y;
-    float w_px = imgui_viewport->WorkSize.x;
-    float h_px = imgui_viewport->WorkSize.y;
-    float fx_px = x_px;
-    float fy_px = y_px;
-    float fw_px = w_px;
-    float fh_px = h_px;
-    float fbw = imgui_viewport->Size.x;
-    float fbh = imgui_viewport->Size.y;
-    float fex = fx_px - x_px;
-    float fey = fy_px - y_px;
-    float few = fw_px;
-    float feh = fh_px;
+    fedd.fbw = imgui_viewport->Size.x;
+    fedd.fbh = imgui_viewport->Size.y;
     static bool ctrl_left = false;
     static bool ctrl_right = false;
 
@@ -292,12 +286,8 @@ bool graphical_immediate_mode_interface::update_and_render()
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    //TODO put this in the sdl resize event, make a resize function on the context app
-    // whole workspace under the menubar, use this for frontend background if wanted
-    fedd.fbw = imgui_viewport->Size.x;
-    fedd.fbh = imgui_viewport->Size.y;
-
-    glViewport(0, 0, (int)fedd.fbw, (int)fedd.fbh);
+    //TODO put this in the sdl resize event, make a resize function on the context app?
+    glViewport(0, 0, (int)imgui_viewport->Size.x, (int)imgui_viewport->Size.y);
 
     {
         // draw background to refresh behind imgui windows

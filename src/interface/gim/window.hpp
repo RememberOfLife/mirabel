@@ -20,8 +20,13 @@ struct graphical_immediate_mode_interface {
     //TODO better place for this
     //TODO and cul for usefulness..
     struct {
+        // bool complete; //TODO so we actually only use it, if it is GL complete
+        GLuint frontend_fbo;
+        GLuint frontend_tex;
+        GLuint frontend_rbo;
         float fbw;
         float fbh;
+        //TODO these should in reality all be removable
         float fex;
         float fey;
         float few;

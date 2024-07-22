@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <cstdio>
 
+#include <GL/glew.h>
 #include "nanovg.h"
 
 #include "mirabel/application.h"
@@ -9,6 +10,9 @@
 
 void graphical_immediate_mode_interface::metagui_empty_frontend()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, fedd.frontend_fbo);
+    glViewport(0, 0, fedd.fbw, fedd.fbh);
+
     // test nanovg
     nvgBeginFrame(nanovg_ctx, fedd.fbw, fedd.fbh, 1); //TODO correct device pixel ratio
     nvgSave(nanovg_ctx);
@@ -58,4 +62,7 @@ void graphical_immediate_mode_interface::metagui_empty_frontend()
 
     nvgRestore(nanovg_ctx);
     nvgEndFrame(nanovg_ctx);
+
+    // reset framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
