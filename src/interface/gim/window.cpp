@@ -79,11 +79,12 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     self->imgui_io = &ImGui::GetIO();
-    self->imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // enable gamepad controls
+    self->imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // self->imgui_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // makes hotkeys uncomfortable because imgui grabs attention for nav
     // setup imgui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
+    self->imgui_io->IniFilename = NULL; //TODO reenable, but for now turn it off to test sane defaults..
 
     // dpi scaling
     float dpi_scale = 1;
@@ -93,6 +94,7 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
         if (dpi_scale < 1 || dpi_scale > 4) { // sanity check, would underscale < 1 on normal display (looks blurry)
             dpi_scale = 1;
         }
+        mirabel_slogf(LOGS_LESS, "imgui dpi scale adjusted: %f", dpi_scale);
     }
     self->imgui_io->FontGlobalScale = dpi_scale;
     //TODO load font with approriate size instead of scaling it!
@@ -103,12 +105,19 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
 
     self->imgui_viewport = ImGui::GetMainViewport();
 
+#ifndef __EMSCRIPTEN__
+    //TODO embed basic imgui font in web build and give it a loadable location via the resource manager
     //TODO load imgui fonts: docs/FONTS.md
-
     // ImFontConfig font_config;
-    // font_config.OversampleH = 4;
-    // font_config.OversampleV = 4;
-    // io.Fonts->AddFontFromFileTTF("../fonts/opensans/OpenSans-Regular.ttf", 20.0f, &font_config);
+    // font_config.RasterizerDensity = 2;
+    // font_config.OversampleH = 2;
+    // font_config.OversampleV = 2;
+    // use as &font_config last arg for loading
+    //TODO can use the returned fonts for font push/pop, save them somewhere
+    float font_size_normal = 22; // or 20, but no less
+    ImFont* imgui_reg = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
+    ImFont* imgui_bold = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
+#endif
 
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -124,7 +133,12 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
         exit(1);
     }
 
+#ifndef __EMSCRIPTEN__
+    //TODO same embedded basic font as the imgui basic one
     //TODO load nanovg fonts
+    //TODO also returns the font handle but not really needed truly
+    nvgCreateFont(self->nanovg_ctx, "nanovg_bold", "../res/fonts/opensans/OpenSans-Bold.ttf");
+#endif
 
     return self;
 }
@@ -280,74 +294,42 @@ bool graphical_immediate_mode_interface::update_and_render()
 
     //TODO put this in the sdl resize event, make a resize function on the context app
     // whole workspace under the menubar, use this for frontend background if wanted
-    //TODO just need w and h of whole window, replace
-    x_px = imgui_viewport->WorkPos.x;
-    y_px = imgui_viewport->WorkPos.y;
-    w_px = imgui_viewport->WorkSize.x;
-    h_px = imgui_viewport->WorkSize.y;
+    fedd.fbw = imgui_viewport->Size.x;
+    fedd.fbh = imgui_viewport->Size.y;
 
-    fbw = imgui_viewport->Size.x;
-    fbh = imgui_viewport->Size.y;
-    // frontend only gets the frontend dockspace
-    fex = fx_px;
-    fey = fy_px;
-    few = fw_px;
-    feh = fh_px;
+    glViewport(0, 0, (int)fedd.fbw, (int)fedd.fbh);
 
-    glViewport(0, 0, (int)fbw, (int)fbh);
+    {
+        // draw background to refresh behind imgui windows
+        nvgBeginFrame(nanovg_ctx, fedd.fbw, fedd.fbh, 1); //TODO correct device pixel ratio
+        nvgSave(nanovg_ctx);
+
+        nvgBeginPath(nanovg_ctx);
+        nvgRect(nanovg_ctx, imgui_viewport->WorkPos.x, imgui_viewport->WorkPos.y, imgui_viewport->WorkSize.x, imgui_viewport->WorkSize.y);
+        nvgFillColor(nanovg_ctx, nvgRGB(100, 100, 100));
+        nvgFill(nanovg_ctx);
+
+        nvgRestore(nanovg_ctx);
+        nvgEndFrame(nanovg_ctx);
+    }
 
     if (show_imgui_demo) {
         ImGui::ShowDemoWindow();
+        fedd.fex = imgui_viewport->WorkPos.x;
+        fedd.fey = imgui_viewport->WorkPos.y;
+        fedd.few = imgui_viewport->WorkSize.x;
+        fedd.feh = imgui_viewport->WorkSize.y;
+        metagui_empty_frontend();
     } else {
-        main_menu_bar();
+        metagui_main_menu_bar();
+        metagui_workspace_tabs();
+
         //TODO show imgui windows: main bar, workspaces, current workspace opened windows
         // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
 
         //TODO update ticks for frontend or no?
         //TODO update frontend
         //TODO render frontend
-    }
-
-    {
-        // test nanovg
-        nvgBeginFrame(nanovg_ctx, fbw, fbh, 2);
-        nvgSave(nanovg_ctx);
-
-        nvgBeginPath(nanovg_ctx);
-        nvgRect(nanovg_ctx, fex, fey, few, feh);
-        nvgFillColor(nanovg_ctx, nvgRGB(114, 140, 153));
-        nvgFill(nanovg_ctx);
-
-        float circ_x = fex + few / 2;
-        float circ_y = fey + feh / 2;
-        float circ_r = fmin(few, feh) / 20;
-        float circ_ro = circ_r * 2;
-
-        nvgBeginPath(nanovg_ctx);
-        nvgMoveTo(nanovg_ctx, circ_x, circ_y - circ_ro);
-        nvgLineTo(nanovg_ctx, fex, fey);
-        nvgLineTo(nanovg_ctx, circ_x - circ_ro, circ_y);
-        // nvgMoveTo(nanovg_ctx, circ_x - circ_ro, circ_y);
-        nvgLineTo(nanovg_ctx, fex, fey + feh);
-        nvgLineTo(nanovg_ctx, circ_x, circ_y + circ_ro);
-        // nvgMoveTo(nanovg_ctx, circ_x, circ_y + circ_ro);
-        nvgLineTo(nanovg_ctx, fex + few, fey + feh);
-        nvgLineTo(nanovg_ctx, circ_x + circ_ro, circ_y);
-        // nvgMoveTo(nanovg_ctx, circ_x + circ_ro, circ_y);
-        nvgLineTo(nanovg_ctx, fex + few, fey);
-        // nvgLineTo(nanovg_ctx, circ_x, circ_y - circ_ro);
-        nvgClosePath(nanovg_ctx);
-        nvgFillColor(nanovg_ctx, nvgRGB(87, 122, 140));
-        nvgFill(nanovg_ctx);
-
-        nvgBeginPath(nanovg_ctx);
-        nvgCircle(nanovg_ctx, circ_x, circ_y, circ_r);
-        nvgStrokeWidth(nanovg_ctx, 10);
-        nvgStrokeColor(nanovg_ctx, nvgRGB(0, 0, 0));
-        nvgStroke(nanovg_ctx);
-
-        nvgRestore(nanovg_ctx);
-        nvgEndFrame(nanovg_ctx);
     }
 
     ImGui::Render();

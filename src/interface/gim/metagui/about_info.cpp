@@ -5,7 +5,7 @@
 
 #include "interface/gim/window.hpp"
 
-void graphical_immediate_mode_interface::about_info()
+void graphical_immediate_mode_interface::metagui_about_info()
 {
     //TODO
 }

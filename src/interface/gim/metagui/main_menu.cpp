@@ -9,9 +9,10 @@
 
 #include "interface/gim/window.hpp"
 
-void graphical_immediate_mode_interface::main_menu_bar()
+void graphical_immediate_mode_interface::metagui_main_menu_bar()
 {
     if (ImGui::BeginMainMenuBar()) {
+
         if (ImGui::BeginMenu("Windows")) {
             ImGui::BeginDisabled();
             if (ImGui::MenuItem("Stats", "F3", false)) {
@@ -21,6 +22,11 @@ void graphical_immediate_mode_interface::main_menu_bar()
                 //TODO
             }
             ImGui::Separator();
+            ImGui::EndDisabled();
+            if (ImGui::MenuItem("ImGui Demo Mode", "F5", show_imgui_demo)) {
+                show_imgui_demo = !show_imgui_demo;
+            }
+            ImGui::BeginDisabled();
             if (ImGui::MenuItem("Fullscreen", "F11", false)) {
                 //TODO
             }

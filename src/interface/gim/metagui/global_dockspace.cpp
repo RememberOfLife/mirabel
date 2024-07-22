@@ -5,7 +5,7 @@
 
 #include "interface/gim/window.hpp"
 
-void graphical_immediate_mode_interface::global_dockspace(float* x, float* y, float* w, float* h)
+void graphical_immediate_mode_interface::metagui_global_dockspace(float* x, float* y, float* w, float* h)
 {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;

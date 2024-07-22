@@ -79,8 +79,10 @@ set(SOURCES
     src/game/game.c
 
     src/interface/gim/metagui/about_info.cpp
+    src/interface/gim/metagui/empty_frontend.cpp
     src/interface/gim/metagui/global_dockspace.cpp
     src/interface/gim/metagui/main_menu.cpp
+    src/interface/gim/metagui/workspace_tabs.cpp
     src/interface/gim/window.cpp
     src/interface/app_interface.c
 
