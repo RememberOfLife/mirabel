@@ -94,7 +94,7 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
         if (dpi_scale < 1 || dpi_scale > 4) { // sanity check, would underscale < 1 on normal display (looks blurry)
             dpi_scale = 1;
         }
-        mirabel_slogf(LOGS_LESS, "imgui dpi scale adjusted: %f", dpi_scale);
+        mirabel_slogf(LOGS_LESS, "imgui dpi scale adjusted: %.2f", dpi_scale);
     }
     self->imgui_io->FontGlobalScale = dpi_scale;
     //TODO load font with approriate size instead of scaling it!
@@ -139,6 +139,10 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     //TODO also returns the font handle but not really needed truly
     nvgCreateFont(self->nanovg_ctx, "nanovg_bold", "../res/fonts/opensans/OpenSans-Bold.ttf");
 #endif
+
+    self->show_imgui_demo = false;
+    self->show_about_info = false;
+    self->fullscreen = false;
 
     self->fedd.fbw = -1;
     self->fedd.fbh = -1;
@@ -313,6 +317,7 @@ bool graphical_immediate_mode_interface::update_and_render()
     } else {
         metagui_main_menu_bar();
         metagui_workspace_tabs();
+        metagui_about_info();
 
         //TODO show imgui windows: main bar, workspaces, current workspace opened windows
         // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
