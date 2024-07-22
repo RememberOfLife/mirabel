@@ -83,7 +83,7 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     // self->imgui_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // makes hotkeys uncomfortable because imgui grabs attention for nav
     // setup imgui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
+    // ImGui::StyleColorsLight();
     self->imgui_io->IniFilename = NULL; //TODO reenable, but for now turn it off to test sane defaults..
 
     // dpi scaling
@@ -296,7 +296,7 @@ bool graphical_immediate_mode_interface::update_and_render()
 
         nvgBeginPath(nanovg_ctx);
         nvgRect(nanovg_ctx, imgui_viewport->WorkPos.x, imgui_viewport->WorkPos.y, imgui_viewport->WorkSize.x, imgui_viewport->WorkSize.y);
-        nvgFillColor(nanovg_ctx, nvgRGB(100, 100, 100));
+        nvgFillColor(nanovg_ctx, nvgRGB(0, 0, 0));
         nvgFill(nanovg_ctx);
 
         nvgRestore(nanovg_ctx);
