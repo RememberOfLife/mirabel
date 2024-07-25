@@ -13,6 +13,12 @@
 #endif
 #include "imgui.h"
 
+// #include "prototype_util/sane_windows.h"
+// #if !ISMSVC
+// #include <unistd.h>
+// #include <signal.h>
+// #endif
+
 #include "mirabel/application.h"
 #include "mirabel/game.h"
 #include "generated/git_commit_hash.h"
@@ -36,7 +42,7 @@ void graphical_immediate_mode_interface::metagui_about_info()
     }
 
     ImGui::SetNextWindowSize(ImVec2(600, 380), ImGuiCond_FirstUseEver);
-    bool window_contents_visible = ImGui::Begin("About", &show_about_info);
+    bool window_contents_visible = ImGui::Begin("About", &show_about_info, ImGuiWindowFlags_NoCollapse);
     if (!window_contents_visible) {
         ImGui::End();
         return;

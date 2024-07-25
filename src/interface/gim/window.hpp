@@ -1,9 +1,13 @@
 #pragma once
 
+#include <vector>
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include "nanovg.h"
 #include "imgui.h"
+
+#include "interface/gim/workspace.hpp"
 
 struct graphical_immediate_mode_interface {
 
@@ -17,8 +21,9 @@ struct graphical_immediate_mode_interface {
     bool show_about_info;
     bool fullscreen;
 
+    std::vector<gim_workspace> workspaces;
+
     //TODO better place for this
-    //TODO and cul for usefulness..
     struct {
         // bool complete; //TODO so we actually only use it, if it is GL complete
         GLuint frontend_fbo;
@@ -44,4 +49,5 @@ struct graphical_immediate_mode_interface {
     void metagui_global_dockspace(float* x, float* y, float* w, float* h);
     void metagui_main_menu_bar();
     void metagui_workspace_tabs();
+    void metagui_workspace_window(uint32_t workspace_id);
 };

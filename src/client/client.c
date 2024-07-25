@@ -64,3 +64,14 @@ bool client_update(client* self)
     }
     return exit;
 }
+
+workspace* client_add_workspace(client* self)
+{
+    workspace* new_workspace = malloc(sizeof(workspace));
+    if (workspace_create(new_workspace)) {
+        free(new_workspace);
+        return NULL;
+    }
+    VEC_PUSH(&self->workspaces, new_workspace);
+    return new_workspace;
+}

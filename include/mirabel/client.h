@@ -25,6 +25,11 @@ void client_destroy(client* self);
 // returns true to shutdown
 bool client_update(client* self);
 
+// interaction methods for interface
+
+// returns NULL on failure, otherwise ptr to the newly created workspace
+workspace* client_add_workspace(client* self);
+
 #ifdef __cplusplus
 }
 #endif

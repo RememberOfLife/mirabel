@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #include "mirabel/network_connection.h"
 
 #ifdef __cplusplus

@@ -117,8 +117,11 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     float font_size_normal = 22; // or 20, but no less
     ImFont* imgui_reg = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
     ImFont* imgui_bold = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
+    ImFont* imgui_italic = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
+    ImFont* imgui_mono = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal);
 #endif
 
+    //TODO this doesnt work on web, we have to render everything to a separate framebuffer and resolve it manually
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
@@ -316,7 +319,11 @@ bool graphical_immediate_mode_interface::update_and_render()
         metagui_empty_frontend();
     } else {
         metagui_main_menu_bar();
-        metagui_workspace_tabs();
+
+        ImGui::DockSpaceOverViewport();
+        //TODO loop through workspaces and display them
+        metagui_workspace_window(1);
+
         metagui_about_info();
 
         //TODO show imgui windows: main bar, workspaces, current workspace opened windows
