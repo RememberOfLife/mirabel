@@ -23,7 +23,9 @@
 
 graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
 {
-    graphical_immediate_mode_interface* self = (graphical_immediate_mode_interface*)malloc(sizeof(graphical_immediate_mode_interface));
+    //TODO log statements within here will crash because the self has not been returned and set into the interface obj yet
+
+    graphical_immediate_mode_interface* self = new graphical_immediate_mode_interface{};
 
     const int initial_window_width = 1280;
     const int initial_window_height = 720;
@@ -115,10 +117,17 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     // use as &font_config last arg for loading
     //TODO can use the returned fonts for font push/pop, save them somewhere
     float font_size_normal = 22; // or 20, but no less
-    ImFont* imgui_reg = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
-    ImFont* imgui_bold = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
-    ImFont* imgui_italic = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
-    ImFont* imgui_mono = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal);
+    self->fonts.imgui_reg = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
+    self->fonts.imgui_bold = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
+    self->fonts.imgui_italic = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
+    self->fonts.imgui_mono = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal);
+    //TODO mono font is too big compare to opensans
+#else
+    ImFont* imgui_default = self->imgui_io->Fonts->Fonts[0];
+    self->fonts.imgui_reg = imgui_default;
+    self->fonts.imgui_bold = imgui_default;
+    self->fonts.imgui_italic = imgui_default;
+    self->fonts.imgui_mono = imgui_default;
 #endif
 
     //TODO this doesnt work on web, we have to render everything to a separate framebuffer and resolve it manually
@@ -256,7 +265,7 @@ bool graphical_immediate_mode_interface::update_and_render()
                 //TODO toggle stats
             }
             if (event.key.keysym.sym == SDLK_F4) {
-                //TODO toggle global log, this is on the same level as the workspace tabs, can also be one of the tabs??
+                show_log = !show_log;
             }
             if (event.key.keysym.sym == SDLK_F5) {
                 show_imgui_demo = !show_imgui_demo;
@@ -324,7 +333,12 @@ bool graphical_immediate_mode_interface::update_and_render()
         //TODO loop through workspaces and display them
         metagui_workspace_window(1);
 
+        metagui_log();
         metagui_about_info();
+
+        if (ImGui::Button("abc")) {
+            mirabel_slogf(LOGS_WARN, "abc");
+        }
 
         //TODO show imgui windows: main bar, workspaces, current workspace opened windows
         // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
@@ -355,6 +369,7 @@ static const char* app_interface_get_last_error_mi(app_interface* self)
 
 static error_code app_interface_create_mi(app_interface* self)
 {
+    self->data = NULL;
     self->data = graphical_immediate_mode_interface::create();
     if (self->data == NULL) {
         return APP_INTERFACE_ERR_NOK;
@@ -374,7 +389,21 @@ static bool app_interface_mainloop_mi(app_interface* self)
 
 static void app_interface_log_mi(app_interface* self, LOGS status, const char* str, const char* str_end)
 {
-    //TODO
+    graphical_immediate_mode_interface* self_interface = (graphical_immediate_mode_interface*)self->data;
+    graphical_immediate_mode_interface::log_entry new_log_entry{
+        .time = timestamp_get_ms64(),
+        .status = status,
+        .msg = NULL,
+    };
+    if (str_end == NULL) {
+        new_log_entry.msg = (str == NULL ? NULL : strdup(str));
+    } else if (str != NULL) {
+        size_t msg_len = str_end - str;
+        new_log_entry.msg = (char*)malloc(msg_len + 1);
+        memcpy(new_log_entry.msg, str, msg_len);
+        new_log_entry.msg[msg_len] = '\0';
+    }
+    self_interface->stored_logs.push_back(new_log_entry);
 }
 
 static const char* app_interface_user_file_path_prompt_mi(app_interface* self, const char* suggested_save_name)

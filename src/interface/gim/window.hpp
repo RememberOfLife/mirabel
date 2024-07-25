@@ -19,9 +19,25 @@ struct graphical_immediate_mode_interface {
 
     bool show_imgui_demo;
     bool show_about_info;
+    bool show_log;
     bool fullscreen;
 
     std::vector<gim_workspace> workspaces;
+
+    struct log_entry {
+        uint64_t time;
+        LOGS status;
+        char* msg;
+    };
+
+    std::vector<log_entry> stored_logs;
+
+    struct {
+        ImFont* imgui_reg;
+        ImFont* imgui_bold;
+        ImFont* imgui_italic;
+        ImFont* imgui_mono;
+    } fonts;
 
     //TODO better place for this
     struct {
@@ -47,7 +63,7 @@ struct graphical_immediate_mode_interface {
     void metagui_about_info();
     void metagui_empty_frontend();
     void metagui_global_dockspace(float* x, float* y, float* w, float* h);
+    void metagui_log();
     void metagui_main_menu_bar();
-    void metagui_workspace_tabs();
     void metagui_workspace_window(uint32_t workspace_id);
 };

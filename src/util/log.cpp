@@ -7,6 +7,8 @@
 #include <emscripten.h>
 #endif
 #include "mirabel/alloc.h"
+#include "mirabel/app_interface.h"
+#include "mirabel/application.h"
 #include "mirabel/log.h"
 
 //TODO this entire impl is one big hack, in reality we'd likely route this through the client
@@ -46,12 +48,17 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
             vsnprintf(target_buf, print_len, fmt, args);
         }
 
+        // log to the interface
+        if (appi.interface->data != NULL) { //TODO the data check is ugly, find a better way, see creation logging for the interface, should ideally still be recorded for the interface..
+            app_interface_log(appi.interface, status, target_buf, NULL);
+        }
+
         // process and output
         bool bold = status & LOGS_STYLE_BOLD;
         bool line_colored = status & LOGS_STYLE_LINE_COLORED;
         bool invert = status & LOGS_STYLE_INVERT;
-        status = (LOGS)(status & LOGS_TYPE_MASK);
-        //TODO log to the interface
+        LOGS status_only = (LOGS)(status & LOGS_STATUS_MASK);
+
 #ifndef __EMSCRIPTEN__
         const char* status_map[LOGS_COUNT] = {
             [LOGS_LESS] = "       ",
@@ -62,14 +69,14 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
             [LOGS_ERR] = "[ERROR]",
             [LOGS_FATAL] = "[FATAL]",
         };
-        fprintf(stdout, "%s: %s\n", status_map[status], target_buf);
+        fprintf(stdout, "%s: %s\n", status_map[status_only], target_buf);
 #endif
         // log to the web js, //TODO normally the app_interface would do this
         // clang-format off
 #ifdef __EMSCRIPTEN__
         EM_ASM({
             log(LOGS.from_int($0), UTF8ToString($1), $2, $3, $4);
-        }, status, target_buf, bold, line_colored, invert);
+        }, status_only, target_buf, bold, line_colored, invert);
 #endif
         // clang-format on
 

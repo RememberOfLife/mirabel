@@ -12,7 +12,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
     //TODO separate id from window title so we can change the window title without messing up imgui internal ids
     char window_title[128];
     sprintf(window_title, "Workspace###%u", workspace_id);
-    ImVec2 mcenter = ImGui::GetMainViewport()->GetCenter(); //TODO better initial placement as center docked..
+    ImVec2 mcenter = ImGui::GetMainViewport()->GetCenter(); //TODO better initial placement as center docked (on currently active workspace)
     ImGui::SetNextWindowPos(mcenter, ImGuiCond_FirstUseEver, ImVec2(0.5, 0.5));
     ImGui::SetNextWindowSize(ImVec2(1000, 600), ImGuiCond_FirstUseEver);
     if (ImGui::Begin(window_title, &opened)) {

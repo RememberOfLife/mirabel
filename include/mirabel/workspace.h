@@ -11,6 +11,8 @@ extern "C" {
 typedef struct workspace_s {
     network_connection* netc;
 
+    uint32_t session_id;
+
     // lobby lobby;
     // session gsession;
     // VECTOR(engine*) engines;

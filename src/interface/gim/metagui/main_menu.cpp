@@ -18,11 +18,11 @@ void graphical_immediate_mode_interface::metagui_main_menu_bar()
             if (ImGui::MenuItem("Stats", "F3", false)) {
                 //TODO
             }
+            ImGui::EndDisabled();
             if (ImGui::MenuItem("Logs", "F4", false)) {
-                //TODO
+                show_log = !show_log;
             }
             ImGui::Separator();
-            ImGui::EndDisabled();
             if (ImGui::MenuItem("ImGui Demo Mode", "F5", show_imgui_demo)) {
                 show_imgui_demo = !show_imgui_demo;
             }

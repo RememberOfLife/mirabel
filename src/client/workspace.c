@@ -1,11 +1,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mirabel/event.h"
+
 #include "mirabel/workspace.h"
 
 bool workspace_create(workspace* self)
 {
     self->netc = NULL;
+    self->session_id = EVENT_SESSION_NONE;
     return false;
 }
 
