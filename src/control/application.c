@@ -18,6 +18,12 @@
 /////
 // internal
 
+void handle_sigquit(int sig)
+{
+    mirabel_slogf(LOGS_OK, "SIGQUIT, immediate shutdown");
+    exit(1);
+}
+
 void handle_sigint(int sig)
 {
     mirabel_slogf(LOGS_OK, "SIGINT, immediate shutdown");
@@ -61,6 +67,14 @@ void app_create()
     sigemptyset(&sa.sa_mask);
     if (sigaction(SIGINT, &sa, NULL) == -1) {
         mirabel_slogf(LOGS_FATAL, "failed to register SIGINT handler");
+        exit(1); //TODO fail creation gracefully or just exit?
+    }
+    // register SIGQUIT handler
+    sa.sa_handler = handle_sigquit;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGQUIT, &sa, NULL) == -1) {
+        mirabel_slogf(LOGS_FATAL, "failed to register SIGQUIT handler");
         exit(1); //TODO fail creation gracefully or just exit?
     }
 

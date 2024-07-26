@@ -23,7 +23,6 @@
 
 bool graphical_immediate_mode_interface::create()
 {
-    return true;
     sdl_window = NULL;
     sdl_glcontext = NULL;
     imgui_io = NULL;
@@ -203,8 +202,6 @@ bool graphical_immediate_mode_interface::update_and_render()
 {
     bool quit = false;
 
-    fedd.fbw = imgui_viewport->Size.x;
-    fedd.fbh = imgui_viewport->Size.y;
     static bool ctrl_left = false;
     static bool ctrl_right = false;
 
@@ -316,7 +313,9 @@ bool graphical_immediate_mode_interface::update_and_render()
     ImGui::NewFrame();
 
     //TODO put this in the sdl resize event, make a resize function on the context app?
-    glViewport(0, 0, (int)imgui_viewport->Size.x, (int)imgui_viewport->Size.y);
+    fedd.fbw = imgui_viewport->Size.x;
+    fedd.fbh = imgui_viewport->Size.y;
+    glViewport(0, 0, (int)fedd.fbw, (int)fedd.fbh);
 
     {
         // draw background to refresh behind imgui windows
@@ -350,7 +349,13 @@ bool graphical_immediate_mode_interface::update_and_render()
         metagui_about_info();
 
         if (ImGui::Button("abc")) {
+            mirabel_slogf(LOGS_LESS, "abc");
+            mirabel_slogf(LOGS_NORM, "abc");
+            mirabel_slogf(LOGS_OK, "abc");
+            mirabel_slogf(LOGS_INFO, "abc");
             mirabel_slogf(LOGS_WARN, "abc");
+            mirabel_slogf(LOGS_ERR, "abc");
+            mirabel_slogf(LOGS_FATAL, "abc");
         }
 
         //TODO show imgui windows: main bar, workspaces, current workspace opened windows

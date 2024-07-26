@@ -49,7 +49,7 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
         }
 
         // log to the interface
-        if (appi.interface->data != NULL) { //TODO the data check is ugly, find a better way, see creation logging for the interface, should ideally still be recorded for the interface..
+        if (appi.interface != NULL) { //TODO the data check is ugly, find a better way, see creation logging for the interface, should ideally still be recorded for the interface..
             app_interface_log(appi.interface, status, target_buf, NULL);
         }
 
