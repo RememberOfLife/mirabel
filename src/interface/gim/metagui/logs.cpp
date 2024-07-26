@@ -71,13 +71,11 @@ void graphical_immediate_mode_interface::metagui_log()
                     // pass
                 } break;
             }
-            if (line_no < stored_logs.size() - 1) {
-                ImGui::PushFont(fonts.imgui_mono);
-                ImGui::Text("[%09lu]", cur_log_entry->time);
-                ImGui::PopFont();
-            }
+            ImGui::PushFont(fonts.imgui_mono);
+            ImGui::Text("[%09lu]", cur_log_entry->time);
             ImGui::SameLine();
             ImGui::TextUnformatted(cur_log_entry->msg, NULL);
+            ImGui::PopFont();
             if (colored) {
                 ImGui::PopStyleColor();
             }

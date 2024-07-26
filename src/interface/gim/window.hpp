@@ -54,7 +54,7 @@ struct graphical_immediate_mode_interface {
         float feh;
     } fedd;
 
-    static graphical_immediate_mode_interface* create();
+    bool create();
     void destroy();
 
     bool update_and_render();

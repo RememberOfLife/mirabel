@@ -21,11 +21,14 @@
 
 #include "interface/gim/window.hpp"
 
-graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
+bool graphical_immediate_mode_interface::create()
 {
-    //TODO log statements within here will crash because the self has not been returned and set into the interface obj yet
-
-    graphical_immediate_mode_interface* self = new graphical_immediate_mode_interface{};
+    return true;
+    sdl_window = NULL;
+    sdl_glcontext = NULL;
+    imgui_io = NULL;
+    imgui_viewport = NULL;
+    nanovg_ctx = NULL;
 
     const int initial_window_width = 1280;
     const int initial_window_height = 720;
@@ -57,18 +60,18 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     SDL_GL_SetSwapInterval(1); // vsync with 1, possibly set after window creation
 
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    self->sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
-    if (self->sdl_window == NULL) {
+    sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
+    if (sdl_window == NULL) {
         mirabel_slogf(LOGS_FATAL, "sdl window create error: %s\n", SDL_GetError());
         exit(1);
     }
 
-    self->sdl_glcontext = SDL_GL_CreateContext(self->sdl_window);
-    if (self->sdl_glcontext == NULL) {
+    sdl_glcontext = SDL_GL_CreateContext(sdl_window);
+    if (sdl_glcontext == NULL) {
         mirabel_slogf(LOGS_FATAL, "sdl gl context create error: %s\n", SDL_GetError());
         exit(1);
     }
-    SDL_GL_MakeCurrent(self->sdl_window, self->sdl_glcontext);
+    SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
 
     // SDL_GL_SetSwapInterval(0); //TODO enable vsync?
 
@@ -80,32 +83,32 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    self->imgui_io = &ImGui::GetIO();
-    self->imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    // self->imgui_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // makes hotkeys uncomfortable because imgui grabs attention for nav
+    imgui_io = &ImGui::GetIO();
+    imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // imgui_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // makes hotkeys uncomfortable because imgui grabs attention for nav
     // setup imgui style
     ImGui::StyleColorsDark();
     // ImGui::StyleColorsLight();
-    self->imgui_io->IniFilename = NULL; //TODO reenable, but for now turn it off to test sane defaults..
+    imgui_io->IniFilename = NULL; //TODO reenable, but for now turn it off to test sane defaults..
 
     // dpi scaling
     float dpi_scale = 1;
     float dpi;
-    if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(self->sdl_window), &dpi, NULL, NULL)) {
+    if (!SDL_GetDisplayDPI(SDL_GetWindowDisplayIndex(sdl_window), &dpi, NULL, NULL)) {
         dpi_scale = dpi / 96; // 96 is the default dpi on windows
         if (dpi_scale < 1 || dpi_scale > 4) { // sanity check, would underscale < 1 on normal display (looks blurry)
             dpi_scale = 1;
         }
         mirabel_slogf(LOGS_LESS, "imgui dpi scale adjusted: %.2f", dpi_scale);
     }
-    self->imgui_io->FontGlobalScale = dpi_scale;
+    imgui_io->FontGlobalScale = dpi_scale;
     //TODO load font with approriate size instead of scaling it!
 
     // setup platform/renderer backends
-    ImGui_ImplSDL2_InitForOpenGL(self->sdl_window, self->sdl_glcontext);
+    ImGui_ImplSDL2_InitForOpenGL(sdl_window, sdl_glcontext);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    self->imgui_viewport = ImGui::GetMainViewport();
+    imgui_viewport = ImGui::GetMainViewport();
 
 #ifndef __EMSCRIPTEN__
     //TODO embed basic imgui font in web build and give it a loadable location via the resource manager
@@ -117,17 +120,16 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     // use as &font_config last arg for loading
     //TODO can use the returned fonts for font push/pop, save them somewhere
     float font_size_normal = 22; // or 20, but no less
-    self->fonts.imgui_reg = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
-    self->fonts.imgui_bold = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
-    self->fonts.imgui_italic = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
-    self->fonts.imgui_mono = self->imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal);
-    //TODO mono font is too big compare to opensans
+    fonts.imgui_reg = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Regular.ttf", font_size_normal);
+    fonts.imgui_bold = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Bold.ttf", font_size_normal);
+    fonts.imgui_italic = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
+    fonts.imgui_mono = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal * 0.9); //TODO mono font is too big compared to opensans
 #else
-    ImFont* imgui_default = self->imgui_io->Fonts->Fonts[0];
-    self->fonts.imgui_reg = imgui_default;
-    self->fonts.imgui_bold = imgui_default;
-    self->fonts.imgui_italic = imgui_default;
-    self->fonts.imgui_mono = imgui_default;
+    ImFont* imgui_default = imgui_io->Fonts->Fonts[0];
+    fonts.imgui_reg = imgui_default;
+    fonts.imgui_bold = imgui_default;
+    fonts.imgui_italic = imgui_default;
+    fonts.imgui_mono = imgui_default;
 #endif
 
     //TODO this doesnt work on web, we have to render everything to a separate framebuffer and resolve it manually
@@ -136,11 +138,11 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     glEnable(GL_BLEND);
 
 #ifdef __EMSCRIPTEN__
-    self->nanovg_ctx = nvgCreateGLES2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    nanovg_ctx = nvgCreateGLES2(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #else
-    self->nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
+    nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #endif
-    if (self->nanovg_ctx == NULL) {
+    if (nanovg_ctx == NULL) {
         mirabel_slogf(LOGS_FATAL, "nanovg context creation failed\n");
         exit(1);
     }
@@ -149,38 +151,49 @@ graphical_immediate_mode_interface* graphical_immediate_mode_interface::create()
     //TODO same embedded basic font as the imgui basic one
     //TODO load nanovg fonts
     //TODO also returns the font handle but not really needed truly
-    nvgCreateFont(self->nanovg_ctx, "nanovg_bold", "../res/fonts/opensans/OpenSans-Bold.ttf");
+    nvgCreateFont(nanovg_ctx, "nanovg_bold", "../res/fonts/opensans/OpenSans-Bold.ttf");
 #endif
 
-    self->show_imgui_demo = false;
-    self->show_about_info = false;
-    self->fullscreen = false;
+    show_imgui_demo = false;
+    show_about_info = false;
+    fullscreen = false;
 
-    self->fedd.fbw = -1;
-    self->fedd.fbh = -1;
-    glGenFramebuffers(1, &self->fedd.frontend_fbo);
-    glGenTextures(1, &self->fedd.frontend_tex);
-    glGenRenderbuffers(1, &self->fedd.frontend_rbo);
+    fedd.fbw = -1;
+    fedd.fbh = -1;
+    //TODO guard this so it is NULL when not properly initialized
+    glGenFramebuffers(1, &fedd.frontend_fbo);
+    glGenTextures(1, &fedd.frontend_tex);
+    glGenRenderbuffers(1, &fedd.frontend_rbo);
 
-    return self;
+    return false;
 }
 
 void graphical_immediate_mode_interface::destroy()
 {
     //TODO gracefully destroy frontend fbo + rbo + tex
 
+    if (nanovg_ctx != NULL) {
 #ifdef __EMSCRIPTEN__
-    nvgDeleteGLES2(nanovg_ctx);
+        nvgDeleteGLES2(nanovg_ctx);
 #else
-    nvgDeleteGL3(nanovg_ctx);
+        nvgDeleteGL3(nanovg_ctx);
 #endif
+    }
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
+    if (imgui_viewport != NULL) {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+    }
+    if (imgui_io != NULL) {
+        ImGui::DestroyContext();
+    }
 
-    SDL_GL_DeleteContext(sdl_glcontext);
-    SDL_DestroyWindow(sdl_window);
+    if (sdl_glcontext != NULL) {
+        SDL_GL_DeleteContext(sdl_glcontext);
+    }
+    if (sdl_window != NULL) {
+        SDL_DestroyWindow(sdl_window);
+    }
     SDL_Quit();
 
     delete this;
@@ -369,9 +382,8 @@ static const char* app_interface_get_last_error_mi(app_interface* self)
 
 static error_code app_interface_create_mi(app_interface* self)
 {
-    self->data = NULL;
-    self->data = graphical_immediate_mode_interface::create();
-    if (self->data == NULL) {
+    self->data = new graphical_immediate_mode_interface{};
+    if (((graphical_immediate_mode_interface*)self->data)->create()) {
         return APP_INTERFACE_ERR_NOK;
     }
     return APP_INTERFACE_ERR_OK;

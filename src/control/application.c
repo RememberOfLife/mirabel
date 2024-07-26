@@ -171,8 +171,10 @@ void app_args(int argc, char** argv)
             appi.interface->methods = found_interface_methods;
             if (app_interface_create(appi.interface) != APP_INTERFACE_ERR_OK) {
                 const char* err_str = app_interface_get_last_error(appi.interface);
-                mirabel_slogf(LOGS_ERR, "interface \"%s\" creation failed%s%s", err_str != NULL ? ": " : "", err_str != NULL ? err_str : "");
+                mirabel_slogf(LOGS_ERR, "interface \"%s\" creation failed%s%s", requested_interface, err_str != NULL ? ": " : "", err_str != NULL ? err_str : "");
                 app_interface_destroy(appi.interface);
+                mirabel_free(appi.interface);
+                appi.interface = NULL;
             }
         }
     }
