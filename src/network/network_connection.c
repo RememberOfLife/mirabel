@@ -18,6 +18,7 @@ bool network_connection_create(network_connection* self)
     self->adapter_server_port = default_adapter_server_port;
     self->adapter_state = RSI_IDLE;
     self->adapter.inbox = &self->inbox;
+    self->adapter.methods = NULL;
     self->adapter_error = NULL; //TODO unnecessary because RSI_IDLE, want to keep it?
 
     self->connection_state = RSI_NONE;
@@ -42,9 +43,17 @@ void network_connection_destroy(network_connection* self)
 {
     //TODO
 
+    // VEC_DESTROY(&self->connected_workspace_idcs);
+
     event_queue_destroy(&self->inbox);
 
-    // VEC_DESTROY(&self->connected_workspace_idcs);
+    if (self->authn_fail_reason != NULL) {
+        free(self->authn_fail_reason);
+    }
+
+    if (self->connection_verifail_reason != NULL) {
+        free(self->connection_verifail_reason);
+    }
 }
 
 void network_connection_outbox_push(network_connection* self, event_any* e)

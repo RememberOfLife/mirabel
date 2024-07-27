@@ -14,15 +14,18 @@
 extern "C" {
 #endif
 
+//TODO any way to NOT make this a macro?
+#define ADAPTER_SERVER_ADDRESS_SIZE (128)
+//TODO sizers for others too
+
 extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;
 
 typedef struct network_connection_s {
     bool deleted; // adapter is destructing itself asynchronously, will issue an event when it is ready to be destructed
 
-    char adapter_server_address[128];
+    char adapter_server_address[ADAPTER_SERVER_ADDRESS_SIZE];
     uint16_t adapter_server_port;
-    char* adapter_methods_name; // owning
     RUNNING_STATE_INDICATOR adapter_state;
     network_adapter adapter;
     char* adapter_error;

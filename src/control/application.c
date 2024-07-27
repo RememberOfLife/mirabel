@@ -152,18 +152,23 @@ void app_args(int argc, char** argv)
     }
 #endif
 
-    appi.aserver = mirabel_malloc(sizeof(server));
+    if (want_server || !no_server) {
+        appi.aserver = mirabel_malloc(sizeof(server));
+    }
     if (want_server) {
         // hosting server
+        mirabel_slogf(LOGS_LESS, "creating online server");
         server_create(appi.aserver, false);
     } else if (!no_server) {
         // offline server
+        mirabel_slogf(LOGS_LESS, "creating offline server");
         server_create(appi.aserver, true);
     }
 
     if (want_client) {
         appi.aclient = mirabel_malloc(sizeof(client));
         client_create(appi.aclient);
+        mirabel_slogf(LOGS_LESS, "creating client");
     }
 
     const char* requested_interface = rosa_argpv_val(ap, "interface");
@@ -181,6 +186,7 @@ void app_args(int argc, char** argv)
         if (found_interface_methods == NULL) {
             mirabel_slogf(LOGS_ERR, "interface \"%s\" not found", requested_interface);
         } else {
+            mirabel_slogf(LOGS_LESS, "creating interface \"%s\"", requested_interface);
             appi.interface = mirabel_malloc(sizeof(app_interface));
             appi.interface->methods = found_interface_methods;
             if (app_interface_create(appi.interface) != APP_INTERFACE_ERR_OK) {
@@ -197,7 +203,9 @@ void app_args(int argc, char** argv)
 bool app_mainloop()
 {
     bool shutdown = false;
-    shutdown |= server_update(appi.aserver);
+    if (appi.aserver != NULL) {
+        shutdown |= server_update(appi.aserver);
+    }
     if (appi.aclient != NULL) {
         shutdown |= client_update(appi.aclient);
     }

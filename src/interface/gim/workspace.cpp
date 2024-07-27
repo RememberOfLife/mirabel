@@ -8,6 +8,7 @@
 gim_workspace::gim_workspace(uint32_t workspace_id)
 {
     client_workspace = client_get_workspace_by_id(appi.aclient, workspace_id);
+    current_connection_idx = 0;
 }
 
 void gim_workspace::connection_new()
@@ -24,4 +25,5 @@ void gim_workspace::connection_detach()
 {
     //TODO need to do cleanup and possibly gracefully disconnect our workspace here..
     client_workspace->netc = NULL;
+    current_connection_idx = 0;
 }

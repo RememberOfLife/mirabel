@@ -7,7 +7,7 @@
 struct gim_workspace {
     workspace* client_workspace;
 
-    size_t current_connection_idx = 0;
+    size_t current_connection_idx;
 
     gim_workspace(uint32_t workspace_id);
 

@@ -68,4 +68,14 @@ struct graphical_immediate_mode_interface {
 
     void metagui_workspace_window(uint32_t workspace_idx);
     void metagui_new_workspace(); //TODO where this is used, do we need more info? like where to place the new tab
+
+    // metagui util
+    enum METAGUI_UTIL_BUTTON_TYPE {
+        METAGUI_UTIL_BUTTON_TYPE_SUCCESS = 0,
+        METAGUI_UTIL_BUTTON_TYPE_WARN = 1,
+        METAGUI_UTIL_BUTTON_TYPE_DANGER = 2,
+    };
+
+    void metagui_util_push_button_colors(METAGUI_UTIL_BUTTON_TYPE btn_type);
+    void metagui_util_pop_button_colors();
 };

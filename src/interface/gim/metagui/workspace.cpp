@@ -7,6 +7,7 @@
 
 #include "mirabel/application.h"
 #include "mirabel/client.h"
+#include "mirabel/methods_registry.h"
 #include "mirabel/workspace.h"
 
 #include "interface/gim/window.hpp"
@@ -25,6 +26,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
 
         ImGuiTabBarFlags tabbar_flags = ImGuiTabBarFlags_AutoSelectNewTabs | ImGuiTabBarFlags_Reorderable;
         if (ImGui::BeginTabBar("Breadcrumbs", tabbar_flags)) {
+            //TODO draw out tabitems into separate functions
             if (ImGui::BeginTabItem("> Connection")) {
 
                 ImGuiWindowFlags window_flags = ImGuiWindowFlags_None;
@@ -38,6 +40,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                 }
                 ImGui::BeginChild("Connection", ImVec2(window_size, 0), ImGuiChildFlags_None, window_flags);
                 {
+                    //TODO possibly draw out into separate functions
                     if (gim_ws->client_workspace->netc == NULL) {
                         if (ImGui::Button("New Connection", ImVec2(-1, 0))) {
                             gim_ws->connection_new();
@@ -48,6 +51,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             if (disable_existing_connection_listbox) {
                                 ImGui::BeginDisabled();
                             }
+                            listbox_item_count++;
                             if (listbox_item_count < 3) {
                                 listbox_item_count = 3;
                             }
@@ -78,75 +82,112 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                     } else {
                         if (ImGui::Button("Detach from Connection", ImVec2(-1, 0))) {
                             gim_ws->connection_detach();
-                        }
-                    }
+                        } else {
+                            ImGui::PushFont(fonts.imgui_mono);
+                            ImGui::Text("Using: %p", gim_ws->client_workspace->netc); //TODO better name with context from connection; maybe only offer the ones that are actually online an up an running to be used?
+                            ImGui::PopFont();
+                            ImGui::Separator();
 
-                    if (false) {
-                        bool offline_server_available = true;
-                        if (!offline_server_available) {
-                            ImGui::BeginDisabled();
-                        }
-                        if (ImGui::Button("Offline Server", ImVec2(-1, 2 * ImGui::GetTextLineHeightWithSpacing()))) {
-                        }
-                        if (!offline_server_available) {
-                            ImGui::EndDisabled();
-                        }
-                    }
-                    if (false) {
-                        ImGui::Separator();
-                        ImGui::Text("Saved Servers");
-                        ImGui::SameLine();
-                        ImGui::SmallButton("Clear"); //TODO right align
-                        //TODO automatically scale height of listbox up to some value, depending on the number of saved servers?
-                        if (ImGui::BeginListBox("##ServerList", ImVec2(-FLT_MIN, 1 * ImGui::GetTextLineHeightWithSpacing()))) {
-                            static int item_current_idx = 0;
-                            for (int n = 0; n < 3; n++) {
-                                const bool is_selected = (item_current_idx == n);
-                                char selectable_server_name[64];
-                                sprintf(selectable_server_name, "Server %i", n);
-                                if (ImGui::Selectable(selectable_server_name, is_selected)) {
-                                    item_current_idx = n;
-                                }
-                                if (is_selected) {
-                                    ImGui::SetItemDefaultFocus();
+                            const network_adapter_methods* offline_adapter_methods = (const network_adapter_methods*)methods_registry_get(&appi.registry, "network_adapter_client", "offline");
+                            bool offline_server_available = appi.aserver != NULL;
+                            if (!offline_server_available) {
+                                ImGui::BeginDisabled();
+                            }
+                            if (ImGui::Button(">> Offline Server Connect <<", ImVec2(-1, 2 * ImGui::GetTextLineHeightWithSpacing()))) {
+                                if (offline_adapter_methods) {
+                                    gim_ws->client_workspace->netc->adapter.methods = offline_adapter_methods;
+                                    //TODO connect
+                                } else {
+                                    mirabel_slogf(LOGS_WARN, "could not find offline adapter methods for client");
                                 }
                             }
-                            ImGui::EndListBox();
-                        }
-                        ImGui::Separator();
-                        ImGui::Text("Connection");
-                        static char server_addr_buf[128] = "run.mirabel.dev";
-                        uint16_t server_port = 61801;
-                        ImGui::InputText("address", server_addr_buf, sizeof(server_addr_buf)); //TODO filter letters
-                        ImGui::InputScalar("port", ImGuiDataType_U16, &server_port);
-                        static bool server_saved = true;
-                        ImGui::Checkbox("Save Server", &server_saved);
-                        if (server_saved) {
-                            static char server_short_name[32] = "";
-                            ImGui::InputTextWithHint("saved name", server_addr_buf, server_short_name, sizeof(server_short_name));
-                        }
-                        ImGui::Button("Connect", ImVec2(-1, 0));
-                    }
-                    if (false) {
-                        ImGui::Separator();
-                        ImGui::Text("Status:");
-                        ImGui::SameLine();
-                        ImGui::Text("---");
-                        ImGui::Button("PING", ImVec2(-1, 0));
-                        if (ImGui::CollapsingHeader("Thumbprint: 01:23:45:67:89:AB:CD:FE")) {
-                            //TODO push monospace imgui font here
-                            for (int i = 0; i < 8; i++) {
-                                for (int j = 0; j < 8; j++) {
-                                    ImGui::Text("%02x", i * j);
-                                    if (j < 8 - 1) {
-                                        ImGui::SameLine();
+                            if (!offline_server_available) {
+                                ImGui::EndDisabled();
+                            }
+                            if (false) {
+                                ImGui::Separator();
+                                ImGui::Text("Saved Servers");
+                                ImGui::SameLine();
+                                ImGui::SmallButton("Clear"); //TODO right align
+                                //TODO automatically scale height of listbox up to some value, depending on the number of saved servers?
+                                if (ImGui::BeginListBox("##ServerList", ImVec2(-FLT_MIN, 1 * ImGui::GetTextLineHeightWithSpacing()))) {
+                                    static int item_current_idx = 0;
+                                    for (int n = 0; n < 3; n++) {
+                                        const bool is_selected = (item_current_idx == n);
+                                        char selectable_server_name[64];
+                                        sprintf(selectable_server_name, "Server %i", n);
+                                        if (ImGui::Selectable(selectable_server_name, is_selected)) {
+                                            item_current_idx = n;
+                                        }
+                                        if (is_selected) {
+                                            ImGui::SetItemDefaultFocus();
+                                        }
+                                    }
+                                    ImGui::EndListBox();
+                                }
+                            }
+                            ImGui::Separator();
+                            ImGui::Text("Connection");
+                            const char* network_adapter_preview = "<none>";
+                            if (gim_ws->client_workspace->netc->adapter.methods != NULL) {
+                                network_adapter_preview = gim_ws->client_workspace->netc->adapter.methods->name;
+                            }
+                            if (ImGui::BeginCombo("Network Adapter", network_adapter_preview)) {
+                                uint32_t method_count = methods_registry_get_count(&appi.registry, "network_adapter_client");
+                                for (uint32_t method_idx = 0; method_idx < method_count; method_idx++) {
+                                    const methods_entry* adapter_methods = methods_registry_get_entry_by_idx(&appi.registry, "network_adapter_client", method_idx);
+                                    const bool is_selected = (adapter_methods->methods == gim_ws->client_workspace->netc->adapter.methods);
+                                    if (adapter_methods->methods == offline_adapter_methods) {
+                                        continue;
+                                    }
+                                    if (ImGui::Selectable(((const network_adapter_methods*)adapter_methods->methods)->name, is_selected)) {
+                                        gim_ws->client_workspace->netc->adapter.methods = (const network_adapter_methods*)adapter_methods->methods;
+                                    }
+                                    if (is_selected) {
+                                        ImGui::SetItemDefaultFocus();
+                                    }
+                                }
+                                ImGui::EndCombo();
+                            }
+                            bool offline_adapter_selected = (gim_ws->client_workspace->netc->adapter.methods == offline_adapter_methods);
+                            char* server_addr_buf = gim_ws->client_workspace->netc->adapter_server_address;
+                            uint16_t* server_port = &gim_ws->client_workspace->netc->adapter_server_port;
+                            if (!offline_adapter_selected) {
+                                ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE); //TODO filter letters
+                                ImGui::InputScalar("Port", ImGuiDataType_U16, server_port);
+                            }
+                            if (false) {
+                                static bool server_saved = true;
+                                ImGui::Checkbox("Save Server", &server_saved);
+                                if (server_saved) {
+                                    static char server_short_name[32] = "";
+                                    ImGui::InputTextWithHint("saved name", server_addr_buf, server_short_name, sizeof(server_short_name));
+                                }
+                            }
+                            ImGui::Button("Connect", ImVec2(-1, 0));
+
+                            if (false) {
+                                ImGui::Separator();
+                                ImGui::Text("Status:");
+                                ImGui::SameLine();
+                                ImGui::Text("---");
+                                ImGui::Button("PING", ImVec2(-1, 0));
+                                if (ImGui::CollapsingHeader("Thumbprint: 01:23:45:67:89:AB:CD:FE")) {
+                                    //TODO push monospace imgui font here
+                                    for (int i = 0; i < 8; i++) {
+                                        for (int j = 0; j < 8; j++) {
+                                            ImGui::Text("%02x", i * j);
+                                            if (j < 8 - 1) {
+                                                ImGui::SameLine();
+                                            }
+                                        }
                                     }
                                 }
                             }
+
+                            //TODO verifail
                         }
                     }
-
-                    //TODO verifail
                 }
                 ImGui::EndChild();
 
