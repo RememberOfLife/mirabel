@@ -18,7 +18,7 @@
 
 const serialization_layout sl_base[] = {
     {SL_TYPE_U32, offsetof(event, type)},
-    {SL_TYPE_U32, offsetof(event, session_id)},
+    {SL_TYPE_U32, offsetof(event, workspace_id)},
     {SL_TYPE_U32, offsetof(event, association_id)},
     {SL_TYPE_STOP},
 };
@@ -134,35 +134,35 @@ uint32_t get_new_association_id()
 void event_create_zero(event_any* e)
 {
     e->base.type = EVENT_TYPE_NULL;
-    e->base.session_id = EVENT_SESSION_NONE;
+    e->base.workspace_id = EVENT_WORKSPACE_NONE;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
 void event_create_type(event_any* e, EVENT_TYPE type)
 {
     e->base.type = type;
-    e->base.session_id = EVENT_SESSION_NONE;
+    e->base.workspace_id = EVENT_WORKSPACE_NONE;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
 void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id)
 {
     e->base.type = type;
-    e->base.session_id = EVENT_SESSION_NONE;
+    e->base.workspace_id = EVENT_WORKSPACE_NONE;
     e->base.association_id = association_id;
 }
 
-void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id)
+void event_create_type_workspace(event_any* e, EVENT_TYPE type, uint32_t session_id)
 {
     e->base.type = type;
-    e->base.session_id = session_id;
+    e->base.workspace_id = session_id;
     e->base.association_id = EVENT_ASSOCIATION_NONE;
 }
 
-void event_create_type_session_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id)
+void event_create_type_workspace_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id)
 {
     e->base.type = type;
-    e->base.session_id = session_id;
+    e->base.workspace_id = session_id;
     e->base.association_id = association_id;
 }
 

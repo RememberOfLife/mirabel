@@ -83,6 +83,7 @@ bool graphical_immediate_mode_interface::create()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     imgui_io = &ImGui::GetIO();
+    imgui_io->ConfigDockingAlwaysTabBar = true;
     imgui_io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     // imgui_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // makes hotkeys uncomfortable because imgui grabs attention for nav
     // setup imgui style
@@ -163,6 +164,8 @@ bool graphical_immediate_mode_interface::create()
     glGenFramebuffers(1, &fedd.frontend_fbo);
     glGenTextures(1, &fedd.frontend_tex);
     glGenRenderbuffers(1, &fedd.frontend_rbo);
+
+    metagui_new_workspace();
 
     return false;
 }
@@ -268,6 +271,9 @@ bool graphical_immediate_mode_interface::update_and_render()
 
         // global window shortcuts
         if (event.type == SDL_KEYDOWN) {
+            if ((ctrl_left || ctrl_right) && event.key.keysym.sym == SDLK_n) {
+                metagui_new_workspace();
+            }
             if (event.key.keysym.sym == SDLK_F1) {
                 //TODO toggle hud, i.e. skipp all imgui rendering and the frontend assumes the entire framebuffer size
             }
@@ -342,28 +348,16 @@ bool graphical_immediate_mode_interface::update_and_render()
         metagui_main_menu_bar();
 
         ImGui::DockSpaceOverViewport();
-        //TODO loop through workspaces and display them
-        metagui_workspace_window(1);
+        for (size_t workspace_idx = 0; workspace_idx < workspaces.size(); workspace_idx++) {
+            metagui_workspace_window(workspace_idx);
+        }
+        //TODO this all goes into the workspace frontend breadcrumb
+        // update ticks for frontend or no?
+        // update frontend
+        // render frontend
 
         metagui_log();
         metagui_about_info();
-
-        if (ImGui::Button("abc")) {
-            mirabel_slogf(LOGS_LESS, "abc");
-            mirabel_slogf(LOGS_NORM, "abc");
-            mirabel_slogf(LOGS_OK, "abc");
-            mirabel_slogf(LOGS_INFO, "abc");
-            mirabel_slogf(LOGS_WARN, "abc");
-            mirabel_slogf(LOGS_ERR, "abc");
-            mirabel_slogf(LOGS_FATAL, "abc");
-        }
-
-        //TODO show imgui windows: main bar, workspaces, current workspace opened windows
-        // global_dockspace(&fx_px, &fy_px, &fw_px, &fh_px);
-
-        //TODO update ticks for frontend or no?
-        //TODO update frontend
-        //TODO render frontend
     }
 
     ImGui::Render();

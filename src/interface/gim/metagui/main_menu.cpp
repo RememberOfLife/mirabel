@@ -39,6 +39,14 @@ void graphical_immediate_mode_interface::metagui_main_menu_bar()
             }
             ImGui::EndMenu();
         }
+
+        if (ImGui::BeginMenu("Workspace")) {
+            if (ImGui::MenuItem("New", "CTRL + N")) {
+                metagui_new_workspace();
+            }
+            ImGui::EndMenu();
+        }
+
         if (ImGui::BeginMenu("Help")) {
             if (ImGui::MenuItem("About", NULL, show_about_info)) {
                 show_about_info = !show_about_info;

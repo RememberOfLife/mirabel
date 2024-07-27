@@ -85,6 +85,7 @@ set(SOURCES
     src/interface/gim/metagui/main_menu.cpp
     src/interface/gim/metagui/workspace.cpp
     src/interface/gim/window.cpp
+    src/interface/gim/workspace.cpp
     src/interface/app_interface.c
 
     src/network/adapters/offline_client.cpp

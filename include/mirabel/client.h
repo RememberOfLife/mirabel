@@ -30,6 +30,10 @@ bool client_update(client* self);
 // returns NULL on failure, otherwise ptr to the newly created workspace
 workspace* client_add_workspace(client* self);
 
+workspace* client_get_workspace_by_id(client* self, uint32_t workspace_id);
+
+network_connection* client_add_connection(client* self);
+
 #ifdef __cplusplus
 }
 #endif

@@ -33,7 +33,7 @@ bool network_connection_create(network_connection* self)
     self->outbox = &self->adapter.outbox;
     event_queue_create(&self->inbox);
 
-    VEC_CREATE(&self->connected_workspace_idcs, 0);
+    // VEC_CREATE(&self->connected_workspace_idcs, 0);
 
     return false;
 }
@@ -44,7 +44,7 @@ void network_connection_destroy(network_connection* self)
 
     event_queue_destroy(&self->inbox);
 
-    VEC_DESTROY(&self->connected_workspace_idcs);
+    // VEC_DESTROY(&self->connected_workspace_idcs);
 }
 
 void network_connection_outbox_push(network_connection* self, event_any* e)

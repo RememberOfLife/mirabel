@@ -11,7 +11,7 @@ extern "C" {
 typedef struct workspace_s {
     network_connection* netc;
 
-    uint32_t session_id;
+    uint32_t id;
 
     // lobby lobby;
     // session gsession;

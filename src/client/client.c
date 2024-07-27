@@ -75,3 +75,24 @@ workspace* client_add_workspace(client* self)
     VEC_PUSH(&self->workspaces, new_workspace);
     return new_workspace;
 }
+
+workspace* client_get_workspace_by_id(client* self, uint32_t workspace_id)
+{
+    for (size_t widx = 0; widx < VEC_LEN(&self->workspaces); widx++) {
+        if (self->workspaces[widx]->id == workspace_id) {
+            return self->workspaces[widx];
+        }
+    }
+    return NULL;
+}
+
+network_connection* client_add_connection(client* self)
+{
+    network_connection* new_net_conn = malloc(sizeof(network_connection));
+    if (network_connection_create(new_net_conn)) {
+        free(new_net_conn);
+        return NULL;
+    }
+    VEC_PUSH(&self->net_conns, new_net_conn);
+    return new_net_conn;
+}

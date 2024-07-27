@@ -65,5 +65,7 @@ struct graphical_immediate_mode_interface {
     void metagui_global_dockspace(float* x, float* y, float* w, float* h);
     void metagui_log();
     void metagui_main_menu_bar();
-    void metagui_workspace_window(uint32_t workspace_id);
+
+    void metagui_workspace_window(uint32_t workspace_idx);
+    void metagui_new_workspace(); //TODO where this is used, do we need more info? like where to place the new tab
 };

@@ -5,10 +5,12 @@
 
 #include "mirabel/workspace.h"
 
+uint32_t next_workspace_id = 1;
+
 bool workspace_create(workspace* self)
 {
     self->netc = NULL;
-    self->session_id = EVENT_SESSION_NONE;
+    self->id = next_workspace_id++;
     return false;
 }
 

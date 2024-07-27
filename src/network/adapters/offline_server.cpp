@@ -113,7 +113,7 @@ namespace {
                         default: {
                             uint32_t true_connection_id = ctx->conns[conn_id].connection_id;
                             if (e.base.connection_id != true_connection_id) {
-                                mirabel_slogf(LOGS_WARN, "offline neta server: client %u inq with wrong connection id %u", true_connection_id, e.base.session_id);
+                                mirabel_slogf(LOGS_WARN, "offline neta server: client %u inq with wrong connection id %u", true_connection_id, e.base.workspace_id);
                                 e.base.connection_id = true_connection_id;
                             }
                             event_queue_push(self->inbox, &e);

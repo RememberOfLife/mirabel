@@ -50,10 +50,10 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
 
-//TODO typedefs for session and association id?
+//TODO typedefs for workspace and association id?
 
-static const uint32_t EVENT_SESSION_NONE = 0; // none / local
-static const uint32_t EVENT_SESSION_SPEC = UINT32_MAX; //TODO just reserved for now
+static const uint32_t EVENT_WORKSPACE_NONE = 0; // none / local
+static const uint32_t EVENT_WORKSPACE_SPEC = UINT32_MAX; //TODO just reserved for now
 
 static const uint32_t EVENT_ASSOCIATION_NONE = 0;
 static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved for now
@@ -61,7 +61,7 @@ static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved 
 typedef struct event_s {
     EVENT_TYPE type;
     uint32_t connection_id;
-    uint32_t session_id;
+    uint32_t workspace_id;
     uint32_t association_id;
 } event;
 
@@ -80,9 +80,9 @@ void event_create_type(event_any* e, EVENT_TYPE type);
 
 void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id);
 
-void event_create_type_session(event_any* e, EVENT_TYPE type, uint32_t session_id);
+void event_create_type_workspace(event_any* e, EVENT_TYPE type, uint32_t workspace_id);
 
-void event_create_type_session_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id);
+void event_create_type_workspace_assoc(event_any* e, EVENT_TYPE type, uint32_t workspace_id, uint32_t association_id);
 
 void event_zero(event_any* e);
 
