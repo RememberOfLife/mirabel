@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 #include "imgui.h"
+#include "rosalia/serialization.h"
 #include "rosalia/vector.h"
 
 #include "mirabel/application.h"
@@ -86,22 +87,23 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             ImGui::PushFont(fonts.imgui_mono);
                             ImGui::Text("Using: %p", gim_ws->client_workspace->netc); //TODO better name with context from connection; maybe only offer the ones that are actually online an up an running to be used?
                             ImGui::PopFont();
-                            ImGui::Separator();
 
+                            ImGui::Separator();
                             const network_adapter_methods* offline_adapter_methods = (const network_adapter_methods*)methods_registry_get(&appi.registry, "network_adapter_client", "offline");
                             bool offline_server_available = appi.aserver != NULL;
-                            if (!offline_server_available) {
+                            bool connection_setup_disabled = gim_ws->client_workspace->netc->adapter_state != RSI_IDLE;
+                            if (!offline_server_available || connection_setup_disabled) {
                                 ImGui::BeginDisabled();
                             }
                             if (ImGui::Button(">> Offline Server Connect <<", ImVec2(-1, 2 * ImGui::GetTextLineHeightWithSpacing()))) {
                                 if (offline_adapter_methods) {
                                     gim_ws->client_workspace->netc->adapter.methods = offline_adapter_methods;
-                                    //TODO connect
+                                    network_connection_adapter_open(gim_ws->client_workspace->netc);
                                 } else {
                                     mirabel_slogf(LOGS_WARN, "could not find offline adapter methods for client");
                                 }
                             }
-                            if (!offline_server_available) {
+                            if (!offline_server_available || connection_setup_disabled) {
                                 ImGui::EndDisabled();
                             }
                             if (false) {
@@ -127,13 +129,20 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 }
                             }
                             ImGui::Separator();
+                            if (connection_setup_disabled) {
+                                ImGui::BeginDisabled();
+                            }
                             ImGui::Text("Connection");
                             const char* network_adapter_preview = "<none>";
                             if (gim_ws->client_workspace->netc->adapter.methods != NULL) {
                                 network_adapter_preview = gim_ws->client_workspace->netc->adapter.methods->name;
                             }
+                            uint32_t method_count = methods_registry_get_count(&appi.registry, "network_adapter_client");
+                            bool disable_adapter_choice = (method_count == (0 + (offline_adapter_methods != NULL ? 1 : 0)));
+                            if (disable_adapter_choice) {
+                                ImGui::BeginDisabled();
+                            }
                             if (ImGui::BeginCombo("Network Adapter", network_adapter_preview)) {
-                                uint32_t method_count = methods_registry_get_count(&appi.registry, "network_adapter_client");
                                 for (uint32_t method_idx = 0; method_idx < method_count; method_idx++) {
                                     const methods_entry* adapter_methods = methods_registry_get_entry_by_idx(&appi.registry, "network_adapter_client", method_idx);
                                     const bool is_selected = (adapter_methods->methods == gim_ws->client_workspace->netc->adapter.methods);
@@ -149,14 +158,18 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 }
                                 ImGui::EndCombo();
                             }
+                            if (disable_adapter_choice) {
+                                ImGui::EndDisabled();
+                            }
+                            bool no_adapter_selected = (gim_ws->client_workspace->netc->adapter.methods == NULL);
                             bool offline_adapter_selected = (gim_ws->client_workspace->netc->adapter.methods == offline_adapter_methods);
                             char* server_addr_buf = gim_ws->client_workspace->netc->adapter_server_address;
                             uint16_t* server_port = &gim_ws->client_workspace->netc->adapter_server_port;
-                            if (!offline_adapter_selected) {
+                            if (!no_adapter_selected && !offline_adapter_selected) {
                                 ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE); //TODO filter letters
                                 ImGui::InputScalar("Port", ImGuiDataType_U16, server_port);
                             }
-                            if (false) {
+                            if (false && !no_adapter_selected) {
                                 static bool server_saved = true;
                                 ImGui::Checkbox("Save Server", &server_saved);
                                 if (server_saved) {
@@ -164,12 +177,93 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     ImGui::InputTextWithHint("saved name", server_addr_buf, server_short_name, sizeof(server_short_name));
                                 }
                             }
-                            ImGui::Button("Connect", ImVec2(-1, 0));
-
-                            if (false) {
-                                ImGui::Separator();
-                                ImGui::Text("Status:");
+                            if (connection_setup_disabled) {
+                                ImGui::EndDisabled();
+                            }
+                            switch (gim_ws->client_workspace->netc->adapter_state) {
+                                case RUNNING_STATE_INDICATOR_NONE: {
+                                    // unreachable
+                                    assert(0);
+                                } break;
+                                case RUNNING_STATE_INDICATOR_IDLE: {
+                                    bool connect_unavailable = no_adapter_selected;
+                                    if (connect_unavailable) {
+                                        ImGui::BeginDisabled();
+                                    }
+                                    if (ImGui::Button("Connect", ImVec2(-1, 0))) {
+                                        network_connection_adapter_open(gim_ws->client_workspace->netc);
+                                    }
+                                    if (connect_unavailable) {
+                                        ImGui::EndDisabled();
+                                    }
+                                } break;
+                                case RUNNING_STATE_INDICATOR_WAITING: {
+                                    ImGui::BeginDisabled();
+                                    ImGui::Button("Connecting..", ImVec2(-1, 0));
+                                    ImGui::EndDisabled();
+                                } break;
+                                case RUNNING_STATE_INDICATOR_DONE: {
+                                    if (ImGui::Button("Disconnect", ImVec2(-1, 0))) {
+                                        //TODO just adapter close or more?
+                                    }
+                                } break;
+                                default: {
+                                    // unreachable
+                                    assert(0);
+                                } break;
+                            }
+                            if (gim_ws->client_workspace->netc->adapter_error != NULL) {
+                                ImGui::Text("Adapter error:");
                                 ImGui::SameLine();
+                                ImGui::TextColored(imgui_cols.str_danger, "%s", gim_ws->client_workspace->netc->adapter_error);
+                            }
+
+                            ImGui::Separator();
+                            ImGui::Text("Status:");
+                            ImGui::SameLine();
+                            switch (gim_ws->client_workspace->netc->adapter_state) {
+                                case RUNNING_STATE_INDICATOR_NONE: {
+                                    // unreachable
+                                    assert(0);
+                                } break;
+                                case RUNNING_STATE_INDICATOR_IDLE: {
+                                    ImGui::TextColored(imgui_cols.str_danger, "offline");
+                                } break;
+                                case RUNNING_STATE_INDICATOR_WAITING: {
+                                    ImGui::TextColored(imgui_cols.str_warn, "connecting..");
+                                } break;
+                                case RUNNING_STATE_INDICATOR_DONE: {
+                                    ImGui::TextColored(imgui_cols.str_success, "connected");
+                                    ImGui::SameLine();
+                                    switch (gim_ws->client_workspace->netc->connection_state) {
+                                        case RUNNING_STATE_INDICATOR_NONE: {
+                                            // unreachable
+                                            assert(0);
+                                        } break;
+                                        case RUNNING_STATE_INDICATOR_IDLE: {
+                                            // unreachable
+                                            assert(0);
+                                        } break;
+                                        case RUNNING_STATE_INDICATOR_WAITING: {
+                                            ImGui::TextColored(imgui_cols.str_warn, "+ (securing)");
+                                        } break;
+                                        case RUNNING_STATE_INDICATOR_DONE: {
+                                            ImGui::TextColored(imgui_cols.str_success, "+ secured");
+                                            ImGui::SameLine();
+                                            ImGui::Text("+ AUTH STATE"); //TODO
+                                        } break;
+                                        default: {
+                                            // unreachable
+                                            assert(0);
+                                        } break;
+                                    }
+                                } break;
+                                default: {
+                                    // unreachable
+                                    assert(0);
+                                } break;
+                            }
+                            if (false) {
                                 ImGui::Text("---");
                                 ImGui::Button("PING", ImVec2(-1, 0));
                                 if (ImGui::CollapsingHeader("Thumbprint: 01:23:45:67:89:AB:CD:FE")) {
@@ -185,7 +279,25 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 }
                             }
 
-                            //TODO verifail
+                            if (false) {
+                                ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, IM_COL32(226, 74, 117, 255));
+                                ImGui::BeginTable("sidebar_table", 1, ImGuiTableFlags_BordersV, ImVec2(-1, 0)); //TODO need to do -1 horizontal size, otherwise the right border doesnt show up somehow..
+                                ImGui::TableNextRow();
+                                ImGui::TableSetColumnIndex(0);
+                                {
+                                    ImGui::Text("Server cert verification failed:");
+                                    ImGui::PushFont(fonts.imgui_bold);
+                                    ImGui::TextColored(imgui_cols.str_danger, " %s", "VERIFAIL REASON STR");
+                                    ImGui::PopFont();
+                                    metagui_util_push_button_colors(METAGUI_UTIL_BUTTON_TYPE_DANGER);
+                                    if (ImGui::Button("Accept Insecure Connection", ImVec2(-1.0f, 0.0f))) {
+                                        //TODO force accept connection
+                                    }
+                                    metagui_util_pop_button_colors();
+                                }
+                                ImGui::EndTable();
+                                ImGui::PopStyleColor();
+                            }
                         }
                     }
                 }

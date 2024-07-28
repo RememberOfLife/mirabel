@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,6 +60,7 @@ const serialization_layout sl_user_auth_reject[] = {
 
 const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NULL] = sl_base,
+    [EVENT_TYPE_DESTROYED] = sl_base,
 
     [EVENT_TYPE_EXIT] = sl_base,
 
@@ -112,8 +114,27 @@ size_t event_read_size(void* buf)
 
 const char* event_type_strings[] = {
     [EVENT_TYPE_NULL] = "NULL",
+    [EVENT_TYPE_DESTROYED] = "DESTROYED",
+
     [EVENT_TYPE_EXIT] = "EXIT",
     [EVENT_TYPE_LOG] = "LOG",
+
+    [EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER] = "EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER",
+    [EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE] = "EVENT_TYPE_NETWORK_ADAPTER_INTERNAL_SSL_WRITE",
+
+    [EVENT_TYPE_NETWORK_PROTOCOL_OK] = "EVENT_TYPE_NETWORK_PROTOCOL_OK",
+    [EVENT_TYPE_NETWORK_PROTOCOL_NOK] = "EVENT_TYPE_NETWORK_PROTOCOL_NOK",
+    [EVENT_TYPE_NETWORK_PROTOCOL_PING] = "EVENT_TYPE_NETWORK_PROTOCOL_PING",
+    [EVENT_TYPE_NETWORK_PROTOCOL_PONG] = "EVENT_TYPE_NETWORK_PROTOCOL_PONG",
+
+    [EVENT_TYPE_NETWORK_ADAPTER_OPEN] = "EVENT_TYPE_NETWORK_ADAPTER_OPEN",
+    [EVENT_TYPE_NETWORK_ADAPTER_CLOSE] = "EVENT_TYPE_NETWORK_ADAPTER_CLOSE",
+    [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT] = "EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT",
+    [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT] = "EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT",
+
+    [EVENT_TYPE_USER_AUTH_INFO] = "EVENT_TYPE_USER_AUTH_INFO",
+    [EVENT_TYPE_USER_AUTH_ACCEPT] = "EVENT_TYPE_USER_AUTH_ACCEPT",
+    [EVENT_TYPE_USER_AUTH_REJECT] = "EVENT_TYPE_USER_AUTH_REJECT",
 };
 
 const char* event_type_str(EVENT_TYPE type)
@@ -168,17 +189,21 @@ void event_create_type_workspace_assoc(event_any* e, EVENT_TYPE type, uint32_t s
 
 void event_zero(event_any* e)
 {
-    event_destroy(e);
+    if (e->base.type != EVENT_TYPE_DESTROYED) {
+        event_destroy(e);
+    }
     e->base.type = EVENT_TYPE_NULL;
 }
 
 size_t event_size(event_any* e)
 {
+    assert(e->base.type != EVENT_TYPE_DESTROYED);
     return 8 + layout_serializer(GSIT_SIZE, sl_event_any, e, NULL, NULL, NULL);
 }
 
 void event_serialize(event_any* e, void* buf)
 {
+    assert(e->base.type != EVENT_TYPE_DESTROYED);
     event_write_size(buf, event_size(e)); //TODO take some size hint to skip redundant size calculation
     layout_serializer(GSIT_SERIALIZE, sl_event_any, e, NULL, (size_t*)buf + 1, NULL);
 }
@@ -199,12 +224,15 @@ void event_deserialize(event_any* e, void* buf, void* buf_end)
 
 void event_copy(event_any* to, event_any* from)
 {
+    assert(from->base.type != EVENT_TYPE_DESTROYED);
     layout_serializer(GSIT_COPY, sl_event_any, from, to, NULL, NULL);
 }
 
 void event_destroy(event_any* e)
 {
+    assert(e->base.type != EVENT_TYPE_DESTROYED);
     layout_serializer(GSIT_DESTROY, sl_event_any, e, NULL, NULL, NULL);
+    e->base.type = EVENT_TYPE_DESTROYED; // catch double destroy errors
 }
 
 /////

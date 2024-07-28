@@ -7,6 +7,7 @@
 
 #include "rosalia/vector.h"
 
+#include "mirabel/alloc.h"
 #include "mirabel/game.h"
 
 #include "mirabel/move_history.h"
@@ -19,7 +20,7 @@ extern "C" {
 
 move_history* move_history_create()
 {
-    move_history* rp = (move_history*)malloc(sizeof(move_history));
+    move_history* rp = (move_history*)mirabel_malloc(sizeof(move_history));
     *rp = (move_history){
         .sync_data = NULL,
         .player = PLAYER_NONE,
@@ -314,8 +315,8 @@ void move_history_destroy(move_history* h)
             }
             VEC_DESTROY(&del_free->sync_data);
             game_e_move_sync_destroy(del_free->move);
-            free(del_free->move_str);
-            free(del_free);
+            mirabel_free(del_free->move_str);
+            mirabel_free(del_free);
         } else {
             break;
         }
@@ -326,8 +327,8 @@ void move_history_destroy(move_history* h)
     }
     VEC_DESTROY(&del_head->sync_data);
     game_e_move_sync_destroy(del_head->move);
-    free(del_head->move_str);
-    free(del_head);
+    mirabel_free(del_head->move_str);
+    mirabel_free(del_head);
 }
 
 #ifdef __cplusplus

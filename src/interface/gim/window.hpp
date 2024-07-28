@@ -39,6 +39,12 @@ struct graphical_immediate_mode_interface {
         ImFont* imgui_mono;
     } fonts;
 
+    struct {
+        const ImVec4 str_success = ImVec4(0.22, 0.85, 0.52, 1);
+        const ImVec4 str_warn = ImVec4(0.85, 0.52, 0.22, 1);
+        const ImVec4 str_danger = ImVec4(0.89, 0.29, 0.46, 1);
+    } imgui_cols;
+
     //TODO better place for this
     struct {
         // bool complete; //TODO so we actually only use it, if it is GL complete

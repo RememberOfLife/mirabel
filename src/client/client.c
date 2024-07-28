@@ -2,6 +2,7 @@
 
 #include "rosalia/vector.h"
 
+#include "mirabel/alloc.h"
 #include "mirabel/workspace.h"
 
 #include "mirabel/client.h"
@@ -56,7 +57,7 @@ bool client_update(client* self)
                                 workspace handle event
                 */
                 default: {
-                    mirabel_slogf(LOGS_WARN, "client: connection %zu, received unexpected event, type: %d %s\n", conn_idx, e.base.type, event_type_str(e.base.type));
+                    mirabel_slogf(LOGS_WARN, "client: connection %zu, received unexpected event, type: %d %s", conn_idx, e.base.type, event_type_str(e.base.type));
                 } break;
             }
             event_destroy(&e);
@@ -67,9 +68,9 @@ bool client_update(client* self)
 
 workspace* client_add_workspace(client* self)
 {
-    workspace* new_workspace = malloc(sizeof(workspace));
+    workspace* new_workspace = mirabel_malloc(sizeof(workspace));
     if (workspace_create(new_workspace)) {
-        free(new_workspace);
+        mirabel_free(new_workspace);
         return NULL;
     }
     VEC_PUSH(&self->workspaces, new_workspace);
@@ -88,9 +89,9 @@ workspace* client_get_workspace_by_id(client* self, uint32_t workspace_id)
 
 network_connection* client_add_connection(client* self)
 {
-    network_connection* new_net_conn = malloc(sizeof(network_connection));
+    network_connection* new_net_conn = mirabel_malloc(sizeof(network_connection));
     if (network_connection_create(new_net_conn)) {
-        free(new_net_conn);
+        mirabel_free(new_net_conn);
         return NULL;
     }
     VEC_PUSH(&self->net_conns, new_net_conn);

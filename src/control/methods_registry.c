@@ -5,6 +5,7 @@
 #include "rosalia/noise.h"
 #include "rosalia/vector.h"
 
+#include "mirabel/alloc.h"
 #include "mirabel/log.h"
 
 #include "mirabel/methods_registry.h"
@@ -87,8 +88,8 @@ bool methods_registry_remove(methods_registry* self, const char* methods_type, c
         mirabel_slogf(LOGS_ERR, "methods registry: remove failed, \"%s\".\"%s\" does not exist", methods_type, methods_name);
         return true;
     }
-    free(self->entries[idx].methods_type);
-    free(self->entries[idx].methods_name);
+    mirabel_free(self->entries[idx].methods_type);
+    mirabel_free(self->entries[idx].methods_name);
     VEC_REMOVE_SWAP(&self->entries, idx);
     return false;
 }

@@ -32,7 +32,7 @@ bool graphical_immediate_mode_interface::create()
     const int initial_window_width = 1280;
     const int initial_window_height = 720;
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
-        mirabel_slogf(LOGS_FATAL, "sdl init error: %s\n", SDL_GetError());
+        mirabel_slogf(LOGS_FATAL, "sdl init error: %s", SDL_GetError());
         exit(1);
     }
 
@@ -61,13 +61,13 @@ bool graphical_immediate_mode_interface::create()
     SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     sdl_window = SDL_CreateWindow("mirabel", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, initial_window_width, initial_window_height, window_flags);
     if (sdl_window == NULL) {
-        mirabel_slogf(LOGS_FATAL, "sdl window create error: %s\n", SDL_GetError());
+        mirabel_slogf(LOGS_FATAL, "sdl window create error: %s", SDL_GetError());
         exit(1);
     }
 
     sdl_glcontext = SDL_GL_CreateContext(sdl_window);
     if (sdl_glcontext == NULL) {
-        mirabel_slogf(LOGS_FATAL, "sdl gl context create error: %s\n", SDL_GetError());
+        mirabel_slogf(LOGS_FATAL, "sdl gl context create error: %s", SDL_GetError());
         exit(1);
     }
     SDL_GL_MakeCurrent(sdl_window, sdl_glcontext);
@@ -76,7 +76,7 @@ bool graphical_immediate_mode_interface::create()
 
     GLenum glew_err = glewInit();
     if (glew_err != GLEW_OK) {
-        mirabel_slogf(LOGS_FATAL, "glew init error: %s\n", glewGetErrorString(glew_err));
+        mirabel_slogf(LOGS_FATAL, "glew init error: %s", glewGetErrorString(glew_err));
         exit(1);
     }
 
@@ -143,7 +143,7 @@ bool graphical_immediate_mode_interface::create()
     nanovg_ctx = nvgCreateGL3(NVG_ANTIALIAS | NVG_STENCIL_STROKES);
 #endif
     if (nanovg_ctx == NULL) {
-        mirabel_slogf(LOGS_FATAL, "nanovg context creation failed\n");
+        mirabel_slogf(LOGS_FATAL, "nanovg context creation failed");
         exit(1);
     }
 

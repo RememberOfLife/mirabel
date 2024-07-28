@@ -31,7 +31,7 @@ typedef struct network_connection_s {
     char* adapter_error;
 
     RUNNING_STATE_INDICATOR connection_state;
-    uint8_t connection_cert_thumb[32]; //TODO replace with a sizer for the SHA256 thumbprint
+    blob connection_cert_thumb;
     char* connection_verifail_reason; // owning
 
     RUNNING_STATE_INDICATOR authinfo_state;
@@ -62,6 +62,10 @@ void network_connection_outbox_push(network_connection* self, event_any* e);
 
 // non blocking, like event_queue_pop
 void network_connection_inbox_pop(network_connection* self, event_any* e);
+
+void network_connection_adapter_open(network_connection* self);
+
+void network_connection_adapter_close(network_connection* self);
 
 #ifdef __cplusplus
 }

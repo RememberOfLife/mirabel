@@ -9,6 +9,7 @@
 #include "rosalia/noise.h"
 #include "rosalia/serialization.h"
 
+#include "mirabel/alloc.h"
 #include "mirabel/game.h"
 
 #ifdef __cplusplus
@@ -73,7 +74,7 @@ error_code rerrorfv(char** pbuf, error_code ec, const char* fmt, va_list args)
         return ec;
     }
     if (*pbuf != NULL) {
-        free(*pbuf);
+        mirabel_free(*pbuf);
         *pbuf = NULL;
     }
     if (fmt != NULL) {
@@ -83,7 +84,7 @@ error_code rerrorfv(char** pbuf, error_code ec, const char* fmt, va_list args)
         va_copy(args_copy, args);
         size_t len = vsnprintf(NULL, 0, fmt, args_copy) + 1;
         va_end(args_copy);
-        *pbuf = (char*)malloc(len);
+        *pbuf = (char*)mirabel_malloc(len);
         if (*pbuf == NULL) {
             return ERR_OUT_OF_MEMORY;
         }
@@ -251,7 +252,7 @@ void game_init_create_standard(game_init* init_info, const char* opts, uint8_t p
             },
         },
     };
-    init_info->source.standard.player_legacies = malloc(sizeof(const char*) * player_count);
+    init_info->source.standard.player_legacies = mirabel_malloc(sizeof(const char*) * player_count);
     for (uint8_t pi = 0; pi < player_count; pi++) {
         if (player_legacies != NULL) {
             init_info->source.standard.player_legacies[pi] = (player_legacies[pi] == NULL ? NULL : strdup(player_legacies[pi]));
@@ -670,7 +671,7 @@ move_data game_e_create_move_big(size_t len, uint8_t* buf)
 {
     uint8_t* new_data = NULL;
     if (len > 0) {
-        new_data = (uint8_t*)malloc(len);
+        new_data = (uint8_t*)mirabel_malloc(len);
         memcpy(new_data, buf, len);
     } else {
         new_data = PTRMAX;
@@ -691,7 +692,7 @@ move_data_sync game_e_create_move_sync_big(game* self, size_t len, uint8_t* buf)
     assert(self->methods);
     uint8_t* new_data = NULL;
     if (len > 0) {
-        new_data = (uint8_t*)malloc(len);
+        new_data = (uint8_t*)mirabel_malloc(len);
         memcpy(new_data, buf, len);
     } else {
         new_data = PTRMAX;

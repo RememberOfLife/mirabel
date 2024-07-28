@@ -24,6 +24,8 @@ typedef struct event_queue_s event_queue;
 typedef enum EVENT_TYPE_E {
     // special events
     EVENT_TYPE_NULL = 0, // ignored event
+    EVENT_TYPE_DESTROYED,
+
     EVENT_TYPE_EXIT,
     EVENT_TYPE_LOG,
 
@@ -93,6 +95,8 @@ void event_serialize(event_any* e, void* buf);
 void event_deserialize(event_any* e, void* buf, void* buf_end);
 
 void event_copy(event_any* to, event_any* from);
+
+//TODO event move
 
 void event_destroy(event_any* e);
 

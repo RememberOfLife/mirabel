@@ -49,7 +49,7 @@ bool server_update(server* self)
             } break;
             //TODO other event types
             default: {
-                mirabel_slogf(LOGS_WARN, "server: received unexpected event, type: %d %s\n", e.base.type, event_type_str(e.base.type));
+                mirabel_slogf(LOGS_WARN, "server: received unexpected event, type: %d %s", e.base.type, event_type_str(e.base.type));
             } break;
         }
         event_destroy(&e);

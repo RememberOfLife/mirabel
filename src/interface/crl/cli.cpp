@@ -31,7 +31,7 @@ bool CommandReadLine::mainloop()
     input_mut.lock();
     if (input_buf != NULL) {
         // process input
-        mirabel_slogf(LOGS_NORM, "crl-echo: \"%s\"\n", input_buf);
+        mirabel_slogf(LOGS_NORM, "crl-echo: \"%s\"", input_buf);
     }
     input_buf = NULL;
     input_mut.unlock();

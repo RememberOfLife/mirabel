@@ -4,6 +4,7 @@
 #include "rosalia/semver.h"
 
 #include "mirabel/application.h"
+#include "mirabel/log.h"
 #include "mirabel/network_adapter.h"
 #include "mirabel/server.h"
 
@@ -26,7 +27,6 @@ namespace {
         bool worker_quit = false;
         while (!worker_quit) {
             // we expect low volume on the offline adapters, so just one thread does client sending + receiving
-
             bool exit;
 
             // sending
@@ -34,10 +34,11 @@ namespace {
             exit = false;
             while (!exit) {
                 event_any e;
-                event_queue_pop(&self->outbox, &e, UINT32_MAX);
+                event_queue_pop(&self->outbox, &e, 5);
                 switch (e.base.type) {
                     case EVENT_TYPE_NULL: {
-                        // pass and loop
+                        exit = true;
+                        break;
                     } break;
                     case EVENT_TYPE_EXIT: {
                         exit = true;
@@ -47,12 +48,14 @@ namespace {
                         mirabel_slogf(e.log.status, "offline neta client: queue log: %s", e.log.str);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_OPEN: {
-                        event_queue* srv_inq = appi.aserver->netas[0]->inbox; //TODO //HACK better way of finding the server offline connector //BUG this is a race condition!
+                        mirabel_slogf(LOGS_LESS, "offline neta client: opening adapter");
+                        event_queue* srv_inq = &appi.aserver->netas[0]->outbox; //TODO //HACK better way of finding the server offline connector //BUG this is a race condition!
                         event_any re;
                         event_create_neta_offline_conn_enter(&re, &ctx->inq);
                         event_queue_push(srv_inq, &re);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                        mirabel_slogf(LOGS_LESS, "offline neta client: closing adapter");
                         event_any re;
                         event_create_neta_close(&re, NULL);
                         event_queue_push(ctx->outq, &re);
@@ -74,10 +77,11 @@ namespace {
             exit = false;
             while (!exit) {
                 event_any e;
-                event_queue_pop(&ctx->inq, &e, UINT32_MAX);
+                event_queue_pop(&ctx->inq, &e, 5);
                 switch (e.base.type) {
                     case EVENT_TYPE_NULL: {
-                        // pass and loop
+                        exit = true;
+                        break;
                     } break;
                     case EVENT_TYPE_EXIT: {
                         exit = true;
@@ -87,14 +91,16 @@ namespace {
                         mirabel_slogf(e.log.status, "offline neta client: queue log: %s", e.log.str);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
+                        mirabel_slogf(LOGS_LESS, "offline neta client: offline connection enter answer received");
                         ctx->outq = e.neta_offline_conn.rx_queue;
                         event_any re;
-                        event_create_type(&re, EVENT_TYPE_NETWORK_ADAPTER_OPEN);
+                        event_create_neta_open(&re, "offline", 0);
                         event_queue_push(self->inbox, &re);
                         event_create_neta_veri(&re, EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT, BLOB_NULL, NULL);
                         event_queue_push(self->inbox, &re);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
+                        mirabel_slogf(LOGS_LESS, "offline neta client: received adapter close from server");
                         if (ctx->outq == NULL) {
                             // client initiated disconnect
                             event_any re;
@@ -137,7 +143,8 @@ static const char* network_adapter_get_last_error_mi(network_adapter* self)
 
 static bool network_adapter_create_mi(network_adapter* self)
 {
-    adapter_context* ctx = (adapter_context*)malloc(sizeof(adapter_context));
+    adapter_context* ctx = new adapter_context();
+    event_queue_create(&ctx->inq);
     ctx->worker = std::thread(adapter_worker, ctx, self);
     self->data = ctx;
     return false;
@@ -150,7 +157,8 @@ static void network_adapter_destroy_mi(network_adapter* self)
     event_queue_push(&self->outbox, &e);
     adapter_context* ctx = (adapter_context*)self->data;
     ctx->worker.join();
-    free(self->data);
+    event_queue_destroy(&ctx->inq);
+    delete ctx;
 }
 
 const network_adapter_methods offline_client_network_adapter_methods = (network_adapter_methods){
