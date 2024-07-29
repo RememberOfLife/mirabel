@@ -107,10 +107,9 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
                 mirabel_slogf(LOGS_OK, "connection rx close: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
-                blob_copy(&self->connection_cert_thumb, &e->neta_veri.thumb);
+                blob_copy(&self->connection_cert_thumb, &e->neta_veri.thumb); //TODO use blob_move when available
                 self->connection_state = RSI_DONE;
                 self->authinfo_state = RSI_WAITING;
-                mirabel_slogf(LOGS_OK, "connection rx veriaccept: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT: {
                 mirabel_slogf(LOGS_OK, "connection rx verireject: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE

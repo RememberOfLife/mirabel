@@ -227,10 +227,10 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     assert(0);
                                 } break;
                                 case RUNNING_STATE_INDICATOR_IDLE: {
-                                    ImGui::TextColored(imgui_cols.str_danger, "offline");
+                                    ImGui::TextColored(imgui_cols.str_danger, "(offline)");
                                 } break;
                                 case RUNNING_STATE_INDICATOR_WAITING: {
-                                    ImGui::TextColored(imgui_cols.str_warn, "connecting..");
+                                    ImGui::TextColored(imgui_cols.str_warn, "(connecting)");
                                 } break;
                                 case RUNNING_STATE_INDICATOR_DONE: {
                                     ImGui::TextColored(imgui_cols.str_success, "connected");
@@ -263,23 +263,56 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     assert(0);
                                 } break;
                             }
-                            if (false) {
-                                ImGui::Text("---");
+                            if (gim_ws->client_workspace->netc->connection_state == RSI_DONE) {
                                 ImGui::Button("PING", ImVec2(-1, 0));
-                                if (ImGui::CollapsingHeader("Thumbprint: 01:23:45:67:89:AB:CD:FE")) {
-                                    //TODO push monospace imgui font here
-                                    for (int i = 0; i < 8; i++) {
-                                        for (int j = 0; j < 8; j++) {
-                                            ImGui::Text("%02x", i * j);
-                                            if (j < 8 - 1) {
+                            }
+                            if (gim_ws->client_workspace->netc->connection_state >= RSI_WAITING) {
+                                blob* thumbprint = &gim_ws->client_workspace->netc->connection_cert_thumb;
+                                bool thumb_null = blob_is_null(thumbprint);
+                                char thumb_preview[64];
+                                if (thumb_null) {
+                                    sprintf(thumb_preview, "Thumbprint: <unavailable>");
+                                } else {
+                                    char* w_thumb_preview = thumb_preview;
+                                    w_thumb_preview += sprintf(w_thumb_preview, "Thumbprint: ");
+                                    for (size_t col_idx = 0; col_idx < 8; col_idx++) {
+                                        if (col_idx > 0) {
+                                            w_thumb_preview += sprintf(w_thumb_preview, ":");
+                                        }
+                                        w_thumb_preview += sprintf(w_thumb_preview, "%02x", ((uint8_t*)thumbprint->data)[col_idx]);
+                                    }
+                                }
+                                if (thumb_null) {
+                                    ImGui::BeginDisabled();
+                                }
+                                if (ImGui::CollapsingHeader(thumb_preview)) {
+                                    ImGui::PushFont(fonts.imgui_mono);
+                                    for (size_t row_idx = 0; row_idx < thumbprint->len / 8; row_idx++) {
+                                        for (size_t col_idx = 0; col_idx < 8; col_idx++) {
+                                            if (col_idx > 0) {
                                                 ImGui::SameLine();
                                             }
+                                            ImGui::Text("%02x", ((uint8_t*)thumbprint->data)[row_idx * 8 + col_idx]);
                                         }
                                     }
+                                    size_t remaining_thumb_bytes = thumbprint->len % 8;
+                                    if (remaining_thumb_bytes > 0) {
+                                        size_t row_idx = thumbprint->len / 8 + 1;
+                                        for (size_t col_idx = 0; col_idx < remaining_thumb_bytes; col_idx++) {
+                                            if (col_idx > 0) {
+                                                ImGui::SameLine();
+                                            }
+                                            ImGui::Text("%02x", ((uint8_t*)thumbprint->data)[row_idx * 8 + col_idx]);
+                                        }
+                                    }
+                                    ImGui::PopFont();
+                                }
+                                if (thumb_null) {
+                                    ImGui::EndDisabled();
                                 }
                             }
 
-                            if (false) {
+                            if (gim_ws->client_workspace->netc->connection_verifail_reason != NULL) {
                                 ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, IM_COL32(226, 74, 117, 255));
                                 ImGui::BeginTable("sidebar_table", 1, ImGuiTableFlags_BordersV, ImVec2(-1, 0)); //TODO need to do -1 horizontal size, otherwise the right border doesnt show up somehow..
                                 ImGui::TableNextRow();

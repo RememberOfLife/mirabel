@@ -24,7 +24,7 @@ void graphical_immediate_mode_interface::metagui_log()
         return;
     }
 
-    if (true /*ImGui::CollapsingHeader("Log Info", ImGuiTreeNodeFlags_DefaultOpen)*/) {
+    if (ImGui::CollapsingHeader("Log Info")) {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("line count: %lu", stored_logs.size());
         ImGui::SameLine();
@@ -37,7 +37,7 @@ void graphical_immediate_mode_interface::metagui_log()
         ImGui::Checkbox("status", &log_status);
         ImGui::SameLine();
         ImGui::Checkbox("time", &log_time);
-        //TODO sameline + time display combo box (but only disable if time not used)
+        //TODO sameline + time display type (relative, absolute, etc..) combo box (but only disable if time not used)
     }
 
     ImGui::Separator();
