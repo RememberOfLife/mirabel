@@ -80,7 +80,10 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
             consumed = false; // forward to the adapter
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
-
+            //TODO
+        } break;
+        case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
+            consumed = false;
         } break;
         default: {
             consumed = false;
@@ -115,12 +118,16 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
                 mirabel_slogf(LOGS_OK, "connection rx close: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
-                blob_copy(&self->connection_cert_thumb, &e->neta_veri.thumb); //TODO use blob_move when available
+                blob_move(&self->connection_cert_thumb, &e->neta_veri.thumb);
+                self->connection_verifail_reason = e->neta_veri.reason;
+                e->neta_veri.reason = NULL;
                 self->connection_state = RSI_DONE;
                 self->authinfo_state = RSI_WAITING;
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT: {
-                mirabel_slogf(LOGS_OK, "connection rx verireject: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
+                blob_move(&self->connection_cert_thumb, &e->neta_veri.thumb);
+                self->connection_verifail_reason = e->neta_veri.reason;
+                e->neta_veri.reason = NULL;
             } break;
             default: {
                 consumed = false;
@@ -150,5 +157,12 @@ void network_connection_ping(network_connection* self)
 {
     event_any e;
     event_create_type_assoc(&e, EVENT_TYPE_NETWORK_PROTOCOL_PING, get_new_association_id());
+    network_connection_outbox_push(self, &e);
+}
+
+void network_connection_veriaccept(network_connection* self)
+{
+    event_any e;
+    event_create_neta_veri(&e, EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT, BLOB_NULL, NULL);
     network_connection_outbox_push(self, &e);
 }

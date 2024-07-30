@@ -315,23 +315,32 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             }
 
                             if (gim_ws->client_workspace->netc->connection_verifail_reason != NULL) {
-                                ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, IM_COL32(226, 74, 117, 255));
-                                ImGui::BeginTable("sidebar_table", 1, ImGuiTableFlags_BordersV, ImVec2(-1, 0)); //TODO need to do -1 horizontal size, otherwise the right border doesnt show up somehow..
-                                ImGui::TableNextRow();
-                                ImGui::TableSetColumnIndex(0);
-                                {
-                                    ImGui::Text("Server cert verification failed:");
-                                    ImGui::PushFont(fonts.imgui_bold);
-                                    ImGui::TextColored(imgui_cols.str_danger, " %s", "VERIFAIL REASON STR");
-                                    ImGui::PopFont();
-                                    metagui_util_push_button_colors(METAGUI_UTIL_BUTTON_TYPE_DANGER);
-                                    if (ImGui::Button("Accept Insecure Connection", ImVec2(-1.0f, 0.0f))) {
-                                        //TODO force accept connection
+                                if (gim_ws->client_workspace->netc->connection_state == RSI_WAITING) {
+                                    ImGui::PushStyleColor(ImGuiCol_TableBorderStrong, IM_COL32(226, 74, 117, 255));
+                                    ImGui::BeginTable("sidebar_table", 1, ImGuiTableFlags_BordersV, ImVec2(-1, 0)); //TODO need to do -1 horizontal size, otherwise the right border doesnt show up somehow..
+                                    ImGui::TableNextRow();
+                                    ImGui::TableSetColumnIndex(0);
+                                    {
+                                        ImGui::Text("Server cert verification failed:");
+                                        ImGui::PushFont(fonts.imgui_bold);
+                                        ImGui::TextUnformatted(" ");
+                                        ImGui::SameLine();
+                                        ImGui::TextColored(imgui_cols.str_danger, "%s", gim_ws->client_workspace->netc->connection_verifail_reason);
+                                        ImGui::PopFont();
+                                        metagui_util_push_button_colors(METAGUI_UTIL_BUTTON_TYPE_DANGER);
+                                        if (ImGui::Button("Accept Insecure Connection", ImVec2(-1.0f, 0.0f))) {
+                                            network_connection_veriaccept(gim_ws->client_workspace->netc);
+                                        }
+                                        metagui_util_pop_button_colors();
                                     }
-                                    metagui_util_pop_button_colors();
+                                    ImGui::EndTable();
+                                    ImGui::PopStyleColor();
+                                } else if (gim_ws->client_workspace->netc->connection_state == RSI_DONE) {
+                                    ImGui::Text("Server verification accepted:");
+                                    ImGui::TextUnformatted(" ");
+                                    ImGui::SameLine();
+                                    ImGui::TextColored(imgui_cols.str_success, "%s", gim_ws->client_workspace->netc->connection_verifail_reason);
                                 }
-                                ImGui::EndTable();
-                                ImGui::PopStyleColor();
                             }
                         }
                     }
