@@ -123,6 +123,12 @@ namespace {
                         case EVENT_TYPE_LOG: {
                             mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", ctx->conns[conn_id].connection_id, e.log.str);
                         } break;
+                        case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
+                            // response for ping from client
+                            event_any re;
+                            event_create_type_assoc(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, e.base.association_id);
+                            event_queue_push(ctx->conns[conn_id].outq, &re);
+                        } break;
                         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                             mirabel_slogf(LOGS_LESS, "offline neta server: received adapter close from client");
                             //TODO client is disconnecting, remove them and send close to client

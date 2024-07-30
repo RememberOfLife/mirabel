@@ -67,6 +67,8 @@ void network_connection_adapter_open(network_connection* self);
 
 void network_connection_adapter_close(network_connection* self);
 
+void network_connection_ping(network_connection* self);
+
 #ifdef __cplusplus
 }
 #endif

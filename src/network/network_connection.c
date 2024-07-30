@@ -4,6 +4,7 @@
 
 #include "mirabel/alloc.h"
 #include "mirabel/event_queue.h"
+#include "mirabel/log.h"
 #include "mirabel/network_adapter.h"
 #include "mirabel/network_connection.h"
 
@@ -65,6 +66,10 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
     bool consumed = true;
     switch (e->base.type) {
         //TODO our relevant cases..
+        case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
+            mirabel_slogf(LOGS_OK, "sending ping #%u", e->base.association_id);
+            consumed = false;
+        } break;
         case EVENT_TYPE_NETWORK_ADAPTER_OPEN: {
             self->adapter_state = RSI_WAITING;
             if (self->adapter_error != NULL) {
@@ -95,6 +100,9 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
         event_queue_pop(&self->inbox, e, 0);
         switch (e->base.type) {
             //TODO our relevant cases..
+            case EVENT_TYPE_NETWORK_PROTOCOL_PONG: {
+                mirabel_slogf(LOGS_OK, "received pong #%u", e->base.association_id);
+            } break;
             case EVENT_TYPE_NETWORK_ADAPTER_OPEN: {
                 self->adapter_state = RSI_DONE;
                 if (self->connection_verifail_reason != NULL) {
@@ -135,5 +143,12 @@ void network_connection_adapter_close(network_connection* self)
 {
     event_any e;
     event_create_neta_close(&e, NULL); //TODO reason? "user disconnected"
+    network_connection_outbox_push(self, &e);
+}
+
+void network_connection_ping(network_connection* self)
+{
+    event_any e;
+    event_create_type_assoc(&e, EVENT_TYPE_NETWORK_PROTOCOL_PING, get_new_association_id());
     network_connection_outbox_push(self, &e);
 }

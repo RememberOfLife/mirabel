@@ -264,7 +264,9 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 } break;
                             }
                             if (gim_ws->client_workspace->netc->connection_state == RSI_DONE) {
-                                ImGui::Button("PING", ImVec2(-1, 0));
+                                if (ImGui::Button("PING", ImVec2(-1, 0))) {
+                                    network_connection_ping(gim_ws->client_workspace->netc);
+                                }
                             }
                             if (gim_ws->client_workspace->netc->connection_state >= RSI_WAITING) {
                                 blob* thumbprint = &gim_ws->client_workspace->netc->connection_cert_thumb;

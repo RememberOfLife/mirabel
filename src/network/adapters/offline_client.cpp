@@ -92,6 +92,12 @@ namespace {
                     case EVENT_TYPE_LOG: {
                         mirabel_slogf(e.log.status, "offline neta client: queue log: %s", e.log.str);
                     } break;
+                    case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
+                        // response for ping from server
+                        event_any re;
+                        event_create_type_assoc(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, e.base.association_id);
+                        event_queue_push(ctx->outq, &re);
+                    } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
                         mirabel_slogf(LOGS_LESS, "offline neta client: offline connection enter answer received");
                         ctx->outq = e.neta_offline_conn.rx_queue;
