@@ -5,6 +5,8 @@
 #include "rosalia/semver.h"
 
 #include "mirabel/alloc.h"
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 #include "mirabel/log.h"
 #include "mirabel/network_adapter.h"
 
@@ -27,14 +29,15 @@ namespace {
             event_queue* outq; // points to inq in offline client
             event_queue* inq; // our owned inq where this client pushes to
 
-            connection(event_queue* client_inq)
+            bool create(event_queue* client_inq)
             {
                 outq = client_inq;
                 inq = (event_queue*)mirabel_malloc(sizeof(event_queue));
                 event_queue_create(inq);
+                return false;
             }
 
-            ~connection()
+            void destroy() //TODO make sure this is actually used to destroy the queue..
             {
                 event_queue_destroy(inq);
                 mirabel_free(inq);
@@ -72,7 +75,9 @@ namespace {
                     case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
                         mirabel_slogf(LOGS_LESS, "offline neta server: offline connection enter request received");
                         event_queue* client_rxq = e.neta_offline_conn.rx_queue;
-                        ctx->conns.push_back(adapter_context::connection(client_rxq));
+                        adapter_context::connection new_connection{};
+                        new_connection.create(client_rxq);
+                        ctx->conns.push_back(new_connection);
                         event_any re;
                         event_create_neta_offline_conn_enter(&re, ctx->conns.back().inq);
                         event_queue_push(client_rxq, &re);
@@ -119,7 +124,7 @@ namespace {
                             mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", ctx->conns[conn_id].connection_id, e.log.str);
                         } break;
                         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
-                            mirabel_slogf(LOGS_LESS, "offline neta server: received adapter close from server");
+                            mirabel_slogf(LOGS_LESS, "offline neta server: received adapter close from client");
                             //TODO client is disconnecting, remove them and send close to client
                             //TODO how to inform server of this somehow, through e.g. session close events
                         } break;

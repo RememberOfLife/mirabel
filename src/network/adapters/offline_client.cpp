@@ -4,6 +4,8 @@
 #include "rosalia/semver.h"
 
 #include "mirabel/application.h"
+#include "mirabel/event_queue.h"
+#include "mirabel/event.h"
 #include "mirabel/log.h"
 #include "mirabel/network_adapter.h"
 #include "mirabel/server.h"

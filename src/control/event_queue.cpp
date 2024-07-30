@@ -9,6 +9,7 @@
 #include "rosalia/timestamp.h"
 
 #include "mirabel/event.h"
+#include "mirabel/log.h"
 
 #include "mirabel/event_queue.h"
 
@@ -24,6 +25,9 @@ extern "C" {
 */
 
 /*TODO queue multi wait: make it so that multiple people can sensibly wait on one queue?*/
+
+static const uint64_t QUEUE_CANARY_DESTROYED = 0xAAAAAAAAAAAAAAAA;
+static const uint64_t QUEUE_CANARY_VALID = 0xa6c33fdedf77e49e; // just some random number
 
 struct delay_event {
     delay_event_stats stats;
@@ -41,6 +45,7 @@ struct delay_event {
 };
 
 struct event_queue_impl {
+    uint64_t canary;
     std::mutex m;
     std::deque<event_any> iq;
     std::priority_queue<delay_event> tq;
@@ -51,17 +56,25 @@ void event_queue_create(event_queue* eq)
 {
     assert(sizeof(event_queue) >= sizeof(event_queue_impl)); //TODO remove this and force everyone to use void* for eevent_queues since we can not guarantee their size
     event_queue_impl* eqi = (event_queue_impl*)eq;
+    if (eqi->canary == QUEUE_CANARY_VALID) {
+        mirabel_slogf(LOGS_WARN, "suspicious: queue created with valid canary, possible double creation");
+    }
     new (eqi) event_queue_impl();
+    eqi->canary = QUEUE_CANARY_VALID;
 }
 
 void event_queue_destroy(event_queue* eq)
 {
     event_queue_impl* eqi = (event_queue_impl*)eq;
+    if (eqi->canary == QUEUE_CANARY_DESTROYED) {
+        mirabel_slogf(LOGS_WARN, "suspicious: queue destroyed with destroyed canary, possible double destruction");
+    }
     for (std::deque<event_any>::iterator event_iter = eqi->iq.begin(); event_iter != eqi->iq.end(); event_iter++) {
         event_destroy(&*event_iter);
     }
     // tq auto destroys via timed_event destructor
     eqi->~event_queue_impl();
+    eqi->canary = QUEUE_CANARY_DESTROYED;
 }
 
 void event_queue_push(event_queue* eq, event_any* e)
@@ -73,6 +86,7 @@ void event_queue_push_delayed(event_queue* eq, event_any* e, uint32_t release_de
 {
     uint64_t ts_now = timestamp_get_ms64();
     event_queue_impl* eqi = (event_queue_impl*)eq;
+    assert(eqi->canary == QUEUE_CANARY_VALID);
     eqi->m.lock();
     if (release_delay == 0) {
         eqi->iq.emplace_back(*e);
@@ -98,6 +112,7 @@ bool event_queue_released_event_available(event_queue_impl* eqi, uint64_t releas
 void event_queue_pop(event_queue* eq, event_any* e, uint32_t t_ms)
 {
     event_queue_impl* eqi = (event_queue_impl*)eq;
+    assert(eqi->canary == QUEUE_CANARY_VALID);
     std::unique_lock<std::mutex> lock(eqi->m);
     uint64_t now_ts = timestamp_get_ms64();
     uint64_t maximal_timeout_ts = now_ts + t_ms;
