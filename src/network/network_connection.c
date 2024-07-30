@@ -25,9 +25,9 @@ bool network_connection_create(network_connection* self)
     self->adapter.methods = NULL;
     self->adapter_error = NULL; //TODO unnecessary because RSI_IDLE, want to keep it?
 
-    self->connection_state = RSI_NONE;
+    self->connection_state = RSI_IDLE;
     self->connection_cert_thumb = BLOB_NULL;
-    self->connection_verifail_reason = NULL; //TODO unnecessary because RSI_NONE, want to keep it?
+    self->connection_verifail_reason = NULL;
 
     self->authinfo_state = RSI_NONE;
 
@@ -81,6 +81,7 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
             //TODO
+            consumed = false;
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
             consumed = false;
@@ -115,7 +116,10 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
                 self->connection_state = RSI_WAITING;
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
-                mirabel_slogf(LOGS_OK, "connection rx close: %s %hu", e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
+                self->adapter_state = RSI_IDLE;
+                self->connection_state = RSI_IDLE;
+                network_adapter_destroy(&self->adapter);
+                mirabel_slogf(LOGS_NORM, "connection closed: %p %s %hu", self, e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
             } break;
             case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
                 blob_move(&self->connection_cert_thumb, &e->neta_veri.thumb);
@@ -128,6 +132,16 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
                 blob_move(&self->connection_cert_thumb, &e->neta_veri.thumb);
                 self->connection_verifail_reason = e->neta_veri.reason;
                 e->neta_veri.reason = NULL;
+            } break;
+            case EVENT_TYPE_USER_AUTH_INFO: {
+                // if is_guest is true the server accepts guest logins, otherwise not
+                self->authinfo_allow_guest = e->user_auth_info.is_guest;
+                // if username is NULL the server does NOT accept user logins
+                self->authinfo_allow_login = (e->user_auth_info.username != NULL);
+                // if password is NULL the server does NOT require a server password for guests
+                self->authinfo_want_guest_pw = (e->user_auth_info.password != NULL);
+                // if the server does not accept user AND guest logins wait for user to press guest login, enable pw input if wanted
+                self->authinfo_state = RSI_DONE;
             } break;
             default: {
                 consumed = false;
@@ -165,4 +179,14 @@ void network_connection_veriaccept(network_connection* self)
     event_any e;
     event_create_neta_veri(&e, EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT, BLOB_NULL, NULL);
     network_connection_outbox_push(self, &e);
+}
+
+void network_connection_authn_login(network_connection* self, bool guest_not_user)
+{
+    //TODO
+}
+
+void network_connection_authn_logout(network_connection* self)
+{
+    //TODO
 }

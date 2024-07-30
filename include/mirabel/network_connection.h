@@ -14,9 +14,10 @@
 extern "C" {
 #endif
 
-//TODO any way to NOT make this a macro?
+//TODO any way to NOT make these macros?
 #define ADAPTER_SERVER_ADDRESS_SIZE (128)
-//TODO sizers for others too
+#define ADAPTER_AUTHN_USERNAME_SIZE (64)
+#define ADAPTER_AUTHN_PASSWORD_SIZE (128)
 
 extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;
@@ -26,21 +27,21 @@ typedef struct network_connection_s {
 
     char adapter_server_address[ADAPTER_SERVER_ADDRESS_SIZE];
     uint16_t adapter_server_port;
-    RUNNING_STATE_INDICATOR adapter_state;
+    RSI adapter_state;
     network_adapter adapter;
     char* adapter_error;
 
-    RUNNING_STATE_INDICATOR connection_state;
+    RSI connection_state;
     blob connection_cert_thumb;
     char* connection_verifail_reason; // owning
 
-    RUNNING_STATE_INDICATOR authinfo_state;
+    RSI authinfo_state;
     bool authinfo_allow_login;
     bool authinfo_allow_guest;
     bool authinfo_want_guest_pw;
 
-    char authn_username[64];
-    char authn_password[128];
+    char authn_username[ADAPTER_AUTHN_USERNAME_SIZE];
+    char authn_password[ADAPTER_AUTHN_PASSWORD_SIZE];
     req_res_tracker authn_state;
     char* authn_fail_reason; // owning
 
@@ -70,6 +71,10 @@ void network_connection_adapter_close(network_connection* self);
 void network_connection_ping(network_connection* self);
 
 void network_connection_veriaccept(network_connection* self);
+
+void network_connection_authn_login(network_connection* self, bool guest_not_user);
+
+void network_connection_authn_logout(network_connection* self);
 
 #ifdef __cplusplus
 }

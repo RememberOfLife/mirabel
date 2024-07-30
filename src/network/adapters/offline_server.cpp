@@ -81,6 +81,7 @@ namespace {
                         event_any re;
                         event_create_neta_offline_conn_enter(&re, ctx->conns.back().inq);
                         event_queue_push(client_rxq, &re);
+                        //TODO report new connection upwards to server, which sends back authentication info for us
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                         mirabel_slogf(LOGS_LESS, "offline neta server: closing adapter");
@@ -131,8 +132,18 @@ namespace {
                         } break;
                         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                             mirabel_slogf(LOGS_LESS, "offline neta server: received adapter close from client");
-                            //TODO client is disconnecting, remove them and send close to client
+                            event_any re;
+                            event_create_neta_close(&re, NULL);
+                            event_queue_push(ctx->conns[conn_id].outq, &re);
+                            ctx->conns[conn_id].destroy();
+                            if (conn_id < ctx->conns.size() - 1) {
+                                ctx->conns[conn_id] = ctx->conns[ctx->conns.size() - 1];
+                                conn_id--; //HACK careful that we dont use it afterwards again
+                            }
+                            ctx->conns.pop_back();
                             //TODO how to inform server of this somehow, through e.g. session close events
+                            exit = true;
+                            break;
                         } break;
                         default: {
                             uint32_t true_connection_id = ctx->conns[conn_id].connection_id;

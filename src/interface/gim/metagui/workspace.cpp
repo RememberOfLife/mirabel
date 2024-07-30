@@ -13,6 +13,26 @@
 
 #include "interface/gim/window.hpp"
 
+struct ConnectionTextFilters {
+    // return 0 (pass) if the character is allowed
+
+    static int FilterAddressLetters(ImGuiInputTextCallbackData* data)
+    {
+        if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-./:", (char)data->EventChar)) {
+            return 0;
+        }
+        return 1;
+    }
+
+    static int FilterSanitizedTextLetters(ImGuiInputTextCallbackData* data)
+    {
+        if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", (char)data->EventChar)) {
+            return 0;
+        }
+        return 1;
+    }
+};
+
 void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t workspace_idx)
 {
     gim_workspace* gim_ws = &workspaces[workspace_idx];
@@ -42,6 +62,8 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                 ImGui::BeginChild("Connection", ImVec2(window_size, 0), ImGuiChildFlags_None, window_flags);
                 {
                     //TODO possibly draw out into separate functions
+
+                    //TODO important: make a button for destroying connections
                     if (gim_ws->client_workspace->netc == NULL) {
                         if (ImGui::Button("New Connection", ImVec2(-1, 0))) {
                             gim_ws->connection_new();
@@ -59,13 +81,17 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             if (listbox_item_count > 7) {
                                 listbox_item_count = 7;
                             }
+                            bool double_click_attach = false;
                             if (ImGui::BeginListBox("##ConnectionList", ImVec2(-FLT_MIN, listbox_item_count * ImGui::GetTextLineHeightWithSpacing()))) {
                                 for (size_t connections_idx = 0; connections_idx < VEC_LEN(&appi.aclient->net_conns); connections_idx++) {
                                     const bool is_selected = (gim_ws->current_connection_idx == connections_idx);
                                     char selectable_connection_name[64];
                                     sprintf(selectable_connection_name, "Connection %zu", connections_idx); //TODO better name with context from connection; maybe only offer the ones that are actually online an up an running to be used?
-                                    if (ImGui::Selectable(selectable_connection_name, is_selected)) {
+                                    if (ImGui::Selectable(selectable_connection_name, is_selected, ImGuiSelectableFlags_AllowDoubleClick)) {
                                         gim_ws->current_connection_idx = connections_idx;
+                                        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                                            double_click_attach = true;
+                                        }
                                     }
                                     if (is_selected) {
                                         ImGui::SetItemDefaultFocus();
@@ -73,7 +99,8 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 }
                                 ImGui::EndListBox();
                             }
-                            if (ImGui::Button("Attach to Connection", ImVec2(-1, 0))) {
+                            //TODO switch this and the new button, so accidental detach clicks do not automatically generate a new connection, also make it so that detaching, places the initial focus in the selectionbox on the current item
+                            if (ImGui::Button("Attach to Connection", ImVec2(-1, 0)) || double_click_attach) {
                                 gim_ws->connection_attach(appi.aclient->net_conns[gim_ws->current_connection_idx]);
                             }
                             if (disable_existing_connection_listbox) {
@@ -166,7 +193,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             char* server_addr_buf = gim_ws->client_workspace->netc->adapter_server_address;
                             uint16_t* server_port = &gim_ws->client_workspace->netc->adapter_server_port;
                             if (!no_adapter_selected && !offline_adapter_selected) {
-                                ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE); //TODO filter letters
+                                ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterAddressLetters);
                                 ImGui::InputScalar("Port", ImGuiDataType_U16, server_port);
                             }
                             if (false && !no_adapter_selected) {
@@ -181,11 +208,11 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 ImGui::EndDisabled();
                             }
                             switch (gim_ws->client_workspace->netc->adapter_state) {
-                                case RUNNING_STATE_INDICATOR_NONE: {
+                                case RSI_NONE: {
                                     // unreachable
                                     assert(0);
                                 } break;
-                                case RUNNING_STATE_INDICATOR_IDLE: {
+                                case RSI_IDLE: {
                                     bool connect_unavailable = no_adapter_selected;
                                     if (connect_unavailable) {
                                         ImGui::BeginDisabled();
@@ -197,14 +224,14 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                         ImGui::EndDisabled();
                                     }
                                 } break;
-                                case RUNNING_STATE_INDICATOR_WAITING: {
+                                case RSI_WAITING: {
                                     ImGui::BeginDisabled();
                                     ImGui::Button("Connecting..", ImVec2(-1, 0));
                                     ImGui::EndDisabled();
                                 } break;
-                                case RUNNING_STATE_INDICATOR_DONE: {
+                                case RSI_DONE: {
                                     if (ImGui::Button("Disconnect", ImVec2(-1, 0))) {
-                                        //TODO just adapter close or more?
+                                        network_connection_adapter_close(gim_ws->client_workspace->netc);
                                     }
                                 } break;
                                 default: {
@@ -220,37 +247,78 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
 
                             ImGui::Separator();
                             ImGui::Text("Status:");
-                            ImGui::SameLine();
+                            ImGui::SameLine(); // idiomatically we would want the samelines to be before the texts, but this is way shorter overall for the giant state switch here
                             switch (gim_ws->client_workspace->netc->adapter_state) {
-                                case RUNNING_STATE_INDICATOR_NONE: {
+                                case RSI_NONE: {
                                     // unreachable
                                     assert(0);
                                 } break;
-                                case RUNNING_STATE_INDICATOR_IDLE: {
+                                case RSI_IDLE: {
                                     ImGui::TextColored(imgui_cols.str_danger, "(offline)");
                                 } break;
-                                case RUNNING_STATE_INDICATOR_WAITING: {
+                                case RSI_WAITING: {
                                     ImGui::TextColored(imgui_cols.str_warn, "(connecting)");
                                 } break;
-                                case RUNNING_STATE_INDICATOR_DONE: {
+                                case RSI_DONE: {
                                     ImGui::TextColored(imgui_cols.str_success, "connected");
                                     ImGui::SameLine();
                                     switch (gim_ws->client_workspace->netc->connection_state) {
-                                        case RUNNING_STATE_INDICATOR_NONE: {
+                                        case RSI_NONE: {
                                             // unreachable
                                             assert(0);
                                         } break;
-                                        case RUNNING_STATE_INDICATOR_IDLE: {
+                                        case RSI_IDLE: {
                                             // unreachable
                                             assert(0);
                                         } break;
-                                        case RUNNING_STATE_INDICATOR_WAITING: {
+                                        case RSI_WAITING: {
                                             ImGui::TextColored(imgui_cols.str_warn, "+ (securing)");
                                         } break;
-                                        case RUNNING_STATE_INDICATOR_DONE: {
+                                        case RSI_DONE: {
                                             ImGui::TextColored(imgui_cols.str_success, "+ secured");
                                             ImGui::SameLine();
-                                            ImGui::Text("+ AUTH STATE"); //TODO
+                                            switch (gim_ws->client_workspace->netc->authinfo_state) {
+                                                case RSI_NONE: {
+                                                    // unreachable
+                                                    assert(0);
+                                                } break;
+                                                case RSI_IDLE: {
+                                                    // unreachable
+                                                    assert(0);
+                                                } break;
+                                                case RSI_WAITING: {
+                                                    ImGui::TextColored(imgui_cols.str_warn, "+ (authinfo?)");
+                                                } break;
+                                                case RSI_DONE: {
+                                                    ImGui::TextColored(imgui_cols.str_success, "+ authinfo"); //TODO might not actually want this, maybe remove this and the sameline after it
+                                                    ImGui::SameLine();
+                                                    switch (gim_ws->client_workspace->netc->authn_state.state) {
+                                                        case RSI_NONE: {
+                                                            // unreachable
+                                                            assert(0);
+                                                        } break;
+                                                        case RSI_IDLE: {
+                                                            ImGui::TextColored(imgui_cols.str_danger, "+ (authn)");
+                                                        } break;
+                                                        case RSI_WAITING: {
+                                                            ImGui::TextColored(imgui_cols.str_warn, "+ (authn)");
+                                                        } break;
+                                                        case RSI_DONE: {
+                                                            ImGui::TextColored(imgui_cols.str_warn, "+ authn");
+                                                            ImGui::SameLine();
+                                                            ImGui::Text("+++"); //TODO
+                                                        } break;
+                                                        default: {
+                                                            // unreachable
+                                                            assert(0);
+                                                        } break;
+                                                    }
+                                                } break;
+                                                default: {
+                                                    // unreachable
+                                                    assert(0);
+                                                } break;
+                                            }
                                         } break;
                                         default: {
                                             // unreachable
@@ -337,9 +405,100 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     ImGui::PopStyleColor();
                                 } else if (gim_ws->client_workspace->netc->connection_state == RSI_DONE) {
                                     ImGui::Text("Server verification accepted:");
+                                    //TODO right aligned clear button to make it go away, IF we event want to allow this at all..
                                     ImGui::TextUnformatted(" ");
                                     ImGui::SameLine();
                                     ImGui::TextColored(imgui_cols.str_success, "%s", gim_ws->client_workspace->netc->connection_verifail_reason);
+                                }
+                            }
+
+                            if (gim_ws->client_workspace->netc->authinfo_state == RSI_DONE) {
+                                ImGui::Separator();
+                                ImGui::Text("Authentication");
+
+                                bool disable_login = !gim_ws->client_workspace->netc->authinfo_allow_login;
+                                bool disable_guest = !gim_ws->client_workspace->netc->authinfo_allow_guest && !disable_login;
+                                bool disable_un = disable_login && !gim_ws->client_workspace->netc->authinfo_allow_guest;
+                                bool disable_pw = disable_login && !gim_ws->client_workspace->netc->authinfo_want_guest_pw;
+
+                                bool disable_authn_panel = gim_ws->client_workspace->netc->authn_state.state > RSI_IDLE;
+                                if (disable_authn_panel) {
+                                    ImGui::BeginDisabled();
+                                }
+                                if (disable_un) {
+                                    ImGui::BeginDisabled();
+                                }
+                                ImGui::InputText("username", gim_ws->client_workspace->netc->authn_username, ADAPTER_AUTHN_USERNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                if (disable_un) {
+                                    ImGui::EndDisabled();
+                                }
+                                static bool hide_pw = true;
+                                ImGuiInputTextFlags password_flags = ImGuiInputTextFlags_CallbackCharFilter;
+                                if (hide_pw || disable_authn_panel) {
+                                    password_flags |= ImGuiInputTextFlags_Password;
+                                }
+                                if (disable_pw) {
+                                    ImGui::BeginDisabled();
+                                }
+                                ImGui::InputText("password", gim_ws->client_workspace->netc->authn_password, ADAPTER_AUTHN_PASSWORD_SIZE, password_flags, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                ImGui::SameLine();
+                                if (ImGui::SmallButton(hide_pw ? "S" : "H")) {
+                                    hide_pw = !hide_pw;
+                                }
+                                if (disable_pw) {
+                                    ImGui::EndDisabled();
+                                }
+                                if (disable_authn_panel) {
+                                    ImGui::EndDisabled();
+                                }
+                                switch (gim_ws->client_workspace->netc->authn_state.state) {
+                                    case RSI_NONE: {
+                                        // unreachable
+                                        assert(0);
+                                    } break;
+                                    case RSI_IDLE: {
+                                        float btn_width = ImGui::CalcItemWidth();
+                                        if (disable_login) {
+                                            ImGui::BeginDisabled();
+                                        }
+                                        if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
+                                            network_connection_authn_login(gim_ws->client_workspace->netc, false);
+                                        }
+                                        if (disable_login) {
+                                            ImGui::EndDisabled();
+                                        }
+                                        ImGui::SameLine();
+                                        btn_width = ImGui::GetContentRegionAvail().x;
+                                        if (disable_guest) {
+                                            ImGui::BeginDisabled();
+                                        }
+                                        if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
+                                            network_connection_authn_login(gim_ws->client_workspace->netc, true);
+                                        }
+                                        if (disable_guest) {
+                                            ImGui::EndDisabled();
+                                        }
+                                    } break;
+                                    case RSI_WAITING: {
+                                        ImGui::BeginDisabled();
+                                        ImGui::Button("Authenticating..", ImVec2(-1.0f, 0.0f));
+                                        ImGui::EndDisabled();
+                                    } break;
+                                    case RSI_DONE: {
+                                        if (ImGui::Button("Logout", ImVec2(-1.0f, 0.0f))) {
+                                            network_connection_authn_logout(gim_ws->client_workspace->netc);
+                                        }
+                                    } break;
+                                    default: {
+                                        // unreachable
+                                        assert(0);
+                                    } break;
+                                }
+                                if (gim_ws->client_workspace->netc->authn_fail_reason != NULL) {
+                                    //TODO small clear button somewhere to make it go away..
+                                    ImGui::Text("AuthN fail:");
+                                    ImGui::SameLine();
+                                    ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "%s", gim_ws->client_workspace->netc->authn_fail_reason);
                                 }
                             }
                         }
