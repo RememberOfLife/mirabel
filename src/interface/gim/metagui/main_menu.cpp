@@ -23,6 +23,9 @@ void graphical_immediate_mode_interface::metagui_main_menu_bar()
                 show_log = !show_log;
             }
             ImGui::Separator();
+            if (ImGui::MenuItem("Server Internal", NULL, false)) {
+                show_server = !show_server;
+            }
             if (ImGui::MenuItem("ImGui Demo Mode", "F5", show_imgui_demo)) {
                 show_imgui_demo = !show_imgui_demo;
             }

@@ -350,12 +350,13 @@ bool graphical_immediate_mode_interface::update_and_render()
         ImGui::DockSpaceOverViewport();
         for (size_t workspace_idx = 0; workspace_idx < workspaces.size(); workspace_idx++) {
             metagui_workspace_window(workspace_idx);
+            //TODO this all goes into the workspace frontend breadcrumb
+            // update ticks for frontend or no?
+            // update frontend
+            // render frontend
         }
-        //TODO this all goes into the workspace frontend breadcrumb
-        // update ticks for frontend or no?
-        // update frontend
-        // render frontend
 
+        metagui_server();
         metagui_log();
         metagui_about_info();
     }

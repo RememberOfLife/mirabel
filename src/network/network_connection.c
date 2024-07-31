@@ -80,7 +80,7 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
             consumed = false; // forward to the adapter
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
-            //TODO
+            //TODO this should be instantly reflected in the state, and not just once the adapter gives it back, need to keep a direction for the connection state, i.e. e.g. bool closing_not_opening, then we can use the connection_state:WAITING for waiting for a disconnect..
             consumed = false;
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {

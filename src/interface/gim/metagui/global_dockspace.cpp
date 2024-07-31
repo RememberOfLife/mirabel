@@ -5,6 +5,7 @@
 
 #include "interface/gim/window.hpp"
 
+//TODO do we stil need this? probably later on when we build our global docknode ourselves..
 void graphical_immediate_mode_interface::metagui_global_dockspace(float* x, float* y, float* w, float* h)
 {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();

@@ -33,11 +33,6 @@ struct delay_event {
     delay_event_stats stats;
     event_any e;
 
-    ~delay_event()
-    {
-        event_destroy(&e);
-    }
-
     friend bool operator<(const delay_event& lesser, const delay_event& greater)
     {
         return lesser.stats.release_ts > greater.stats.release_ts;
@@ -72,7 +67,11 @@ void event_queue_destroy(event_queue* eq)
     for (std::deque<event_any>::iterator event_iter = eqi->iq.begin(); event_iter != eqi->iq.end(); event_iter++) {
         event_destroy(&*event_iter);
     }
-    // tq auto destroys via timed_event destructor
+    while (eqi->tq.size() > 0) {
+        delay_event de = eqi->tq.top();
+        eqi->tq.pop();
+        event_destroy(&de.e);
+    }
     eqi->~event_queue_impl();
     eqi->canary = QUEUE_CANARY_DESTROYED;
 }

@@ -90,14 +90,17 @@ void app_destroy()
     if (appi.interface != NULL) {
         app_interface_destroy(appi.interface);
         mirabel_free(appi.interface);
+        appi.interface = NULL;
     }
     if (appi.aclient != NULL) {
         client_destroy(appi.aclient);
         mirabel_free(appi.aclient);
+        appi.aclient = NULL;
     }
     if (appi.aserver != NULL) {
         server_destroy(appi.aserver);
         mirabel_free(appi.aserver);
+        appi.aserver = NULL;
     }
     methods_registry_destroy(&appi.registry);
     rosa_argpv_destroy(&appi.args);

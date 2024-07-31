@@ -20,6 +20,7 @@ struct graphical_immediate_mode_interface {
     bool show_imgui_demo;
     bool show_about_info;
     bool show_log;
+    bool show_server;
     bool fullscreen;
 
     std::vector<gim_workspace> workspaces;
@@ -71,6 +72,7 @@ struct graphical_immediate_mode_interface {
     void metagui_global_dockspace(float* x, float* y, float* w, float* h);
     void metagui_log();
     void metagui_main_menu_bar();
+    void metagui_server();
 
     void metagui_workspace_window(uint32_t workspace_idx);
     void metagui_new_workspace(); //TODO where this is used, do we need more info? like where to place the new tab
