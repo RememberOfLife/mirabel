@@ -29,8 +29,9 @@ namespace {
             event_queue* outq; // points to inq in offline client
             event_queue* inq; // our owned inq where this client pushes to
 
-            bool create(event_queue* client_inq)
+            bool create(uint32_t connection_id, event_queue* client_inq)
             {
+                this->connection_id = connection_id;
                 outq = client_inq;
                 inq = (event_queue*)mirabel_malloc(sizeof(event_queue));
                 event_queue_create(inq);
@@ -44,6 +45,7 @@ namespace {
             }
         };
 
+        uint32_t next_connection_id;
         std::thread worker;
         std::vector<connection> conns;
     };
@@ -76,12 +78,15 @@ namespace {
                         mirabel_slogf(LOGS_LESS, "offline neta server: offline connection enter request received");
                         event_queue* client_rxq = e.neta_offline_conn.rx_queue;
                         adapter_context::connection new_connection{};
-                        new_connection.create(client_rxq);
+                        new_connection.create(ctx->next_connection_id++, client_rxq);
                         ctx->conns.push_back(new_connection);
                         event_any re;
                         event_create_neta_offline_conn_enter(&re, ctx->conns.back().inq);
+                        re.base.connection_id = ctx->conns.back().connection_id; // send the client their connection id in this same event
                         event_queue_push(client_rxq, &re);
-                        //TODO report new connection upwards to server, which sends back authentication info for us
+                        // report new connection upwards to server, which can handle new connections with e.g. authinfos
+                        event_create_type_connection(&re, EVENT_TYPE_NETWORK_CONNECTION_OPEN, ctx->conns.back().connection_id);
+                        event_queue_push(self->inbox, &re);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                         mirabel_slogf(LOGS_LESS, "offline neta server: closing adapter");
@@ -107,11 +112,12 @@ namespace {
             }
 
             // receiving
-            for (size_t conn_id = 0; conn_id < ctx->conns.size(); conn_id++) {
+            for (size_t conn_idx = 0; conn_idx < ctx->conns.size(); conn_idx++) {
+                adapter_context::connection* this_conn = &ctx->conns[conn_idx];
                 exit = false;
                 while (!exit) {
                     event_any e;
-                    event_queue_pop(ctx->conns[conn_id].inq, &e, 5);
+                    event_queue_pop(this_conn->inq, &e, 5);
                     switch (e.base.type) {
                         case EVENT_TYPE_NULL: {
                             exit = true;
@@ -122,31 +128,32 @@ namespace {
                             break;
                         } break;
                         case EVENT_TYPE_LOG: {
-                            mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", ctx->conns[conn_id].connection_id, e.log.str);
+                            mirabel_slogf(e.log.status, "offline neta server: client %u inq log: %s", this_conn->connection_id, e.log.str);
                         } break;
                         case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                             // response for ping from client
                             event_any re;
-                            event_create_type_assoc(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, e.base.association_id);
-                            event_queue_push(ctx->conns[conn_id].outq, &re);
+                            event_create_type_connection_association(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, this_conn->connection_id, e.base.association_id);
+                            event_queue_push(this_conn->outq, &re);
                         } break;
                         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                             mirabel_slogf(LOGS_LESS, "offline neta server: received adapter close from client");
                             event_any re;
                             event_create_neta_close(&re, NULL);
-                            event_queue_push(ctx->conns[conn_id].outq, &re);
-                            ctx->conns[conn_id].destroy();
-                            if (conn_id < ctx->conns.size() - 1) {
-                                ctx->conns[conn_id] = ctx->conns[ctx->conns.size() - 1];
-                                conn_id--; //HACK careful that we dont use it afterwards again
+                            event_queue_push(this_conn->outq, &re);
+                            this_conn->destroy();
+                            if (conn_idx < ctx->conns.size() - 1) {
+                                ctx->conns[conn_idx] = ctx->conns[ctx->conns.size() - 1];
+                                conn_idx--; //HACK careful that we dont use it afterwards again
                             }
                             ctx->conns.pop_back();
-                            //TODO how to inform server of this somehow, through e.g. session close events
+                            event_create_type_connection(&re, EVENT_TYPE_NETWORK_CONNECTION_CLOSE, this_conn->connection_id);
+                            event_queue_push(self->inbox, &re);
                             exit = true;
                             break;
                         } break;
                         default: {
-                            uint32_t true_connection_id = ctx->conns[conn_id].connection_id;
+                            uint32_t true_connection_id = this_conn->connection_id;
                             if (e.base.connection_id != true_connection_id) {
                                 mirabel_slogf(LOGS_WARN, "offline neta server: client %u inq with wrong connection id %u", true_connection_id, e.base.workspace_id);
                                 e.base.connection_id = true_connection_id;
@@ -177,6 +184,7 @@ static const char* network_adapter_get_last_error_mi(network_adapter* self)
 static bool network_adapter_create_mi(network_adapter* self)
 {
     adapter_context* ctx = new adapter_context();
+    ctx->next_connection_id = 1;
     ctx->worker = std::thread(adapter_worker, ctx, self);
     self->data = ctx;
     return false;

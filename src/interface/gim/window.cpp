@@ -210,6 +210,7 @@ bool graphical_immediate_mode_interface::update_and_render()
 
 #ifndef __EMSCRIPTEN__
     {
+        //TODO if running real online server, we can, instead of waiting, just return and let the application loop pass by the server, as much as we want, e.g. within 1ms, and then when we need to render again, stop and do our steps
         static int frame_work_ns = 0;
         static uint64_t frame_ts_start = 0;
         static bool init_frame_time = false;

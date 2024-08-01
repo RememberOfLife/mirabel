@@ -79,6 +79,9 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT] = sl_base,
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT] = sl_base,
 
+    [EVENT_TYPE_NETWORK_CONNECTION_OPEN] = sl_base,
+    [EVENT_TYPE_NETWORK_CONNECTION_CLOSE] = sl_base,
+
     [EVENT_TYPE_USER_AUTH_INFO] = sl_user_auth_info,
     [EVENT_TYPE_USER_AUTH_ACCEPT] = sl_base,
     [EVENT_TYPE_USER_AUTH_REJECT] = sl_user_auth_reject,
@@ -112,7 +115,7 @@ size_t event_read_size(void* buf)
 /////
 // general purpose event utils
 
-const char* event_type_strings[] = {
+const char* event_type_strings[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NULL] = "NULL",
     [EVENT_TYPE_DESTROYED] = "DESTROYED",
 
@@ -131,6 +134,9 @@ const char* event_type_strings[] = {
     [EVENT_TYPE_NETWORK_ADAPTER_CLOSE] = "EVENT_TYPE_NETWORK_ADAPTER_CLOSE",
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT] = "EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT",
     [EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT] = "EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT",
+
+    [EVENT_TYPE_NETWORK_CONNECTION_OPEN] = "EVENT_TYPE_NETWORK_CONNECTION_OPEN",
+    [EVENT_TYPE_NETWORK_CONNECTION_CLOSE] = "EVENT_TYPE_NETWORK_CONNECTION_CLOSE",
 
     [EVENT_TYPE_USER_AUTH_INFO] = "EVENT_TYPE_USER_AUTH_INFO",
     [EVENT_TYPE_USER_AUTH_ACCEPT] = "EVENT_TYPE_USER_AUTH_ACCEPT",
@@ -161,29 +167,44 @@ void event_create_zero(event_any* e)
 
 void event_create_type(event_any* e, EVENT_TYPE type)
 {
-    e->base.type = type;
-    e->base.workspace_id = EVENT_WORKSPACE_NONE;
-    e->base.association_id = EVENT_ASSOCIATION_NONE;
+    event_create_type_connection_workspace_association(e, type, EVENT_CONNECTION_NONE, EVENT_WORKSPACE_NONE, EVENT_ASSOCIATION_NONE);
 }
 
-void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id)
+void event_create_type_connection(event_any* e, EVENT_TYPE type, uint32_t connection_id)
 {
-    e->base.type = type;
-    e->base.workspace_id = EVENT_WORKSPACE_NONE;
-    e->base.association_id = association_id;
+    event_create_type_connection_workspace_association(e, type, connection_id, EVENT_WORKSPACE_NONE, EVENT_ASSOCIATION_NONE);
 }
 
-void event_create_type_workspace(event_any* e, EVENT_TYPE type, uint32_t session_id)
+void event_create_type_workspace(event_any* e, EVENT_TYPE type, uint32_t workspace_id)
 {
-    e->base.type = type;
-    e->base.workspace_id = session_id;
-    e->base.association_id = EVENT_ASSOCIATION_NONE;
+    event_create_type_connection_workspace_association(e, type, EVENT_CONNECTION_NONE, workspace_id, EVENT_ASSOCIATION_NONE);
 }
 
-void event_create_type_workspace_assoc(event_any* e, EVENT_TYPE type, uint32_t session_id, uint32_t association_id)
+void event_create_type_association(event_any* e, EVENT_TYPE type, uint32_t association_id)
+{
+    event_create_type_connection_workspace_association(e, type, EVENT_CONNECTION_NONE, EVENT_WORKSPACE_NONE, association_id);
+}
+
+void event_create_type_connection_workspace(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t workspace_id)
+{
+    event_create_type_connection_workspace_association(e, type, connection_id, workspace_id, EVENT_ASSOCIATION_NONE);
+}
+
+void event_create_type_connection_association(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t association_id)
+{
+    event_create_type_connection_workspace_association(e, type, connection_id, EVENT_WORKSPACE_NONE, association_id);
+}
+
+void event_create_type_workspace_association(event_any* e, EVENT_TYPE type, uint32_t workspace_id, uint32_t association_id)
+{
+    event_create_type_connection_workspace_association(e, type, EVENT_CONNECTION_NONE, workspace_id, association_id);
+}
+
+void event_create_type_connection_workspace_association(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t workspace_id, uint32_t association_id)
 {
     e->base.type = type;
-    e->base.workspace_id = session_id;
+    e->base.connection_id = connection_id;
+    e->base.workspace_id = workspace_id;
     e->base.association_id = association_id;
 }
 

@@ -42,6 +42,9 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT,
     EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_REJECT,
 
+    EVENT_TYPE_NETWORK_CONNECTION_OPEN,
+    EVENT_TYPE_NETWORK_CONNECTION_CLOSE,
+
     EVENT_TYPE_USER_AUTH_INFO,
     EVENT_TYPE_USER_AUTH_ACCEPT,
     EVENT_TYPE_USER_AUTH_REJECT,
@@ -52,7 +55,10 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,
 } EVENT_TYPE;
 
-//TODO typedefs for workspace and association id?
+//TODO typedefs for connection and workspace and association ids?
+
+static const uint32_t EVENT_CONNECTION_NONE = 0; // none / local
+static const uint32_t EVENT_CONNECTION_SPEC = UINT32_MAX; //TODO just reserved for now
 
 static const uint32_t EVENT_WORKSPACE_NONE = 0; // none / local
 static const uint32_t EVENT_WORKSPACE_SPEC = UINT32_MAX; //TODO just reserved for now
@@ -79,12 +85,13 @@ uint32_t get_new_association_id();
 void event_create_zero(event_any* e);
 
 void event_create_type(event_any* e, EVENT_TYPE type);
-
-void event_create_type_assoc(event_any* e, EVENT_TYPE type, uint32_t association_id);
-
+void event_create_type_connection(event_any* e, EVENT_TYPE type, uint32_t connection_id);
 void event_create_type_workspace(event_any* e, EVENT_TYPE type, uint32_t workspace_id);
-
-void event_create_type_workspace_assoc(event_any* e, EVENT_TYPE type, uint32_t workspace_id, uint32_t association_id);
+void event_create_type_association(event_any* e, EVENT_TYPE type, uint32_t association_id);
+void event_create_type_connection_workspace(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t workspace_id);
+void event_create_type_connection_association(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t association_id);
+void event_create_type_workspace_association(event_any* e, EVENT_TYPE type, uint32_t workspace_id, uint32_t association_id);
+void event_create_type_connection_workspace_association(event_any* e, EVENT_TYPE type, uint32_t connection_id, uint32_t workspace_id, uint32_t association_id);
 
 void event_zero(event_any* e);
 

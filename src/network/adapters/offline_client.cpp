@@ -67,6 +67,7 @@ namespace {
                         if (ctx->outq == NULL) {
                             mirabel_slogf(LOGS_WARN, "offline neta client: failed to send event, missing outq");
                         } else {
+                            e.base.connection_id = ctx->connection_id;
                             event_queue_push(ctx->outq, &e);
                         }
                     } break;
@@ -95,12 +96,13 @@ namespace {
                     case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
                         // response for ping from server
                         event_any re;
-                        event_create_type_assoc(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, e.base.association_id);
+                        event_create_type_association(&re, EVENT_TYPE_NETWORK_PROTOCOL_PONG, e.base.association_id);
                         event_queue_push(ctx->outq, &re);
                     } break;
                     case EVENT_TYPE_NETWORK_ADAPTER_OFFLINE_CONNECTION_ENTER: {
                         mirabel_slogf(LOGS_LESS, "offline neta client: offline connection enter answer received");
                         ctx->outq = e.neta_offline_conn.rx_queue;
+                        ctx->connection_id = e.base.connection_id;
                         event_any re;
                         event_create_neta_open(&re, "offline", 0);
                         event_queue_push(self->inbox, &re);

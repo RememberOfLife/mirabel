@@ -170,7 +170,7 @@ void network_connection_adapter_close(network_connection* self)
 void network_connection_ping(network_connection* self)
 {
     event_any e;
-    event_create_type_assoc(&e, EVENT_TYPE_NETWORK_PROTOCOL_PING, get_new_association_id());
+    event_create_type_association(&e, EVENT_TYPE_NETWORK_PROTOCOL_PING, get_new_association_id());
     network_connection_outbox_push(self, &e);
 }
 
