@@ -48,7 +48,14 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_USER_AUTH_INFO,
     EVENT_TYPE_USER_AUTH_REJECT,
 
-    //TODO session open and close events
+    //TODO use these
+    // EVENT_TYPE_LOBBY_CREATE,
+    // EVENT_TYPE_LOBBY_DESTROY,
+    // EVENT_TYPE_LOBBY_JOIN,
+    // EVENT_TYPE_LOBBY_LEAVE,
+    //TODO some way for the lobby to send information about its state, i.e. settings users etc..
+
+    //TODO
 
     EVENT_TYPE_COUNT,
     EVENT_TYPE_SIZE_MAX = UINT32_MAX,

@@ -125,11 +125,10 @@ bool graphical_immediate_mode_interface::create()
     fonts.imgui_italic = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/opensans/OpenSans-Italic.ttf", font_size_normal);
     fonts.imgui_mono = imgui_io->Fonts->AddFontFromFileTTF("../res/fonts/liberation-mono/LiberationMono-Regular.ttf", font_size_normal * 0.9); //TODO mono font is too big compared to opensans
 #else
-    ImFont* imgui_default = imgui_io->Fonts->Fonts[0];
-    fonts.imgui_reg = imgui_default;
-    fonts.imgui_bold = imgui_default;
-    fonts.imgui_italic = imgui_default;
-    fonts.imgui_mono = imgui_default;
+    fonts.imgui_reg = NULL;
+    fonts.imgui_bold = NULL;
+    fonts.imgui_italic = NULL;
+    fonts.imgui_mono = NULL;
 #endif
 
     //TODO this doesnt work on web, we have to render everything to a separate framebuffer and resolve it manually

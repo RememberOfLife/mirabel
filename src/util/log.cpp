@@ -74,6 +74,7 @@ void mirabel_svlogf(LOGS status, const char* fmt, va_list args)
         // log to the web js, //TODO normally the app_interface would do this
         // clang-format off
 #ifdef __EMSCRIPTEN__
+        //TODO this fails for web worker, they dont know the log function.. how can we forward it to them?
         EM_ASM({
             log(LOGS.from_int($0), UTF8ToString($1), $2, $3, $4);
         }, status_only, target_buf, bold, line_colored, invert);

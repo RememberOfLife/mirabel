@@ -95,6 +95,7 @@ set(SOURCES
     src/network/network_adapter.c
     src/network/network_connection.c
 
+    src/server/lobby_manager.c
     src/server/server.c
     src/server/user_manager.c
 
@@ -232,7 +233,7 @@ if(DEFINED EMSCRIPTEN)
     # --embed-file /home/urs/projects/mirabel-rv2/plugins/example/build-web/example_client.wasm@/example_client.wasm
     set_target_properties(nanovg PROPERTIES COMPILE_FLAGS "-O3 -fPIC -pthread")
     set_target_properties(mirabel PROPERTIES COMPILE_FLAGS "-O2 -s USE_SDL=2 -fPIC -pthread")
-    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/src/mirabel.html -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1 -pthread")
+    set_target_properties(mirabel PROPERTIES LINK_FLAGS "-O2 --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/src/mirabel.html -s USE_SDL=2 -lwebsocket.js -s MAIN_MODULE=1 -pthread -sPTHREAD_POOL_SIZE=8")
     set_target_properties(mirabel PROPERTIES SUFFIX ".html")
 else()
     target_link_libraries(mirabel SDL2::SDL2)
