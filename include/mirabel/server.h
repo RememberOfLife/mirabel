@@ -4,6 +4,7 @@
 
 #include "rosalia/vector.h"
 
+#include "mirabel/server/user_manager.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 #include "mirabel/network_adapter.h"
@@ -15,7 +16,7 @@ extern "C" {
 typedef struct client_connection_s {
     network_adapter* responsible_neta;
     uint32_t neta_local_connection_id;
-    //TODO authenticated user, if any
+    uint64_t authn_user_id;
     //TODO generation index
 } client_connection;
 
@@ -24,6 +25,10 @@ typedef struct workspace_observer_s {
     //TODO generation index for connection
     uint32_t workspace_id;
 } workspace_observer;
+
+//TODO record again the question for what the observer is supposed to do and what mapping we need
+// observer instance -> connection+workspace
+// connection -> all observers using this connection (so we can remove them when the connection closes)
 
 typedef struct server_s {
     bool offline;
@@ -35,10 +40,11 @@ typedef struct server_s {
     //TODO MAP from neta+neta_local_conn_id -> connection_id (idx into server.connections)
     VECTOR(client_connection) connections; // connections start at 1;
 
+    server_user_manager user_mgr;
+
     //TODO
     // own config handle for server
     // db connection
-    // user_info* users;
     // lobby* lobbies;
     // session* sessions;
 } server;
@@ -65,6 +71,9 @@ uint32_t server_client_connection_get(server* self, network_adapter* neta, uint3
 //TODO move away to proper place
 //TODO makes assumptions about existance of connection, also AB problem! need generation idx for connections?
 void server_workspace_observer_network_send(server* self, workspace_observer* ws_ob, event_any* e);
+void server_workspace_observer_network_send_delayed(server* self, workspace_observer* ws_ob, event_any* e, uint32_t delay_ms);
+
+//TODO void server_workspace_observer_get_from_connection(server* self, workspace_observer* ws_ob, uint32_t connection_id);
 
 #ifdef __cplusplus
 }

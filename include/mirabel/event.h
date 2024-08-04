@@ -46,7 +46,6 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_NETWORK_CONNECTION_CLOSE,
 
     EVENT_TYPE_USER_AUTH_INFO,
-    EVENT_TYPE_USER_AUTH_ACCEPT,
     EVENT_TYPE_USER_AUTH_REJECT,
 
     //TODO session open and close events
@@ -164,7 +163,7 @@ typedef struct event_user_auth_info_s {
     char* password;
 } event_user_auth_info;
 
-void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, const char* username, const char* password);
+void event_create_user_auth_info(event_any* e, bool is_guest, const char* username, const char* password);
 
 typedef struct event_user_auth_reject_s {
     event base;

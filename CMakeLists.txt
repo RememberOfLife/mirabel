@@ -96,6 +96,7 @@ set(SOURCES
     src/network/network_connection.c
 
     src/server/server.c
+    src/server/user_manager.c
 
     src/util/alloc.c
     src/util/log.cpp

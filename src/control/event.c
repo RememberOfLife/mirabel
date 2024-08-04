@@ -83,7 +83,6 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NETWORK_CONNECTION_CLOSE] = sl_base,
 
     [EVENT_TYPE_USER_AUTH_INFO] = sl_user_auth_info,
-    [EVENT_TYPE_USER_AUTH_ACCEPT] = sl_base,
     [EVENT_TYPE_USER_AUTH_REJECT] = sl_user_auth_reject,
 };
 
@@ -139,7 +138,6 @@ const char* event_type_strings[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NETWORK_CONNECTION_CLOSE] = "EVENT_TYPE_NETWORK_CONNECTION_CLOSE",
 
     [EVENT_TYPE_USER_AUTH_INFO] = "EVENT_TYPE_USER_AUTH_INFO",
-    [EVENT_TYPE_USER_AUTH_ACCEPT] = "EVENT_TYPE_USER_AUTH_ACCEPT",
     [EVENT_TYPE_USER_AUTH_REJECT] = "EVENT_TYPE_USER_AUTH_REJECT",
 };
 
@@ -317,9 +315,9 @@ void event_create_neta_veri(event_any* e, EVENT_TYPE type, blob thumb, const cha
     e->neta_veri.reason = reason ? strdup(reason) : NULL;
 }
 
-void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, const char* username, const char* password)
+void event_create_user_auth_info(event_any* e, bool is_guest, const char* username, const char* password)
 {
-    event_create_type(e, type);
+    event_create_type(e, EVENT_TYPE_USER_AUTH_INFO);
     e->user_auth_info.is_guest = is_guest;
     e->user_auth_info.username = username ? strdup(username) : NULL;
     e->user_auth_info.password = password ? strdup(password) : NULL;
@@ -327,6 +325,6 @@ void event_create_user_auth_info(event_any* e, EVENT_TYPE type, bool is_guest, c
 
 void event_create_user_auth_reject(event_any* e, const char* reason)
 {
-    event_create_type(e, EVENT_TYPE_NETWORK_ADAPTER_CLOSE);
+    event_create_type(e, EVENT_TYPE_USER_AUTH_REJECT);
     e->user_auth_reject.reason = reason ? strdup(reason) : NULL;
 }

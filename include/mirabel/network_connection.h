@@ -16,8 +16,8 @@ extern "C" {
 
 //TODO any way to NOT make these macros?
 #define ADAPTER_SERVER_ADDRESS_SIZE (128)
-#define ADAPTER_AUTHN_USERNAME_SIZE (64)
-#define ADAPTER_AUTHN_PASSWORD_SIZE (128)
+#define CONNECTION_AUTHN_USERNAME_SIZE (64)
+#define CONNECTION_AUTHN_PASSWORD_SIZE (128)
 
 extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;
@@ -40,9 +40,9 @@ typedef struct network_connection_s {
     bool authinfo_allow_guest;
     bool authinfo_want_guest_pw;
 
-    char authn_username[ADAPTER_AUTHN_USERNAME_SIZE];
-    char authn_password[ADAPTER_AUTHN_PASSWORD_SIZE];
-    req_res_tracker authn_state;
+    char authn_username[CONNECTION_AUTHN_USERNAME_SIZE];
+    char authn_password[CONNECTION_AUTHN_PASSWORD_SIZE];
+    RSI authn_state;
     char* authn_fail_reason; // owning
 
     //TODO need one more bool / tracker for having finished?

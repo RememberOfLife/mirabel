@@ -23,7 +23,7 @@ bool network_connection_create(network_connection* self)
     self->adapter_state = RSI_IDLE;
     self->adapter.inbox = &self->inbox;
     self->adapter.methods = NULL;
-    self->adapter_error = NULL; //TODO unnecessary because RSI_IDLE, want to keep it?
+    self->adapter_error = NULL;
 
     self->connection_state = RSI_IDLE;
     self->connection_cert_thumb = BLOB_NULL;
@@ -31,10 +31,10 @@ bool network_connection_create(network_connection* self)
 
     self->authinfo_state = RSI_NONE;
 
-    self->authn_username[0] = '\0'; //TODO unnecessary because RSI_NONE, want to keep it?
-    self->authn_password[0] = '\0'; //TODO unnecessary because RSI_NONE, want to keep it?
-    self->authn_state.state = RSI_NONE;
-    self->authn_fail_reason = NULL; //TODO unnecessary because RSI_NONE, want to keep it?
+    self->authn_username[0] = '\0';
+    self->authn_password[0] = '\0';
+    self->authn_state = RSI_IDLE;
+    self->authn_fail_reason = NULL;
 
     self->outbox = &self->adapter.outbox;
     event_queue_create(&self->inbox);
@@ -65,7 +65,6 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
 {
     bool consumed = true;
     switch (e->base.type) {
-        //TODO our relevant cases..
         case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
             mirabel_slogf(LOGS_OK, "sending ping #%u", e->base.association_id);
             consumed = false;
@@ -86,6 +85,16 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
         case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
             consumed = false;
         } break;
+        case EVENT_TYPE_USER_AUTH_INFO: {
+            self->authn_state = RSI_WAITING;
+            consumed = false;
+        } break;
+        case EVENT_TYPE_USER_AUTH_REJECT: {
+            self->authinfo_state = RSI_WAITING;
+            self->authn_state = RSI_IDLE;
+            consumed = false;
+        } break;
+        //TODO our relevant cases..
         default: {
             consumed = false;
         } break;
@@ -103,7 +112,6 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
     while (consumed) {
         event_queue_pop(&self->inbox, e, 0);
         switch (e->base.type) {
-            //TODO our relevant cases..
             case EVENT_TYPE_NETWORK_PROTOCOL_PONG: {
                 mirabel_slogf(LOGS_OK, "received pong #%u", e->base.association_id);
             } break;
@@ -118,6 +126,8 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
             case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
                 self->adapter_state = RSI_IDLE;
                 self->connection_state = RSI_IDLE;
+                self->authinfo_state = RSI_IDLE;
+                self->authn_state = RSI_IDLE;
                 network_adapter_destroy(&self->adapter);
                 mirabel_slogf(LOGS_NORM, "connection closed: %p %s %hu", self, e->neta_open.server_addr, e->neta_open.server_port); //REMOVE
             } break;
@@ -134,15 +144,43 @@ void network_connection_inbox_pop(network_connection* self, event_any* e)
                 e->neta_veri.reason = NULL;
             } break;
             case EVENT_TYPE_USER_AUTH_INFO: {
-                // if is_guest is true the server accepts guest logins, otherwise not
-                self->authinfo_allow_guest = e->user_auth_info.is_guest;
-                // if username is NULL the server does NOT accept user logins
-                self->authinfo_allow_login = (e->user_auth_info.username != NULL);
-                // if password is NULL the server does NOT require a server password for guests
-                self->authinfo_want_guest_pw = (e->user_auth_info.password != NULL);
-                // if the server does not accept user AND guest logins wait for user to press guest login, enable pw input if wanted
-                self->authinfo_state = RSI_DONE;
+                if (self->authn_state == RSI_IDLE) {
+                    // if is_guest is true the server accepts guest logins, otherwise not
+                    self->authinfo_allow_guest = e->user_auth_info.is_guest;
+                    // if username is NULL the server does NOT accept user logins
+                    self->authinfo_allow_login = (e->user_auth_info.username != NULL);
+                    // if password is NULL the server does NOT require a server password for guests
+                    self->authinfo_want_guest_pw = (e->user_auth_info.password != NULL);
+                    // if the server does not accept user AND guest logins wait for user to press guest login, enable pw input if wanted
+                    self->authinfo_state = RSI_DONE;
+                    self->authn_state = RSI_IDLE;
+                    if (self->authn_fail_reason != NULL) {
+                        mirabel_free(self->authn_fail_reason);
+                        self->authn_fail_reason = NULL;
+                    }
+                    self->authn_username[0] = '\0';
+                    self->authn_password[0] = '\0';
+                } else {
+                    // we received our login
+                    if (e->user_auth_info.username != NULL) {
+                        strncpy(self->authn_username, e->user_auth_info.username, CONNECTION_AUTHN_USERNAME_SIZE);
+                    }
+                    if (e->user_auth_info.password != NULL) {
+                        strncpy(self->authn_password, e->user_auth_info.password, CONNECTION_AUTHN_PASSWORD_SIZE);
+                    }
+                    if (self->authn_fail_reason != NULL) {
+                        mirabel_free(self->authn_fail_reason);
+                        self->authn_fail_reason = NULL;
+                    }
+                    self->authn_state = RSI_DONE;
+                }
             } break;
+            case EVENT_TYPE_USER_AUTH_REJECT: {
+                self->authn_fail_reason = e->user_auth_reject.reason;
+                e->user_auth_reject.reason = NULL;
+                self->authn_state = RSI_IDLE;
+            } break;
+            //TODO our relevant cases..
             default: {
                 consumed = false;
             } break;
@@ -183,10 +221,14 @@ void network_connection_veriaccept(network_connection* self)
 
 void network_connection_authn_login(network_connection* self, bool guest_not_user)
 {
-    //TODO
+    event_any e;
+    event_create_user_auth_info(&e, guest_not_user, self->authn_username, self->authn_password);
+    network_connection_outbox_push(self, &e);
 }
 
 void network_connection_authn_logout(network_connection* self)
 {
-    //TODO
+    event_any e;
+    event_create_user_auth_reject(&e, NULL);
+    network_connection_outbox_push(self, &e);
 }

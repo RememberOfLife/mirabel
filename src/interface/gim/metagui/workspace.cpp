@@ -292,7 +292,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                                 case RSI_DONE: {
                                                     ImGui::TextColored(imgui_cols.str_success, "+ authinfo"); //TODO might not actually want this, maybe remove this and the sameline after it
                                                     ImGui::SameLine();
-                                                    switch (gim_ws->client_workspace->netc->authn_state.state) {
+                                                    switch (gim_ws->client_workspace->netc->authn_state) {
                                                         case RSI_NONE: {
                                                             // unreachable
                                                             assert(0);
@@ -304,9 +304,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                                             ImGui::TextColored(imgui_cols.str_warn, "+ (authn)");
                                                         } break;
                                                         case RSI_DONE: {
-                                                            ImGui::TextColored(imgui_cols.str_warn, "+ authn");
-                                                            ImGui::SameLine();
-                                                            ImGui::Text("+++"); //TODO
+                                                            ImGui::TextColored(imgui_cols.str_success, "+ authn");
                                                         } break;
                                                         default: {
                                                             // unreachable
@@ -421,14 +419,14 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 bool disable_un = disable_login && !gim_ws->client_workspace->netc->authinfo_allow_guest;
                                 bool disable_pw = disable_login && !gim_ws->client_workspace->netc->authinfo_want_guest_pw;
 
-                                bool disable_authn_panel = gim_ws->client_workspace->netc->authn_state.state > RSI_IDLE;
+                                bool disable_authn_panel = gim_ws->client_workspace->netc->authn_state > RSI_IDLE;
                                 if (disable_authn_panel) {
                                     ImGui::BeginDisabled();
                                 }
                                 if (disable_un) {
                                     ImGui::BeginDisabled();
                                 }
-                                ImGui::InputText("username", gim_ws->client_workspace->netc->authn_username, ADAPTER_AUTHN_USERNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                ImGui::InputText("username", gim_ws->client_workspace->netc->authn_username, CONNECTION_AUTHN_USERNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterSanitizedTextLetters);
                                 if (disable_un) {
                                     ImGui::EndDisabled();
                                 }
@@ -440,7 +438,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 if (disable_pw) {
                                     ImGui::BeginDisabled();
                                 }
-                                ImGui::InputText("password", gim_ws->client_workspace->netc->authn_password, ADAPTER_AUTHN_PASSWORD_SIZE, password_flags, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                ImGui::InputText("password", gim_ws->client_workspace->netc->authn_password, CONNECTION_AUTHN_PASSWORD_SIZE, password_flags, ConnectionTextFilters::FilterSanitizedTextLetters);
                                 ImGui::SameLine();
                                 if (ImGui::SmallButton(hide_pw ? "S" : "H")) {
                                     hide_pw = !hide_pw;
@@ -451,7 +449,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 if (disable_authn_panel) {
                                     ImGui::EndDisabled();
                                 }
-                                switch (gim_ws->client_workspace->netc->authn_state.state) {
+                                switch (gim_ws->client_workspace->netc->authn_state) {
                                     case RSI_NONE: {
                                         // unreachable
                                         assert(0);

@@ -6,6 +6,8 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 
+#include "mirabel/server/user_manager.h"
+
 #include "mirabel/server.h"
 
 bool server_create(server* self, bool offline)
@@ -28,12 +30,16 @@ bool server_create(server* self, bool offline)
         .neta_local_connection_id = EVENT_CONNECTION_NONE,
     };
     VEC_PUSH(&self->connections, client_connection_free_head);
+
+    server_user_manager_create(&self->user_mgr);
     return false;
 }
 
 void server_destroy(server* self)
 {
     //TODO order fine or do we want to do more things?
+    server_user_manager_destroy(&self->user_mgr);
+
     VEC_DESTROY(&self->connections);
 
     for (size_t neta_idx = 0; neta_idx < VEC_LEN(&self->netas); neta_idx++) {
@@ -73,11 +79,17 @@ bool server_update(server* self)
             } break;
             case EVENT_TYPE_NETWORK_CONNECTION_OPEN: {
                 mirabel_slogf(LOGS_OK, "server: connection %u open", e.base.connection_id);
-                //TODO send authinfos
+                server_user_manager_handle_event(&self->user_mgr, &e);
             } break;
             case EVENT_TYPE_NETWORK_CONNECTION_CLOSE: {
                 mirabel_slogf(LOGS_OK, "server: connection %u close", e.base.connection_id);
                 //TODO cleanup on server
+            } break;
+            case EVENT_TYPE_USER_AUTH_INFO: {
+                server_user_manager_handle_event(&self->user_mgr, &e);
+            } break;
+            case EVENT_TYPE_USER_AUTH_REJECT: {
+                server_user_manager_handle_event(&self->user_mgr, &e);
             } break;
             //TODO other event types
             default: {
@@ -186,11 +198,16 @@ uint32_t server_client_connection_get(server* self, network_adapter* neta, uint3
 
 void server_workspace_observer_network_send(server* self, workspace_observer* ws_ob, event_any* e)
 {
+    server_workspace_observer_network_send_delayed(self, ws_ob, e, 0);
+}
+
+void server_workspace_observer_network_send_delayed(server* self, workspace_observer* ws_ob, event_any* e, uint32_t delay_ms)
+{
     client_connection* cc = &self->connections[ws_ob->connection_id];
     if (cc->responsible_neta == NULL) {
         mirabel_slogf(LOGS_ERR, "server workspace observer: connection %u, responsible network adapter missing\nsend event dropped, type %u %s", ws_ob->connection_id, e->base.type, event_type_str(e->base.type));
         return;
     }
     e->base.connection_id = cc->neta_local_connection_id;
-    event_queue_push(&cc->responsible_neta->outbox, e);
+    event_queue_push_delayed(&cc->responsible_neta->outbox, e, delay_ms);
 }
