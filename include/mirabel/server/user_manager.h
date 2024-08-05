@@ -45,4 +45,5 @@ uint64_t server_user_manager_user_add(server_user_manager* self, bool is_guest, 
 
 void server_user_manager_user_remove(server_user_manager* self, uint64_t id);
 
+//TODO move to mirabel global util
 void server_user_manager_password_hash(uint8_t password_hash[SERVER_USER_PASSWORD_HASH_SIZE], const char* password, uint64_t password_salt);

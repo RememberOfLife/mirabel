@@ -44,4 +44,5 @@ uint64_t server_lobby_manager_lobby_add(server_lobby_manager* self, const char* 
 
 void server_lobby_manager_lobby_remove(server_lobby_manager* self, uint64_t id);
 
+//TODO move to mirabel global util
 void server_lobby_manager_password_hash(uint8_t password_hash[SERVER_LOBBY_PASSWORD_HASH_SIZE], const char* password, uint64_t password_salt);

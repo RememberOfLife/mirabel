@@ -84,6 +84,9 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_USER_AUTH_INFO] = sl_user_auth_info,
     [EVENT_TYPE_USER_AUTH_REJECT] = sl_user_auth_reject,
+
+    [EVENT_TYPE_WORKSPACE_CREATE] = sl_base,
+    [EVENT_TYPE_WORKSPACE_DESTROY] = sl_base,
 };
 
 const serialization_layout sl_event_any[] = {
@@ -139,6 +142,9 @@ const char* event_type_strings[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_USER_AUTH_INFO] = "EVENT_TYPE_USER_AUTH_INFO",
     [EVENT_TYPE_USER_AUTH_REJECT] = "EVENT_TYPE_USER_AUTH_REJECT",
+
+    [EVENT_TYPE_WORKSPACE_CREATE] = "EVENT_TYPE_WORKSPACE_CREATE",
+    [EVENT_TYPE_WORKSPACE_DESTROY] = "EVENT_TYPE_WORKSPACE_DESTROY",
 };
 
 const char* event_type_str(EVENT_TYPE type)

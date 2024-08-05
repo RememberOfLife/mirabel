@@ -6,6 +6,7 @@
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 
+#include "mirabel/server/lobby_manager.h"
 #include "mirabel/server/user_manager.h"
 
 #include "mirabel/server.h"
@@ -28,18 +29,38 @@ bool server_create(server* self, bool offline)
     client_connection client_connection_free_head = (client_connection){
         .responsible_neta = NULL,
         .neta_local_connection_id = EVENT_CONNECTION_NONE,
+        .authn_user_id = USER_ID_NONE,
     };
+    VEC_CREATE(&client_connection_free_head.workspaces, 0);
     VEC_PUSH(&self->connections, client_connection_free_head);
 
+    VEC_CREATE(&self->workspaces, 16);
+    workspace_handle workspace_handle_free_head = (workspace_handle){
+        .connection_id = EVENT_CONNECTION_NONE,
+        .client_local_workspace_id = EVENT_WORKSPACE_NONE,
+        .lobby_id = LOBBY_ID_NONE,
+    };
+    VEC_PUSH(&self->workspaces, workspace_handle_free_head);
+
     server_user_manager_create(&self->user_mgr);
+    server_lobby_manager_create(&self->lobby_mgr);
+
     return false;
 }
 
 void server_destroy(server* self)
 {
-    //TODO order fine or do we want to do more things?
+    //TODO order fine, and/or do we want to do more things?
+
+    server_lobby_manager_destroy(&self->lobby_mgr);
+
     server_user_manager_destroy(&self->user_mgr);
 
+    VEC_DESTROY(&self->workspaces);
+
+    for (size_t conn_idx = 0; conn_idx < VEC_LEN(&self->connections); conn_idx++) {
+        VEC_DESTROY(&self->connections[conn_idx].workspaces);
+    }
     VEC_DESTROY(&self->connections);
 
     for (size_t neta_idx = 0; neta_idx < VEC_LEN(&self->netas); neta_idx++) {
@@ -108,6 +129,7 @@ void server_handle_adapter_incoming(server* self, network_adapter* neta)
         remaining_budget--;
         event_any e;
         event_queue_pop(neta->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this
+        //TODO can we somehow directly translate the connection id, here! ?
         bool consumed = true;
         switch (e.base.type) {
             case EVENT_TYPE_NULL: {
@@ -131,8 +153,16 @@ void server_handle_adapter_incoming(server* self, network_adapter* neta)
             } break;
             case EVENT_TYPE_NETWORK_CONNECTION_CLOSE: {
                 uint32_t origin_conn_id = server_client_connection_get(self, neta, e.base.connection_id);
-                // server_client_connection_remove(self, origin_conn_id); //TODO do this, but only when AB problem is solved, with e.g. generations
+                //TODO make lobbies remove all workspace_handles pertaining to this connection, by simply removing the workspace handle?, or does removing the connection also remove all the handles automatically?
+                server_client_connection_remove(self, origin_conn_id);
                 consumed = false;
+            } break;
+            //TODO here or elsewhere?
+            case EVENT_TYPE_WORKSPACE_CREATE: {
+                //TODO
+            } break;
+            case EVENT_TYPE_WORKSPACE_DESTROY: {
+                //TODO
             } break;
             //TODO more (consumed) event types?
             default: {
@@ -196,18 +226,53 @@ uint32_t server_client_connection_get(server* self, network_adapter* neta, uint3
     return EVENT_CONNECTION_NONE;
 }
 
-void server_workspace_observer_network_send(server* self, workspace_observer* ws_ob, event_any* e)
+void server_connection_network_send(server* self, uint32_t connection_id, event_any* e)
 {
-    server_workspace_observer_network_send_delayed(self, ws_ob, e, 0);
+    server_connection_network_send_delayed(self, connection_id, e, 0);
 }
 
-void server_workspace_observer_network_send_delayed(server* self, workspace_observer* ws_ob, event_any* e, uint32_t delay_ms)
+void server_connection_network_send_delayed(server* self, uint32_t connection_id, event_any* e, uint32_t delay_ms)
 {
-    client_connection* cc = &self->connections[ws_ob->connection_id];
+    client_connection* cc = &self->connections[connection_id];
     if (cc->responsible_neta == NULL) {
-        mirabel_slogf(LOGS_ERR, "server workspace observer: connection %u, responsible network adapter missing\nsend event dropped, type %u %s", ws_ob->connection_id, e->base.type, event_type_str(e->base.type));
+        mirabel_slogf(LOGS_ERR, "server client-connection: connection %u, responsible network adapter missing\nsend event dropped, type %u %s", connection_id, e->base.type, event_type_str(e->base.type));
         return;
     }
     e->base.connection_id = cc->neta_local_connection_id;
+    e->base.workspace_id = EVENT_WORKSPACE_NONE;
+    event_queue_push_delayed(&cc->responsible_neta->outbox, e, delay_ms);
+}
+
+uint32_t server_workspace_handle_add(server* add, uint32_t connection_id, uint32_t client_local_workspace_id)
+{
+    //TODO
+}
+
+void server_workspace_handle_remove(server* add, uint32_t workspace_id)
+{
+    //TODO
+}
+
+// returns 0 if it can not be found
+uint32_t server_workspace_handle_get(server* add, uint32_t connection_id, uint32_t client_local_workspace_id)
+{
+    //TODO
+}
+
+void server_workspace_handle_network_send(server* self, uint32_t workspace_id, event_any* e)
+{
+    server_workspace_handle_network_send_delayed(self, workspace_id, e, 0);
+}
+
+void server_workspace_handle_network_send_delayed(server* self, uint32_t workspace_id, event_any* e, uint32_t delay_ms)
+{
+    workspace_handle* wh = &self->workspaces[workspace_id];
+    client_connection* cc = &self->connections[wh->connection_id];
+    if (cc->responsible_neta == NULL) {
+        mirabel_slogf(LOGS_ERR, "server workspace-handle: workspace %u, connection %u, responsible network adapter missing\nsend event dropped, type %u %s", workspace_id, wh->connection_id, e->base.type, event_type_str(e->base.type));
+        return;
+    }
+    e->base.connection_id = cc->neta_local_connection_id;
+    e->base.workspace_id = wh->client_local_workspace_id;
     event_queue_push_delayed(&cc->responsible_neta->outbox, e, delay_ms);
 }

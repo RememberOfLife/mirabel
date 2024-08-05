@@ -20,6 +20,7 @@ uint64_t next_lobby_id = 1;
 bool server_lobby_manager_create(server_lobby_manager* self)
 {
     //TODO
+    return false;
 }
 
 void server_lobby_manager_destroy(server_lobby_manager* self)

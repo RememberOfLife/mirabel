@@ -56,41 +56,33 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
             // client wants to have the authinfo, serve it
             event_any re;
             event_create_user_auth_info(&re, true, NULL, NULL);
-            workspace_observer no_wob = (workspace_observer){
-                .connection_id = e->base.connection_id,
-                .workspace_id = EVENT_WORKSPACE_NONE,
-            };
-            server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+            server_connection_network_send(appi.aserver, e->base.connection_id, &re);
         } break;
         case EVENT_TYPE_USER_AUTH_INFO: {
             // client wants to auth with given credentials, send back authn or authfail
             event_any re;
-            workspace_observer no_wob = (workspace_observer){
-                .connection_id = e->base.connection_id,
-                .workspace_id = EVENT_WORKSPACE_NONE,
-            };
             //TODO save guest names and check for dupes
             if (!e->user_auth_info.is_guest) {
                 event_create_user_auth_reject(&re, "user logins not accepted");
-                server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+                server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                 break;
             }
             if (e->user_auth_info.username == NULL) {
                 event_create_user_auth_reject(&re, "name NULL");
-                server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+                server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                 break;
             }
             // validate that username uses only allowed characters
             for (size_t i = 0; i < strlen(e->user_auth_info.username); i++) {
                 if (!strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", e->user_auth_info.username[i])) {
                     event_create_user_auth_reject(&re, "name contains illegal characters");
-                    server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+                    server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                     break;
                 }
             }
             if (strlen(e->user_auth_info.username) > 0 && strlen(e->user_auth_info.username) < 3) {
                 event_create_user_auth_reject(&re, "name < 3 characters");
-                server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+                server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                 break;
             }
             if (strlen(e->user_auth_info.username) == 0) {
@@ -109,12 +101,12 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
             }
             if (server_user_manager_user_get_by_name(self, e->user_auth_info.username) != NULL) {
                 event_create_user_auth_reject(&re, "username already exists");
-                server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+                server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                 break;
             }
             appi.aserver->connections[e->base.connection_id].authn_user_id = server_user_manager_user_add(self, true, e->user_auth_info.username, "xxxxxxxx", timestamp_get_ns64());
             event_create_user_auth_info(&re, true, e->user_auth_info.username, NULL);
-            server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+            server_connection_network_send(appi.aserver, e->base.connection_id, &re);
         } break;
         case EVENT_TYPE_USER_AUTH_REJECT: {
             // client wants to logout but keep the connection, we tell them we logged them out
@@ -122,13 +114,9 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
             appi.aserver->connections[e->base.connection_id].authn_user_id = USER_ID_NONE;
             event_any re;
             event_create_user_auth_reject(&re, NULL);
-            workspace_observer no_wob = (workspace_observer){
-                .connection_id = e->base.connection_id,
-                .workspace_id = EVENT_WORKSPACE_NONE,
-            };
-            server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+            server_connection_network_send(appi.aserver, e->base.connection_id, &re);
             event_create_user_auth_info(&re, true, NULL, NULL);
-            server_workspace_observer_network_send(appi.aserver, &no_wob, &re);
+            server_connection_network_send(appi.aserver, e->base.connection_id, &re);
         } break;
         default: {
             mirabel_slogf(LOGS_WARN, "server user-manager: received unexpected event, type: %d %s", e->base.type, event_type_str(e->base.type));
