@@ -63,11 +63,10 @@ void network_connection_destroy(network_connection* self)
 
 void network_connection_outbox_push(network_connection* self, event_any* e)
 {
-    bool consumed = true;
+    bool consumed = false;
     switch (e->base.type) {
         case EVENT_TYPE_NETWORK_PROTOCOL_PING: {
             mirabel_slogf(LOGS_OK, "sending ping #%u", e->base.association_id);
-            consumed = false;
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_OPEN: {
             self->adapter_state = RSI_WAITING;
@@ -76,27 +75,23 @@ void network_connection_outbox_push(network_connection* self, event_any* e)
                 self->adapter_error = NULL;
             }
             network_adapter_create(&self->adapter);
-            consumed = false; // forward to the adapter
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_CLOSE: {
             //TODO this should be instantly reflected in the state, and not just once the adapter gives it back, need to keep a direction for the connection state, i.e. e.g. bool closing_not_opening, then we can use the connection_state:WAITING for waiting for a disconnect..
-            consumed = false;
         } break;
         case EVENT_TYPE_NETWORK_ADAPTER_VERIFICATION_ACCEPT: {
-            consumed = false;
+            // pass
         } break;
         case EVENT_TYPE_USER_AUTH_INFO: {
             self->authn_state = RSI_WAITING;
-            consumed = false;
         } break;
         case EVENT_TYPE_USER_AUTH_REJECT: {
             self->authinfo_state = RSI_WAITING;
             self->authn_state = RSI_IDLE;
-            consumed = false;
         } break;
         //TODO our relevant cases..
         default: {
-            consumed = false;
+            // pass
         } break;
     }
     if (consumed) {

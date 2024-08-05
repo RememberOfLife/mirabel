@@ -36,6 +36,7 @@ typedef struct server_s {
 
     //TODO MAP from neta+neta_local_conn_id -> connection_id (idx into server.connections)
     VECTOR(client_connection) connections; // connections start at 1;
+    //TODO MAP from conn_id+client_local_workspace_id -> workspace_id (idx into server.workspaces)
     VECTOR(workspace_handle) workspaces; // server global workspaces
 
     server_user_manager user_mgr;
@@ -69,12 +70,12 @@ uint32_t server_client_connection_get(server* self, network_adapter* neta, uint3
 void server_connection_network_send(server* self, uint32_t connection_id, event_any* e);
 void server_connection_network_send_delayed(server* self, uint32_t connection_id, event_any* e, uint32_t delay_ms);
 
-uint32_t server_workspace_handle_add(server* add, uint32_t connection_id, uint32_t client_local_workspace_id);
+uint32_t server_workspace_handle_add(server* self, uint32_t connection_id, uint32_t client_local_workspace_id);
 
-void server_workspace_handle_remove(server* add, uint32_t workspace_id);
+void server_workspace_handle_remove(server* self, uint32_t workspace_id);
 
-// returns 0 if it can not be found
-uint32_t server_workspace_handle_get(server* add, uint32_t connection_id, uint32_t client_local_workspace_id);
+// returns EVENT_WORKSPACE_NONE if it can not be found
+uint32_t server_workspace_handle_get(server* self, uint32_t connection_id, uint32_t client_local_workspace_id);
 
 void server_workspace_handle_network_send(server* self, uint32_t workspace_id, event_any* e);
 void server_workspace_handle_network_send_delayed(server* self, uint32_t workspace_id, event_any* e, uint32_t delay_ms);

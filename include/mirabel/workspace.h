@@ -12,6 +12,7 @@ typedef struct workspace_s {
     network_connection* netc;
 
     uint32_t id;
+    bool server_workspace_created;
 
     // lobby lobby;
     // session gsession;

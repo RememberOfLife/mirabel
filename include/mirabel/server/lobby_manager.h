@@ -12,8 +12,6 @@
 
 static const uint64_t LOBBY_ID_NONE = 0;
 
-extern uint64_t next_lobby_id;
-
 typedef struct server_lobby_s {
     bool dirty;
     uint64_t id;

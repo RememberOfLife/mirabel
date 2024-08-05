@@ -12,8 +12,6 @@
 
 static const uint64_t USER_ID_NONE = 0;
 
-extern uint64_t next_user_id;
-
 typedef struct server_user_s {
     bool dirty;
     uint64_t id;

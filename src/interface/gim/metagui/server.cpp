@@ -46,6 +46,7 @@ void graphical_immediate_mode_interface::metagui_server()
     }
 
     if (ImGui::CollapsingHeader("Client Connections")) {
+        //TODO make this a table
         ImGui::Text("total connections: %zu", VEC_LEN(&srv->connections) - 1);
         ImGui::Separator();
         size_t reuse_slots = 0;
@@ -61,6 +62,7 @@ void graphical_immediate_mode_interface::metagui_server()
     }
 
     if (ImGui::CollapsingHeader("Workspace Handles")) {
+        //TODO make this a table
         ImGui::Text("total handles: %zu", VEC_LEN(&srv->workspaces) - 1);
         ImGui::Separator();
         size_t reuse_slots = 0;
@@ -76,6 +78,7 @@ void graphical_immediate_mode_interface::metagui_server()
     }
 
     if (ImGui::CollapsingHeader("User Manager")) {
+        //TODO make this a table
         ImGui::Text("loaded users: %zu", VEC_LEN(&srv->user_mgr.loaded_slots));
         ImGui::Separator();
         for (size_t user_idx = 0; user_idx < VEC_LEN(&srv->user_mgr.loaded_slots); user_idx++) {
@@ -84,6 +87,7 @@ void graphical_immediate_mode_interface::metagui_server()
     }
 
     if (ImGui::CollapsingHeader("Lobby Manager")) {
+        //TODO make this a table
         ImGui::TextUnformatted("<TODO>");
     }
 

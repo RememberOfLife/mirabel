@@ -1,13 +1,14 @@
-#include "network/adapters/offline_server.h"
+#include <assert.h>
 
 #include "rosalia/vector.h"
 
+#include "mirabel/server/lobby_manager.h"
+#include "mirabel/server/user_manager.h"
 #include "mirabel/alloc.h"
 #include "mirabel/event_queue.h"
 #include "mirabel/event.h"
 
-#include "mirabel/server/lobby_manager.h"
-#include "mirabel/server/user_manager.h"
+#include "network/adapters/offline_server.h"
 
 #include "mirabel/server.h"
 
@@ -129,54 +130,62 @@ void server_handle_adapter_incoming(server* self, network_adapter* neta)
         remaining_budget--;
         event_any e;
         event_queue_pop(neta->inbox, &e, 0); //TODO for a true ONLY server, we will end spinning a lot if we do this
+        uint32_t server_global_connection_id = server_client_connection_get(self, neta, e.base.connection_id);
+        uint32_t server_global_workspace_id = server_workspace_handle_get(self, server_global_connection_id, e.base.workspace_id);
         //TODO can we somehow directly translate the connection id, here! ?
-        bool consumed = true;
+        bool consumed = false;
         switch (e.base.type) {
             case EVENT_TYPE_NULL: {
                 remaining_budget = 0;
+                consumed = true;
+                break;
             } break;
             case EVENT_TYPE_EXIT: {
                 remaining_budget = 0;
+                consumed = true;
                 break;
             } break;
             case EVENT_TYPE_LOG: {
                 mirabel_slogf(e.log.status, "server adapter-handling: queue log: %s", e.log.str);
+                consumed = true;
             } break;
             case EVENT_TYPE_NETWORK_CONNECTION_OPEN: {
-                uint32_t origin_conn_id = server_client_connection_get(self, neta, e.base.connection_id);
-                if (origin_conn_id != EVENT_CONNECTION_NONE) {
-                    mirabel_slogf(LOGS_WARN, "server adapter-handling: received connection open for already existing connection %u", origin_conn_id);
+                if (server_global_connection_id != EVENT_CONNECTION_NONE) {
+                    mirabel_slogf(LOGS_WARN, "server adapter-handling: received connection open for already existing connection %u", server_global_connection_id);
+                    consumed = true;
                     break;
                 }
-                server_client_connection_add(self, neta, e.base.connection_id);
-                consumed = false;
+                server_global_connection_id = server_client_connection_add(self, neta, e.base.connection_id);
             } break;
             case EVENT_TYPE_NETWORK_CONNECTION_CLOSE: {
-                uint32_t origin_conn_id = server_client_connection_get(self, neta, e.base.connection_id);
-                //TODO make lobbies remove all workspace_handles pertaining to this connection, by simply removing the workspace handle?, or does removing the connection also remove all the handles automatically?
-                server_client_connection_remove(self, origin_conn_id);
-                consumed = false;
+                // removing the connection also automatically removes all handles and informs all relevant participants
+                server_client_connection_remove(self, server_global_connection_id);
             } break;
-            //TODO here or elsewhere?
             case EVENT_TYPE_WORKSPACE_CREATE: {
-                //TODO
+                if (server_global_workspace_id != EVENT_WORKSPACE_NONE) {
+                    mirabel_slogf(LOGS_WARN, "server adapter-handling: received workspace create for already created workspace %u", server_global_workspace_id);
+                    consumed = true;
+                    break;
+                }
+                server_global_workspace_id = server_workspace_handle_add(self, server_global_connection_id, e.base.workspace_id);
             } break;
             case EVENT_TYPE_WORKSPACE_DESTROY: {
-                //TODO
+                //removing the handle also automatically informs all relevant participants
+                server_workspace_handle_remove(self, server_global_workspace_id);
             } break;
             //TODO more (consumed) event types?
             default: {
-                consumed = false;
+                // pass
             } break;
         }
         if (consumed) {
             event_destroy(&e);
         } else {
-            uint32_t origin_conn_id = server_client_connection_get(self, neta, e.base.connection_id);
-            if (origin_conn_id == EVENT_CONNECTION_NONE) {
-                mirabel_slogf(LOGS_WARN, "server adapter-handling: event from unknown connection %u received, type %u %s", origin_conn_id, e.base.type, event_type_str(e.base.type));
+            if (server_global_connection_id == EVENT_CONNECTION_NONE) {
+                mirabel_slogf(LOGS_WARN, "server adapter-handling: event from unknown connection %u can not be forwarded, type %u %s", server_global_connection_id, e.base.type, event_type_str(e.base.type));
             } else {
-                e.base.connection_id = origin_conn_id;
+                e.base.connection_id = server_global_connection_id;
+                e.base.workspace_id = server_global_workspace_id;
                 event_queue_push(&self->inbox, &e);
             }
         }
@@ -188,29 +197,34 @@ uint32_t server_client_connection_add(server* self, network_adapter* neta, uint3
     uint32_t new_conn_id;
     if (self->connections[0].neta_local_connection_id == EVENT_CONNECTION_NONE) {
         // push new connection
-        client_connection new_client_conn = (client_connection){
-            .responsible_neta = neta,
-            .neta_local_connection_id = neta_local_connection_id,
-        };
-        VEC_PUSH(&self->connections, new_client_conn);
-        new_conn_id = VEC_LEN(&self->connections) - 1;
+        new_conn_id = VEC_LEN(&self->connections);
+        VEC_PUSH_N(&self->connections, 1);
     } else {
         // reuse existing slot
         new_conn_id = self->connections[0].neta_local_connection_id;
         self->connections[0].neta_local_connection_id = self->connections[new_conn_id].neta_local_connection_id;
-        self->connections[new_conn_id] = (client_connection){
-            .responsible_neta = neta,
-            .neta_local_connection_id = neta_local_connection_id,
-        };
     }
+    assert(new_conn_id != EVENT_CONNECTION_NONE);
+    self->connections[new_conn_id] = (client_connection){
+        .responsible_neta = neta,
+        .neta_local_connection_id = neta_local_connection_id,
+    };
     return new_conn_id;
 }
 
 void server_client_connection_remove(server* self, uint32_t connection_id)
 {
+    // remove all handles this connection has
+    for (size_t wsh_idx = 0; wsh_idx < VEC_LEN(&self->connections[connection_id].workspaces); wsh_idx++) {
+        server_workspace_handle_remove(self, self->connections[connection_id].workspaces[wsh_idx]);
+    }
+    // actually remove
+    VEC_DESTROY(&self->connections[connection_id].workspaces);
     self->connections[connection_id] = (client_connection){
         .responsible_neta = NULL,
         .neta_local_connection_id = self->connections[0].neta_local_connection_id,
+        .authn_user_id = USER_ID_NONE,
+        .workspaces = NULL,
     };
     self->connections[0].neta_local_connection_id = connection_id;
 }
@@ -218,9 +232,9 @@ void server_client_connection_remove(server* self, uint32_t connection_id)
 uint32_t server_client_connection_get(server* self, network_adapter* neta, uint32_t neta_local_connection_id)
 {
     //TODO use map to make this faster
-    for (size_t conn_id = 1; conn_id < VEC_LEN(&self->connections); conn_id++) {
-        if (self->connections[conn_id].responsible_neta == neta && self->connections[conn_id].neta_local_connection_id == neta_local_connection_id) {
-            return conn_id;
+    for (size_t conn_idx = 1; conn_idx < VEC_LEN(&self->connections); conn_idx++) {
+        if (self->connections[conn_idx].responsible_neta == neta && self->connections[conn_idx].neta_local_connection_id == neta_local_connection_id) {
+            return conn_idx;
         }
     }
     return EVENT_CONNECTION_NONE;
@@ -243,20 +257,48 @@ void server_connection_network_send_delayed(server* self, uint32_t connection_id
     event_queue_push_delayed(&cc->responsible_neta->outbox, e, delay_ms);
 }
 
-uint32_t server_workspace_handle_add(server* add, uint32_t connection_id, uint32_t client_local_workspace_id)
+uint32_t server_workspace_handle_add(server* self, uint32_t connection_id, uint32_t client_local_workspace_id)
 {
-    //TODO
+    uint32_t new_wsh_id;
+    if (self->workspaces[0].client_local_workspace_id == EVENT_WORKSPACE_NONE) {
+        // push new connection
+        new_wsh_id = VEC_LEN(&self->workspaces);
+        VEC_PUSH_N(&self->workspaces, 1);
+    } else {
+        // reuse existing slot
+        new_wsh_id = self->workspaces[0].client_local_workspace_id;
+        self->workspaces[0].client_local_workspace_id = self->workspaces[new_wsh_id].client_local_workspace_id;
+    }
+    assert(new_wsh_id != EVENT_WORKSPACE_NONE);
+    self->workspaces[new_wsh_id] = (workspace_handle){
+        .connection_id = connection_id,
+        .client_local_workspace_id = client_local_workspace_id,
+        .lobby_id = LOBBY_ID_NONE,
+    };
+    return new_wsh_id;
 }
 
-void server_workspace_handle_remove(server* add, uint32_t workspace_id)
+void server_workspace_handle_remove(server* self, uint32_t workspace_id)
 {
-    //TODO
+    //TODO notify lobby that the handle has been dropped
+    // actually remove
+    self->workspaces[workspace_id] = (workspace_handle){
+        .connection_id = EVENT_CONNECTION_NONE,
+        .client_local_workspace_id = self->workspaces[0].client_local_workspace_id,
+        .lobby_id = LOBBY_ID_NONE,
+    };
+    self->workspaces[0].client_local_workspace_id = workspace_id;
 }
 
-// returns 0 if it can not be found
-uint32_t server_workspace_handle_get(server* add, uint32_t connection_id, uint32_t client_local_workspace_id)
+uint32_t server_workspace_handle_get(server* self, uint32_t connection_id, uint32_t client_local_workspace_id)
 {
-    //TODO
+    //TODO use map to make this faster
+    for (size_t wsh_idx = 1; wsh_idx < VEC_LEN(&self->workspaces); wsh_idx++) {
+        if (self->workspaces[wsh_idx].connection_id == connection_id && self->workspaces[wsh_idx].client_local_workspace_id == client_local_workspace_id) {
+            return wsh_idx;
+        }
+    }
+    return EVENT_WORKSPACE_NONE;
 }
 
 void server_workspace_handle_network_send(server* self, uint32_t workspace_id, event_any* e)

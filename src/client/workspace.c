@@ -11,6 +11,7 @@ bool workspace_create(workspace* self)
 {
     self->netc = NULL;
     self->id = next_workspace_id++;
+    self->server_workspace_created = false;
     return false;
 }
 
