@@ -115,7 +115,7 @@ bool server_update(server* self)
             } break;
             //TODO other event types
             default: {
-                mirabel_slogf(LOGS_WARN, "server: received unexpected event, type: %d %s", e.base.type, event_type_str(e.base.type));
+                mirabel_slogf(LOGS_WARN, "server: received unexpected event, type: %u %s", e.base.type, event_type_str(e.base.type));
             } break;
         }
         event_destroy(&e);
@@ -162,14 +162,24 @@ void server_handle_adapter_incoming(server* self, network_adapter* neta)
                 server_client_connection_remove(self, server_global_connection_id);
             } break;
             case EVENT_TYPE_WORKSPACE_CREATE: {
+                consumed = true;
+                //TODO error if conn none
                 if (server_global_workspace_id != EVENT_WORKSPACE_NONE) {
                     mirabel_slogf(LOGS_WARN, "server adapter-handling: received workspace create for already created workspace %u", server_global_workspace_id);
-                    consumed = true;
                     break;
                 }
                 server_global_workspace_id = server_workspace_handle_add(self, server_global_connection_id, e.base.workspace_id);
+                event_any re;
+                event_create_type(&re, EVENT_TYPE_WORKSPACE_CREATE);
+                server_workspace_handle_network_send(self, server_global_workspace_id, &re);
             } break;
             case EVENT_TYPE_WORKSPACE_DESTROY: {
+                consumed = true;
+                //TODO error if conn none
+                //TODO error if wsh none
+                event_any re;
+                event_create_type(&re, EVENT_TYPE_WORKSPACE_DESTROY);
+                server_workspace_handle_network_send(self, server_global_workspace_id, &re);
                 //removing the handle also automatically informs all relevant participants
                 server_workspace_handle_remove(self, server_global_workspace_id);
             } break;
@@ -247,6 +257,10 @@ void server_connection_network_send(server* self, uint32_t connection_id, event_
 
 void server_connection_network_send_delayed(server* self, uint32_t connection_id, event_any* e, uint32_t delay_ms)
 {
+    if (connection_id == EVENT_CONNECTION_NONE) {
+        mirabel_slogf(LOGS_ERR, "server client-connection: can not send for connection NONE\nsend event dropped, type %u %s", e->base.type, event_type_str(e->base.type));
+        return;
+    }
     client_connection* cc = &self->connections[connection_id];
     if (cc->responsible_neta == NULL) {
         mirabel_slogf(LOGS_ERR, "server client-connection: connection %u, responsible network adapter missing\nsend event dropped, type %u %s", connection_id, e->base.type, event_type_str(e->base.type));
@@ -275,6 +289,7 @@ uint32_t server_workspace_handle_add(server* self, uint32_t connection_id, uint3
         .client_local_workspace_id = client_local_workspace_id,
         .lobby_id = LOBBY_ID_NONE,
     };
+    VEC_PUSH(&self->connections[connection_id].workspaces, new_wsh_id);
     return new_wsh_id;
 }
 
@@ -308,6 +323,10 @@ void server_workspace_handle_network_send(server* self, uint32_t workspace_id, e
 
 void server_workspace_handle_network_send_delayed(server* self, uint32_t workspace_id, event_any* e, uint32_t delay_ms)
 {
+    if (workspace_id == EVENT_WORKSPACE_NONE) {
+        mirabel_slogf(LOGS_ERR, "server workspace-handle: can not send for workspace NONE\nsend event dropped, type %u %s", e->base.type, event_type_str(e->base.type));
+        return;
+    }
     workspace_handle* wh = &self->workspaces[workspace_id];
     client_connection* cc = &self->connections[wh->connection_id];
     if (cc->responsible_neta == NULL) {

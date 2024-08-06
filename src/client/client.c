@@ -49,15 +49,18 @@ bool client_update(client* self)
                 case EVENT_TYPE_LOG: {
                     mirabel_slogf(e.log.status, "client: queue log: %s", e.log.str);
                 } break;
-                //TODO other event types
-                /*
-                    for all workspaces
-                        if workspace netc is connection
-                            if event is relevant for workspace
-                                workspace handle event
-                */
+                //TODO other handled event types
                 default: {
-                    mirabel_slogf(LOGS_WARN, "client: connection %zu, received unexpected event, type: %d %s", conn_idx, e.base.type, event_type_str(e.base.type));
+                    if (e.base.workspace_id == EVENT_WORKSPACE_NONE) {
+                        mirabel_slogf(LOGS_WARN, "client: connection %zu, received unexpected event, type: %u %s with no workspace", conn_idx, e.base.type, event_type_str(e.base.type));
+                    } else {
+                        workspace* target_ws = client_get_workspace_by_id(self, e.base.workspace_id);
+                        if (target_ws == NULL) {
+                            mirabel_slogf(LOGS_WARN, "client: connection %zu, event type %u %s could not be delivered to workspace %u, could not find workspace", conn_idx, e.base.type, event_type_str(e.base.type), e.base.workspace_id);
+                        } else {
+                            workspace_process_network_event(target_ws, &e);
+                        }
+                    }
                 } break;
             }
             event_destroy(&e);

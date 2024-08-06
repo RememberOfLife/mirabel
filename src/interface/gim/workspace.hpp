@@ -7,6 +7,7 @@
 struct gim_workspace {
     workspace* client_workspace;
 
+    //TODO any way to remove this from here and not have to keep it
     size_t current_connection_idx;
 
     gim_workspace(uint32_t workspace_id);

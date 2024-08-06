@@ -13,17 +13,17 @@ gim_workspace::gim_workspace(uint32_t workspace_id)
 
 void gim_workspace::connection_new()
 {
-    client_workspace->netc = client_add_connection(appi.aclient);
+    workspace_connection_attach(client_workspace, client_add_connection(appi.aclient));
 }
 
 void gim_workspace::connection_attach(network_connection* net_conn)
 {
-    client_workspace->netc = net_conn;
+    workspace_connection_attach(client_workspace, net_conn);
 }
 
 void gim_workspace::connection_detach()
 {
     //TODO need to do cleanup and possibly gracefully disconnect our workspace here..
-    client_workspace->netc = NULL;
+    workspace_connection_detach(client_workspace);
     current_connection_idx = 0;
 }

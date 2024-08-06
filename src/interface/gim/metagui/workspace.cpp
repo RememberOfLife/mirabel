@@ -499,6 +499,36 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     ImGui::TextColored(ImVec4(0.85, 0.52, 0.22, 1), "%s", gim_ws->client_workspace->netc->authn_fail_reason);
                                 }
                             }
+
+                            if (gim_ws->client_workspace->netc->authn_state == RSI_DONE) {
+                                ImGui::Separator();
+                                ImGui::Text("Server workspace:");
+                                bool auto_create_workspace = false;
+                                switch (gim_ws->client_workspace->server_workspace) {
+                                    case RSI_NONE: {
+                                        auto_create_workspace = true;
+                                    } /* fallthrough */;
+                                    case RSI_IDLE: {
+                                        if (ImGui::Button(">> Create <<", ImVec2(-1.0f, 0.0f)) || auto_create_workspace) {
+                                            workspace_srvrepr_create(gim_ws->client_workspace);
+                                        }
+                                    } break;
+                                    case RSI_WAITING: {
+                                        ImGui::BeginDisabled();
+                                        ImGui::Button("Waiting for response..", ImVec2(-1.0f, 0.0f));
+                                        ImGui::EndDisabled();
+                                    } break;
+                                    case RSI_DONE: {
+                                        if (ImGui::Button("Destroy", ImVec2(-1.0f, 0.0f))) {
+                                            workspace_srvrepr_destroy(gim_ws->client_workspace);
+                                        }
+                                    } break;
+                                    default: {
+                                        // unreachable
+                                        assert(0);
+                                    } break;
+                                }
+                            }
                         }
                     }
                 }

@@ -96,7 +96,7 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
                 char* str_p = e->user_auth_info.username;
                 str_p += sprintf(str_p, "Guest");
                 for (int i = 0; i < assigned_length; i++) {
-                    str_p += sprintf(str_p, "%d", fprng_rand(&rng) % 10);
+                    str_p += sprintf(str_p, "%u", fprng_rand(&rng) % 10);
                 }
             }
             if (server_user_manager_user_get_by_name(self, e->user_auth_info.username) != NULL) {
@@ -119,7 +119,7 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
             server_connection_network_send(appi.aserver, e->base.connection_id, &re);
         } break;
         default: {
-            mirabel_slogf(LOGS_WARN, "server user-manager: received unexpected event, type: %d %s", e->base.type, event_type_str(e->base.type));
+            mirabel_slogf(LOGS_WARN, "server user-manager: received unexpected event, type: %u %s", e->base.type, event_type_str(e->base.type));
         } break;
     }
 }

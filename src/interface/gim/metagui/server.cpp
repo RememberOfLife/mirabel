@@ -17,7 +17,7 @@ void graphical_immediate_mode_interface::metagui_server()
         return;
     }
 
-    ImGui::SetNextWindowSize(ImVec2(1000, 700), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 700), ImGuiCond_FirstUseEver);
     bool window_contents_visible = ImGui::Begin("Server Internals", &show_server);
     if (!window_contents_visible) {
         ImGui::End();
@@ -38,17 +38,15 @@ void graphical_immediate_mode_interface::metagui_server()
         ImGui::Text("Online");
     }
 
-    if (ImGui::CollapsingHeader("Network Adapters")) {
-        //TODO make this a table
+    if (ImGui::CollapsingHeader("Network Adapters", ImGuiTreeNodeFlags_DefaultOpen)) {
+        //TODO make this a table with fixed vsize
         for (size_t neta_idx = 0; neta_idx < VEC_LEN(&srv->netas); neta_idx++) {
             ImGui::Text("#%zu ^%p: %s", neta_idx, srv->netas[neta_idx], srv->netas[neta_idx]->methods->name);
         }
     }
 
-    if (ImGui::CollapsingHeader("Client Connections")) {
-        //TODO make this a table
-        ImGui::Text("total connections: %zu", VEC_LEN(&srv->connections) - 1);
-        ImGui::Separator();
+    if (ImGui::CollapsingHeader("Client Connections", ImGuiTreeNodeFlags_DefaultOpen)) {
+        //TODO make this a table with fixed vsize
         size_t reuse_slots = 0;
         for (size_t conn_idx = 1; conn_idx < VEC_LEN(&srv->connections); conn_idx++) {
             if (srv->connections[conn_idx].responsible_neta == NULL) {
@@ -58,27 +56,27 @@ void graphical_immediate_mode_interface::metagui_server()
             ImGui::Text("#%zu: rneta^%p + adapter_connid[%u]", conn_idx, srv->connections[conn_idx].responsible_neta, srv->connections[conn_idx].neta_local_connection_id);
         }
         ImGui::Separator();
+        ImGui::Text("total connections: %zu", VEC_LEN(&srv->connections) - 1 - reuse_slots);
         ImGui::Text("%zu reusable slots", reuse_slots);
     }
 
-    if (ImGui::CollapsingHeader("Workspace Handles")) {
-        //TODO make this a table
-        ImGui::Text("total handles: %zu", VEC_LEN(&srv->workspaces) - 1);
-        ImGui::Separator();
+    if (ImGui::CollapsingHeader("Workspace Handles", ImGuiTreeNodeFlags_DefaultOpen)) {
+        //TODO make this a table with fixed vsize
         size_t reuse_slots = 0;
         for (size_t wsh_idx = 1; wsh_idx < VEC_LEN(&srv->workspaces); wsh_idx++) {
             if (srv->workspaces[wsh_idx].connection_id == EVENT_CONNECTION_NONE) {
                 reuse_slots++;
                 continue;
             }
-            ImGui::Text("#%zu: conn[%u] + client_wsidx[%u] + lobby[%u]", wsh_idx, srv->workspaces[wsh_idx].connection_id, srv->workspaces[wsh_idx].client_local_workspace_id, srv->workspaces[wsh_idx].lobby_id);
+            ImGui::Text("#%zu: conn[%u] + client_wsid[%u] + lobby[%u]", wsh_idx, srv->workspaces[wsh_idx].connection_id, srv->workspaces[wsh_idx].client_local_workspace_id, srv->workspaces[wsh_idx].lobby_id);
         }
         ImGui::Separator();
+        ImGui::Text("total handles: %zu", VEC_LEN(&srv->workspaces) - 1 - reuse_slots);
         ImGui::Text("%zu reusable slots", reuse_slots);
     }
 
-    if (ImGui::CollapsingHeader("User Manager")) {
-        //TODO make this a table
+    if (ImGui::CollapsingHeader("User Manager", ImGuiTreeNodeFlags_DefaultOpen)) {
+        //TODO make this a table with fixed vsize
         ImGui::Text("loaded users: %zu", VEC_LEN(&srv->user_mgr.loaded_slots));
         ImGui::Separator();
         for (size_t user_idx = 0; user_idx < VEC_LEN(&srv->user_mgr.loaded_slots); user_idx++) {
@@ -86,8 +84,8 @@ void graphical_immediate_mode_interface::metagui_server()
         }
     }
 
-    if (ImGui::CollapsingHeader("Lobby Manager")) {
-        //TODO make this a table
+    if (ImGui::CollapsingHeader("Lobby Manager", ImGuiTreeNodeFlags_DefaultOpen)) {
+        //TODO make this a table with fixed vsize
         ImGui::TextUnformatted("<TODO>");
     }
 

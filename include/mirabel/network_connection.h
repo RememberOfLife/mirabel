@@ -50,7 +50,7 @@ typedef struct network_connection_s {
     event_queue* outbox;
     event_queue inbox;
 
-    // VECTOR(size_t) connected_workspace_idcs; //TODO would want this to directly target the relevant workspaces, and not have to ptr compare the workspaces network_connection ptr to the one where the event arrived from, when matching
+    // VECTOR(size_t) connected_workspace_idcs; //TODO would want this to directly target the relevant workspaces, and not have to ptr compare the workspaces network_connection ptr to the one where the event arrived from, when matching, also need it to inform workspaces when the connection closes and opens
 } network_connection;
 
 // returns true on failure
