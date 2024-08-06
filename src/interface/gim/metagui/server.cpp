@@ -5,6 +5,7 @@
 #include "rosalia/vector.h"
 
 #include "mirabel/server/lobby_manager.h"
+#include "mirabel/server/lobby.h"
 #include "mirabel/server/user_manager.h"
 #include "mirabel/application.h"
 #include "mirabel/server.h"
@@ -53,7 +54,13 @@ void graphical_immediate_mode_interface::metagui_server()
                 reuse_slots++;
                 continue;
             }
-            ImGui::Text("#%zu: rneta^%p + adapter_connid[%u]", conn_idx, srv->connections[conn_idx].responsible_neta, srv->connections[conn_idx].neta_local_connection_id);
+            ImGui::Text("#%zu: rneta^%p + adapter_connid[%u] + user[%lu] + wsh{", conn_idx, srv->connections[conn_idx].responsible_neta, srv->connections[conn_idx].neta_local_connection_id, srv->connections[conn_idx].authn_user_id);
+            for (size_t wsh_idx = 0; wsh_idx < VEC_LEN(&srv->connections[conn_idx].workspaces); wsh_idx++) {
+                ImGui::SameLine();
+                ImGui::Text("%u", srv->connections[conn_idx].workspaces[wsh_idx]);
+            }
+            ImGui::SameLine();
+            ImGui::Text("}");
         }
         ImGui::Separator();
         ImGui::Text("total connections: %zu", VEC_LEN(&srv->connections) - 1 - reuse_slots);
@@ -86,7 +93,11 @@ void graphical_immediate_mode_interface::metagui_server()
 
     if (ImGui::CollapsingHeader("Lobby Manager", ImGuiTreeNodeFlags_DefaultOpen)) {
         //TODO make this a table with fixed vsize
-        ImGui::TextUnformatted("<TODO>");
+        ImGui::Text("loaded lobbies: %zu", VEC_LEN(&srv->lobby_mgr.loaded_slots));
+        ImGui::Separator();
+        for (size_t lobby_idx = 0; lobby_idx < VEC_LEN(&srv->lobby_mgr.loaded_slots); lobby_idx++) {
+            ImGui::Text("#%zu: name\"%s\"", lobby_idx, srv->lobby_mgr.loaded_slots[lobby_idx].lobbyname);
+        }
     }
 
     // end of window

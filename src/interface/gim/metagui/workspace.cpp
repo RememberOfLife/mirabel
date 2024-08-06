@@ -6,6 +6,7 @@
 #include "rosalia/serialization.h"
 #include "rosalia/vector.h"
 
+#include "mirabel/server/lobby_manager.h"
 #include "mirabel/application.h"
 #include "mirabel/client.h"
 #include "mirabel/methods_registry.h"
@@ -13,7 +14,7 @@
 
 #include "interface/gim/window.hpp"
 
-struct ConnectionTextFilters {
+struct WorkspaceTextFilters {
     // return 0 (pass) if the character is allowed
 
     static int FilterAddressLetters(ImGuiInputTextCallbackData* data)
@@ -24,7 +25,7 @@ struct ConnectionTextFilters {
         return 1;
     }
 
-    static int FilterSanitizedTextLetters(ImGuiInputTextCallbackData* data)
+    static int FilterSanitizedIdentLetters(ImGuiInputTextCallbackData* data)
     {
         if (data->EventChar < 256 && strchr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-", (char)data->EventChar)) {
             return 0;
@@ -193,7 +194,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                             char* server_addr_buf = gim_ws->client_workspace->netc->adapter_server_address;
                             uint16_t* server_port = &gim_ws->client_workspace->netc->adapter_server_port;
                             if (!no_adapter_selected && !offline_adapter_selected) {
-                                ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterAddressLetters);
+                                ImGui::InputText("Address", server_addr_buf, ADAPTER_SERVER_ADDRESS_SIZE, ImGuiInputTextFlags_CallbackCharFilter, WorkspaceTextFilters::FilterAddressLetters);
                                 ImGui::InputScalar("Port", ImGuiDataType_U16, server_port);
                             }
                             if (false && !no_adapter_selected) {
@@ -394,7 +395,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                         ImGui::TextColored(imgui_cols.str_danger, "%s", gim_ws->client_workspace->netc->connection_verifail_reason);
                                         ImGui::PopFont();
                                         metagui_util_push_button_colors(METAGUI_UTIL_BUTTON_TYPE_DANGER);
-                                        if (ImGui::Button("Accept Insecure Connection", ImVec2(-1.0f, 0.0f))) {
+                                        if (ImGui::Button("Accept Insecure Connection", ImVec2(-1, 0))) {
                                             network_connection_veriaccept(gim_ws->client_workspace->netc);
                                         }
                                         metagui_util_pop_button_colors();
@@ -426,7 +427,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 if (disable_un) {
                                     ImGui::BeginDisabled();
                                 }
-                                ImGui::InputText("username", gim_ws->client_workspace->netc->authn_username, CONNECTION_AUTHN_USERNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                ImGui::InputText("username", gim_ws->client_workspace->netc->authn_username, CONNECTION_AUTHN_USERNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, WorkspaceTextFilters::FilterSanitizedIdentLetters);
                                 if (disable_un) {
                                     ImGui::EndDisabled();
                                 }
@@ -438,7 +439,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                 if (disable_pw) {
                                     ImGui::BeginDisabled();
                                 }
-                                ImGui::InputText("password", gim_ws->client_workspace->netc->authn_password, CONNECTION_AUTHN_PASSWORD_SIZE, password_flags, ConnectionTextFilters::FilterSanitizedTextLetters);
+                                ImGui::InputText("password", gim_ws->client_workspace->netc->authn_password, CONNECTION_AUTHN_PASSWORD_SIZE, password_flags, WorkspaceTextFilters::FilterSanitizedIdentLetters);
                                 ImGui::SameLine();
                                 if (ImGui::SmallButton(hide_pw ? "S" : "H")) {
                                     hide_pw = !hide_pw;
@@ -459,7 +460,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                         if (disable_login) {
                                             ImGui::BeginDisabled();
                                         }
-                                        if (ImGui::Button("Login", ImVec2(btn_width, 0.0f))) {
+                                        if (ImGui::Button("Login", ImVec2(btn_width, 0))) {
                                             network_connection_authn_login(gim_ws->client_workspace->netc, false);
                                         }
                                         if (disable_login) {
@@ -470,7 +471,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                         if (disable_guest) {
                                             ImGui::BeginDisabled();
                                         }
-                                        if (ImGui::Button("Guest", ImVec2(btn_width, 0.0f))) {
+                                        if (ImGui::Button("Guest", ImVec2(btn_width, 0))) {
                                             network_connection_authn_login(gim_ws->client_workspace->netc, true);
                                         }
                                         if (disable_guest) {
@@ -479,11 +480,11 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                     } break;
                                     case RSI_WAITING: {
                                         ImGui::BeginDisabled();
-                                        ImGui::Button("Authenticating..", ImVec2(-1.0f, 0.0f));
+                                        ImGui::Button("Authenticating..", ImVec2(-1, 0));
                                         ImGui::EndDisabled();
                                     } break;
                                     case RSI_DONE: {
-                                        if (ImGui::Button("Logout", ImVec2(-1.0f, 0.0f))) {
+                                        if (ImGui::Button("Logout", ImVec2(-1, 0))) {
                                             network_connection_authn_logout(gim_ws->client_workspace->netc);
                                         }
                                     } break;
@@ -509,17 +510,17 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                                         auto_create_workspace = true;
                                     } /* fallthrough */;
                                     case RSI_IDLE: {
-                                        if (ImGui::Button(">> Create <<", ImVec2(-1.0f, 0.0f)) || auto_create_workspace) {
+                                        if (ImGui::Button(">> Create <<", ImVec2(-1, 0)) || auto_create_workspace) {
                                             workspace_srvrepr_create(gim_ws->client_workspace);
                                         }
                                     } break;
                                     case RSI_WAITING: {
                                         ImGui::BeginDisabled();
-                                        ImGui::Button("Waiting for response..", ImVec2(-1.0f, 0.0f));
+                                        ImGui::Button("Waiting for response..", ImVec2(-1, 0));
                                         ImGui::EndDisabled();
                                     } break;
                                     case RSI_DONE: {
-                                        if (ImGui::Button("Destroy", ImVec2(-1.0f, 0.0f))) {
+                                        if (ImGui::Button("Destroy", ImVec2(-1, 0))) {
                                             workspace_srvrepr_destroy(gim_ws->client_workspace);
                                         }
                                     } break;
@@ -539,7 +540,90 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
             if (false && ImGui::BeginTabItem("> User")) {
                 ImGui::EndTabItem();
             }
-            if (false && ImGui::BeginTabItem("> Lobby")) {
+            if (gim_ws->client_workspace->server_workspace == RSI_DONE && ImGui::BeginTabItem("> Lobby")) {
+
+                bool disable_lobby_ident_inputs = gim_ws->client_workspace->lobby_state != RSI_IDLE;
+                if (disable_lobby_ident_inputs) {
+                    ImGui::BeginDisabled();
+                }
+                ImGui::InputText("name", gim_ws->client_workspace->lobby_name, SERVER_LOBBY_LOBBYNAME_SIZE, ImGuiInputTextFlags_CallbackCharFilter, WorkspaceTextFilters::FilterSanitizedIdentLetters);
+                static bool hide_pw = true;
+                ImGuiInputTextFlags password_flags = ImGuiInputTextFlags_CallbackCharFilter;
+                if (hide_pw) {
+                    password_flags |= ImGuiInputTextFlags_Password;
+                }
+                ImGui::InputText("password", gim_ws->client_workspace->lobby_password, SERVER_LOBBY_PASSWORD_HASH_SIZE, password_flags, WorkspaceTextFilters::FilterSanitizedIdentLetters);
+                ImGui::SameLine();
+                if (disable_lobby_ident_inputs) {
+                    ImGui::EndDisabled();
+                }
+                if (ImGui::SmallButton(hide_pw ? "S" : "H")) {
+                    hide_pw = !hide_pw;
+                }
+                switch (gim_ws->client_workspace->lobby_state) {
+                    case RSI_NONE: {
+                        // unreachable
+                        assert(0);
+                    } break;
+                    case RSI_IDLE: {
+                        bool disable_create_join = strlen(gim_ws->client_workspace->lobby_name) < 3;
+                        if (disable_create_join) {
+                            ImGui::BeginDisabled();
+                        }
+                        if (ImGui::Button("Create")) {
+                            workspace_lobby_create(gim_ws->client_workspace);
+                        }
+                        ImGui::SameLine();
+                        if (ImGui::Button("Join", ImVec2(-1, 0))) {
+                            workspace_lobby_join(gim_ws->client_workspace);
+                        }
+                        if (disable_create_join) {
+                            ImGui::EndDisabled();
+                        }
+                    } break;
+                    case RSI_WAITING: {
+                        ImGui::BeginDisabled();
+                        ImGui::Button("Waiting for response..", ImVec2(-1, 0));
+                        ImGui::EndDisabled();
+                    } break;
+                    case RSI_DONE: {
+                        //TODO only show destroy to lobby admin, and then ONLY show destroy
+                        if (ImGui::Button("Destroy")) {
+                            workspace_lobby_destroy(gim_ws->client_workspace);
+                        }
+                        ImGui::SameLine();
+                        if (ImGui::Button("Leave", ImVec2(-1, 0))) {
+                            workspace_lobby_leave(gim_ws->client_workspace);
+                        }
+                    } break;
+                    default: {
+                        // unreachable
+                        assert(0);
+                    } break;
+                }
+                ImGui::Separator();
+                bool disable_lobby_lower = gim_ws->client_workspace->lobby_state == RSI_WAITING;
+                if (disable_lobby_lower) {
+                    ImGui::BeginDisabled();
+                }
+                if (gim_ws->client_workspace->lobby_id == LOBBY_ID_NONE) {
+                    // lobby listings
+                    //TODO
+                    ImGui::TextDisabled("<TODO lobby listings>");
+                    // if (ImGui::Button("Load listings", ImVec2(-1, 0))) {
+                    //     //TODO
+                    // }
+                } else {
+                    // lobby information
+                    //TODO this is a table, on the right side 1/4 is the user list, everthing following is on the left:
+                    //TODO lobby settings, client kinda needs offline lobby for that to work properly.. //TODO offline server :/
+                    //TODO game config
+                    //TODO client<->playerid mappings
+                }
+                if (disable_lobby_lower) {
+                    ImGui::EndDisabled();
+                }
+
                 ImGui::EndTabItem();
             }
             if (false && ImGui::BeginTabItem("> Frontend")) {

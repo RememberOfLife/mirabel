@@ -59,6 +59,10 @@ void network_connection_destroy(network_connection* self)
     if (self->connection_verifail_reason != NULL) {
         mirabel_free(self->connection_verifail_reason);
     }
+
+    if (self->adapter_error != NULL) {
+        mirabel_free(self->adapter_error);
+    }
 }
 
 void network_connection_outbox_push(network_connection* self, event_any* e)

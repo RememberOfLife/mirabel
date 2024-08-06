@@ -19,13 +19,13 @@ void graphical_immediate_mode_interface::metagui_global_dockspace(float* x, floa
     host_window_flags |= ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking;
     host_window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
     host_window_flags |= ImGuiWindowFlags_NoBackground;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::Begin("global_dockspace_window", NULL, host_window_flags);
     ImGui::PopStyleVar(3);
     ImGuiID dockspace_id = ImGui::GetID("global_dockspace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+    ImGui::DockSpace(dockspace_id, ImVec2(0, 0), dockspace_flags);
     ImGuiDockNode* dn = ImGui::DockBuilderGetNode(dockspace_id);
     *x = dn->CentralNode->Pos.x;
     *y = dn->CentralNode->Pos.y;

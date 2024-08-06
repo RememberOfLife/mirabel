@@ -51,11 +51,11 @@ typedef enum EVENT_TYPE_E {
     EVENT_TYPE_WORKSPACE_CREATE,
     EVENT_TYPE_WORKSPACE_DESTROY,
 
-    //TODO use these
-    // EVENT_TYPE_LOBBY_CREATE,
-    // EVENT_TYPE_LOBBY_DESTROY,
-    // EVENT_TYPE_LOBBY_JOIN,
-    // EVENT_TYPE_LOBBY_LEAVE,
+    EVENT_TYPE_LOBBY_CREATE,
+    EVENT_TYPE_LOBBY_DESTROY,
+    EVENT_TYPE_LOBBY_JOIN,
+    EVENT_TYPE_LOBBY_LEAVE,
+    EVENT_TYPE_LOBBY_CDJL_ERR,
     //TODO some way for the lobby to send information about its state, i.e. settings users etc..
 
     //TODO
@@ -74,6 +74,10 @@ static const uint32_t EVENT_WORKSPACE_SPEC = UINT32_MAX; //TODO just reserved fo
 
 static const uint32_t EVENT_ASSOCIATION_NONE = 0;
 static const uint32_t EVENT_ASSOCIATION_SPEC = UINT32_MAX; //TODO just reserved for now
+
+//TODO if we really only allow a workspace to be in just one lobby, then arguably we do not want to bother with handling lobby ids on the client AT ALL
+static const uint32_t EVENT_LOBBY_NONE = 0;
+static const uint32_t EVENT_LOBBY_SPEC = UINT32_MAX; //TODO just reserved for now
 
 typedef struct event_s {
     EVENT_TYPE type;
@@ -182,6 +186,37 @@ typedef struct event_user_auth_reject_s {
 
 void event_create_user_auth_reject(event_any* e, const char* reason);
 
+typedef struct event_lobby_base_s {
+    event base;
+    uint32_t lobby_id;
+} event_lobby_base;
+
+void event_create_lobby_base(event_any* e, EVENT_TYPE type, uint32_t lobby_id);
+
+typedef struct event_lobby_create_s {
+    event base;
+    char* lobby_name;
+    char* password;
+} event_lobby_create;
+
+void event_create_lobby_create(event_any* e, const char* lobby_name, const char* password);
+
+typedef struct event_lobby_join_s {
+    event base;
+    uint32_t lobby_id;
+    char* lobby_name;
+    char* password;
+} event_lobby_join;
+
+void event_create_lobby_join(event_any* e, const char* lobby_name, const char* password, uint32_t lobby_id);
+
+typedef struct event_lobby_cdjl_err_s {
+    event base;
+    char* err_msg;
+} event_lobby_cdjl_err;
+
+void event_create_lobby_cdjl_err(event_any* e, const char* err_msg);
+
 // event_any is as large as the largest event
 // use for arbitrary events, event arrays and deserialization where type and size are unknown
 typedef union event_any_u {
@@ -194,6 +229,10 @@ typedef union event_any_u {
     event_neta_veri neta_veri;
     event_user_auth_info user_auth_info;
     event_user_auth_reject user_auth_reject;
+    event_lobby_base lobby_base;
+    event_lobby_create lobby_create;
+    event_lobby_join lobby_join;
+    event_lobby_cdjl_err lobby_cdjl_err;
 } event_any;
 
 #ifdef __cplusplus

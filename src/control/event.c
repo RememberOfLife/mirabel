@@ -58,6 +58,33 @@ const serialization_layout sl_user_auth_reject[] = {
     {SL_TYPE_STOP},
 };
 
+const serialization_layout sl_lobby_base[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_base, base), .ext.layout = sl_base},
+    {SL_TYPE_U32, offsetof(event_lobby_base, lobby_id)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_lobby_create[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_create, base), .ext.layout = sl_base},
+    {SL_TYPE_STRING, offsetof(event_lobby_create, lobby_name)},
+    {SL_TYPE_STRING, offsetof(event_lobby_create, password)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_lobby_join[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_join, base), .ext.layout = sl_base},
+    {SL_TYPE_U32, offsetof(event_lobby_base, lobby_id)},
+    {SL_TYPE_STRING, offsetof(event_lobby_join, lobby_name)},
+    {SL_TYPE_STRING, offsetof(event_lobby_join, password)},
+    {SL_TYPE_STOP},
+};
+
+const serialization_layout sl_lobby_cdjl_err[] = {
+    {SL_TYPE_COMPLEX, offsetof(event_lobby_cdjl_err, base), .ext.layout = sl_base},
+    {SL_TYPE_STRING, offsetof(event_lobby_cdjl_err, err_msg)},
+    {SL_TYPE_STOP},
+};
+
 const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
     [EVENT_TYPE_NULL] = sl_base,
     [EVENT_TYPE_DESTROYED] = sl_base,
@@ -87,6 +114,12 @@ const serialization_layout* sl_event_map[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_WORKSPACE_CREATE] = sl_base,
     [EVENT_TYPE_WORKSPACE_DESTROY] = sl_base,
+
+    [EVENT_TYPE_LOBBY_CREATE] = sl_lobby_create,
+    [EVENT_TYPE_LOBBY_DESTROY] = sl_lobby_base,
+    [EVENT_TYPE_LOBBY_JOIN] = sl_lobby_join,
+    [EVENT_TYPE_LOBBY_LEAVE] = sl_lobby_base,
+    [EVENT_TYPE_LOBBY_CDJL_ERR] = sl_lobby_cdjl_err,
 };
 
 const serialization_layout sl_event_any[] = {
@@ -145,6 +178,12 @@ const char* event_type_strings[EVENT_TYPE_COUNT] = {
 
     [EVENT_TYPE_WORKSPACE_CREATE] = "EVENT_TYPE_WORKSPACE_CREATE",
     [EVENT_TYPE_WORKSPACE_DESTROY] = "EVENT_TYPE_WORKSPACE_DESTROY",
+
+    [EVENT_TYPE_LOBBY_CREATE] = "EVENT_TYPE_LOBBY_CREATE",
+    [EVENT_TYPE_LOBBY_DESTROY] = "EVENT_TYPE_LOBBY_DESTROY",
+    [EVENT_TYPE_LOBBY_JOIN] = "EVENT_TYPE_LOBBY_JOIN",
+    [EVENT_TYPE_LOBBY_LEAVE] = "EVENT_TYPE_LOBBY_LEAVE",
+    [EVENT_TYPE_LOBBY_CDJL_ERR] = "EVENT_TYPE_LOBBY_CDJL_ERRINFO",
 };
 
 const char* event_type_str(EVENT_TYPE type)
@@ -333,4 +372,31 @@ void event_create_user_auth_reject(event_any* e, const char* reason)
 {
     event_create_type(e, EVENT_TYPE_USER_AUTH_REJECT);
     e->user_auth_reject.reason = reason ? strdup(reason) : NULL;
+}
+
+void event_create_lobby_base(event_any* e, EVENT_TYPE type, uint32_t lobby_id)
+{
+    event_create_type(e, type);
+    e->lobby_base.lobby_id = lobby_id;
+}
+
+void event_create_lobby_create(event_any* e, const char* lobby_name, const char* password)
+{
+    event_create_type(e, EVENT_TYPE_LOBBY_CREATE);
+    e->lobby_create.lobby_name = lobby_name ? strdup(lobby_name) : NULL;
+    e->lobby_create.password = password ? strdup(password) : NULL;
+}
+
+void event_create_lobby_join(event_any* e, const char* lobby_name, const char* password, uint32_t lobby_id)
+{
+    event_create_type(e, EVENT_TYPE_LOBBY_JOIN);
+    e->lobby_join.lobby_name = lobby_name ? strdup(lobby_name) : NULL;
+    e->lobby_join.password = password ? strdup(password) : NULL;
+    e->lobby_join.lobby_id = lobby_id;
+}
+
+void event_create_lobby_cdjl_err(event_any* e, const char* err_msg)
+{
+    event_create_type(e, EVENT_TYPE_LOBBY_CDJL_ERR);
+    e->lobby_cdjl_err.err_msg = err_msg ? strdup(err_msg) : NULL;
 }

@@ -17,7 +17,7 @@ extern "C" {
 typedef struct client_connection_s {
     network_adapter* responsible_neta;
     uint32_t neta_local_connection_id;
-    uint64_t authn_user_id;
+    uint32_t authn_user_id;
     VECTOR(uint32_t) workspaces; // idcs into server.workspaces
 } client_connection;
 

@@ -29,7 +29,7 @@ typedef struct network_connection_s {
     uint16_t adapter_server_port;
     RSI adapter_state;
     network_adapter adapter;
-    char* adapter_error;
+    char* adapter_error; // owning
 
     RSI connection_state;
     blob connection_cert_thumb;

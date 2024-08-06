@@ -13,13 +13,14 @@
 
 #include "mirabel/server/user_manager.h"
 
-//TODO using appi.aserver is ugly here..
+//TODO using appi.aserver is ugly here.., make server* srv the first arg for all functions instead..
 
 uint64_t next_user_id = 1;
 
 bool server_user_manager_create(server_user_manager* self)
 {
     VEC_CREATE(&self->loaded_slots, 8);
+    return false;
 }
 
 void server_user_manager_destroy(server_user_manager* self)
@@ -27,7 +28,7 @@ void server_user_manager_destroy(server_user_manager* self)
     VEC_DESTROY(&self->loaded_slots);
 }
 
-server_user* server_user_manager_user_get_by_id(server_user_manager* self, uint64_t id)
+server_user* server_user_manager_user_get_by_id(server_user_manager* self, uint32_t id)
 {
     //TODO use map to make this faster
     for (size_t search_idx = 0; search_idx < VEC_LEN(&self->loaded_slots); search_idx++) {
@@ -51,6 +52,10 @@ server_user* server_user_manager_user_get_by_name(server_user_manager* self, con
 
 void server_user_manager_handle_event(server_user_manager* self, event_any* e)
 {
+    if (e->base.workspace_id != EVENT_WORKSPACE_NONE) {
+        mirabel_slogf(LOGS_WARN, "server user-manager: unexpected workspace for event type %u %s", e->base.type, event_type_str(e->base.type));
+        return;
+    }
     switch (e->base.type) {
         case EVENT_TYPE_NETWORK_CONNECTION_OPEN: {
             // client wants to have the authinfo, serve it
@@ -61,7 +66,6 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
         case EVENT_TYPE_USER_AUTH_INFO: {
             // client wants to auth with given credentials, send back authn or authfail
             event_any re;
-            //TODO save guest names and check for dupes
             if (!e->user_auth_info.is_guest) {
                 event_create_user_auth_reject(&re, "user logins not accepted");
                 server_connection_network_send(appi.aserver, e->base.connection_id, &re);
@@ -85,6 +89,7 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
                 server_connection_network_send(appi.aserver, e->base.connection_id, &re);
                 break;
             }
+            //TODO this is NOT read-only on the event, should be separate.., see lobby-manager
             if (strlen(e->user_auth_info.username) == 0) {
                 free(e->user_auth_info.username);
                 static uint32_t seed = 123;
@@ -124,7 +129,7 @@ void server_user_manager_handle_event(server_user_manager* self, event_any* e)
     }
 }
 
-uint64_t server_user_manager_user_add(server_user_manager* self, bool is_guest, const char* username, const char* password, uint64_t password_salt)
+uint32_t server_user_manager_user_add(server_user_manager* self, bool is_guest, const char* username, const char* password, uint64_t password_salt)
 {
     server_user new_user = (server_user){
         .dirty = false,
@@ -137,7 +142,7 @@ uint64_t server_user_manager_user_add(server_user_manager* self, bool is_guest, 
     return new_user.id;
 }
 
-void server_user_manager_user_remove(server_user_manager* self, uint64_t id)
+void server_user_manager_user_remove(server_user_manager* self, uint32_t id)
 {
     if (server_user_manager_user_get_by_id(self, id) == NULL) {
         mirabel_slogf(LOGS_WARN, "server user-manager: attempting to remove non-existant user");

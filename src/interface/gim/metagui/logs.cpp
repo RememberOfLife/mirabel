@@ -118,7 +118,7 @@ void graphical_immediate_mode_interface::metagui_log()
     }
     clipper.End();
     if (log_auto_scroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY()) {
-        ImGui::SetScrollHereY(1.0f);
+        ImGui::SetScrollHereY(1);
     }
     ImGui::EndChild();
 

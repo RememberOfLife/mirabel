@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "mirabel/server/lobby.h"
 #include "mirabel/network_connection.h"
 #include "mirabel/rrsi.h"
 
@@ -14,6 +15,12 @@ typedef struct workspace_s {
 
     uint32_t id;
     RSI server_workspace;
+
+    char lobby_name[SERVER_LOBBY_LOBBYNAME_SIZE];
+    char lobby_password[SERVER_LOBBY_PASSWORD_HASH_SIZE];
+    RSI lobby_state;
+    char* lobby_error; // owning
+    uint32_t lobby_id;
 
     // lobby lobby;
     // session gsession;
@@ -41,6 +48,14 @@ void workspace_process_network_event(workspace* self, event_any* e);
 void workspace_srvrepr_create(workspace* self);
 
 void workspace_srvrepr_destroy(workspace* self);
+
+void workspace_lobby_create(workspace* self);
+
+void workspace_lobby_destroy(workspace* self);
+
+void workspace_lobby_join(workspace* self);
+
+void workspace_lobby_leave(workspace* self);
 
 #ifdef __cplusplus
 }

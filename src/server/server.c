@@ -113,6 +113,18 @@ bool server_update(server* self)
             case EVENT_TYPE_USER_AUTH_REJECT: {
                 server_user_manager_handle_event(&self->user_mgr, &e);
             } break;
+            case EVENT_TYPE_LOBBY_CREATE: {
+                server_lobby_manager_handle_event(&self->lobby_mgr, &e);
+            } break;
+            case EVENT_TYPE_LOBBY_DESTROY: {
+                server_lobby_manager_handle_event(&self->lobby_mgr, &e);
+            } break;
+            case EVENT_TYPE_LOBBY_JOIN: {
+                server_lobby_manager_handle_event(&self->lobby_mgr, &e);
+            } break;
+            case EVENT_TYPE_LOBBY_LEAVE: {
+                server_lobby_manager_handle_event(&self->lobby_mgr, &e);
+            } break;
             //TODO other event types
             default: {
                 mirabel_slogf(LOGS_WARN, "server: received unexpected event, type: %u %s", e.base.type, event_type_str(e.base.type));

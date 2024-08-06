@@ -96,6 +96,7 @@ set(SOURCES
     src/network/network_connection.c
 
     src/server/lobby_manager.c
+    src/server/lobby.c
     src/server/server.c
     src/server/user_manager.c
 
