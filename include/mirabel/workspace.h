@@ -17,7 +17,7 @@ typedef struct workspace_s {
     RSI server_workspace;
 
     char lobby_name[SERVER_LOBBY_LOBBYNAME_SIZE];
-    char lobby_password[SERVER_LOBBY_PASSWORD_HASH_SIZE];
+    char lobby_password[SERVER_LOBBY_PASSWORD_SIZE];
     RSI lobby_state;
     char* lobby_error; // owning
     uint32_t lobby_id;

@@ -16,8 +16,8 @@ extern "C" {
 
 //TODO any way to NOT make these macros?
 #define ADAPTER_SERVER_ADDRESS_SIZE (128)
-#define CONNECTION_AUTHN_USERNAME_SIZE (64)
-#define CONNECTION_AUTHN_PASSWORD_SIZE (128)
+#define CONNECTION_AUTHN_USERNAME_SIZE (32)
+#define CONNECTION_AUTHN_PASSWORD_SIZE (32)
 
 extern const char* default_adapter_server_address;
 extern const uint16_t default_adapter_server_port;

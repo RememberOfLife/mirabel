@@ -5,10 +5,14 @@
 
 #include "rosalia/vector.h"
 
+#include "mirabel/server/pwhash.h"
 #include "mirabel/event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SERVER_USER_USERNAME_SIZE (32)
-#define SERVER_USER_PASSWORD_HASH_SIZE (16)
 
 static const uint32_t USER_ID_NONE = 0;
 
@@ -17,8 +21,7 @@ typedef struct server_user_s {
     uint32_t id;
     bool is_guest;
     char username[SERVER_USER_USERNAME_SIZE];
-    uint8_t password_hash[SERVER_USER_PASSWORD_HASH_SIZE];
-    uint64_t password_salt;
+    password_hash pwh;
 } server_user;
 
 //TODO dedicated create and destroy methods for user?
@@ -45,5 +48,6 @@ uint32_t server_user_manager_user_add(server_user_manager* self, bool is_guest, 
 
 void server_user_manager_user_remove(server_user_manager* self, uint32_t id);
 
-//TODO move to mirabel global util
-void server_user_manager_password_hash(uint8_t password_hash[SERVER_USER_PASSWORD_HASH_SIZE], const char* password, uint64_t password_salt);
+#ifdef __cplusplus
+}
+#endif

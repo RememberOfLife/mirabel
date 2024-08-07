@@ -2,11 +2,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "rosalia/noise.h"
 #include "rosalia/rand.h"
 #include "rosalia/timestamp.h"
 #include "rosalia/vector.h"
 
+#include "mirabel/server/pwhash.h"
 #include "mirabel/application.h"
 #include "mirabel/event.h"
 #include "mirabel/server.h"
@@ -137,7 +137,7 @@ uint32_t server_user_manager_user_add(server_user_manager* self, bool is_guest, 
         .is_guest = is_guest,
     };
     strncpy(new_user.username, username, SERVER_USER_USERNAME_SIZE);
-    server_user_manager_password_hash(new_user.password_hash, password, password_salt);
+    password_hash_create(&new_user.pwh, password, password_salt);
     VEC_PUSH(&self->loaded_slots, new_user);
     return new_user.id;
 }
@@ -150,25 +150,4 @@ void server_user_manager_user_remove(server_user_manager* self, uint32_t id)
     }
     size_t remove_slot = server_user_manager_user_get_by_id(self, id) - self->loaded_slots;
     VEC_REMOVE_SWAP(&self->loaded_slots, remove_slot);
-}
-
-void server_user_manager_password_hash(uint8_t password_hash[SERVER_USER_PASSWORD_HASH_SIZE], const char* password, uint64_t password_salt)
-{
-    //TODO //HACK use some crypto hash for password hashing, unfortunately openssl is probably not sensible to ship in the web version?
-    for (size_t i = 0; i < SERVER_USER_PASSWORD_HASH_SIZE; i++) {
-        password_hash[i] = password_salt >> (8 * (i % sizeof(uint64_t)));
-    }
-    uint32_t* acc = (uint32_t*)password_hash;
-    size_t acc_idx = 0;
-    const size_t max_acc_idx = SERVER_USER_PASSWORD_HASH_SIZE / sizeof(uint32_t);
-    const char* wstr_end = password + strlen(password);
-    for (size_t i = 0; i < 64; i++) {
-        const char* wstr = password;
-        while (wstr < wstr_end) {
-            acc[acc_idx % max_acc_idx] *= squirrelnoise5(acc[(acc_idx + 1) % max_acc_idx], *wstr);
-            acc_idx += 1;
-            acc[acc_idx % max_acc_idx] ^= squirrelnoise5(*wstr, acc[(acc_idx + 1) % max_acc_idx]);
-            wstr++;
-        }
-    }
 }

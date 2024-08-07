@@ -8,6 +8,7 @@
 #include "rosalia/vector.h"
 
 #include "mirabel/server/lobby.h"
+#include "mirabel/server/pwhash.h"
 #include "mirabel/application.h"
 #include "mirabel/event.h"
 #include "mirabel/server.h"
@@ -75,7 +76,6 @@ void server_lobby_manager_handle_event(server_lobby_manager* self, event_any* e)
             }
             char new_lobby_name[SERVER_LOBBY_LOBBYNAME_SIZE];
             if (strlen(e->lobby_create.lobby_name) == 0) {
-                //TODO auto generate using username if no name given
                 static uint32_t seed = 123;
                 fast_prng rng;
                 fprng_srand(&rng, seed++);
@@ -93,7 +93,7 @@ void server_lobby_manager_handle_event(server_lobby_manager* self, event_any* e)
                 server_workspace_handle_network_send(appi.aserver, e->base.workspace_id, &re);
                 break;
             }
-            uint32_t new_lobby_id = server_lobby_manager_lobby_add(self, new_lobby_name, e->lobby_create.password, timestamp_get_ns64()); //TODO make sure that if password is NULL others can freely join by simply leaving the password box as it is
+            uint32_t new_lobby_id = server_lobby_manager_lobby_add(self, new_lobby_name, e->lobby_create.password, timestamp_get_ns64());
             //TODO actually add the user+workspace to the lobby! +on server add this info into the workspace handler
             event_create_lobby_join(&re, new_lobby_name, e->lobby_create.password, new_lobby_id);
             server_workspace_handle_network_send(appi.aserver, e->base.workspace_id, &re);
@@ -125,7 +125,11 @@ void server_lobby_manager_handle_event(server_lobby_manager* self, event_any* e)
                 server_workspace_handle_network_send(appi.aserver, e->base.workspace_id, &re);
                 break;
             }
-            //TODO error if password incorrect
+            if (!password_hash_test(&join_lobby->pwh, e->lobby_join.password)) {
+                event_create_lobby_cdjl_err(&re, "password mismatch");
+                server_workspace_handle_network_send(appi.aserver, e->base.workspace_id, &re);
+                break;
+            }
             //TODO add user+workspace to lobby +on server add this info into the workspace handler
             event_create_lobby_join(&re, join_lobby->lobbyname, e->lobby_join.password, join_lobby->id);
             server_workspace_handle_network_send(appi.aserver, e->base.workspace_id, &re);
@@ -155,7 +159,7 @@ uint32_t server_lobby_manager_lobby_add(server_lobby_manager* self, const char* 
         .id = next_lobby_id++,
     };
     strncpy(new_lobby.lobbyname, lobbyname, SERVER_LOBBY_LOBBYNAME_SIZE);
-    server_lobby_manager_password_hash(new_lobby.password_hash, password, password_salt);
+    password_hash_create(&new_lobby.pwh, password, password_salt);
     //TODO server_lobby_add which params do we want in the create function?
     VEC_PUSH(&self->loaded_slots, new_lobby);
     return new_lobby.id;
@@ -170,27 +174,4 @@ void server_lobby_manager_lobby_remove(server_lobby_manager* self, uint32_t id)
     //TODO server_lobby_destroy
     size_t remove_slot = server_lobby_manager_lobby_get_by_id(self, id) - self->loaded_slots;
     VEC_REMOVE_SWAP(&self->loaded_slots, remove_slot);
-}
-
-void server_lobby_manager_password_hash(uint8_t password_hash[SERVER_LOBBY_PASSWORD_HASH_SIZE], const char* password, uint64_t password_salt)
-{
-    //TODO //HACK use some crypto hash for password hashing, unfortunately openssl is probably not sensible to ship in the web version?
-    for (size_t i = 0; i < SERVER_LOBBY_PASSWORD_HASH_SIZE; i++) {
-        password_hash[i] = password_salt >> (8 * (i % sizeof(uint64_t)));
-    }
-    if (password != NULL) {
-        uint32_t* acc = (uint32_t*)password_hash;
-        size_t acc_idx = 0;
-        const size_t max_acc_idx = SERVER_LOBBY_PASSWORD_HASH_SIZE / sizeof(uint32_t);
-        const char* wstr_end = password + strlen(password);
-        for (size_t i = 0; i < 64; i++) {
-            const char* wstr = password;
-            while (wstr < wstr_end) {
-                acc[acc_idx % max_acc_idx] *= squirrelnoise5(acc[(acc_idx + 1) % max_acc_idx], *wstr);
-                acc_idx += 1;
-                acc[acc_idx % max_acc_idx] ^= squirrelnoise5(*wstr, acc[(acc_idx + 1) % max_acc_idx]);
-                wstr++;
-            }
-        }
-    }
 }

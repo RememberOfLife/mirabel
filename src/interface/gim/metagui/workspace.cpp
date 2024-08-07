@@ -6,7 +6,6 @@
 #include "rosalia/serialization.h"
 #include "rosalia/vector.h"
 
-#include "mirabel/server/lobby_manager.h"
 #include "mirabel/application.h"
 #include "mirabel/client.h"
 #include "mirabel/methods_registry.h"
@@ -552,7 +551,7 @@ void graphical_immediate_mode_interface::metagui_workspace_window(uint32_t works
                 if (hide_pw) {
                     password_flags |= ImGuiInputTextFlags_Password;
                 }
-                ImGui::InputText("password", gim_ws->client_workspace->lobby_password, SERVER_LOBBY_PASSWORD_HASH_SIZE, password_flags, WorkspaceTextFilters::FilterSanitizedIdentLetters);
+                ImGui::InputText("password", gim_ws->client_workspace->lobby_password, SERVER_LOBBY_PASSWORD_SIZE, password_flags, WorkspaceTextFilters::FilterSanitizedIdentLetters);
                 ImGui::SameLine();
                 if (disable_lobby_ident_inputs) {
                     ImGui::EndDisabled();
